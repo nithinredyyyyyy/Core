@@ -1,0 +1,10 @@
+node_modules
+dist
+logs
+tmp-logo-check
+tmp-snapshot-check
+*.log
+.env
+.env.*
+server/data/*.sqlite-shm
+server/data/*.sqlite-wal
