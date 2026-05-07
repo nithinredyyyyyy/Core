@@ -127,3 +127,4 @@ Important:
 - Base44 environment variables are no longer required for the app to run.
 - The current admin UI now works against the local API/database rather than Base44.
 - For deployment, host the frontend and backend together or configure your production frontend to reach the backend domain.
+"# Core" 
