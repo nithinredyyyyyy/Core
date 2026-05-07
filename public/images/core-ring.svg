@@ -1,0 +1,12 @@
+<svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="core-ring-gradient-file" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#fcd34d" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="#FFF8F1" />
+  <circle cx="32" cy="32" r="23" fill="none" stroke="url(#core-ring-gradient-file)" stroke-width="8" stroke-dasharray="112 38" stroke-linecap="round" transform="rotate(-32 32 32)" />
+  <circle cx="32" cy="32" r="7" fill="#0f172a" fill-opacity="0.92" />
+  <path d="M43 20C39.9 17.2 36.2 15.8 31.9 15.8C23 15.8 15.8 23 15.8 31.9C15.8 40.8 23 48 31.9 48C36.2 48 39.9 46.6 43 43.8" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round" />
+</svg>
