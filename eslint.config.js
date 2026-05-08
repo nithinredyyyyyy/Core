@@ -5,6 +5,14 @@ import pluginReactHooks from "eslint-plugin-react-hooks";
 
 export default [
   {
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "logs/**",
+      "server/data/**",
+    ],
+  },
+  {
     files: [
       "src/**/*.{js,mjs,cjs,jsx}",
     ],

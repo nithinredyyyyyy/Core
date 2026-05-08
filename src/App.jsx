@@ -9,9 +9,9 @@ import { SearchProvider } from '@/lib/SearchContext';
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
 import Tournaments from './pages/Tournaments';
-import Teams from './pages/Teams';
+import Teams from './pages/TEAMS';
 import PlayerProfile from './pages/PlayerProfile';
-import Leaderboard from './pages/Leaderboard';
+import Leaderboard from './pages/LEADERBOARD';
 import News from './pages/News';
 import NewsArticle from './pages/NewsArticle';
 import Fans from './pages/Fans';
@@ -46,12 +46,12 @@ function AdminAccessGate() {
 function LeaderboardAccessGate() {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isLocalAdmin = LOCAL_ADMIN_HOSTS.has(hostname);
+  const [searchParams] = useSearchParams();
 
   if (isLocalAdmin) {
     return <Leaderboard />;
   }
 
-  const [searchParams] = useSearchParams();
   const tournamentId = searchParams.get('tournament');
   const target = tournamentId ? `/tournaments?id=${encodeURIComponent(tournamentId)}` : '/tournaments';
   return <Navigate to={target} replace />;

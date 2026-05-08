@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import AdminTournaments from "../components/admin/AdminTournaments";
 import AdminTeams from "../components/admin/AdminTeams";
 import AdminMatches from "../components/admin/AdminMatches";
-import AdminResults from "../components/admin/AdminResults";
+import AdminResults from "../components/admin/ADMINRESULTS";
 import AdminNews from "../components/admin/AdminNews";
 import AdminTransfers from "../components/admin/AdminTransfers";
 import AdminInspector from "../components/admin/AdminInspector";
