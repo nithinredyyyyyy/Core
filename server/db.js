@@ -830,6 +830,7 @@ function backfillNormalizedData() {
       stageRows.forEach((stage) => {
         const stageId = stageMetaByName.get(stage.name)?.id;
         if (!stageId || !Array.isArray(stage.standings)) return;
+        const seenStageStandingKeys = new Set();
 
         stage.standings.forEach((entry) => {
           const teamRecord = resolveTeamRecord(teamLookup, entry?.team);
@@ -840,6 +841,9 @@ function backfillNormalizedData() {
               ? (String(entry.group).startsWith("Group ") ? entry.group : `Group ${String(entry.group).toUpperCase()}`)
               : null;
           const groupId = groupName ? groupIdByStageAndName.get(`${stage.name}::${groupName}`) || null : null;
+          const standingKey = `${stageId}::${groupId || "overall"}::${teamRecord.id}`;
+          if (seenStageStandingKeys.has(standingKey)) return;
+          seenStageStandingKeys.add(standingKey);
           insertStageStanding.run(
             randomUUID(),
             tournament.id,

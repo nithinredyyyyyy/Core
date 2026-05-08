@@ -1168,7 +1168,7 @@ app.delete("/api/entities/:entity/:id", (req, res) => {
 
 app.use(express.static(distDir));
 
-app.get("*", (req, res, next) => {
+app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return next();
   }

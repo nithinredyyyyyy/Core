@@ -12,13 +12,14 @@ export default function LogoBlock({
 }) {
   return (
     <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-800/45 bg-[linear-gradient(180deg,_rgba(15,23,42,0.68),_rgba(2,6,23,0.76))] shadow-[0_4px_12px_rgba(15,23,42,0.10)] ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-[linear-gradient(180deg,_rgba(255,255,255,0.98),_rgba(241,245,249,0.94))] shadow-[0_4px_12px_rgba(15,23,42,0.06)] ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
     >
       {src ? (
         <img
           src={src}
           alt={alt}
           className={`h-full w-full object-contain ${imgClassName}`}
+          style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.12))" }}
         />
       ) : (
         children

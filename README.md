@@ -36,6 +36,8 @@ The frontend runs on Vite's default port and proxies `/api` calls to `http://loc
 npm run build
 ```
 
+On Windows environments where Node child-process spawning is blocked with `spawn EPERM`, `npm run build` now automatically falls back to a shell-driven build that uses the Tailwind CLI and `esbuild.exe` directly. Normal environments still try `vite build` first.
+
 ## Deploy
 
 Build the frontend, then run the Express server:
@@ -120,11 +122,10 @@ Important:
 
 - SQLite database file: [server/data/stagecore.sqlite](/C:/Users/surak/core/server/data/stagecore.sqlite)
 - API entry: [server/index.js](/C:/Users/surak/core/server/index.js)
-- Frontend data client: [SRC/API/BASE44CLIENT.js](/C:/Users/surak/core/SRC/API/BASE44CLIENT.js)
+- Frontend data client: [src/api/base44Client.js](/C:/Users/surak/core/src/api/base44Client.js)
 
 ## Notes
 
 - Base44 environment variables are no longer required for the app to run.
 - The current admin UI now works against the local API/database rather than Base44.
 - For deployment, host the frontend and backend together or configure your production frontend to reach the backend domain.
-"# Core" 

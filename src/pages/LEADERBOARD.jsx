@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import TeamIdentity from "../components/shared/TeamIdentity";
 import StatusBadge from "../components/shared/StatusBadge";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
+import { getTeamLogoByName } from "@/lib/teamLogos";
 import {
   getFeaturedTournamentStage,
   getStageBoardData,
@@ -62,6 +63,32 @@ function buildTeamLink(teamName) {
   return `/teams?team=${encodeURIComponent(normalizeOrganizationName(teamName))}`;
 }
 
+function getTournamentLogo(tournament) {
+  if (!tournament?.name) return null;
+  if (tournament.name === "Battlegrounds Mobile India Series 2026") return "/images/bgis-logo.png";
+  if (tournament.name === "Battlegrounds Mobile India Series 2023") return "/images/bgis-2023.png";
+  if (tournament.name === "Battlegrounds Mobile India Series 2024") return "/images/bgis-2024.png";
+  if (tournament.name === "Battlegrounds Mobile India Series 2025") return "/images/bgis-2025.png";
+  if (tournament.name === "India - Korea Invitational") return "/images/in-kr.png";
+  if (tournament.name === "Battlegrounds Mobile India Showdown 2025") return "/images/bmsd-2025.png";
+  if (tournament.name === "Battlegrounds Mobile India International Cup 2025") return "/images/bmic-2025.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2023") return "/images/bmps-2023.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2024") return "/images/bmps-2024.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2025") return "/images/bmps-2025.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") return "/images/bmps-2026.png";
+  return null;
+}
+
+function getTournamentBadgeText(tournament) {
+  const name = tournament?.name || "";
+  if (name.includes("Mobile India Pro Series")) return "BMPS";
+  if (name.includes("Mobile India Series")) return "BGIS";
+  if (name.includes("Mobile India Showdown")) return "BMSD";
+  if (name.includes("Mobile India International Cup")) return "BMIC";
+  if (name.includes("India - Korea Invitational")) return "INKR";
+  return "CORE";
+}
+
 function MatchCell({ cell }) {
   if (!cell) {
     return <span className="text-muted-foreground/70">-</span>;
@@ -70,7 +97,7 @@ function MatchCell({ cell }) {
   return (
     <div className="flex flex-col items-center justify-center leading-none">
       <div className="flex items-center gap-1">
-        {cell.won ? <span className="text-xs leading-none">??</span> : null}
+        {cell.won ? <Trophy className="h-3.5 w-3.5 text-amber-500" /> : null}
         <span className="text-base font-black text-foreground">{cell.points}</span>
       </div>
       <span className="mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -78,6 +105,73 @@ function MatchCell({ cell }) {
       </span>
     </div>
   );
+}
+
+function SnapshotLogo({ name, className = "" }) {
+  const teamLogo = getTeamLogoByName(name);
+  if (!teamLogo) return null;
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center ${className.includes("h-3.5") ? "h-4.5 w-4.5" : className.includes("h-4") ? "h-5 w-5" : "h-6 w-6"}`}>
+      <img
+        src={teamLogo}
+        alt={`${name} logo`}
+        className={`shrink-0 object-contain ${className}`.trim()}
+        style={{ filter: "drop-shadow(0 0 0.8px rgba(10,56,114,0.45)) drop-shadow(0 1px 2px rgba(10,56,114,0.18))" }}
+      />
+    </span>
+  );
+}
+
+function getSnapshotGroupPolicy(group) {
+  const normalizedGroup = String(group || "").trim().toUpperCase();
+  if (normalizedGroup === "A") {
+    return { allowPromotion: false, allowRelegation: true };
+  }
+  if (normalizedGroup === "D") {
+    return { allowPromotion: true, allowRelegation: false };
+  }
+  return { allowPromotion: true, allowRelegation: true };
+}
+
+function getSnapshotZone({ index, total, selectedGroup }) {
+  const topCutoff = 4;
+  const bottomCutoff = Math.max(total - 4, 12);
+  const isTop = index < topCutoff;
+  const isBottom = index >= bottomCutoff;
+  const policy = getSnapshotGroupPolicy(selectedGroup === "all" ? "" : selectedGroup);
+
+  if (isTop && policy.allowPromotion) return "promotion";
+  if (isBottom && policy.allowRelegation) return "relegation";
+  return "safe";
+}
+
+function getSnapshotZoneClasses(zone, variant = "match") {
+  if (variant === "day") {
+    if (zone === "promotion") return "bg-[#17b348] text-white";
+    if (zone === "relegation") return "bg-[#d93045] text-white";
+    return "bg-[#185eb1] text-white";
+  }
+  if (zone === "promotion") return "bg-[#1bb14a] text-white";
+  if (zone === "relegation") return "bg-[#d93045] text-white";
+  return "bg-[#175aa8] text-white";
+}
+
+function getSnapshotLegendItems(selectedGroup, variant = "match") {
+  const policy = getSnapshotGroupPolicy(selectedGroup === "all" ? "" : selectedGroup);
+  const safeColor = variant === "day" ? "#185eb1" : "#175aa8";
+  const promotionColor = variant === "day" ? "#17b348" : "#1bb14a";
+  const relegationColor = "#d93045";
+  const items = [];
+
+  if (policy.allowPromotion) {
+    items.push({ label: "Promotion", color: promotionColor });
+  }
+  items.push({ label: "Safe Zone", color: safeColor });
+  if (policy.allowRelegation) {
+    items.push({ label: "Relegation", color: relegationColor });
+  }
+
+  return items;
 }
 
 function SignalCard({ label, value, detail, accent = "default", status }) {
@@ -202,6 +296,11 @@ export default function Leaderboard() {
     if (!shouldShowSnapshotGroup) return [];
     return [...new Set(stageBoard.standings.map((team) => team.group).filter((group) => group && group !== "-"))].sort();
   }, [shouldShowSnapshotGroup, stageBoard.standings]);
+  const canUseAllGroupsSnapshot = useMemo(() => {
+    if (!shouldShowSnapshotGroup) return true;
+    if (snapshotFormat !== "day") return true;
+    return stageBoard.standings.length <= 16;
+  }, [shouldShowSnapshotGroup, snapshotFormat, stageBoard.standings.length]);
   useEffect(() => {
     if (!snapshotGroupOptions.length) {
       setSnapshotGroup("all");
@@ -211,6 +310,12 @@ export default function Leaderboard() {
       setSnapshotGroup(snapshotGroupOptions[0]);
     }
   }, [snapshotGroup, snapshotGroupOptions]);
+  useEffect(() => {
+    if (!snapshotGroupOptions.length) return;
+    if (snapshotFormat === "day" && !canUseAllGroupsSnapshot && snapshotGroup === "all") {
+      setSnapshotGroup(snapshotGroupOptions[0]);
+    }
+  }, [snapshotFormat, canUseAllGroupsSnapshot, snapshotGroup, snapshotGroupOptions]);
   const latestCompletedMatch = useMemo(() => {
     const completed = stageBoard.stageMatches.filter((match) => match.status === "completed");
     const source = completed.length > 0 ? completed : stageBoard.stageMatches;
@@ -243,12 +348,15 @@ export default function Leaderboard() {
     const base = `${featuredTournament?.name || "standings"}-${stageBoard.featuredStage || "board"}${snapshotGroup !== "all" ? `-group-${snapshotGroup}` : ""}-${snapshotFormat}`;
     return base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }, [featuredTournament, stageBoard.featuredStage, snapshotFormat, snapshotGroup]);
+  const snapshotTournamentLogo = useMemo(() => getTournamentLogo(featuredTournament), [featuredTournament]);
+  const matchSnapshotLegend = useMemo(() => getSnapshotLegendItems(snapshotGroup, "match"), [snapshotGroup]);
+  const daySnapshotLegend = useMemo(() => getSnapshotLegendItems(snapshotGroup, "day"), [snapshotGroup]);
   const matchSnapshotGridClass = shouldShowSnapshotGroupColumn
     ? "grid-cols-[22px_16px_minmax(0,2.05fr)_26px_22px_22px_28px_28px_38px_36px]"
     : "grid-cols-[22px_16px_minmax(0,2.2fr)_22px_22px_28px_28px_38px_36px]";
   const daySnapshotGridClass = shouldShowSnapshotGroupColumn
-    ? "grid-cols-[28px_18px_minmax(0,2.34fr)_42px_34px_34px_42px_44px_62px]"
-    : "grid-cols-[28px_18px_minmax(0,2.54fr)_34px_34px_42px_44px_62px]";
+    ? "grid-cols-[30px_24px_minmax(0,3.05fr)_34px_28px_28px_34px_36px_54px]"
+    : "grid-cols-[30px_24px_minmax(0,3.25fr)_28px_28px_34px_36px_54px]";
 
   const createSnapshotCanvas = async () => {
     if (!snapshotRef.current) return null;
@@ -508,11 +616,24 @@ export default function Leaderboard() {
 
               {snapshotGroupOptions.length ? (
                 <div className="mt-3 grid grid-cols-3 gap-2">
-                  <Button variant={snapshotGroup === "all" ? "default" : "outline"} onClick={() => setSnapshotGroup("all")} className="col-span-3">All Groups</Button>
+                  <Button
+                    variant={snapshotGroup === "all" ? "default" : "outline"}
+                    onClick={() => canUseAllGroupsSnapshot && setSnapshotGroup("all")}
+                    disabled={!canUseAllGroupsSnapshot}
+                    className="col-span-3"
+                    title={!canUseAllGroupsSnapshot ? "Day 4:5 uses one group at a time for large grouped stages." : undefined}
+                  >
+                    All Groups
+                  </Button>
                   {snapshotGroupOptions.map((group) => (
                     <Button key={group} variant={snapshotGroup === group ? "default" : "outline"} onClick={() => setSnapshotGroup(group)}>Group {group}</Button>
                   ))}
                 </div>
+              ) : null}
+              {!canUseAllGroupsSnapshot ? (
+                <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+                  `Day 4:5` uses one group at a time for large grouped stages so the poster stays readable.
+                </p>
               ) : null}
 
               <div className="mt-4 rounded-2xl border border-border/70 bg-secondary/20 p-4 text-sm">
@@ -544,28 +665,44 @@ export default function Leaderboard() {
                       <div className="overflow-hidden rounded-[30px] bg-white shadow-[0_18px_44px_rgba(7,23,52,0.28)]">
                         <div className={`bg-[linear-gradient(180deg,_#0d3e7f_0%,_#0a3265_100%)] text-white ${isDenseMatchSnapshot ? "px-4 py-4" : "px-5 py-5"}`}>
                           <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[9px] uppercase tracking-[0.28em] text-white/72">{featuredTournament?.name || "Tournament"}</p>
-                              <h3 className={`mt-1.5 font-black uppercase leading-none tracking-[-0.06em] ${isDenseMatchSnapshot ? "text-[25px]" : "text-[29px]"}`}>Standings</h3>
+                            <div className="min-w-0 flex flex-1 items-start gap-3.5">
+                              <div className={`flex shrink-0 items-center justify-center ${isDenseMatchSnapshot ? "h-[82px] w-[82px]" : "h-[96px] w-[96px]"}`}>
+                                {snapshotTournamentLogo ? (
+                                  <img
+                                    src={snapshotTournamentLogo}
+                                    alt={featuredTournament?.name || "Tournament logo"}
+                                    className="h-full w-full object-contain"
+                                    style={{ filter: "drop-shadow(0 8px 18px rgba(4,22,48,0.24))" }}
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center rounded-[16px] border border-white/18 bg-white/8 text-[11px] font-black uppercase tracking-[0.22em] text-white">
+                                    {getTournamentBadgeText(featuredTournament)}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-white/74">{featuredTournament?.name || "Tournament"}</p>
+                                <h3 className={`mt-1 font-black uppercase leading-[0.88] tracking-[-0.095em] ${isDenseMatchSnapshot ? "text-[34px]" : "text-[42px]"}`}>Standings</h3>
+                              </div>
                             </div>
                             <div className={`rounded-2xl bg-white/12 text-right ${isDenseMatchSnapshot ? "min-w-[72px] px-2.5 py-1.5" : "min-w-[78px] px-3 py-2"}`}>
-                              <p className="text-[9px] uppercase tracking-[0.2em] text-white/72">Match</p>
-                              <p className="mt-1 text-sm font-black leading-none text-white">{latestMatchLabel}</p>
+                              <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-white/68">Match</p>
+                              <p className="mt-1 text-[15px] font-black leading-none tracking-[-0.04em] text-white">{latestMatchLabel}</p>
                             </div>
                           </div>
                         </div>
                         <div className={`${isDenseMatchSnapshot ? "px-3 py-3" : "px-4 py-4"}`}>
                           <div className="flex items-center justify-between gap-3 border-b border-[#d6e0ee] pb-3">
                             <div className="min-w-0 flex-1">
-                              <p className={`font-black uppercase tracking-[0.04em] text-[#103b73] ${isDenseMatchSnapshot ? "text-[14px]" : "text-[16px]"}`}>{snapshotStageLabel}</p>
+                                <p className={`font-black uppercase tracking-[0.02em] text-[#103b73] ${isDenseMatchSnapshot ? "text-[16px]" : "text-[18px]"}`}>{snapshotStageLabel}</p>
                               <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{snapshotStandings.length} teams ranked</p>
                             </div>
                             <div className={`rounded-2xl bg-[linear-gradient(90deg,_#0d4ea0_0%,_#1c71c8_100%)] text-center text-white shadow-[0_10px_24px_rgba(13,78,160,0.22)] ${isDenseMatchSnapshot ? "min-w-[110px] px-3 py-2" : "min-w-[128px] px-4 py-2.5"}`}>
-                              <p className="text-[10px] uppercase tracking-[0.24em] text-white/72">Map</p>
-                              <p className={`mt-1 font-black uppercase tracking-[0.08em] ${isDenseMatchSnapshot ? "text-[13px]" : "text-[15px]"}`}>{latestCompletedMatch?.map || "Standings"}</p>
+                              <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-white/70">Map</p>
+                              <p className={`mt-1 font-black uppercase tracking-[0.04em] ${isDenseMatchSnapshot ? "text-[14px]" : "text-[16px]"}`}>{latestCompletedMatch?.map || "Standings"}</p>
                             </div>
                           </div>
-                          <div className={`mt-3 grid items-center gap-x-0.5 gap-y-1 rounded-[18px] bg-slate-50 px-2 py-2 text-[7px] font-bold uppercase tracking-[0.14em] text-slate-600 ${matchSnapshotGridClass}`}>
+                          <div className={`mt-3 grid items-center gap-x-0.5 gap-y-1 rounded-[18px] bg-slate-50 px-2 py-2 text-[7px] font-bold uppercase tracking-[0.12em] text-slate-500 ${matchSnapshotGridClass}`}>
                             <span className="-ml-[1px] text-center">#</span>
                             <span />
                             <span className="pl-0.5 text-left">Team</span>
@@ -579,9 +716,9 @@ export default function Leaderboard() {
                           </div>
                           <div className="mt-1 space-y-1">
                             {snapshotStandings.map((team, index) => (
-                              <div key={`story-${team.teamId || team.teamName}`} className={`rounded-[14px] border border-slate-200 bg-white ${isDenseMatchSnapshot ? "min-h-[34px] px-2 py-1.5" : "min-h-[40px] px-2.5 py-2"}`}>
+                              <div key={`story-${team.teamId || team.teamName}`} className={`rounded-[14px] border border-slate-200/80 bg-white ${isDenseMatchSnapshot ? "min-h-[34px] px-2 py-1.5" : "min-h-[40px] px-2.5 py-2"}`}>
                                 <div className={`grid items-center gap-x-0.5 gap-y-1 ${matchSnapshotGridClass}`}>
-                                  <div className={`relative inline-flex self-center rounded-full ${isDenseMatchSnapshot ? "h-5 w-5" : "h-6 w-6"} ${index < 4 ? "bg-[#1bb14a] text-white" : index >= Math.max(snapshotStandings.length - 4, 12) ? "bg-[#d93045] text-white" : "bg-[#175aa8] text-white"}`}>
+                                  <div className={`relative inline-flex self-center rounded-full ${isDenseMatchSnapshot ? "h-5 w-5" : "h-6 w-6"} ${getSnapshotZoneClasses(getSnapshotZone({ index, total: snapshotStandings.length, selectedGroup: snapshotGroup }), "match")}`}>
                                     <span
                                       className={`absolute inset-0 flex items-center justify-center font-black leading-none tabular-nums ${isDenseMatchSnapshot ? "text-[9px]" : "text-[10px]"}`}
                                       style={{ transform: "translateY(-5.5px)" }}
@@ -589,18 +726,14 @@ export default function Leaderboard() {
                                       {team.rank}
                                     </span>
                                   </div>
-                                  <div className={isDenseMatchSnapshot ? "relative top-px flex h-3.5 w-3.5 self-center items-center justify-center" : "relative top-px flex h-4 w-4 self-center items-center justify-center"}>
-                                    <TeamIdentity
-                                      name={team.logoName || team.teamName}
-                                      compact
-                                      plain
-                                      hideText
-                                      containerClassName="justify-center"
-                                      logoClassName={isDenseMatchSnapshot ? "h-3.5 w-3.5 shrink-0 object-contain" : "h-4 w-4 shrink-0 object-contain"}
-                                    />
-                                  </div>
+                                <div className={isDenseMatchSnapshot ? "flex h-5 w-5 self-center items-center justify-center" : "flex h-5 w-5 self-center items-center justify-center"}>
+                                  <SnapshotLogo
+                                    name={team.logoName || team.teamName}
+                                    className="h-5 w-5"
+                                  />
+                                </div>
                                   <div className="relative -top-[5px] flex min-w-0 self-center items-center gap-1 pl-0.5 pr-1">
-                                    <span className={`${isDenseMatchSnapshot ? "text-[9.5px]" : "text-[10.5px]"} block min-w-0 whitespace-nowrap text-left font-bold leading-[1.15] text-slate-900`}>
+                                    <span className={`${isDenseMatchSnapshot ? "text-[14px]" : "text-[14px]"} block min-w-0 whitespace-nowrap text-left font-extrabold leading-[1.08] text-slate-900`}>
                                       {team.teamName}
                                     </span>
                                       {latestCompletedMatch && team.matchCells[latestCompletedMatch.id]?.won ? (
@@ -610,12 +743,12 @@ export default function Leaderboard() {
                                       ) : null}
                                   </div>
                                   {shouldShowSnapshotGroupColumn ? <div className="text-center text-[8px] font-semibold text-slate-600">{team.group || "-"}</div> : null}
-                                  <div className="text-center text-[8px] font-semibold text-slate-700">{team.matches}</div>
-                                  <div className="text-center text-[8px] font-semibold text-slate-700">{team.wwcd}</div>
-                                  <div className="text-center text-[8px] font-semibold text-slate-700">{team.placementPoints}</div>
-                                  <div className="text-center text-[8px] font-semibold text-slate-700">{team.elims}</div>
-                                  <div className="pr-1 text-right text-[10px] font-black text-slate-900">{team.points}</div>
-                                  <div className="pr-1 text-right text-[9px] font-black text-[#0d4ea0]">
+                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.matches}</div>
+                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.wwcd}</div>
+                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.placementPoints}</div>
+                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.elims}</div>
+                                  <div className="pr-1 text-right text-[10px] font-black tabular-nums text-slate-900">{team.points}</div>
+                                  <div className="pr-1 text-right text-[9px] font-black tabular-nums text-[#0d4ea0]">
                                     {latestCompletedMatch ? (team.matchCells[latestCompletedMatch.id]?.points ?? "-") : "-"}
                                   </div>
                                 </div>
@@ -623,19 +756,13 @@ export default function Leaderboard() {
                             ))}
                           </div>
                         </div>
-                        <div className="relative -top-[2px] mt-2 flex flex-wrap items-center justify-center gap-2 text-[8px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          <div className="flex items-center gap-1.5 leading-none">
-                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#1bb14a]" />
-                            <span>Promotion</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 leading-none">
-                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#175aa8]" />
-                            <span>Safe Zone</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 leading-none">
-                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#d93045]" />
-                            <span>Relegation</span>
-                          </div>
+                        <div className="relative -top-[2px] mt-2 flex flex-wrap items-center justify-center gap-3 text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                          {matchSnapshotLegend.map((item) => (
+                            <div key={item.label} className="flex items-center gap-1.5 leading-none">
+                              <span className="inline-flex h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                              <span>{item.label}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -656,19 +783,33 @@ export default function Leaderboard() {
                       }}
                     >
                       <div className={`flex h-full flex-col overflow-hidden rounded-[24px] bg-white shadow-[0_20px_40px_rgba(5,24,55,0.22)] ${isDenseDaySnapshot ? "px-4 py-4" : "px-5 py-5"}`}>
-                        <div className="flex items-start justify-between gap-3 rounded-[22px] bg-[linear-gradient(180deg,_#0e4a95_0%,_#0b3971_100%)] px-4 py-4 text-white">
-                          <div>
-                            <p className="text-[9px] uppercase tracking-[0.28em] text-white/70">{featuredTournament?.name || "Tournament"}</p>
-                            <p className={`mt-1.5 font-black uppercase tracking-[-0.06em] text-white ${isDenseDaySnapshot ? "text-[32px]" : "text-[38px]"}`}>Standings</p>
-                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-white/80">{snapshotStageLabel} • {snapshotStandings.length} teams</p>
-                          </div>
-                          <div className="min-w-[76px] rounded-2xl bg-white/12 px-3 py-2 text-right text-white">
-                            <p className="text-[9px] uppercase tracking-[0.18em] text-white/60">Board</p>
-                            <p className="mt-1 text-sm font-black leading-none">{featuredTournament?.status === "completed" ? "Final" : featuredTournament?.status === "ongoing" ? "Live" : "Ready"}</p>
+                        <div className={`flex items-start gap-4 rounded-[22px] bg-[linear-gradient(180deg,_#0e4a95_0%,_#0b3971_100%)] text-white ${isDenseDaySnapshot ? "px-5 py-4.5" : "px-5 py-4.5"}`}>
+                          <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                            {snapshotTournamentLogo ? (
+                              <div className={`flex shrink-0 items-center justify-center ${isDenseDaySnapshot ? "h-[96px] w-[96px]" : "h-[104px] w-[104px]"}`}>
+                                {snapshotTournamentLogo ? (
+                                  <img
+                                    src={snapshotTournamentLogo}
+                                    alt={featuredTournament?.name || "Tournament logo"}
+                                    className="h-full w-full object-contain"
+                                    style={{ filter: "drop-shadow(0 8px 18px rgba(4,22,48,0.18))" }}
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center rounded-[16px] border border-white/18 bg-white/8 text-[12px] font-black uppercase tracking-[0.22em] text-white">
+                                    {getTournamentBadgeText(featuredTournament)}
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/74">{featuredTournament?.name || "Tournament"}</p>
+                              <p className={`mt-1 font-black uppercase tracking-[-0.095em] text-white ${isDenseDaySnapshot ? "text-[52px]" : "text-[52px]"}`}>Standings</p>
+                              <p className="mt-1 text-[14px] font-semibold uppercase tracking-[0.11em] text-white/84">{snapshotStageLabel} • {snapshotStandings.length} teams</p>
+                            </div>
                           </div>
                         </div>
                         <div className={`mt-4 rounded-[18px] border border-slate-200 bg-slate-50/95 ${isDenseDaySnapshot ? "px-3 py-2.5" : "px-4 py-3"}`}>
-                          <div className={`grid items-center gap-x-1 gap-y-2 font-bold uppercase text-slate-600 ${isDenseDaySnapshot ? "text-[9px] tracking-[0.12em]" : "text-[11px] tracking-[0.16em]"} ${daySnapshotGridClass}`}>
+                          <div className={`grid items-center gap-x-2 gap-y-2 font-bold uppercase text-slate-500 ${isDenseDaySnapshot ? "text-[9px] tracking-[0.1em]" : "text-[11px] tracking-[0.14em]"} ${daySnapshotGridClass}`}>
                             <span className="-ml-[1px] text-center">#</span>
                             <span />
                             <span className="pl-0.5 text-left">Team</span>
@@ -682,8 +823,8 @@ export default function Leaderboard() {
                         </div>
                         <div className="mt-3 flex flex-1 flex-col justify-between">
                           {snapshotStandings.map((team, index) => (
-                            <div key={`feed-${team.teamId || team.teamName}`} className={`grid items-center gap-x-1 gap-y-2 rounded-[16px] border-b border-slate-200/90 last:border-b-0 ${isDenseDaySnapshot ? "min-h-[38px] px-1.5 py-1.5 text-[12px]" : "min-h-[46px] px-2 py-2 text-sm"} ${daySnapshotGridClass}`}>
-                              <div className={`relative inline-flex self-center rounded-full ${isDenseDaySnapshot ? "h-6 w-6" : "h-8 w-8"} ${index < 4 ? "bg-[#17b348] text-white" : index >= Math.max(snapshotStandings.length - 4, 12) ? "bg-[#d93045] text-white" : "bg-[#185eb1] text-white"}`}>
+                            <div key={`feed-${team.teamId || team.teamName}`} className={`grid items-center gap-x-2 gap-y-2 rounded-[16px] border-b border-slate-200/75 last:border-b-0 ${isDenseDaySnapshot ? "min-h-[38px] px-1.5 py-1.5 text-[12px]" : "min-h-[46px] px-2 py-2 text-sm"} ${daySnapshotGridClass}`}>
+                              <div className={`relative inline-flex self-center rounded-full ${isDenseDaySnapshot ? "h-6 w-6" : "h-8 w-8"} ${getSnapshotZoneClasses(getSnapshotZone({ index, total: snapshotStandings.length, selectedGroup: snapshotGroup }), "day")}`}>
                                 <span
                                   className={`absolute inset-0 flex items-center justify-center font-black leading-none tabular-nums ${isDenseDaySnapshot ? "text-[11px]" : "text-sm"}`}
                                   style={{ transform: "translateY(-5.5px)" }}
@@ -691,47 +832,34 @@ export default function Leaderboard() {
                                   {team.rank}
                                 </span>
                               </div>
-                              <div className={isDenseDaySnapshot ? "relative top-px flex h-4 w-4 self-center items-center justify-center" : "relative top-px flex h-[18px] w-[18px] self-center items-center justify-center"}>
-                                <TeamIdentity
+                              <div className={isDenseDaySnapshot ? "flex h-[30px] w-[30px] self-center items-center justify-center" : "flex h-[30px] w-[30px] self-center items-center justify-center"}>
+                                <SnapshotLogo
                                   name={team.logoName || team.teamName}
-                                  compact
-                                  plain
-                                  hideText
-                                  containerClassName="justify-center"
-                                  logoClassName={isDenseDaySnapshot ? "h-4 w-4 shrink-0 object-contain" : "h-[18px] w-[18px] shrink-0 object-contain"}
+                                  className="h-[30px] w-[30px]"
                                 />
                               </div>
                               <div className="relative -top-[5px] flex min-w-0 self-center items-center pl-0.5 pr-1">
-                                <span className={`${isDenseDaySnapshot ? "text-[12px]" : "text-sm"} block min-w-0 whitespace-nowrap text-left font-semibold leading-[1.18] text-slate-900`}>
+                                <span className={`${isDenseDaySnapshot ? "text-[18px]" : "text-[18px]"} block min-w-0 whitespace-nowrap text-left font-extrabold leading-[1.08] text-slate-900`}>
                                   {team.teamName}
                                 </span>
                               </div>
                               {shouldShowSnapshotGroupColumn ? <div className="relative -top-[5px] self-center text-center font-medium text-slate-700">{team.group || "-"}</div> : null}
-                              <div className="relative -top-[5px] self-center text-center font-medium text-slate-700">{team.matches}</div>
-                              <div className="relative -top-[5px] self-center text-center font-medium text-slate-700">{team.wwcd}</div>
-                              <div className="relative -top-[5px] self-center text-center font-medium text-slate-700">{team.placementPoints}</div>
-                              <div className="relative -top-[5px] self-center text-center font-medium text-slate-700">{team.elims}</div>
-                              <div className={`relative -top-[5px] self-center pr-1 text-right font-black text-slate-900 ${isDenseDaySnapshot ? "text-[18px]" : "text-2xl"}`}>{team.points}</div>
+                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.matches}</div>
+                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.wwcd}</div>
+                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.placementPoints}</div>
+                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.elims}</div>
+                              <div className={`relative -top-[5px] self-center pr-1 text-right font-black tabular-nums text-slate-900 ${isDenseDaySnapshot ? "text-[22px]" : "text-2xl"}`}>{team.points}</div>
                             </div>
                           ))}
                         </div>
                         <div className="mt-3 border-t border-[#d6e0ee] pt-2">
-                          <div className="relative -top-[2px] flex flex-wrap items-center justify-center gap-3 text-[8px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                            <div className="flex items-center gap-1.5 leading-none">
-                              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#17b348]" />
-                              <span>Promotion</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 leading-none">
-                              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#185eb1]" />
-                              <span>Safe Zone</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 leading-none">
-                              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#d93045]" />
-                              <span>Relegation</span>
-                            </div>
-                          </div>
-                          <div className="mt-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                            Official standings snapshot
+                          <div className="relative -top-[2px] flex flex-wrap items-center justify-center gap-4 text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                            {daySnapshotLegend.map((item) => (
+                              <div key={item.label} className="flex items-center gap-1.5 leading-none">
+                                <span className="inline-flex h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                                <span>{item.label}</span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>

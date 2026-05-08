@@ -59,11 +59,12 @@ export default function TeamIdentity({
             </div>
           ) : (
             plain ? (
-              <span className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-800/45 bg-[linear-gradient(180deg,_rgba(15,23,42,0.68),_rgba(2,6,23,0.76))] p-1 shadow-[0_2px_8px_rgba(15,23,42,0.08)] ${plainChipSize}`}>
+              <span className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize}`}>
                 <img
                   src={teamLogo}
                   alt={`${name} logo`}
                   className={logoClassName || `${plainImgSize} shrink-0 object-contain`}
+                  style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.16)) drop-shadow(0 0 1px rgba(11,31,61,0.08))" }}
                 />
               </span>
             ) : (
