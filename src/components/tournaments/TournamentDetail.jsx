@@ -12,7 +12,21 @@ import { Link } from "react-router-dom";
 import { getOrganizationMeta, normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { applyCurrentRosterOverride } from "@/lib/currentRosterOverrides";
 import { buildLiveRoster } from "@/lib/rosterUtils";
-import { getStageBoardData } from "@/lib/stageBoard";
+import { compareStageBoardStandings, getFeaturedTournamentStage, getStageBoardData } from "@/lib/stageBoard";
+import {
+  deriveBmps2026ParticipantEntries,
+  isBmps2026PromotionStage,
+  resolveTournamentParticipantState,
+} from "@/lib/bmps2026Progression";
+import {
+  BMPS_2026_IGL_STATS,
+  BMPS_2026_MVP_STATS,
+  BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES,
+  BMPS_2026_PLAYER_TEAM_OVERRIDES,
+  BMPS_2026_QUALIFIER_PLAYER_STATS,
+} from "@/lib/bmps2026PlayerStats";
+import { decorateMatchesWithLiveStatus } from "@/lib/liveCalendar";
+import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 
 function getTournamentLogo(tournament) {
   if (tournament.name === "Battlegrounds Mobile India Series 2026") {
@@ -95,6 +109,19 @@ function getTournamentAllocations(tournament) {
 
   return tournament.allocations ?? [];
 }
+
+const BMPS_2026_STYLE_STAGE_TOURNAMENTS = new Set([
+  "Battlegrounds Mobile India Series 2026",
+  "Battlegrounds Mobile India International Cup 2025",
+  "Battlegrounds Mobile India Showdown 2025",
+  "Battlegrounds Mobile India Pro Series 2025",
+  "Battlegrounds Mobile India Series 2025",
+  "Battlegrounds Mobile India Pro Series 2024",
+  "Battlegrounds Mobile India Series 2024",
+  "Battlegrounds Mobile India Pro Series 2023",
+  "India - Korea Invitational",
+  "Battlegrounds Mobile India Series 2023",
+]);
 
 function buildTeamLink(teamName) {
   return `/teams?team=${encodeURIComponent(normalizeTeamName(teamName))}`;
@@ -279,6 +306,14 @@ function buildNormalizedParticipantEntries(normalizedParticipants) {
   });
 }
 
+function getBmps2026PreviousStageName(stageName) {
+  const normalized = String(stageName || "").trim().toLowerCase();
+  if (normalized === "round 2") return "Round 1";
+  if (normalized === "round 3") return "Round 2";
+  if (normalized === "round 4") return "Round 3";
+  return null;
+}
+
 function buildNormalizedStageBoardStages(normalizedStages, normalizedParticipants) {
   const participantCountsByStage = new Map();
 
@@ -341,36 +376,119 @@ function buildNormalizedStageBoardStages(normalizedStages, normalizedParticipant
   });
 }
 
-function StageStandingsBoard({ stages, participantEntries = [], tournamentName, tournamentId, teams = [], matches = [], matchResults = [] }) {
+function StageStandingsBoard({
+  stages,
+  participantEntries = [],
+  tournamentName,
+  tournamentId,
+  teams = [],
+  players = [],
+  matches = [],
+  matchResults = [],
+  requestedStage = "",
+  rankings = [],
+}) {
+  const hasBmps2026Statistics =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+    BMPS_2026_QUALIFIER_PLAYER_STATS.length > 0;
+  const resolvedParticipantEntries = useMemo(() => {
+    if (tournamentName !== "Battlegrounds Mobile India Pro Series 2026") {
+      return participantEntries;
+    }
+    return deriveBmps2026ParticipantEntries(participantEntries, stages, {
+      getRows: (stage) => stage?.standings || [],
+      getGroup: (row) => row?.grp,
+      getTeamName: (row) => row?.fullTeam || row?.team,
+      buildDerivedEntry: ({ sourceEntry, row, teamName, destinationGroup, nextStageName }) => ({
+        ...(sourceEntry || {}),
+        placement: sourceEntry?.placement ?? row?.placement ?? null,
+        team: sourceEntry?.team || teamName || "Unknown Team",
+        phase: `${nextStageName} - Group ${destinationGroup}`,
+        players: sourceEntry?.players || [],
+        roster: sourceEntry?.roster || [],
+        seed: sourceEntry?.seed ?? null,
+        badges: sourceEntry?.badges || [],
+        invite_status: sourceEntry?.invite_status || null,
+      }),
+    });
+  }, [participantEntries, stages, tournamentName]);
+
   const stageOptions = useMemo(
-    () =>
-      stages
+    () => {
+      const options = stages
         .filter((stage) => stage.name && (stage.standings?.length || stage.summary || stage.teamCount))
         .map((stage) => ({
           ...stage,
           standings: [...(stage.standings || [])].sort((a, b) => (a.placement ?? 999) - (b.placement ?? 999)),
-        })),
-    [stages]
+        }));
+
+      if (hasBmps2026Statistics) {
+        options.push({
+          name: "Statistics",
+          summary: "Player qualifier statistics for BMPS 2026.",
+          teamCount: BMPS_2026_QUALIFIER_PLAYER_STATS.length,
+          standings: [],
+          isStatistics: true,
+          statisticsType: "bmps-players",
+        });
+      } else if (rankings.length > 0) {
+        options.push({
+          name: "Statistics",
+          summary: "Player and team rankings for this tournament.",
+          teamCount: rankings.length,
+          standings: [],
+          isStatistics: true,
+          statisticsType: "rankings",
+        });
+      }
+
+      return options;
+    },
+    [hasBmps2026Statistics, rankings.length, stages]
   );
   const stageOptionsKey = useMemo(
     () => stageOptions.map((stage) => `${stage.name}:${stage.standings?.length || 0}`).join("|"),
     [stageOptions]
   );
+  const defaultStageName = useMemo(() => {
+    if (requestedStage && stageOptions.some((stage) => stage.name === requestedStage)) {
+      return requestedStage;
+    }
+    const tournamentMatches = matches.filter((match) => match.tournament_id === tournamentId);
+    const tournamentResults = matchResults.filter((result) => result.tournament_id === tournamentId);
+    const featuredStageName = getFeaturedTournamentStage(
+      { id: tournamentId, stages: stageOptions },
+      tournamentMatches,
+      tournamentResults
+    );
+
+    if (featuredStageName && stageOptions.some((stage) => stage.name === featuredStageName)) {
+      return featuredStageName;
+    }
+
+    return stageOptions[0]?.name || "";
+  }, [matchResults, matches, requestedStage, stageOptions, tournamentId]);
   const [selectedStage, setSelectedStage] = useState(stageOptions[0]?.name || "");
   const [selectedGroup, setSelectedGroup] = useState("overall");
+  const [selectedStatisticsCategory, setSelectedStatisticsCategory] = useState("eliminator");
+  const [selectedStatisticsSubStage, setSelectedStatisticsSubStage] = useState("qualifier stage");
 
   useEffect(() => {
-    setSelectedStage(stageOptions[0]?.name || "");
+    setSelectedStage(defaultStageName);
     setSelectedGroup("overall");
-  }, [stageOptionsKey]);
+    setSelectedStatisticsCategory("eliminator");
+    setSelectedStatisticsSubStage("qualifier stage");
+  }, [defaultStageName, stageOptionsKey]);
 
   const activeStage = stageOptions.find((stage) => stage.name === selectedStage) || stageOptions[0] || null;
+  const isStatisticsStage = Boolean(activeStage?.isStatistics);
+  const isRankingsStatisticsStage = activeStage?.statisticsType === "rankings";
   const isGrandFinalsStage = String(activeStage?.name || "").trim().toLowerCase() === "grand finals";
   const groups = useMemo(() => {
     if (!activeStage) return [];
     if (String(activeStage.name || "").trim().toLowerCase() === "grand finals") return [];
     const standingsGroups = (activeStage.standings || []).map((entry) => entry.grp).filter(Boolean);
-    const participantGroups = participantEntries
+    const participantGroups = resolvedParticipantEntries
       .map((entry) => {
         const match = String(entry.phase || "").match(/^(.+?)\s*-\s*Group\s+([A-Z])$/i);
         if (!match) return null;
@@ -381,7 +499,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
       .filter(Boolean);
 
     return [...new Set([...standingsGroups, ...participantGroups])].sort();
-  }, [activeStage, participantEntries]);
+  }, [activeStage, resolvedParticipantEntries]);
 
   useEffect(() => {
     if (selectedGroup !== "overall" && !groups.includes(selectedGroup)) {
@@ -397,25 +515,25 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
   const groupParticipants = useMemo(() => {
     if (!activeStage || selectedGroup === "overall") return [];
     const expectedPhase = `${activeStage.name} - Group ${selectedGroup}`.toLowerCase();
-    return participantEntries.filter((entry) => String(entry.phase || "").toLowerCase() === expectedPhase);
-  }, [activeStage, participantEntries, selectedGroup]);
+    return resolvedParticipantEntries.filter((entry) => String(entry.phase || "").toLowerCase() === expectedPhase);
+  }, [activeStage, resolvedParticipantEntries, selectedGroup]);
   const groupedParticipants = useMemo(() => {
     if (!activeStage || groups.length === 0) return [];
     return groups.map((group) => ({
       group,
-      entries: participantEntries.filter(
+      entries: resolvedParticipantEntries.filter(
         (entry) =>
           String(entry.phase || "").toLowerCase() === `${activeStage.name} - Group ${group}`.toLowerCase()
       ),
     }));
-  }, [activeStage, groups, participantEntries]);
+  }, [activeStage, groups, resolvedParticipantEntries]);
   const maxGroupRows = useMemo(
     () => Math.max(0, ...groupedParticipants.map((section) => section.entries.length)),
     [groupedParticipants]
   );
   const usesPromotionGroups =
     tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
-    activeStage?.name === "Round 1" &&
+    isBmps2026PromotionStage(activeStage?.name) &&
     groups.length > 0;
   const isGroupDrawStage = groupedParticipants.length > 0 && !activeStage?.standings?.length;
   const completeGroupStandings = useMemo(() => {
@@ -448,6 +566,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
         pos: 0,
         elimins: 0,
         points: 0,
+        placementSum: 0,
       };
 
       const wins = result.wins_count && result.wins_count > 0 ? result.wins_count : result.placement === 1 ? 1 : 0;
@@ -456,6 +575,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
       existing.pos += result.placement_points || 0;
       existing.elimins += result.kill_points || 0;
       existing.points += result.total_points || 0;
+      existing.placementSum += Number(result.placement) || 0;
 
       liveGroupStandings.set(key, existing);
     }
@@ -475,6 +595,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
           ...existing,
           team: existing.fullTeam || existing.team,
           fullTeam: existing.fullTeam || existing.team,
+          teamName: existing.fullTeam || existing.team,
           grp: selectedGroup,
         };
       }
@@ -483,38 +604,41 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
         placement: null,
         team: entry.team,
         fullTeam: entry.team,
+        teamName: entry.team,
         grp: selectedGroup,
         matches: 0,
         wwcd: 0,
         pos: 0,
         elimins: 0,
         points: 0,
+        placementSum: 0,
       };
     });
 
-    return completeRows.sort((a, b) => {
-      if ((b.points || 0) !== (a.points || 0)) return (b.points || 0) - (a.points || 0);
-      if ((b.wwcd || 0) !== (a.wwcd || 0)) return (b.wwcd || 0) - (a.wwcd || 0);
-      if ((b.elimins || 0) !== (a.elimins || 0)) return (b.elimins || 0) - (a.elimins || 0);
-      if ((b.pos || 0) !== (a.pos || 0)) return (b.pos || 0) - (a.pos || 0);
-      return String(a.fullTeam || a.team).localeCompare(String(b.fullTeam || b.team));
-    });
+    return completeRows
+      .map((row) => ({
+        ...row,
+        placementPoints: row.pos || 0,
+        elims: row.elimins || 0,
+        averageEliminationPosition: row.matches > 0 ? row.placementSum / row.matches : null,
+      }))
+      .sort(compareStageBoardStandings);
   }, [usesPromotionGroups, selectedGroup, filteredStandings, groupParticipants, matches, matchResults, teams, tournamentId, activeStage]);
 
   useEffect(() => {
-    if (isGroupDrawStage && selectedGroup === "overall" && groups.length > 0) {
-      return;
-    }
-    if (usesPromotionGroups && selectedGroup === "overall" && groups.length > 0) {
-      return;
-    }
     if ((isGroupDrawStage || usesPromotionGroups) && !selectedGroup && groups.length > 0) {
-      setSelectedGroup(groups[0]);
+      setSelectedGroup("overall");
     }
   }, [isGroupDrawStage, usesPromotionGroups, selectedGroup, groups]);
 
   const showGroupColumn = !isGrandFinalsStage && !usesPromotionGroups && selectedGroup === "overall" && groups.length > 1;
+  const useContainedGroupLogos = groups.length > 0;
+  const bmpsWaitingStageName =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" && /^round\s+[234]$/i.test(activeStage?.name || "")
+      ? getBmps2026PreviousStageName(activeStage?.name)
+      : null;
   const legendItems = useMemo(() => {
+    if (isStatisticsStage) return [];
     if (usesPromotionGroups) return [];
     const seen = new Map();
     for (const entry of activeStage?.standings || []) {
@@ -525,7 +649,91 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
       if (!seen.has(tone.label)) seen.set(tone.label, tone.dot);
     }
     return [...seen.entries()];
-  }, [activeStage]);
+  }, [activeStage, isStatisticsStage]);
+  const bmps2026PlayerTeams = useMemo(() => {
+    if (!isStatisticsStage) return new Map();
+
+    const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
+    const teamCandidatesByPlayer = new Map();
+
+    const registerPlayerTeam = (playerName, teamName) => {
+      const normalizedPlayer = normalizeOrganizationName(playerName);
+      const canonicalTeamName = getOrganizationMeta(teamName).name;
+      const normalizedTeam = normalizeOrganizationName(canonicalTeamName);
+      if (!normalizedPlayer || !normalizedTeam) return;
+      const current = teamCandidatesByPlayer.get(normalizedPlayer) || new Set();
+      current.add(canonicalTeamName);
+      teamCandidatesByPlayer.set(normalizedPlayer, current);
+    };
+
+    resolvedParticipantEntries.forEach((entry) => {
+      const teamName = entry?.team;
+      if (!teamName) return;
+
+      (entry.players || []).forEach((playerName) => registerPlayerTeam(playerName, teamName));
+      (entry.roster || []).forEach((playerEntry) => {
+        const playerName = typeof playerEntry === "string" ? playerEntry : playerEntry?.name;
+        registerPlayerTeam(playerName, teamName);
+      });
+    });
+
+    players.forEach((player) => {
+      const teamName = teamNameById.get(player.team_id);
+      if (!teamName) return;
+      registerPlayerTeam(player.ign, teamName);
+    });
+
+    return new Map(
+      [...teamCandidatesByPlayer.entries()].map(([playerKey, teamNames]) => [
+        playerKey,
+        teamNames.size === 1 ? [...teamNames][0] : null,
+      ])
+    );
+  }, [isStatisticsStage, players, resolvedParticipantEntries, teams]);
+  const statisticsCategories = useMemo(() => {
+    const categories = [];
+    if (BMPS_2026_QUALIFIER_PLAYER_STATS.length > 0) {
+      categories.push({ key: "eliminator", label: "Eliminator" });
+    }
+    if (BMPS_2026_IGL_STATS.length > 0) {
+      categories.push({ key: "igl", label: "IGL" });
+    }
+    if (BMPS_2026_MVP_STATS.length > 0) {
+      categories.push({ key: "mvp", label: "MVP" });
+    }
+    return categories;
+  }, []);
+  const eliminatorSubStages = useMemo(() => {
+    const subStages = [];
+    if (BMPS_2026_QUALIFIER_PLAYER_STATS.length > 0) {
+      subStages.push({ key: "qualifier stage", label: "Qualifier Stage" });
+    }
+    return subStages;
+  }, []);
+  const statisticsTableRows = useMemo(() => {
+    if (selectedStatisticsCategory !== "eliminator") return [];
+    if (selectedStatisticsSubStage !== "qualifier stage") return [];
+    return BMPS_2026_QUALIFIER_PLAYER_STATS;
+  }, [selectedStatisticsCategory, selectedStatisticsSubStage]);
+  const statisticsPanelTitle = useMemo(() => {
+    if (selectedStatisticsCategory === "eliminator") return "ELIMINATOR";
+    if (selectedStatisticsCategory === "igl") return "IGL";
+    if (selectedStatisticsCategory === "mvp") return "MVP";
+    if (selectedStatisticsCategory === "fmvp") return "FMVP";
+    return "STATISTICS";
+  }, [selectedStatisticsCategory]);
+  useEffect(() => {
+    if (statisticsCategories.length === 0) return;
+    if (!statisticsCategories.some((category) => category.key === selectedStatisticsCategory)) {
+      setSelectedStatisticsCategory(statisticsCategories[0].key);
+    }
+  }, [selectedStatisticsCategory, statisticsCategories]);
+  useEffect(() => {
+    if (selectedStatisticsCategory !== "eliminator" || eliminatorSubStages.length === 0) return;
+    if (!eliminatorSubStages.some((subStage) => subStage.key === selectedStatisticsSubStage)) {
+      setSelectedStatisticsSubStage(eliminatorSubStages[0].key);
+    }
+  }, [eliminatorSubStages, selectedStatisticsCategory, selectedStatisticsSubStage]);
 
   if (!activeStage) return null;
 
@@ -546,7 +754,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
                 active ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {stage.name === "Wildcard" ? "Wildcards" : stage.name === "Survival Stage" ? "Survivals Stage" : stage.name}
+              {stage.name === "Wildcard" ? "Wildcards" : stage.name}
             </button>
           );
         })}
@@ -602,7 +810,229 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
         </div>
       ) : null}
 
-      {selectedGroup === "overall" && (isGroupDrawStage || usesPromotionGroups) ? (
+      {isStatisticsStage && !isRankingsStatisticsStage ? (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2 border-b border-border pb-3">
+            {statisticsCategories.map((category) => (
+              <button
+                key={category.key}
+                type="button"
+                onClick={() => {
+                  setSelectedStatisticsCategory(category.key);
+                  if (category.key === "eliminator") {
+                    setSelectedStatisticsSubStage("qualifier stage");
+                  }
+                }}
+                className={`rounded-t-xl border-b-2 px-2 py-2 text-sm font-semibold transition-colors md:px-3 ${
+                  selectedStatisticsCategory === category.key
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+
+          {selectedStatisticsCategory === "eliminator" ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-[#165ca8] px-5 py-4 text-center">
+                  <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                    ELIMINATOR
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 border-b border-border px-5 py-3">
+                  {eliminatorSubStages.map((subStage) => (
+                    <button
+                      key={subStage.key}
+                      type="button"
+                      onClick={() => setSelectedStatisticsSubStage(subStage.key)}
+                      className={`rounded-t-xl border-b-2 px-2 py-2 text-sm font-semibold transition-colors md:px-3 ${
+                        selectedStatisticsSubStage === subStage.key
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {subStage.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedStatisticsSubStage === "qualifier stage" ? (
+                <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                  <table className="w-full min-w-[860px] border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                        <th className="border-r border-border/60 px-4 py-4 text-left">Rank</th>
+                        <th className="border-r border-border/60 px-4 py-4 text-left">Player</th>
+                        <th className="border-r border-border/60 px-4 py-4 text-center">Finishes</th>
+                        <th className="border-r border-border/60 px-4 py-4 text-center">FPM</th>
+                        <th className="border-r border-border/60 px-4 py-4 text-center">Contribution</th>
+                        <th className="px-4 py-4 text-center">Matches</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {statisticsTableRows.map((entry, index) => {
+                        const rawTeamName =
+                          BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES[`${entry.rank}:${entry.player}`] ||
+                          BMPS_2026_PLAYER_TEAM_OVERRIDES[normalizeOrganizationName(entry.player)] ||
+                          bmps2026PlayerTeams.get(normalizeOrganizationName(entry.player)) ||
+                          null;
+                        const teamName = rawTeamName ? getOrganizationMeta(rawTeamName).name : null;
+
+                        return (
+                          <tr
+                            key={`bmps-2026-stat-${entry.rank}-${entry.player}`}
+                            className={`${index % 2 === 0 ? "bg-background/70" : "bg-secondary/10"} transition-colors hover:bg-secondary/20`}
+                          >
+                            <td className="border-r border-border/50 px-4 py-4 font-semibold text-foreground">#{entry.rank}</td>
+                            <td className="border-r border-border/50 px-4 py-4">
+                              {teamName ? (
+                                <Link to={buildTeamLink(teamName)} className="inline-flex items-center gap-2 font-semibold text-foreground">
+                                  <TeamIdentity name={teamName} plain compact hideText logoClassName="h-5 w-5 object-contain" />
+                                  <span>{entry.player}</span>
+                                </Link>
+                              ) : (
+                                <span className="font-semibold text-foreground">{entry.player}</span>
+                              )}
+                            </td>
+                            <td className="border-r border-border/50 px-4 py-4 text-center font-semibold text-primary">{entry.finishes}</td>
+                            <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.fpm}</td>
+                            <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.contribution}</td>
+                            <td className="px-4 py-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+          ) : selectedStatisticsCategory === "igl" ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-[#165ca8] px-5 py-4 text-center">
+                  <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                    {statisticsPanelTitle}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                <table className="w-full min-w-[980px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <th className="border-r border-border/60 px-4 py-4 text-left">Rank</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-left">Player</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">IGL Rating</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">Team Avg. Pts.</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">WWCD</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">Top 5s</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">Team Avg. Sur.</th>
+                      <th className="px-4 py-4 text-center">Matches</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {BMPS_2026_IGL_STATS.map((entry, index) => (
+                      <tr
+                        key={`bmps-2026-igl-${entry.rank}-${entry.player}`}
+                        className={`${index % 2 === 0 ? "bg-background/70" : "bg-secondary/10"} transition-colors hover:bg-secondary/20`}
+                      >
+                        <td className="border-r border-border/50 px-4 py-4 font-semibold text-foreground">#{entry.rank}</td>
+                        <td className="border-r border-border/50 px-4 py-4">
+                          <Link to={buildTeamLink(entry.teamName)} className="inline-flex items-center gap-2 font-semibold text-foreground">
+                            <TeamIdentity name={entry.teamName} plain compact hideText logoClassName="h-5 w-5 object-contain" />
+                            <span>{entry.player}</span>
+                          </Link>
+                        </td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-semibold text-primary">{entry.iglRating}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.teamAvgPts}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.wwcd}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.top5s}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.teamAvgSurvival}</td>
+                        <td className="px-4 py-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : selectedStatisticsCategory === "mvp" ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-[#165ca8] px-5 py-4 text-center">
+                  <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                    {statisticsPanelTitle}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                <table className="w-full min-w-[980px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <th className="border-r border-border/60 px-4 py-4 text-left">Rank</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-left">Player</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">MVP Rating</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">Finishes</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">Damage</th>
+                      <th className="border-r border-border/60 px-4 py-4 text-center">Avg. Survival</th>
+                      <th className="px-4 py-4 text-center">Knocks</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {BMPS_2026_MVP_STATS.map((entry, index) => (
+                      <tr
+                        key={`bmps-2026-mvp-${entry.rank}-${entry.player}`}
+                        className={`${index % 2 === 0 ? "bg-background/70" : "bg-secondary/10"} transition-colors hover:bg-secondary/20`}
+                      >
+                        <td className="border-r border-border/50 px-4 py-4 font-semibold text-foreground">#{entry.rank}</td>
+                        <td className="border-r border-border/50 px-4 py-4">
+                          <Link to={buildTeamLink(entry.teamName)} className="inline-flex items-center gap-2 font-semibold text-foreground">
+                            <TeamIdentity name={entry.teamName} plain compact hideText logoClassName="h-5 w-5 object-contain" />
+                            <span>{entry.player}</span>
+                          </Link>
+                        </td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-semibold text-primary">{entry.mvpRating}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.finishes}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.damage}</td>
+                        <td className="border-r border-border/50 px-4 py-4 text-center font-medium text-muted-foreground">{entry.avgSurvival}</td>
+                        <td className="px-4 py-4 text-center font-medium text-muted-foreground">{entry.knocks}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isRankingsStatisticsStage ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border bg-background/90 px-5 py-5 shadow-sm">
+            <p className="text-lg font-black uppercase tracking-[0.08em] text-foreground">
+              {activeStage?.name?.toUpperCase() || "STATISTICS"}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Tournament player and team leaderboards collected from the official stage rankings for this event.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {rankings.map((ranking) => (
+              <div key={ranking.title} className="rounded-xl border border-border bg-background/80 p-4 shadow-sm">
+                <p className="mb-3 text-[10px] uppercase tracking-wider text-primary">{ranking.title}</p>
+                <RankingTable ranking={ranking} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {!isStatisticsStage && selectedGroup === "overall" && (isGroupDrawStage || usesPromotionGroups) ? (
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="bg-[#165ca8] px-5 py-4 text-center">
             <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
@@ -641,6 +1071,8 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
                             <TeamIdentity
                               name={getDisplayTeamName(entry.team)}
                               className="font-semibold text-foreground"
+                              contained
+                              surfaceToneOverride="light"
                             />
                           </Link>
                         ) : (
@@ -655,7 +1087,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
           </table>
           </div>
         </div>
-      ) : activeStage.standings?.length ? (
+      ) : !isStatisticsStage && activeStage.standings?.length ? (
       <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
         <table className="w-full min-w-[820px] border-collapse text-sm">
           <thead>
@@ -701,8 +1133,10 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
                       <TeamIdentity
                         name={entry.fullTeam || entry.team}
                         className="font-medium text-foreground"
-                        framed
+                        contained={useContainedGroupLogos}
+                        framed={!useContainedGroupLogos}
                         containerClassName="items-center gap-3"
+                        surfaceToneOverride="light"
                       />
                     </Link>
                   </td>
@@ -729,7 +1163,7 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
           </tbody>
         </table>
       </div>
-      ) : selectedGroup !== "overall" && groupParticipants.length > 0 ? (
+      ) : !isStatisticsStage && selectedGroup !== "overall" && groupParticipants.length > 0 ? (
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-background/90 px-5 py-5 shadow-sm">
             <p className="text-lg font-black uppercase tracking-[0.08em] text-foreground">
@@ -781,6 +1215,8 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
                           <TeamIdentity
                             name={getDisplayTeamName(entry.team)}
                             className="font-semibold text-foreground"
+                            contained
+                            surfaceToneOverride="light"
                           />
                         </Link>
                       </td>
@@ -800,14 +1236,16 @@ function StageStandingsBoard({ stages, participantEntries = [], tournamentName, 
             </table>
           </div>
         </div>
-      ) : (
+      ) : !isStatisticsStage ? (
         <div className="rounded-xl border border-border bg-background/90 px-5 py-6 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Standings pending</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {activeStage.summary || "This stage is part of the tournament flow, but standings data has not been attached yet."}
+            {bmpsWaitingStageName
+              ? `${activeStage.name} groups will appear automatically after ${bmpsWaitingStageName} results are added.`
+              : activeStage.summary || "This stage is part of the tournament flow, but standings data has not been attached yet."}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -874,7 +1312,7 @@ function RankingTable({ ranking }) {
               <td className="border-r border-border/50 px-3 py-3">
                 <p className="font-medium text-foreground">{entry.player}</p>
                 <Link to={buildTeamLink(entry.team)} className="inline-flex items-center">
-                  <TeamIdentity name={entry.team} className="text-xs text-muted-foreground" framed hideText />
+                  <TeamIdentity name={entry.team} className="text-xs text-muted-foreground" framed hideText surfaceToneOverride="light" />
                   <span className="ml-2 text-xs text-muted-foreground">{getDisplayTeamName(entry.team)}</span>
                 </Link>
               </td>
@@ -1173,7 +1611,7 @@ function MatchdayHub({ tournament, matches, matchResults }) {
   );
 }
 
-export default function TournamentDetail({ tournament, onBack }) {
+export default function TournamentDetail({ tournament, onBack, requestedStage = "" }) {
   const { data: teams = [] } = useQuery({
     queryKey: ["teams"],
     queryFn: () => base44.entities.Team.list("-total_points", 300),
@@ -1182,10 +1620,11 @@ export default function TournamentDetail({ tournament, onBack }) {
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("scheduled_time", 500),
   });
-  const { data: matchResults = [] } = useQuery({
+  const { data: rawMatchResults = [] } = useQuery({
     queryKey: ["match-results"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
   });
+  const matchResults = useMemo(() => filterPublishedMatchResults(rawMatchResults), [rawMatchResults]);
 
   const { data: players = [] } = useQuery({
     queryKey: ["players"],
@@ -1205,6 +1644,10 @@ export default function TournamentDetail({ tournament, onBack }) {
   const normalizedParticipants = normalizedTournamentData?.participants || [];
   const normalizedStages = normalizedTournamentData?.stages || [];
   const rawParticipantEntries = tournament.participants || [];
+  const calendarMatches = useMemo(
+    () => decorateMatchesWithLiveStatus(matches, matchResults),
+    [matches, matchResults]
+  );
 
   const participantEntries = useMemo(() => {
     if (normalizedParticipants.length > 0) {
@@ -1220,8 +1663,21 @@ export default function TournamentDetail({ tournament, onBack }) {
   }, [normalizedParticipants, rawParticipantEntries]);
 
   const rankings = tournament.rankings ?? [];
+  const useIntegratedRankingsStage =
+    BMPS_2026_STYLE_STAGE_TOURNAMENTS.has(tournament.name) && rankings.length > 0;
   const tournamentLogo = getTournamentLogo(tournament);
   const allocations = getTournamentAllocations(tournament);
+  const resolvedParticipantState = useMemo(() => {
+    const sourceStages = normalizedStages.length > 0 ? normalizedStages : (tournament.stages || []);
+    return resolveTournamentParticipantState({
+      tournament,
+      teams,
+      matches: calendarMatches,
+      matchResults,
+      participantEntries,
+      stageNames: sourceStages.map((stage) => stage?.name).filter(Boolean),
+    });
+  }, [calendarMatches, matchResults, normalizedStages, participantEntries, teams, tournament]);
   const derivedStageBoards = useMemo(() => {
     const map = new Map();
     const sourceStages = normalizedStages.length > 0 ? normalizedStages : (tournament.stages || []);
@@ -1232,14 +1688,27 @@ export default function TournamentDetail({ tournament, onBack }) {
         getStageBoardData({
           featuredTournament: tournament,
           teams,
-          matches,
+          matches: calendarMatches,
           matchResults,
           requestedStage: stage.name,
+          participantEntries: resolvedParticipantState.participantEntries,
         })
       );
     }
     return map;
-  }, [normalizedStages, tournament, teams, matches, matchResults]);
+  }, [calendarMatches, matchResults, normalizedStages, resolvedParticipantState.participantEntries, teams, tournament]);
+  const tournamentStageFocus = useMemo(
+    () =>
+      getStageBoardData({
+        featuredTournament: tournament,
+        teams,
+        matches: calendarMatches,
+        matchResults,
+        requestedStage: requestedStage || null,
+        participantEntries: resolvedParticipantState.participantEntries,
+      }),
+    [calendarMatches, matchResults, requestedStage, resolvedParticipantState.participantEntries, teams, tournament]
+  );
   const stageBoardStages = useMemo(
     () => {
       if (normalizedStages.length > 0) {
@@ -1247,15 +1716,32 @@ export default function TournamentDetail({ tournament, onBack }) {
         const rawStageMap = new Map((tournament.stages || []).map((stage) => [stage.name, stage]));
         const mergedStages = normalizedBoardStages.map((stage) => {
           const rawStage = rawStageMap.get(stage.name);
+          const derived = derivedStageBoards.get(stage.name);
           const rawStandings = Array.isArray(rawStage?.standings) ? rawStage.standings : [];
           const normalizedStandings = Array.isArray(stage.standings) ? stage.standings : [];
-          const preferredStandings = rawStandings.length > normalizedStandings.length ? rawStandings : normalizedStandings;
+          const derivedStandings = derived?.standings?.map((entry) => ({
+            placement: entry.rank,
+            team: entry.teamName,
+            fullTeam: entry.teamName,
+            grp: entry.group && entry.group !== "-" ? entry.group : undefined,
+            matches: entry.matches,
+            wwcd: entry.wwcd,
+            pos: entry.placementPoints,
+            elimins: entry.elims,
+            points: entry.points,
+          })) || [];
+          const preferredStandings =
+            rawStandings.length > normalizedStandings.length
+              ? rawStandings
+              : normalizedStandings;
+          const finalStandings =
+            derivedStandings.length > preferredStandings.length ? derivedStandings : preferredStandings;
 
           return {
             ...stage,
             summary: stage.summary || rawStage?.summary || "",
-            teamCount: Math.max(stage.teamCount || 0, rawStage?.teamCount || 0, preferredStandings.length || 0),
-            standings: preferredStandings,
+            teamCount: Math.max(stage.teamCount || 0, rawStage?.teamCount || 0, finalStandings.length || 0),
+            standings: finalStandings,
           };
         });
 
@@ -1294,7 +1780,9 @@ export default function TournamentDetail({ tournament, onBack }) {
   );
   const hasStageProgression = stageBoardStages.some((stage) => stage.summary || stage.standings?.length);
   const spotlightStage =
-    stageBoardStages.find((stage) => stage.summary || stage.standings?.length) || null;
+    stageBoardStages.find((stage) => stage.name === tournamentStageFocus.featuredStage) ||
+    stageBoardStages.find((stage) => stage.summary || stage.standings?.length) ||
+    null;
   const championEntry = stageBoardStages
     ?.find((stage) => stage.name === "Grand Finals" && stage.standings?.length)
     ?.standings?.find((entry) => entry.placement === 1);
@@ -1332,7 +1820,11 @@ export default function TournamentDetail({ tournament, onBack }) {
     championEntry?.team;
   const championDisplayName = getChampionDisplayName(championTeamName);
   const championLogoOverride = getChampionLogoOverride(championEntry?.fullTeam || championTeamName);
-  const participantCount = participantEntries.length || tournament.max_teams || 16;
+  const participantCount = Math.max(
+    participantEntries.length || 0,
+    tournament.max_teams || 0,
+    16
+  );
   const participantSections = useMemo(() => {
     if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") {
       return [
@@ -1576,15 +2068,6 @@ export default function TournamentDetail({ tournament, onBack }) {
                 </AccordionItem>
               )}
 
-              <AccordionItem value="matchday-hub" className="mb-2 rounded-xl border border-border bg-secondary/20 px-5">
-                <AccordionTrigger className="py-3 hover:no-underline">
-                  <h3 className="font-semibold text-foreground">Matchday Hub</h3>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <MatchdayHub tournament={tournament} matches={matches} matchResults={matchResults} />
-                </AccordionContent>
-              </AccordionItem>
-
               {tournament.prize_breakdown?.length > 0 && (
                 <AccordionItem value="prize-pool" className="mb-2 rounded-xl border border-border bg-secondary/20 px-5">
                   <AccordionTrigger className="py-3 hover:no-underline">
@@ -1699,7 +2182,7 @@ export default function TournamentDetail({ tournament, onBack }) {
                 </AccordionItem>
               )}
 
-              {rankings.length > 0 && (
+              {rankings.length > 0 && !useIntegratedRankingsStage && (
                 <AccordionItem value="rankings" className="mt-2 rounded-xl border border-border bg-secondary/20 px-5">
                   <AccordionTrigger className="py-3 hover:no-underline">
                     <h3 className="font-semibold text-foreground">Rankings</h3>
@@ -1780,15 +2263,18 @@ export default function TournamentDetail({ tournament, onBack }) {
             <h2 className="font-heading text-sm font-bold tracking-wider uppercase">Tournament Stages & Results</h2>
           </div>
           <div className="space-y-4 p-3 md:p-5">
-            <StageStandingsBoard
-              stages={stageBoardStages}
-              participantEntries={participantEntries}
-              tournamentName={tournament.name}
-              tournamentId={tournament.id}
-              teams={teams}
-              matches={matches}
-              matchResults={matchResults}
-            />
+                <StageStandingsBoard
+                  stages={stageBoardStages}
+                  participantEntries={participantEntries}
+                  tournamentName={tournament.name}
+                  tournamentId={tournament.id}
+                  teams={teams}
+                  players={players}
+                  matches={calendarMatches}
+                  matchResults={matchResults}
+                  requestedStage={requestedStage}
+                  rankings={useIntegratedRankingsStage ? rankings : []}
+                />
           </div>
         </div>
       )}

@@ -71,6 +71,11 @@ try {
       property="og:image"
       content="https://media.base44.com/images/public/user_68ac92df3a1b474cdb95da21/ed64a54f1_3c2ad61d-d348-4cab-be8c-56737d0aa014.png"
     />
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("http://127.0.0.1:4000/");
+      }
+    </script>
     <link rel="stylesheet" href="/assets/index.css" />
     <script type="module" src="/assets/index.js"></script>
   </head>

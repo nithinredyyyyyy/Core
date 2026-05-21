@@ -6,21 +6,21 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { BrandMark, BrandWordmark } from "../shared/BrandMark";
-
-const LOCAL_ADMIN_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+import { useAdminAccess } from "@/lib/adminAccess";
+import { buildContextualFanHubLink } from "@/lib/fanNavigation";
 
 export default function Sidebar() {
   const location = useLocation();
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  const isLocalAdmin = LOCAL_ADMIN_HOSTS.has(hostname);
+  const { hasAdminAccess } = useAdminAccess();
+  const fansPath = buildContextualFanHubLink(location);
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: Trophy, label: "Tournaments", path: "/tournaments" },
     { icon: Users, label: "Teams", path: "/teams" },
-    ...(isLocalAdmin ? [{ icon: BarChart3, label: "Standings", path: "/leaderboard" }] : []),
-    { icon: Megaphone, label: "Fans", path: "/fans" },
+    { icon: BarChart3, label: "Standings", path: "/leaderboard" },
+    { icon: Megaphone, label: "Fans", path: fansPath },
     { icon: Newspaper, label: "News", path: "/news" },
-    ...(isLocalAdmin ? [{ icon: Shield, label: "Admin", path: "/admin" }] : []),
+    ...(hasAdminAccess ? [{ icon: Shield, label: "Admin", path: "/admin" }] : []),
   ];
 
   return (
@@ -40,7 +40,7 @@ export default function Sidebar() {
 
       <nav className="flex flex-1 flex-col items-center gap-1">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path.split("?")[0];
           return (
             <Link
               key={item.path}

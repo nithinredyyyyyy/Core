@@ -1,55 +1,15 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import html2canvas from "html2canvas";
-import { ArrowUpRight, Download, Share2, Trophy } from "lucide-react";
+import { ArrowUpRight, Trophy } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeamIdentity from "../components/shared/TeamIdentity";
 import StatusBadge from "../components/shared/StatusBadge";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
-import { getTeamLogoByName } from "@/lib/teamLogos";
-import {
-  getFeaturedTournamentStage,
-  getStageBoardData,
-  sortStageBoardMatches,
-} from "@/lib/stageBoard";
-import {
-  decorateMatchesWithLiveStatus,
-  decorateTournamentsWithLiveStatus,
-} from "@/lib/liveCalendar";
-
-const LOCAL_ADMIN_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
-
-function getFeaturedTournament(tournaments, matches, matchResults) {
-  const now = new Date();
-  const liveTournamentIds = new Set(matches.filter((match) => match.status === "live").map((match) => match.tournament_id));
-  const scheduledTournamentIds = new Set(matches.filter((match) => match.status === "scheduled" || match.status === "live").map((match) => match.tournament_id));
-  const resultTournamentIds = new Set(matchResults.map((result) => result.tournament_id).filter(Boolean));
-
-  const upcomingTournaments = tournaments
-    .filter((tournament) => tournament.status === "upcoming" && tournament.start_date && new Date(tournament.start_date) >= now)
-    .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-
-  const completedTournaments = tournaments
-    .filter((tournament) => tournament.status === "completed" && resultTournamentIds.has(tournament.id))
-    .sort((a, b) => new Date(b.end_date || b.start_date || 0) - new Date(a.end_date || a.start_date || 0));
-
-  return (
-    tournaments.find((tournament) => liveTournamentIds.has(tournament.id)) ||
-    tournaments.find((tournament) => tournament.status === "ongoing" && scheduledTournamentIds.has(tournament.id)) ||
-    tournaments.find((tournament) => tournament.status === "ongoing") ||
-    upcomingTournaments[0] ||
-    completedTournaments[0] ||
-    tournaments.find((tournament) => scheduledTournamentIds.has(tournament.id)) ||
-    tournaments.find((tournament) => resultTournamentIds.has(tournament.id)) ||
-    tournaments[0] ||
-    null
-  );
-}
+import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
+import { resolveTournamentLiveState } from "@/lib/tournamentLiveState";
 
 function buildBoardLink(tournamentId, stage) {
   const params = new URLSearchParams();
@@ -61,32 +21,6 @@ function buildBoardLink(tournamentId, stage) {
 
 function buildTeamLink(teamName) {
   return `/teams?team=${encodeURIComponent(normalizeOrganizationName(teamName))}`;
-}
-
-function getTournamentLogo(tournament) {
-  if (!tournament?.name) return null;
-  if (tournament.name === "Battlegrounds Mobile India Series 2026") return "/images/bgis-logo.png";
-  if (tournament.name === "Battlegrounds Mobile India Series 2023") return "/images/bgis-2023.png";
-  if (tournament.name === "Battlegrounds Mobile India Series 2024") return "/images/bgis-2024.png";
-  if (tournament.name === "Battlegrounds Mobile India Series 2025") return "/images/bgis-2025.png";
-  if (tournament.name === "India - Korea Invitational") return "/images/in-kr.png";
-  if (tournament.name === "Battlegrounds Mobile India Showdown 2025") return "/images/bmsd-2025.png";
-  if (tournament.name === "Battlegrounds Mobile India International Cup 2025") return "/images/bmic-2025.png";
-  if (tournament.name === "Battlegrounds Mobile India Pro Series 2023") return "/images/bmps-2023.png";
-  if (tournament.name === "Battlegrounds Mobile India Pro Series 2024") return "/images/bmps-2024.png";
-  if (tournament.name === "Battlegrounds Mobile India Pro Series 2025") return "/images/bmps-2025.png";
-  if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") return "/images/bmps-2026.png";
-  return null;
-}
-
-function getTournamentBadgeText(tournament) {
-  const name = tournament?.name || "";
-  if (name.includes("Mobile India Pro Series")) return "BMPS";
-  if (name.includes("Mobile India Series")) return "BGIS";
-  if (name.includes("Mobile India Showdown")) return "BMSD";
-  if (name.includes("Mobile India International Cup")) return "BMIC";
-  if (name.includes("India - Korea Invitational")) return "INKR";
-  return "CORE";
 }
 
 function MatchCell({ cell }) {
@@ -107,73 +41,6 @@ function MatchCell({ cell }) {
   );
 }
 
-function SnapshotLogo({ name, className = "" }) {
-  const teamLogo = getTeamLogoByName(name);
-  if (!teamLogo) return null;
-  return (
-    <span className={`inline-flex shrink-0 items-center justify-center ${className.includes("h-3.5") ? "h-4.5 w-4.5" : className.includes("h-4") ? "h-5 w-5" : "h-6 w-6"}`}>
-      <img
-        src={teamLogo}
-        alt={`${name} logo`}
-        className={`shrink-0 object-contain ${className}`.trim()}
-        style={{ filter: "drop-shadow(0 0 0.8px rgba(10,56,114,0.45)) drop-shadow(0 1px 2px rgba(10,56,114,0.18))" }}
-      />
-    </span>
-  );
-}
-
-function getSnapshotGroupPolicy(group) {
-  const normalizedGroup = String(group || "").trim().toUpperCase();
-  if (normalizedGroup === "A") {
-    return { allowPromotion: false, allowRelegation: true };
-  }
-  if (normalizedGroup === "D") {
-    return { allowPromotion: true, allowRelegation: false };
-  }
-  return { allowPromotion: true, allowRelegation: true };
-}
-
-function getSnapshotZone({ index, total, selectedGroup }) {
-  const topCutoff = 4;
-  const bottomCutoff = Math.max(total - 4, 12);
-  const isTop = index < topCutoff;
-  const isBottom = index >= bottomCutoff;
-  const policy = getSnapshotGroupPolicy(selectedGroup === "all" ? "" : selectedGroup);
-
-  if (isTop && policy.allowPromotion) return "promotion";
-  if (isBottom && policy.allowRelegation) return "relegation";
-  return "safe";
-}
-
-function getSnapshotZoneClasses(zone, variant = "match") {
-  if (variant === "day") {
-    if (zone === "promotion") return "bg-[#17b348] text-white";
-    if (zone === "relegation") return "bg-[#d93045] text-white";
-    return "bg-[#185eb1] text-white";
-  }
-  if (zone === "promotion") return "bg-[#1bb14a] text-white";
-  if (zone === "relegation") return "bg-[#d93045] text-white";
-  return "bg-[#175aa8] text-white";
-}
-
-function getSnapshotLegendItems(selectedGroup, variant = "match") {
-  const policy = getSnapshotGroupPolicy(selectedGroup === "all" ? "" : selectedGroup);
-  const safeColor = variant === "day" ? "#185eb1" : "#175aa8";
-  const promotionColor = variant === "day" ? "#17b348" : "#1bb14a";
-  const relegationColor = "#d93045";
-  const items = [];
-
-  if (policy.allowPromotion) {
-    items.push({ label: "Promotion", color: promotionColor });
-  }
-  items.push({ label: "Safe Zone", color: safeColor });
-  if (policy.allowRelegation) {
-    items.push({ label: "Relegation", color: relegationColor });
-  }
-
-  return items;
-}
-
 function SignalCard({ label, value, detail, accent = "default", status }) {
   const accentClass =
     accent === "primary"
@@ -186,8 +53,12 @@ function SignalCard({ label, value, detail, accent = "default", status }) {
     <div className={`rounded-[26px] border p-5 shadow-sm ${accentClass}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">{label}</p>
-          <p className="mt-3 text-lg font-black uppercase tracking-[-0.02em] text-foreground">{value}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+            {label}
+          </p>
+          <p className="mt-3 text-lg font-black uppercase tracking-[-0.02em] text-foreground">
+            {value}
+          </p>
           <p className="mt-2 text-[13px] leading-6 text-muted-foreground">{detail}</p>
         </div>
         {status ? <StatusBadge status={status} /> : null}
@@ -196,13 +67,213 @@ function SignalCard({ label, value, detail, accent = "default", status }) {
   );
 }
 
+function buildTeamMapStats({ featuredTournament, stageBoard, matches, matchResults }) {
+  const tournamentMatches = matches.filter((match) => match.tournament_id === featuredTournament?.id);
+  const tournamentMatchIds = new Set(tournamentMatches.map((match) => match.id));
+  const matchMap = new Map(tournamentMatches.map((match) => [match.id, match]));
+  const teamStats = new Map();
+
+  for (const row of stageBoard.standings) {
+    teamStats.set(row.teamId || normalizeOrganizationName(row.teamName), {
+      teamId: row.teamId,
+      teamName: row.teamName,
+      logoName: row.logoName || row.teamName,
+      maps: new Map(),
+    });
+  }
+
+  for (const result of matchResults) {
+    if (!tournamentMatchIds.has(result.match_id)) continue;
+
+    const match = matchMap.get(result.match_id);
+    const mapName = String(match?.map || "Map pending").trim();
+    const teamKey = result.team_id || normalizeOrganizationName(result.team_name);
+    const displayName = result.team_name || teamStats.get(teamKey)?.teamName || "Unknown Team";
+    const teamEntry = teamStats.get(teamKey) || {
+      teamId: result.team_id,
+      teamName: displayName,
+      logoName: displayName,
+      maps: new Map(),
+    };
+
+    const mapEntry = teamEntry.maps.get(mapName) || {
+      map: mapName,
+      matches: 0,
+      wwcd: 0,
+      placementPoints: 0,
+      elims: 0,
+      points: 0,
+      placementSum: 0,
+      topFiveCount: 0,
+      topEightCount: 0,
+      overEightCount: 0,
+      pointsBuckets: {
+        zero: 0,
+        oneToFive: 0,
+        sixToTen: 0,
+        elevenToFifteen: 0,
+        sixteenToTwenty: 0,
+        overTwenty: 0,
+      },
+    };
+
+    const wins =
+      result.wins_count && result.wins_count > 0
+        ? result.wins_count
+        : result.placement === 1
+          ? 1
+          : 0;
+
+    mapEntry.matches += result.matches_count || 1;
+    mapEntry.wwcd += wins;
+    mapEntry.placementPoints += result.placement_points || 0;
+    mapEntry.elims += result.kill_points || 0;
+    mapEntry.points += result.total_points || 0;
+    mapEntry.placementSum += Number(result.placement) || 0;
+    const placement = Number(result.placement) || 0;
+    const totalPoints = Number(result.total_points) || 0;
+
+    if (placement > 0 && placement <= 5) {
+      mapEntry.topFiveCount += 1;
+    }
+    if (placement > 0 && placement <= 8) {
+      mapEntry.topEightCount += 1;
+    }
+    if (placement > 8) {
+      mapEntry.overEightCount += 1;
+    }
+
+    if (totalPoints === 0) {
+      mapEntry.pointsBuckets.zero += 1;
+    } else if (totalPoints <= 5) {
+      mapEntry.pointsBuckets.oneToFive += 1;
+    } else if (totalPoints <= 10) {
+      mapEntry.pointsBuckets.sixToTen += 1;
+    } else if (totalPoints <= 15) {
+      mapEntry.pointsBuckets.elevenToFifteen += 1;
+    } else if (totalPoints <= 20) {
+      mapEntry.pointsBuckets.sixteenToTwenty += 1;
+    } else {
+      mapEntry.pointsBuckets.overTwenty += 1;
+    }
+
+    teamEntry.maps.set(mapName, mapEntry);
+    teamStats.set(teamKey, teamEntry);
+  }
+
+  return stageBoard.standings.map((row) => {
+    const entry =
+      teamStats.get(row.teamId || normalizeOrganizationName(row.teamName)) || {
+        teamId: row.teamId,
+        teamName: row.teamName,
+        logoName: row.logoName || row.teamName,
+        maps: new Map(),
+      };
+
+    const maps = [...entry.maps.values()]
+      .map((mapRow) => ({
+        ...mapRow,
+        avgPlacement: mapRow.matches > 0 ? mapRow.placementSum / mapRow.matches : null,
+        avgPlacePoints: mapRow.matches > 0 ? mapRow.placementPoints / mapRow.matches : 0,
+        avgElims: mapRow.matches > 0 ? mapRow.elims / mapRow.matches : 0,
+      }))
+      .sort((left, right) => {
+        if (right.points !== left.points) return right.points - left.points;
+        if (right.wwcd !== left.wwcd) return right.wwcd - left.wwcd;
+        return left.map.localeCompare(right.map);
+      });
+
+    const bestMap = maps[0] || null;
+    const weakestMap =
+      [...maps].sort((left, right) => {
+        if (left.points !== right.points) return left.points - right.points;
+        if (left.wwcd !== right.wwcd) return left.wwcd - right.wwcd;
+        return left.map.localeCompare(right.map);
+      })[0] || null;
+
+    const totals = maps.reduce(
+      (accumulator, mapRow) => {
+        accumulator.points += mapRow.points;
+        accumulator.matches += mapRow.matches;
+        accumulator.placementPoints += mapRow.placementPoints;
+        accumulator.elims += mapRow.elims;
+        accumulator.placementSum += mapRow.placementSum;
+        accumulator.topFiveCount += mapRow.topFiveCount;
+        accumulator.topEightCount += mapRow.topEightCount;
+        accumulator.overEightCount += mapRow.overEightCount;
+        accumulator.pointsBuckets.zero += mapRow.pointsBuckets.zero;
+        accumulator.pointsBuckets.oneToFive += mapRow.pointsBuckets.oneToFive;
+        accumulator.pointsBuckets.sixToTen += mapRow.pointsBuckets.sixToTen;
+        accumulator.pointsBuckets.elevenToFifteen += mapRow.pointsBuckets.elevenToFifteen;
+        accumulator.pointsBuckets.sixteenToTwenty += mapRow.pointsBuckets.sixteenToTwenty;
+        accumulator.pointsBuckets.overTwenty += mapRow.pointsBuckets.overTwenty;
+        return accumulator;
+      },
+      {
+        points: 0,
+        matches: 0,
+        placementPoints: 0,
+        elims: 0,
+        placementSum: 0,
+        topFiveCount: 0,
+        topEightCount: 0,
+        overEightCount: 0,
+        pointsBuckets: {
+          zero: 0,
+          oneToFive: 0,
+          sixToTen: 0,
+          elevenToFifteen: 0,
+          sixteenToTwenty: 0,
+          overTwenty: 0,
+        },
+      }
+    );
+
+    return {
+      teamId: row.teamId,
+      teamName: row.teamName,
+      logoName: row.logoName || row.teamName,
+      rank: row.rank,
+      totalPoints: totals.points,
+      matchesPlayed: totals.matches,
+      totalPlacePoints: totals.placementPoints,
+      totalElims: totals.elims,
+      avgPlacePoints: totals.matches > 0 ? totals.placementPoints / totals.matches : 0,
+      avgPlacement: totals.matches > 0 ? totals.placementSum / totals.matches : null,
+      avgElims: totals.matches > 0 ? totals.elims / totals.matches : 0,
+      avgTotalPoints: totals.matches > 0 ? totals.points / totals.matches : 0,
+      topFiveCount: totals.topFiveCount,
+      topEightCount: totals.topEightCount,
+      overEightCount: totals.overEightCount,
+      pointsBuckets: totals.pointsBuckets,
+      avgPointsByMap: {
+        rondo: maps.find((mapRow) => mapRow.map.toLowerCase() === "rondo")?.matches
+          ? maps.find((mapRow) => mapRow.map.toLowerCase() === "rondo").points /
+            maps.find((mapRow) => mapRow.map.toLowerCase() === "rondo").matches
+          : null,
+        erangel: maps.find((mapRow) => mapRow.map.toLowerCase() === "erangel")?.matches
+          ? maps.find((mapRow) => mapRow.map.toLowerCase() === "erangel").points /
+            maps.find((mapRow) => mapRow.map.toLowerCase() === "erangel").matches
+          : null,
+        miramar: maps.find((mapRow) => mapRow.map.toLowerCase() === "miramar")?.matches
+          ? maps.find((mapRow) => mapRow.map.toLowerCase() === "miramar").points /
+            maps.find((mapRow) => mapRow.map.toLowerCase() === "miramar").matches
+          : null,
+      },
+      maps,
+    };
+  }).sort((left, right) => {
+    if (right.totalPoints !== left.totalPoints) return right.totalPoints - left.totalPoints;
+    if (right.totalElims !== left.totalElims) return right.totalElims - left.totalElims;
+    return left.teamName.localeCompare(right.teamName);
+  }).map((row, index) => ({
+    ...row,
+    rank: index + 1,
+  }));
+}
+
 export default function Leaderboard() {
   const [searchParams] = useSearchParams();
-  const [snapshotOpen, setSnapshotOpen] = useState(false);
-  const [snapshotBusy, setSnapshotBusy] = useState(false);
-  const [snapshotFormat, setSnapshotFormat] = useState("match");
-  const [snapshotGroup, setSnapshotGroup] = useState("all");
-  const snapshotRef = useRef(null);
 
   const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
     queryKey: ["tournaments"],
@@ -212,10 +283,11 @@ export default function Leaderboard() {
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("scheduled_time", 300),
   });
-  const { data: matchResults = [], isLoading: resultsLoading } = useQuery({
+  const { data: rawMatchResults = [], isLoading: resultsLoading } = useQuery({
     queryKey: ["match-results"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
   });
+  const matchResults = useMemo(() => filterPublishedMatchResults(rawMatchResults), [rawMatchResults]);
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
     queryKey: ["teams"],
     queryFn: () => base44.entities.Team.list("-created_date", 300),
@@ -223,229 +295,175 @@ export default function Leaderboard() {
 
   const requestedTournamentId = searchParams.get("tournament");
   const requestedStage = searchParams.get("stage");
-  const isLocalAdmin = typeof window !== "undefined" && LOCAL_ADMIN_HOSTS.has(window.location.hostname);
 
-  const calendarMatches = useMemo(
-    () => decorateMatchesWithLiveStatus(matches, matchResults),
-    [matches, matchResults]
-  );
-  const calendarTournaments = useMemo(
-    () => decorateTournamentsWithLiveStatus(tournaments, calendarMatches, matchResults),
-    [tournaments, calendarMatches, matchResults]
-  );
-
-  const featuredTournament = useMemo(
+  const liveState = useMemo(
     () =>
-      calendarTournaments.find((tournament) => tournament.id === requestedTournamentId) ||
-      getFeaturedTournament(calendarTournaments, calendarMatches, matchResults),
-    [calendarTournaments, calendarMatches, matchResults, requestedTournamentId]
+      resolveTournamentLiveState({
+        tournaments,
+        teams,
+        matches,
+        matchResults,
+        requestedTournamentId,
+        requestedStage,
+      }),
+    [matches, matchResults, requestedStage, requestedTournamentId, teams, tournaments]
   );
+  const { calendarMatches, calendarTournaments, featuredTournament, stageBoard } =
+    liveState;
 
-  const stageBoard = useMemo(
-    () => getStageBoardData({ featuredTournament, teams, matches: calendarMatches, matchResults, requestedStage }),
-    [featuredTournament, teams, calendarMatches, matchResults, requestedStage]
-  );
+  const isLoading =
+    tournamentsLoading || matchesLoading || resultsLoading || teamsLoading;
+  const tournamentQuery = useMemo(() => {
+    if (!featuredTournament) return "";
+    const params = new URLSearchParams();
+    params.set("id", featuredTournament.id);
+    if (stageBoard.featuredStage) {
+      params.set("stage", stageBoard.featuredStage);
+    }
+    return `?${params.toString()}`;
+  }, [featuredTournament, stageBoard.featuredStage]);
 
-  const isLoading = tournamentsLoading || matchesLoading || resultsLoading || teamsLoading;
-  const tournamentQuery = featuredTournament ? `?id=${encodeURIComponent(featuredTournament.id)}` : "";
   const stageOptions = useMemo(() => {
     if (!featuredTournament) return [];
+
     const labels = new Map();
-    const declaredStages = (featuredTournament.stages || []).map((stage) => stage?.name).filter(Boolean);
+    const declaredStages = (featuredTournament.stages || [])
+      .map((stage) => stage?.name)
+      .filter(Boolean);
+
     for (const stage of featuredTournament.stages || []) {
       if (stage?.name) labels.set(stage.name, stage.name);
     }
     for (const match of matches) {
-      if (match.tournament_id === featuredTournament.id && match.stage && declaredStages.includes(match.stage)) labels.set(match.stage, match.stage);
+      if (
+        match.tournament_id === featuredTournament.id &&
+        match.stage &&
+        declaredStages.includes(match.stage)
+      ) {
+        labels.set(match.stage, match.stage);
+      }
     }
     for (const result of matchResults) {
-      if (result.tournament_id === featuredTournament.id && result.stage && declaredStages.includes(result.stage)) labels.set(result.stage, result.stage);
+      if (
+        result.tournament_id === featuredTournament.id &&
+        result.stage &&
+        declaredStages.includes(result.stage)
+      ) {
+        labels.set(result.stage, result.stage);
+      }
     }
+
     return [...labels.values()];
   }, [featuredTournament, matches, matchResults]);
 
   const nextUpcomingTournament = useMemo(() => {
     const now = new Date();
-    return tournaments
-      .filter((tournament) => tournament.status === "upcoming" && tournament.start_date && new Date(tournament.start_date) >= now)
-      .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0] || null;
+    return (
+      calendarTournaments
+        .filter(
+          (tournament) =>
+            tournament.status === "upcoming" &&
+            tournament.start_date &&
+            new Date(tournament.start_date) >= now
+        )
+        .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0] || null
+    );
   }, [calendarTournaments]);
 
+  const teamMapStats = useMemo(
+    () =>
+      buildTeamMapStats({
+        featuredTournament,
+        stageBoard,
+        matches: calendarMatches,
+        matchResults,
+      }),
+    [featuredTournament, stageBoard, calendarMatches, matchResults]
+  );
+  const stageMaps = useMemo(
+    () =>
+      [...new Set(
+        teamMapStats.flatMap((team) =>
+          Array.isArray(team.maps) ? team.maps.map((entry) => entry.map).filter(Boolean) : []
+        )
+      )],
+    [teamMapStats]
+  );
+
   const boardState =
-    featuredTournament?.status === "upcoming" ? "upcoming" :
-    stageBoard.liveMatch ? "live" :
-    stageBoard.standings.length > 0 ? "active" : "waiting";
+    featuredTournament?.status === "upcoming"
+      ? "upcoming"
+      : stageBoard.liveMatch
+        ? "live"
+        : stageBoard.standings.length > 0
+          ? "active"
+          : "waiting";
 
   const boardIntro =
     boardState === "live"
       ? "Live scoreboard, up-next signal, and match-by-match scoring in one connected standings view."
       : boardState === "upcoming"
-        ? "The next tournament board is armed with scheduled lobbies and will populate the moment BMPS 2026 results land."
+        ? "The next tournament board is armed with scheduled lobbies and will populate the moment results land."
         : stageBoard.standings.length > 0
           ? "Current stage standings, mapped match columns, and leaderboard movement in one connected surface."
           : "Standings will appear here as soon as verified match scores are attached to the selected stage.";
 
-  const hasBoardData = stageBoard.standings.length > 0;
-  const shouldShowSnapshotGroup = useMemo(() => {
-    if (String(stageBoard.featuredStage || "").trim().toLowerCase() === "grand finals") {
-      return false;
-    }
-    return stageBoard.standings.some((team) => team.group && team.group !== "-");
-  }, [stageBoard.featuredStage, stageBoard.standings]);
-  const snapshotGroupOptions = useMemo(() => {
-    if (!shouldShowSnapshotGroup) return [];
-    return [...new Set(stageBoard.standings.map((team) => team.group).filter((group) => group && group !== "-"))].sort();
-  }, [shouldShowSnapshotGroup, stageBoard.standings]);
-  const canUseAllGroupsSnapshot = useMemo(() => {
-    if (!shouldShowSnapshotGroup) return true;
-    if (snapshotFormat !== "day") return true;
-    return stageBoard.standings.length <= 16;
-  }, [shouldShowSnapshotGroup, snapshotFormat, stageBoard.standings.length]);
-  useEffect(() => {
-    if (!snapshotGroupOptions.length) {
-      setSnapshotGroup("all");
-      return;
-    }
-    if (snapshotGroup !== "all" && !snapshotGroupOptions.includes(snapshotGroup)) {
-      setSnapshotGroup(snapshotGroupOptions[0]);
-    }
-  }, [snapshotGroup, snapshotGroupOptions]);
-  useEffect(() => {
-    if (!snapshotGroupOptions.length) return;
-    if (snapshotFormat === "day" && !canUseAllGroupsSnapshot && snapshotGroup === "all") {
-      setSnapshotGroup(snapshotGroupOptions[0]);
-    }
-  }, [snapshotFormat, canUseAllGroupsSnapshot, snapshotGroup, snapshotGroupOptions]);
-  const latestCompletedMatch = useMemo(() => {
-    const completed = stageBoard.stageMatches.filter((match) => match.status === "completed");
-    const source = completed.length > 0 ? completed : stageBoard.stageMatches;
-    return source[source.length - 1] || null;
-  }, [stageBoard.stageMatches]);
-  const latestMatchLabel = latestCompletedMatch ? `M${latestCompletedMatch.board_match_number || latestCompletedMatch.match_number || "-"}` : "Mx";
-  const snapshotStageLabel = snapshotGroup !== "all" ? `${stageBoard.featuredStage || "Standings"} - Group ${snapshotGroup}` : stageBoard.featuredStage || "Standings";
-  const snapshotStandings = useMemo(
-    () => {
-      const source = snapshotGroup === "all" ? stageBoard.standings : stageBoard.standings.filter((team) => team.group === snapshotGroup);
-      const scoped = snapshotFormat === "match" ? source.slice(0, 16) : source;
-      return snapshotGroup === "all"
-        ? scoped
-        : scoped.map((team, index) => ({ ...team, rank: index + 1 }));
-    },
-    [stageBoard.standings, snapshotFormat, snapshotGroup]
-  );
-  const shouldShowSnapshotGroupColumn = shouldShowSnapshotGroup && snapshotGroup === "all";
-  const isDenseMatchSnapshot = snapshotStandings.length > 12;
-  const isDenseDaySnapshot = snapshotStandings.length > 12;
-  const matchSnapshotScale = useMemo(() => {
-    if (snapshotFormat !== "match") return 1;
-    return Math.min(1, 13.5 / Math.max(snapshotStandings.length, 1));
-  }, [snapshotFormat, snapshotStandings.length]);
-  const daySnapshotScale = useMemo(() => {
-    if (snapshotFormat !== "day") return 1;
-    return Math.min(1, 11 / Math.max(snapshotStandings.length, 1));
-  }, [snapshotFormat, snapshotStandings.length]);
-  const snapshotFilename = useMemo(() => {
-    const base = `${featuredTournament?.name || "standings"}-${stageBoard.featuredStage || "board"}${snapshotGroup !== "all" ? `-group-${snapshotGroup}` : ""}-${snapshotFormat}`;
-    return base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  }, [featuredTournament, stageBoard.featuredStage, snapshotFormat, snapshotGroup]);
-  const snapshotTournamentLogo = useMemo(() => getTournamentLogo(featuredTournament), [featuredTournament]);
-  const matchSnapshotLegend = useMemo(() => getSnapshotLegendItems(snapshotGroup, "match"), [snapshotGroup]);
-  const daySnapshotLegend = useMemo(() => getSnapshotLegendItems(snapshotGroup, "day"), [snapshotGroup]);
-  const matchSnapshotGridClass = shouldShowSnapshotGroupColumn
-    ? "grid-cols-[22px_16px_minmax(0,2.05fr)_26px_22px_22px_28px_28px_38px_36px]"
-    : "grid-cols-[22px_16px_minmax(0,2.2fr)_22px_22px_28px_28px_38px_36px]";
-  const daySnapshotGridClass = shouldShowSnapshotGroupColumn
-    ? "grid-cols-[30px_24px_minmax(0,3.05fr)_34px_28px_28px_34px_36px_54px]"
-    : "grid-cols-[30px_24px_minmax(0,3.25fr)_28px_28px_34px_36px_54px]";
-
-  const createSnapshotCanvas = async () => {
-    if (!snapshotRef.current) return null;
-    return html2canvas(snapshotRef.current, {
-      scale: 2,
-      backgroundColor: snapshotFormat === "match" ? "#0b1018" : "#0a4280",
-      useCORS: true,
-    });
-  };
-
-  const handleDownloadSnapshot = async () => {
-    try {
-      setSnapshotBusy(true);
-      const canvas = await createSnapshotCanvas();
-      if (!canvas) return;
-      const link = document.createElement("a");
-      link.download = `${snapshotFilename}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    } finally {
-      setSnapshotBusy(false);
-    }
-  };
-
-  const handleShareSnapshot = async () => {
-    try {
-      setSnapshotBusy(true);
-      const canvas = await createSnapshotCanvas();
-      if (!canvas) return;
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return;
-      const file = new File([blob], `${snapshotFilename}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-        await navigator.share({
-          title: "Standings Snapshot",
-          text: `${featuredTournament?.name || "Tournament"} standings snapshot`,
-          files: [file],
-        });
-        return;
-      }
-      const link = document.createElement("a");
-      link.download = `${snapshotFilename}.png`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    } finally {
-      setSnapshotBusy(false);
-    }
-  };
-
   if (isLoading) {
-    return <div className="flex min-h-[40vh] items-center justify-center"><p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Loading standings</p></div>;
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
+          Loading standings
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-5 md:space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Tournament center</p>
-          <h1 className="mt-2 text-[2rem] font-heading font-black tracking-[-0.04em] text-foreground md:text-4xl">STANDINGS</h1>
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+            Tournament center
+          </p>
+          <h1 className="mt-2 text-[2rem] font-heading font-black tracking-[-0.04em] text-foreground md:text-4xl">
+            STANDINGS
+          </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{boardIntro}</p>
         </div>
         <div className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm sm:w-auto sm:text-right">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Featured board</p>
-          <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-primary">{featuredTournament?.status === "upcoming" ? "Armed" : "Active"}</p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Featured board
+          </p>
+          <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-primary">
+            {featuredTournament?.status === "upcoming" ? "Armed" : "Active"}
+          </p>
         </div>
       </div>
 
-      {isLocalAdmin && hasBoardData ? (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => { setSnapshotFormat("match"); setSnapshotOpen(true); }}>
-            <Share2 className="mr-2 h-4 w-4" /> Match 9:16
-          </Button>
-          <Button variant="outline" onClick={() => { setSnapshotFormat("day"); setSnapshotOpen(true); }}>
-            <Share2 className="mr-2 h-4 w-4" /> Day 4:5
-          </Button>
-        </div>
-      ) : null}
-
       {featuredTournament ? (
-        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+        >
           <div className="border-b border-border bg-[linear-gradient(180deg,rgba(251,146,60,0.08),rgba(255,255,255,0))] px-4 py-4 dark:bg-[linear-gradient(180deg,rgba(251,146,60,0.12),rgba(15,23,42,0))] sm:px-5 sm:py-5 md:px-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">Featured tournament standings</p>
-                  <StatusBadge status={featuredTournament.status === "ongoing" ? "live" : featuredTournament.status} />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+                    Featured tournament standings
+                  </p>
+                  <StatusBadge
+                    status={
+                      featuredTournament.status === "ongoing"
+                        ? "live"
+                        : featuredTournament.status
+                    }
+                  />
                 </div>
-                <h2 className="mt-3 max-w-4xl text-[1.75rem] font-heading font-black uppercase tracking-[-0.04em] text-foreground sm:text-2xl md:text-4xl">{featuredTournament.name}</h2>
+                <h2 className="mt-3 max-w-4xl text-[1.75rem] font-heading font-black uppercase tracking-[-0.04em] text-foreground sm:text-2xl md:text-4xl">
+                  {featuredTournament.name}
+                </h2>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   <span>{stageBoard.standings.length} teams ranked</span>
                   <span>&bull;</span>
@@ -453,7 +471,10 @@ export default function Leaderboard() {
                 </div>
               </div>
 
-              <Link to={`/tournaments${tournamentQuery}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:border-primary/40 hover:text-primary sm:w-auto">
+              <Link
+                to={`/tournaments${tournamentQuery}`}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:border-primary/40 hover:text-primary sm:w-auto"
+              >
                 Tournament hub
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
@@ -468,7 +489,9 @@ export default function Leaderboard() {
                       key={stageName}
                       to={buildBoardLink(featuredTournament.id, stageName)}
                       className={`rounded-full px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.16em] transition-colors ${
-                        active ? "bg-primary text-primary-foreground" : "border border-border bg-background/80 text-muted-foreground hover:border-primary/35 hover:text-foreground"
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border bg-background/80 text-muted-foreground hover:border-primary/35 hover:text-foreground"
                       }`}
                     >
                       {stageName}
@@ -482,27 +505,73 @@ export default function Leaderboard() {
           <div className="grid gap-4 border-b border-border px-4 py-4 sm:px-5 sm:py-5 md:grid-cols-4 md:px-6">
             <SignalCard
               label="Live match"
-              value={stageBoard.liveMatch ? `Match ${stageBoard.liveMatch.match_number || "-"}` : featuredTournament.status === "completed" ? "Tournament completed" : featuredTournament.status === "upcoming" ? "Season not live yet" : "No live lobby"}
-              detail={stageBoard.liveMatch ? `${stageBoard.liveMatch.stage}${stageBoard.liveMatch.map ? ` ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${stageBoard.liveMatch.map}` : ""}` : featuredTournament.start_date ? `Starts ${format(new Date(featuredTournament.start_date), "MMM d, yyyy")}` : "Standings remain available while the next lobby is prepared."}
+              value={
+                stageBoard.liveMatch
+                  ? `Match ${stageBoard.liveMatch.match_number || "-"}`
+                  : featuredTournament.status === "completed"
+                    ? "Tournament completed"
+                    : featuredTournament.status === "upcoming"
+                      ? "Season not live yet"
+                      : "No live lobby"
+              }
+              detail={
+                stageBoard.liveMatch
+                  ? `${stageBoard.liveMatch.stage || "Stage"}${
+                      stageBoard.liveMatch.map ? ` - ${stageBoard.liveMatch.map}` : ""
+                    }`
+                  : featuredTournament.start_date
+                    ? `Starts ${format(
+                        new Date(featuredTournament.start_date),
+                        "MMM d, yyyy"
+                      )}`
+                    : "Standings remain available while the next lobby is prepared."
+              }
               accent={featuredTournament.status === "completed" ? "default" : "live"}
               status={stageBoard.liveMatch ? "live" : featuredTournament.status}
             />
             <SignalCard
               label="Up next"
-              value={stageBoard.nextMatch ? `Match ${stageBoard.nextMatch.match_number || "-"}` : nextUpcomingTournament ? nextUpcomingTournament.name : "Awaiting update"}
-              detail={stageBoard.nextMatch?.scheduled_time ? format(new Date(stageBoard.nextMatch.scheduled_time), "MMM d, h:mm a") : nextUpcomingTournament?.start_date ? `Starts ${format(new Date(nextUpcomingTournament.start_date), "MMM d, yyyy")}` : "No scheduled start time yet."}
-              status={stageBoard.nextMatch?.status || nextUpcomingTournament?.status || featuredTournament.status}
+              value={
+                stageBoard.nextMatch
+                  ? `Match ${stageBoard.nextMatch.match_number || "-"}`
+                  : nextUpcomingTournament
+                    ? nextUpcomingTournament.name
+                    : "Awaiting update"
+              }
+              detail={
+                stageBoard.nextMatch?.scheduled_time
+                  ? format(new Date(stageBoard.nextMatch.scheduled_time), "MMM d, h:mm a")
+                  : nextUpcomingTournament?.start_date
+                    ? `Starts ${format(
+                        new Date(nextUpcomingTournament.start_date),
+                        "MMM d, yyyy"
+                      )}`
+                    : "No scheduled start time yet."
+              }
+              status={
+                stageBoard.nextMatch?.status ||
+                nextUpcomingTournament?.status ||
+                featuredTournament.status
+              }
             />
             <SignalCard
               label="Stage leader"
               value={stageBoard.leader?.teamName || "Standings pending"}
-              detail={stageBoard.leader ? `${stageBoard.leader.points} pts ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${stageBoard.leader.wwcd} WWCD ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${stageBoard.leader.elims} elims` : "Results will populate once the stage board receives match scores."}
+              detail={
+                stageBoard.leader
+                  ? `${stageBoard.leader.points} pts - ${stageBoard.leader.wwcd} WWCD - ${stageBoard.leader.elims} elims`
+                  : "Results will populate once the stage board receives match scores."
+              }
               accent="primary"
             />
             <SignalCard
               label="Stage focus"
               value={stageBoard.featuredStage || "Standings"}
-              detail={stageBoard.stageMatches.length > 0 ? `${stageBoard.stageMatches.length} match columns connected` : "Waiting for mapped match data."}
+              detail={
+                stageBoard.stageMatches.length > 0
+                  ? `${stageBoard.stageMatches.length} match columns connected`
+                  : "Waiting for mapped match data."
+              }
             />
           </div>
 
@@ -521,13 +590,27 @@ export default function Leaderboard() {
                   </colgroup>
                   <thead>
                     <tr className="border-b border-border bg-secondary/25 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      <th className="border-r border-border bg-secondary/35 px-4 py-3 text-left">#</th>
-                      <th className="border-r border-border bg-secondary/35 px-4 py-3 text-left">Team</th>
-                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">M</th>
-                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">WWCD</th>
-                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">Place</th>
-                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">Elims</th>
-                      <th className="bg-background px-3 py-3 text-center font-black text-foreground">Pts</th>
+                      <th className="border-r border-border bg-secondary/35 px-4 py-3 text-left">
+                        #
+                      </th>
+                      <th className="border-r border-border bg-secondary/35 px-4 py-3 text-left">
+                        Team
+                      </th>
+                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">
+                        M
+                      </th>
+                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">
+                        WWCD
+                      </th>
+                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">
+                        Place
+                      </th>
+                      <th className="border-r border-border bg-secondary/35 px-3 py-3 text-center">
+                        Elims
+                      </th>
+                      <th className="bg-background px-3 py-3 text-center font-black text-foreground">
+                        Pts
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -540,18 +623,38 @@ export default function Leaderboard() {
                         className="h-[72px] bg-card/90 transition-colors hover:bg-secondary/20"
                       >
                         <td className="h-[72px] border-r border-border px-4 py-3 align-middle">
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-sm font-black text-emerald-600 dark:text-emerald-300">{team.rank}</span>
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-sm font-black text-emerald-600 dark:text-emerald-300">
+                            {team.rank}
+                          </span>
                         </td>
                         <td className="h-[72px] border-r border-border px-4 py-3 align-middle">
-                          <Link to={buildTeamLink(team.logoName || team.teamName)} className="block">
-                            <TeamIdentity name={team.logoName} className="font-semibold text-foreground" contained logoClassName="h-7 w-auto object-contain" />
+                          <Link
+                            to={buildTeamLink(team.logoName || team.teamName)}
+                            className="block"
+                          >
+                            <TeamIdentity
+                              name={team.logoName}
+                              className="font-semibold text-foreground"
+                              contained
+                              logoClassName="h-7 w-auto object-contain"
+                            />
                           </Link>
                         </td>
-                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">{team.matches}</td>
-                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">{team.wwcd}</td>
-                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">{team.placementPoints}</td>
-                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">{team.elims}</td>
-                        <td className="h-[72px] bg-background px-3 py-3 text-center align-middle text-lg font-black text-primary">{team.points}</td>
+                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {team.matches}
+                        </td>
+                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {team.wwcd}
+                        </td>
+                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {team.placementPoints}
+                        </td>
+                        <td className="h-[72px] border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {team.elims}
+                        </td>
+                        <td className="h-[72px] bg-background px-3 py-3 text-center align-middle text-lg font-black text-primary">
+                          {team.points}
+                        </td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -568,7 +671,9 @@ export default function Leaderboard() {
                   <thead>
                     <tr className="border-b border-border bg-secondary/25 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       {stageBoard.stageMatches.map((match) => (
-                        <th key={match.id} className="px-3 py-3 text-center">M{match.board_match_number || match.match_number || "-"}</th>
+                        <th key={match.id} className="px-3 py-3 text-center">
+                          M{match.board_match_number || match.match_number || "-"}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -582,7 +687,10 @@ export default function Leaderboard() {
                         className="h-[72px] bg-card/90 transition-colors hover:bg-secondary/20"
                       >
                         {stageBoard.stageMatches.map((match) => (
-                          <td key={`${team.teamId || team.teamName}-${match.id}`} className="h-[72px] px-3 py-3 text-center align-middle">
+                          <td
+                            key={`${team.teamId || team.teamName}-${match.id}`}
+                            className="h-[72px] px-3 py-3 text-center align-middle"
+                          >
                             <MatchCell cell={team.matchCells[match.id]} />
                           </td>
                         ))}
@@ -596,295 +704,353 @@ export default function Leaderboard() {
         </motion.section>
       ) : null}
 
-      <Dialog open={snapshotOpen} onOpenChange={setSnapshotOpen}>
-        <DialogContent className="max-w-[1280px] rounded-[28px] border-border/70 bg-background p-0 overflow-hidden">
-          <div className="grid gap-0 lg:grid-cols-[380px_1fr]">
-            <div className="border-b border-border/70 p-5 lg:border-b-0 lg:border-r">
-              <DialogHeader className="text-left">
-                <DialogTitle>{snapshotFormat === "match" ? "Match Snapshot" : "Day Snapshot"}</DialogTitle>
-                <DialogDescription>
-                  {snapshotFormat === "match"
-                    ? "9:16 export with #, Team, WWCD, Elims, Total, and only the latest completed match column."
-                    : "4:5 export with #, Team, M, WWCD, Place, Elims, and Total."}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="mt-5 flex gap-2">
-                <Button variant={snapshotFormat === "match" ? "default" : "outline"} onClick={() => setSnapshotFormat("match")} className="flex-1">Match 9:16</Button>
-                <Button variant={snapshotFormat === "day" ? "default" : "outline"} onClick={() => setSnapshotFormat("day")} className="flex-1">Day 4:5</Button>
-              </div>
-
-              {snapshotGroupOptions.length ? (
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <Button
-                    variant={snapshotGroup === "all" ? "default" : "outline"}
-                    onClick={() => canUseAllGroupsSnapshot && setSnapshotGroup("all")}
-                    disabled={!canUseAllGroupsSnapshot}
-                    className="col-span-3"
-                    title={!canUseAllGroupsSnapshot ? "Day 4:5 uses one group at a time for large grouped stages." : undefined}
-                  >
-                    All Groups
-                  </Button>
-                  {snapshotGroupOptions.map((group) => (
-                    <Button key={group} variant={snapshotGroup === group ? "default" : "outline"} onClick={() => setSnapshotGroup(group)}>Group {group}</Button>
-                  ))}
-                </div>
-              ) : null}
-              {!canUseAllGroupsSnapshot ? (
-                <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
-                  `Day 4:5` uses one group at a time for large grouped stages so the poster stays readable.
+      {featuredTournament && teamMapStats.length > 0 ? (
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+        >
+          <div className="border-b border-border px-4 py-4 sm:px-5 sm:py-5 md:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+                  Overall statistics
                 </p>
-              ) : null}
-
-              <div className="mt-4 rounded-2xl border border-border/70 bg-secondary/20 p-4 text-sm">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Scope</p>
-                <p className="mt-2 font-medium text-foreground">{featuredTournament?.name || "Tournament"}</p>
-                <p className="mt-1 text-muted-foreground">{snapshotStageLabel} - {snapshotStandings.length} teams</p>
+                <h3 className="mt-2 text-[1.4rem] font-heading font-black uppercase tracking-[-0.04em] text-foreground sm:text-2xl">
+                  BMPS Overall Statistics: All Maps
+                </h3>
+                <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                  Full-tournament participant totals, point averages, placement summary, and points-earned ranges for the teams currently shown in the board.
+                </p>
               </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button onClick={handleDownloadSnapshot} disabled={snapshotBusy}><Download className="mr-2 h-4 w-4" /> Download PNG</Button>
-                <Button variant="outline" onClick={handleShareSnapshot} disabled={snapshotBusy}><Share2 className="mr-2 h-4 w-4" /> Share</Button>
+              <div className="rounded-2xl border border-border bg-secondary/20 px-4 py-3 text-sm text-muted-foreground">
+                {calendarMatches.filter((match) => match.tournament_id === featuredTournament?.id).length} tournament matches
               </div>
-            </div>
-
-            <div className="flex items-center justify-center bg-[linear-gradient(135deg,_#0e4b93_0%,_#0a3b77_30%,_#072b58_100%)] p-5">
-              {snapshotFormat === "match" ? (
-                <div key={`match-${featuredTournament?.id || "board"}-${stageBoard.featuredStage || "stage"}-${latestMatchLabel}`} ref={snapshotRef} className="relative aspect-[9/16] w-[430px] overflow-hidden rounded-[34px] bg-[linear-gradient(180deg,_#0b4f9d_0%,_#0a3f80_16%,_#0a3872_100%)] shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-                  <div className="absolute inset-0 opacity-30 [background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_2px,transparent_2px,transparent_10px)]" />
-                  <div className="absolute inset-0 overflow-hidden">
-                    <div
-                      className={`relative z-10 flex h-full flex-col ${isDenseMatchSnapshot ? "p-3" : "p-4"}`}
-                      style={{
-                        transform: `scale(${matchSnapshotScale})`,
-                        transformOrigin: "top left",
-                        width: `${100 / matchSnapshotScale}%`,
-                        height: `${100 / matchSnapshotScale}%`,
-                      }}
-                    >
-                      <div className="overflow-hidden rounded-[30px] bg-white shadow-[0_18px_44px_rgba(7,23,52,0.28)]">
-                        <div className={`bg-[linear-gradient(180deg,_#0d3e7f_0%,_#0a3265_100%)] text-white ${isDenseMatchSnapshot ? "px-4 py-4" : "px-5 py-5"}`}>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex flex-1 items-start gap-3.5">
-                              <div className={`flex shrink-0 items-center justify-center ${isDenseMatchSnapshot ? "h-[82px] w-[82px]" : "h-[96px] w-[96px]"}`}>
-                                {snapshotTournamentLogo ? (
-                                  <img
-                                    src={snapshotTournamentLogo}
-                                    alt={featuredTournament?.name || "Tournament logo"}
-                                    className="h-full w-full object-contain"
-                                    style={{ filter: "drop-shadow(0 8px 18px rgba(4,22,48,0.24))" }}
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center rounded-[16px] border border-white/18 bg-white/8 text-[11px] font-black uppercase tracking-[0.22em] text-white">
-                                    {getTournamentBadgeText(featuredTournament)}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-white/74">{featuredTournament?.name || "Tournament"}</p>
-                                <h3 className={`mt-1 font-black uppercase leading-[0.88] tracking-[-0.095em] ${isDenseMatchSnapshot ? "text-[34px]" : "text-[42px]"}`}>Standings</h3>
-                              </div>
-                            </div>
-                            <div className={`rounded-2xl bg-white/12 text-right ${isDenseMatchSnapshot ? "min-w-[72px] px-2.5 py-1.5" : "min-w-[78px] px-3 py-2"}`}>
-                              <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-white/68">Match</p>
-                              <p className="mt-1 text-[15px] font-black leading-none tracking-[-0.04em] text-white">{latestMatchLabel}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`${isDenseMatchSnapshot ? "px-3 py-3" : "px-4 py-4"}`}>
-                          <div className="flex items-center justify-between gap-3 border-b border-[#d6e0ee] pb-3">
-                            <div className="min-w-0 flex-1">
-                                <p className={`font-black uppercase tracking-[0.02em] text-[#103b73] ${isDenseMatchSnapshot ? "text-[16px]" : "text-[18px]"}`}>{snapshotStageLabel}</p>
-                              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{snapshotStandings.length} teams ranked</p>
-                            </div>
-                            <div className={`rounded-2xl bg-[linear-gradient(90deg,_#0d4ea0_0%,_#1c71c8_100%)] text-center text-white shadow-[0_10px_24px_rgba(13,78,160,0.22)] ${isDenseMatchSnapshot ? "min-w-[110px] px-3 py-2" : "min-w-[128px] px-4 py-2.5"}`}>
-                              <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-white/70">Map</p>
-                              <p className={`mt-1 font-black uppercase tracking-[0.04em] ${isDenseMatchSnapshot ? "text-[14px]" : "text-[16px]"}`}>{latestCompletedMatch?.map || "Standings"}</p>
-                            </div>
-                          </div>
-                          <div className={`mt-3 grid items-center gap-x-0.5 gap-y-1 rounded-[18px] bg-slate-50 px-2 py-2 text-[7px] font-bold uppercase tracking-[0.12em] text-slate-500 ${matchSnapshotGridClass}`}>
-                            <span className="-ml-[1px] text-center">#</span>
-                            <span />
-                            <span className="pl-0.5 text-left">Team</span>
-                            {shouldShowSnapshotGroupColumn ? <span className="text-center">Grp</span> : null}
-                            <span className="text-center">M</span>
-                            <span className="text-center">W</span>
-                            <span className="text-center">P</span>
-                            <span className="text-center">F</span>
-                            <span className="pr-1 text-right">Total</span>
-                            <span className="pr-1 text-right">{latestMatchLabel}</span>
-                          </div>
-                          <div className="mt-1 space-y-1">
-                            {snapshotStandings.map((team, index) => (
-                              <div key={`story-${team.teamId || team.teamName}`} className={`rounded-[14px] border border-slate-200/80 bg-white ${isDenseMatchSnapshot ? "min-h-[34px] px-2 py-1.5" : "min-h-[40px] px-2.5 py-2"}`}>
-                                <div className={`grid items-center gap-x-0.5 gap-y-1 ${matchSnapshotGridClass}`}>
-                                  <div className={`relative inline-flex self-center rounded-full ${isDenseMatchSnapshot ? "h-5 w-5" : "h-6 w-6"} ${getSnapshotZoneClasses(getSnapshotZone({ index, total: snapshotStandings.length, selectedGroup: snapshotGroup }), "match")}`}>
-                                    <span
-                                      className={`absolute inset-0 flex items-center justify-center font-black leading-none tabular-nums ${isDenseMatchSnapshot ? "text-[9px]" : "text-[10px]"}`}
-                                      style={{ transform: "translateY(-5.5px)" }}
-                                    >
-                                      {team.rank}
-                                    </span>
-                                  </div>
-                                <div className={isDenseMatchSnapshot ? "flex h-5 w-5 self-center items-center justify-center" : "flex h-5 w-5 self-center items-center justify-center"}>
-                                  <SnapshotLogo
-                                    name={team.logoName || team.teamName}
-                                    className="h-5 w-5"
-                                  />
-                                </div>
-                                  <div className="relative -top-[5px] flex min-w-0 self-center items-center gap-1 pl-0.5 pr-1">
-                                    <span className={`${isDenseMatchSnapshot ? "text-[14px]" : "text-[14px]"} block min-w-0 whitespace-nowrap text-left font-extrabold leading-[1.08] text-slate-900`}>
-                                      {team.teamName}
-                                    </span>
-                                      {latestCompletedMatch && team.matchCells[latestCompletedMatch.id]?.won ? (
-                                        <span className="relative top-[2px] inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-50 px-1 py-[1px] text-[7px] font-black uppercase leading-none text-amber-700">
-                                          <Trophy className="h-2.5 w-2.5" strokeWidth={2.4} />
-                                        </span>
-                                      ) : null}
-                                  </div>
-                                  {shouldShowSnapshotGroupColumn ? <div className="text-center text-[8px] font-semibold text-slate-600">{team.group || "-"}</div> : null}
-                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.matches}</div>
-                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.wwcd}</div>
-                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.placementPoints}</div>
-                                  <div className="text-center text-[8px] font-semibold tabular-nums text-slate-700">{team.elims}</div>
-                                  <div className="pr-1 text-right text-[10px] font-black tabular-nums text-slate-900">{team.points}</div>
-                                  <div className="pr-1 text-right text-[9px] font-black tabular-nums text-[#0d4ea0]">
-                                    {latestCompletedMatch ? (team.matchCells[latestCompletedMatch.id]?.points ?? "-") : "-"}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="relative -top-[2px] mt-2 flex flex-wrap items-center justify-center gap-3 text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                          {matchSnapshotLegend.map((item) => (
-                            <div key={item.label} className="flex items-center gap-1.5 leading-none">
-                              <span className="inline-flex h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                              <span>{item.label}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div key={`day-${featuredTournament?.id || "board"}-${stageBoard.featuredStage || "stage"}`} ref={snapshotRef} className="relative aspect-[4/5] w-[620px] overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,_#0b58aa_0%,_#0a4280_36%,_#0a3669_100%)] shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
-                  <div className="absolute inset-0 bg-[linear-gradient(135deg,_#0b58aa_0%,_#0a4280_36%,_#0a3669_100%)]" />
-                  <div className="absolute inset-0 opacity-25 [background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_2px,transparent_2px,transparent_12px)]" />
-                  <div className="absolute inset-0 overflow-hidden">
-                    <div
-                      className={`relative z-10 h-full ${isDenseDaySnapshot ? "p-3.5" : "p-4"}`}
-                      style={{
-                        transform: `scale(${daySnapshotScale})`,
-                        transformOrigin: "top left",
-                        width: `${100 / daySnapshotScale}%`,
-                        height: `${100 / daySnapshotScale}%`,
-                      }}
-                    >
-                      <div className={`flex h-full flex-col overflow-hidden rounded-[24px] bg-white shadow-[0_20px_40px_rgba(5,24,55,0.22)] ${isDenseDaySnapshot ? "px-4 py-4" : "px-5 py-5"}`}>
-                        <div className={`flex items-start gap-4 rounded-[22px] bg-[linear-gradient(180deg,_#0e4a95_0%,_#0b3971_100%)] text-white ${isDenseDaySnapshot ? "px-5 py-4.5" : "px-5 py-4.5"}`}>
-                          <div className="flex min-w-0 flex-1 items-start gap-3.5">
-                            {snapshotTournamentLogo ? (
-                              <div className={`flex shrink-0 items-center justify-center ${isDenseDaySnapshot ? "h-[96px] w-[96px]" : "h-[104px] w-[104px]"}`}>
-                                {snapshotTournamentLogo ? (
-                                  <img
-                                    src={snapshotTournamentLogo}
-                                    alt={featuredTournament?.name || "Tournament logo"}
-                                    className="h-full w-full object-contain"
-                                    style={{ filter: "drop-shadow(0 8px 18px rgba(4,22,48,0.18))" }}
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center rounded-[16px] border border-white/18 bg-white/8 text-[12px] font-black uppercase tracking-[0.22em] text-white">
-                                    {getTournamentBadgeText(featuredTournament)}
-                                  </div>
-                                )}
-                              </div>
-                            ) : null}
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/74">{featuredTournament?.name || "Tournament"}</p>
-                              <p className={`mt-1 font-black uppercase tracking-[-0.095em] text-white ${isDenseDaySnapshot ? "text-[52px]" : "text-[52px]"}`}>Standings</p>
-                              <p className="mt-1 text-[14px] font-semibold uppercase tracking-[0.11em] text-white/84">{snapshotStageLabel} • {snapshotStandings.length} teams</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`mt-4 rounded-[18px] border border-slate-200 bg-slate-50/95 ${isDenseDaySnapshot ? "px-3 py-2.5" : "px-4 py-3"}`}>
-                          <div className={`grid items-center gap-x-2 gap-y-2 font-bold uppercase text-slate-500 ${isDenseDaySnapshot ? "text-[9px] tracking-[0.1em]" : "text-[11px] tracking-[0.14em]"} ${daySnapshotGridClass}`}>
-                            <span className="-ml-[1px] text-center">#</span>
-                            <span />
-                            <span className="pl-0.5 text-left">Team</span>
-                            {shouldShowSnapshotGroupColumn ? <span className="text-center">Grp</span> : null}
-                            <span className="text-center">M</span>
-                            <span className="text-center">W</span>
-                            <span className="text-center">P</span>
-                            <span className="text-center">F</span>
-                            <span className="pr-1 text-right">Total</span>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-1 flex-col justify-between">
-                          {snapshotStandings.map((team, index) => (
-                            <div key={`feed-${team.teamId || team.teamName}`} className={`grid items-center gap-x-2 gap-y-2 rounded-[16px] border-b border-slate-200/75 last:border-b-0 ${isDenseDaySnapshot ? "min-h-[38px] px-1.5 py-1.5 text-[12px]" : "min-h-[46px] px-2 py-2 text-sm"} ${daySnapshotGridClass}`}>
-                              <div className={`relative inline-flex self-center rounded-full ${isDenseDaySnapshot ? "h-6 w-6" : "h-8 w-8"} ${getSnapshotZoneClasses(getSnapshotZone({ index, total: snapshotStandings.length, selectedGroup: snapshotGroup }), "day")}`}>
-                                <span
-                                  className={`absolute inset-0 flex items-center justify-center font-black leading-none tabular-nums ${isDenseDaySnapshot ? "text-[11px]" : "text-sm"}`}
-                                  style={{ transform: "translateY(-5.5px)" }}
-                                >
-                                  {team.rank}
-                                </span>
-                              </div>
-                              <div className={isDenseDaySnapshot ? "flex h-[30px] w-[30px] self-center items-center justify-center" : "flex h-[30px] w-[30px] self-center items-center justify-center"}>
-                                <SnapshotLogo
-                                  name={team.logoName || team.teamName}
-                                  className="h-[30px] w-[30px]"
-                                />
-                              </div>
-                              <div className="relative -top-[5px] flex min-w-0 self-center items-center pl-0.5 pr-1">
-                                <span className={`${isDenseDaySnapshot ? "text-[18px]" : "text-[18px]"} block min-w-0 whitespace-nowrap text-left font-extrabold leading-[1.08] text-slate-900`}>
-                                  {team.teamName}
-                                </span>
-                              </div>
-                              {shouldShowSnapshotGroupColumn ? <div className="relative -top-[5px] self-center text-center font-medium text-slate-700">{team.group || "-"}</div> : null}
-                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.matches}</div>
-                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.wwcd}</div>
-                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.placementPoints}</div>
-                              <div className="relative -top-[5px] self-center text-center font-medium tabular-nums text-slate-700">{team.elims}</div>
-                              <div className={`relative -top-[5px] self-center pr-1 text-right font-black tabular-nums text-slate-900 ${isDenseDaySnapshot ? "text-[22px]" : "text-2xl"}`}>{team.points}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-3 border-t border-[#d6e0ee] pt-2">
-                          <div className="relative -top-[2px] flex flex-wrap items-center justify-center gap-4 text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                            {daySnapshotLegend.map((item) => (
-                              <div key={item.label} className="flex items-center gap-1.5 leading-none">
-                                <span className="inline-flex h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                                <span>{item.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5 md:mx-0 md:px-6">
+            <table className="min-w-[1500px] table-fixed text-sm">
+              <colgroup>
+                <col style={{ width: "64px" }} />
+                <col style={{ width: "264px" }} />
+                <col style={{ width: "92px" }} />
+                <col style={{ width: "108px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "96px" }} />
+                <col style={{ width: "96px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "96px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "84px" }} />
+                <col style={{ width: "84px" }} />
+                <col style={{ width: "84px" }} />
+              </colgroup>
+              <thead>
+                <tr className="border-b border-border bg-secondary/25 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <th rowSpan={2} className="border-r border-border px-3 py-3 text-center">#</th>
+                  <th rowSpan={2} className="border-r border-border px-4 py-3 text-left">Participant</th>
+                  <th rowSpan={2} className="border-r border-border px-3 py-3 text-center">Total Points</th>
+                  <th rowSpan={2} className="border-r border-border px-3 py-3 text-center">Matches Played</th>
+                  <th colSpan={2} className="border-r border-border px-3 py-3 text-center">Points</th>
+                  <th colSpan={4} className="border-r border-border px-3 py-3 text-center">Averages</th>
+                  <th colSpan={3} className="border-r border-border px-3 py-3 text-center">Placement Summary</th>
+                  <th colSpan={3} className="bg-secondary/10 px-3 py-3 text-center">Map Avg Pts</th>
+                </tr>
+                <tr className="border-b border-border bg-secondary/15 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <th className="border-r border-border px-3 py-3 text-center">Place</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Elims</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Placement</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Place Pts.</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Elims</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Total Pts.</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Top 5</th>
+                  <th className="border-r border-border px-3 py-3 text-center">Top 8</th>
+                  <th className="border-r border-border px-3 py-3 text-center">&gt; 8th</th>
+                  <th className="bg-secondary/10 px-2 py-3 text-center">Rondo</th>
+                  <th className="bg-secondary/10 px-2 py-3 text-center">Erangel</th>
+                  <th className="bg-secondary/10 px-2 py-3 text-center">Miramar</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {teamMapStats.map((team, index) => (
+                  <motion.tr
+                    key={`overall-stats-${team.teamId || team.teamName}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.012 }}
+                    className="bg-card/90 transition-colors hover:bg-secondary/20"
+                  >
+                    <td className="border-r border-border px-3 py-4 text-center align-middle">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-sm font-black text-emerald-600 dark:text-emerald-300">
+                        {team.rank}
+                      </span>
+                    </td>
+                    <td className="border-r border-border px-4 py-4 align-middle">
+                      <Link to={buildTeamLink(team.logoName || team.teamName)} className="block">
+                        <TeamIdentity
+                          name={team.logoName}
+                          className="font-semibold text-foreground"
+                          contained
+                          logoClassName="h-7 w-auto object-contain"
+                        />
+                      </Link>
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-lg font-black text-primary">
+                      {team.totalPoints}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {team.matchesPlayed}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {team.totalPlacePoints}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {team.totalElims}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {Number.isFinite(team.avgPlacement) ? team.avgPlacement.toFixed(2) : "-"}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {Number.isFinite(team.avgPlacePoints) ? team.avgPlacePoints.toFixed(2) : "-"}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {Number.isFinite(team.avgElims) ? team.avgElims.toFixed(2) : "-"}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {Number.isFinite(team.avgTotalPoints) ? team.avgTotalPoints.toFixed(2) : "-"}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {team.topFiveCount}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {team.topEightCount}
+                    </td>
+                    <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">
+                      {team.overEightCount}
+                    </td>
+                    <td className="bg-secondary/5 px-2 py-4 text-center align-middle font-semibold text-foreground">
+                      {Number.isFinite(team.avgPointsByMap.rondo) ? team.avgPointsByMap.rondo.toFixed(2) : "-"}
+                    </td>
+                    <td className="bg-secondary/5 px-2 py-4 text-center align-middle font-semibold text-foreground">
+                      {Number.isFinite(team.avgPointsByMap.erangel) ? team.avgPointsByMap.erangel.toFixed(2) : "-"}
+                    </td>
+                    <td className="bg-secondary/5 px-2 py-4 text-center align-middle font-semibold text-foreground">
+                      {Number.isFinite(team.avgPointsByMap.miramar) ? team.avgPointsByMap.miramar.toFixed(2) : "-"}
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.section>
+      ) : null}
+
+      {false && featuredTournament && teamMapStats.length > 0 ? (
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+        >
+          <div className="border-b border-border px-4 py-4 sm:px-5 sm:py-5 md:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+                  Team map trends
+                </p>
+                <h3 className="mt-2 text-[1.4rem] font-heading font-black uppercase tracking-[-0.04em] text-foreground sm:text-2xl">
+                  Map Stats By Team
+                </h3>
+                <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                  Participant totals on the left, then map-by-map averages, placement summaries, and point-range counts across the full tournament run.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-secondary/20 px-4 py-3 text-sm text-muted-foreground">
+                {calendarMatches.filter((match) => match.tournament_id === featuredTournament?.id).length} tournament matches across{" "}
+                {stageMaps.length} maps
+              </div>
+            </div>
+          </div>
+
+          <div className="-mx-4 overflow-x-auto sm:-mx-5 md:mx-0">
+            <div className="flex min-w-[1100px] overflow-hidden md:min-w-0">
+              <div className="shrink-0 border-r border-border bg-card shadow-[10px_0_24px_rgba(15,23,42,0.08)]">
+                <table className="w-[760px] table-fixed text-sm">
+                  <colgroup>
+                    <col style={{ width: "260px" }} />
+                    <col style={{ width: "92px" }} />
+                    <col style={{ width: "96px" }} />
+                    <col style={{ width: "96px" }} />
+                    <col style={{ width: "96px" }} />
+                    <col style={{ width: "80px" }} />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/25 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <th className="border-r border-border px-4 py-3 text-left">Team</th>
+                      <th className="border-r border-border px-3 py-3 text-center">Total Pts</th>
+                      <th className="border-r border-border px-3 py-3 text-center">Matches</th>
+                      <th className="border-r border-border px-3 py-3 text-center">Avg Place Pts</th>
+                      <th className="border-r border-border px-3 py-3 text-center">Avg Elims</th>
+                      <th className="px-3 py-3 text-center">Avg Placement</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {teamMapStats.map((team, index) => (
+                      <motion.tr
+                        key={`map-stats-summary-${team.teamId || team.teamName}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.012 }}
+                        className="h-[84px] bg-card/90 transition-colors hover:bg-secondary/20"
+                      >
+                        <td className="border-r border-border px-4 py-3 align-middle">
+                          <Link to={buildTeamLink(team.logoName || team.teamName)} className="block">
+                            <TeamIdentity
+                              name={team.logoName}
+                              className="font-semibold text-foreground"
+                              contained
+                              logoClassName="h-7 w-auto object-contain"
+                            />
+                          </Link>
+                        </td>
+                        <td className="border-r border-border px-3 py-3 text-center align-middle text-lg font-black text-primary">
+                          {team.totalPoints}
+                        </td>
+                        <td className="border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {team.matchesPlayed}
+                        </td>
+                        <td className="border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {Number.isFinite(team.avgPlacePoints) ? team.avgPlacePoints.toFixed(1) : "-"}
+                        </td>
+                        <td className="border-r border-border px-3 py-3 text-center align-middle text-foreground">
+                          {Number.isFinite(team.avgElims) ? team.avgElims.toFixed(1) : "-"}
+                        </td>
+                        <td className="px-3 py-3 text-center align-middle text-foreground">
+                          {Number.isFinite(team.avgPlacement) ? team.avgPlacement.toFixed(1) : "-"}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="min-w-0 flex-1 overflow-x-auto">
+                <table className="w-max table-fixed text-sm">
+                  <colgroup>
+                    {stageMaps.map((mapName) => (
+                      <col key={`map-col-${mapName}`} style={{ width: "250px" }} />
+                    ))}
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/25 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      {stageMaps.map((mapName) => (
+                        <th key={mapName} className="px-3 py-3 text-center">
+                          {mapName}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {teamMapStats.map((team, index) => (
+                      <motion.tr
+                        key={`map-stats-cells-${team.teamId || team.teamName}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.012 }}
+                        className="h-[84px] bg-card/90 transition-colors hover:bg-secondary/20"
+                      >
+                        {stageMaps.map((mapName) => {
+                          const mapRow = team.maps.find((entry) => entry.map === mapName);
+                          return (
+                            <td
+                              key={`${team.teamId || team.teamName}-${mapName}`}
+                              className="px-3 py-3 align-middle"
+                            >
+                              {mapRow ? (
+                                <div className="rounded-2xl border border-border bg-background px-3 py-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-black text-foreground">{mapRow.points} pts</p>
+                                    <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                                      {mapRow.matches}M • {mapRow.wwcd}W
+                                    </p>
+                                  </div>
+                                  <div className="mt-2 grid grid-cols-3 gap-2">
+                                    <div className="rounded-xl bg-secondary/30 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Place Pts</p>
+                                      <p className="mt-1 text-[11px] font-semibold text-foreground">{mapRow.avgPlacePoints.toFixed(1)}</p>
+                                    </div>
+                                    <div className="rounded-xl bg-secondary/30 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Avg Elims</p>
+                                      <p className="mt-1 text-[11px] font-semibold text-foreground">{mapRow.avgElims.toFixed(1)}</p>
+                                    </div>
+                                    <div className="rounded-xl bg-secondary/30 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Avg Place</p>
+                                      <p className="mt-1 text-[11px] font-semibold text-foreground">{mapRow.avgPlacement?.toFixed(1) || "-"}</p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-2 grid grid-cols-3 gap-2">
+                                    <div className="rounded-xl bg-secondary/20 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Top 5</p>
+                                      <p className="mt-1 text-[11px] font-semibold text-foreground">{mapRow.topFiveCount}</p>
+                                    </div>
+                                    <div className="rounded-xl bg-secondary/20 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Top 8</p>
+                                      <p className="mt-1 text-[11px] font-semibold text-foreground">{mapRow.topEightCount}</p>
+                                    </div>
+                                    <div className="rounded-xl bg-secondary/20 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">&gt; 8th</p>
+                                      <p className="mt-1 text-[11px] font-semibold text-foreground">{mapRow.overEightCount}</p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-2 grid grid-cols-3 gap-2">
+                                    <div className="rounded-xl border border-border/70 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">0</p>
+                                      <p className="mt-1 text-[10px] font-semibold text-foreground">{mapRow.pointsBuckets.zero}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-border/70 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">1-5</p>
+                                      <p className="mt-1 text-[10px] font-semibold text-foreground">{mapRow.pointsBuckets.oneToFive}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-border/70 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">6-10</p>
+                                      <p className="mt-1 text-[10px] font-semibold text-foreground">{mapRow.pointsBuckets.sixToTen}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-border/70 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">11-15</p>
+                                      <p className="mt-1 text-[10px] font-semibold text-foreground">{mapRow.pointsBuckets.elevenToFifteen}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-border/70 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">16-20</p>
+                                      <p className="mt-1 text-[10px] font-semibold text-foreground">{mapRow.pointsBuckets.sixteenToTwenty}</p>
+                                    </div>
+                                    <div className="rounded-xl border border-border/70 px-2 py-1.5">
+                                      <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">20+</p>
+                                      <p className="mt-1 text-[10px] font-semibold text-foreground">{mapRow.pointsBuckets.overTwenty}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="rounded-2xl border border-dashed border-border bg-background px-3 py-6 text-center text-muted-foreground/70">
+                                  -
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+      ) : null}
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

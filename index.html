@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/images/core-logo.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f97316" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="StageCore" />
+    <link rel="apple-touch-icon" href="/images/core-logo.png" />
     <title>StageCore - Control the Game. Own the Stage.</title>
     <meta
       name="description"
@@ -18,6 +24,11 @@
       property="og:image"
       content="https://media.base44.com/images/public/user_68ac92df3a1b474cdb95da21/ed64a54f1_3c2ad61d-d348-4cab-be8c-56737d0aa014.png"
     />
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("http://127.0.0.1:4000/");
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

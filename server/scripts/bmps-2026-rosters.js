@@ -1,7 +1,7 @@
 export const BMPS_2026_ROSTERS = {
   teamsoul: ["NakuL", "Goblin", "LEGIT", "Jokerr", "Thunder"],
   genesisesports: ["GravityJOD", "ViPER", "HunterZ", "FurY", "Zap"],
-  orangutan: ["Aaru", "AK", "WizzGOD", "Attanki", "Prem"],
+  orangutan: ["Aaru", "AKop", "WizzGOD", "Attanki", "Prem"],
   victoressumus: ["Owais", "VeNoM", "ScaryJod", "Mafia36", "Paritosh"],
   godlikeesports: ["Manya", "ADMINO", "Saumay", "Spower", "Godz"],
   divinegaming: ["Omega", "Slug", "NinjaBoi", "Knight", "Amit"],
@@ -64,4 +64,3 @@ export const BMPS_2026_ROSTERS = {
   truerippers: ["Punkk", "Omega", "Termi", "Shayaan", "Achuk"],
   esportsocial: ["BaDop", "MannyJOD", "GyroGOD", "Joyesh", "SuperMan"],
 };
-

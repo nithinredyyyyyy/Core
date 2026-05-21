@@ -1,10 +1,12 @@
 import cors from "cors";
 import express from "express";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { db, entityConfigs, normalizeRecord, recomputeTeamStats, serializePayload } from "./db.js";
+import { normalizeOrganizationName } from "../src/lib/organizationIdentity.js";
+import { getTeamLogoByName } from "../src/lib/teamLogos.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -12,10 +14,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
 const indexHtmlPath = path.join(distDir, "index.html");
-const LOCAL_ADMIN_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 const LOCAL_ADMIN_IPS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 const PUBLIC_WRITE_ENTITIES = new Set(["FanProfile", "FanPrediction", "FanPollVote", "FanChatMessage"]);
 const ADMIN_WRITE_ENTITIES = new Set(Object.keys(entityConfigs).filter((entityName) => !PUBLIC_WRITE_ENTITIES.has(entityName)));
+const FAN_SESSION_SECRET = String(process.env.CORE_FAN_SESSION_SECRET || randomUUID());
 const CONFIGURED_CORS_ORIGINS = [
   ...String(process.env.FRONTEND_ORIGIN || "")
     .split(",")
@@ -31,6 +33,10 @@ const ALLOWED_CORS_ORIGINS = new Set([
   "http://127.0.0.1:5173",
   "https://localhost:5173",
   "https://127.0.0.1:5173",
+  "http://localhost:4000",
+  "http://127.0.0.1:4000",
+  "https://localhost:4000",
+  "https://127.0.0.1:4000",
   ...CONFIGURED_CORS_ORIGINS,
 ]);
 
@@ -48,6 +54,14 @@ app.use(
   })
 );
 app.use(express.json({ limit: "2mb" }));
+
+app.get("/api/health", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "stagecore",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 const ORDERABLE_COLUMNS = {
   Tournament: new Set(["created_date", "updated_date", "name", "start_date", "end_date", "status", "tier"]),
@@ -76,6 +90,10 @@ const ORDERABLE_COLUMNS = {
 const stringField = (min = 1) => z.string().trim().min(min);
 const numberField = () => z.number().finite();
 const intField = () => z.number().int();
+const fanSessionRequestSchema = z.object({
+  display_name: z.string().trim().min(1).max(32).optional(),
+  user_id: z.string().trim().min(1).max(80).optional(),
+});
 
 const createSchemas = {
   Tournament: z.object({
@@ -325,7 +343,8 @@ function applyListQuery(entityName, config, query = {}, options = {}) {
     params.push(config.jsonFields.includes(key) ? JSON.stringify(value) : value);
   }
 
-  const safeLimit = Number.isFinite(Number(options.limit)) ? Math.min(Number(options.limit), 500) : null;
+  const maxListLimit = entityName === "MatchResult" ? 5000 : 500;
+  const safeLimit = Number.isFinite(Number(options.limit)) ? Math.min(Number(options.limit), maxListLimit) : null;
   const safeSkip = Number.isFinite(Number(options.skip)) ? Math.max(Number(options.skip), 0) : 0;
 
   let orderBy = "created_date DESC";
@@ -358,25 +377,77 @@ function normalizeTournamentPayload(row) {
   return normalizeRecord(entityConfigs.Tournament, row);
 }
 
-function getRequestHostname(req) {
-  const forwardedHost = req.headers["x-forwarded-host"];
-  const hostHeader = Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost || req.headers.host || "";
-  return String(hostHeader).split(":")[0].toLowerCase();
+function encodeTokenSegment(value) {
+  return Buffer.from(String(value), "utf8").toString("base64url");
 }
 
-function getRequestIp(req) {
-  const forwarded = req.headers["x-forwarded-for"];
-  const firstForwarded = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  if (firstForwarded) {
-    return String(firstForwarded).split(",")[0].trim();
+function decodeTokenSegment(value) {
+  return Buffer.from(String(value), "base64url").toString("utf8");
+}
+
+function signFanSessionPayload(encodedPayload) {
+  return createHmac("sha256", FAN_SESSION_SECRET).update(String(encodedPayload)).digest("base64url");
+}
+
+function createFanSession(displayName, preferredUserId) {
+  const safeName = String(displayName || "").trim() || `Fan${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const payload = {
+    userId: String(preferredUserId || "").trim() || `fan-${randomUUID()}`,
+    displayName: safeName,
+    issuedAt: new Date().toISOString(),
+  };
+  const encodedPayload = encodeTokenSegment(JSON.stringify(payload));
+  const signature = signFanSessionPayload(encodedPayload);
+
+  return {
+    userId: payload.userId,
+    displayName: payload.displayName,
+    token: `${encodedPayload}.${signature}`,
+  };
+}
+
+function resolveFanSession(req) {
+  const rawToken = String(req.headers["x-stagecore-fan-token"] || "").trim();
+  if (!rawToken) return null;
+
+  const [encodedPayload, providedSignature] = rawToken.split(".");
+  if (!encodedPayload || !providedSignature) return null;
+
+  const expectedSignature = signFanSessionPayload(encodedPayload);
+  const providedBuffer = Buffer.from(providedSignature, "utf8");
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return null;
   }
-  return req.ip || req.socket?.remoteAddress || "";
+
+  if (!timingSafeEqual(providedBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(decodeTokenSegment(encodedPayload));
+    if (!payload?.userId || !payload?.displayName) {
+      return null;
+    }
+
+    return {
+      token: rawToken,
+      userId: String(payload.userId),
+      displayName: String(payload.displayName),
+      issuedAt: payload.issuedAt || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getDirectRequestIp(req) {
+  return String(req.socket?.remoteAddress || req.ip || "").trim();
 }
 
 function isLocalAdminRequest(req) {
-  const hostname = getRequestHostname(req);
-  const ip = getRequestIp(req);
-  return LOCAL_ADMIN_HOSTS.has(hostname) || LOCAL_ADMIN_IPS.has(ip);
+  return LOCAL_ADMIN_IPS.has(getDirectRequestIp(req));
 }
 
 function resolveRequestAuth(req) {
@@ -405,6 +476,20 @@ function resolveRequestAuth(req) {
 }
 
 function ensureEntityWriteAccess(req, res, entityName) {
+  if (PUBLIC_WRITE_ENTITIES.has(entityName)) {
+    const fanSession = resolveFanSession(req);
+    if (!fanSession) {
+      res.status(401).json({
+        error: "Fan session required",
+        code: "fan_session_required",
+      });
+      return false;
+    }
+
+    req.fanSession = fanSession;
+    return true;
+  }
+
   if (!ADMIN_WRITE_ENTITIES.has(entityName)) {
     return null;
   }
@@ -420,6 +505,47 @@ function ensureEntityWriteAccess(req, res, entityName) {
 
   req.coreAuth = auth;
   return true;
+}
+
+function withFanOwnership(entityName, payload, fanSession) {
+  if (!PUBLIC_WRITE_ENTITIES.has(entityName)) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    user_id: fanSession.userId,
+    display_name: fanSession.displayName,
+    created_by: `fan:${fanSession.userId}`,
+  };
+}
+
+function ensurePublicRecordOwnership(req, res, entityName, id) {
+  const fanSession = req.fanSession || resolveFanSession(req);
+  if (!fanSession) {
+    res.status(401).json({
+      error: "Fan session required",
+      code: "fan_session_required",
+    });
+    return null;
+  }
+
+  const record = getRecord(entityName, id);
+  if (!record) {
+    res.status(404).json({ error: "Not found" });
+    return null;
+  }
+
+  if (record.user_id !== fanSession.userId) {
+    res.status(403).json({
+      error: "You can only modify your own fan activity",
+      code: "fan_record_forbidden",
+    });
+    return null;
+  }
+
+  req.fanSession = fanSession;
+  return record;
 }
 
 function normalizeSearchValue(value) {
@@ -963,6 +1089,101 @@ function getNormalizedTournament(id) {
   };
 }
 
+function isBmps2026PromotionStage(stageName) {
+  return /^round\s+[123]$/i.test(String(stageName || "").trim());
+}
+
+function getBmps2026NextStageName(stageName) {
+  const normalized = String(stageName || "").trim().toLowerCase();
+  if (normalized === "round 1") return "Round 2";
+  if (normalized === "round 2") return "Round 3";
+  if (normalized === "round 3") return "Survival Stage";
+  return null;
+}
+
+function getBmps2026MovementGroup(group, placement, totalTeams) {
+  const label = String(group || "").trim().toUpperCase();
+  const total = Math.max(Number(totalTeams) || 0, 0);
+  const bottomCutoff = Math.max(total - 3, 13);
+
+  if (label === "A") {
+    if (placement >= bottomCutoff) return "B";
+    return "A";
+  }
+  if (label === "B") {
+    if (placement <= 4) return "A";
+    if (placement >= bottomCutoff) return "C";
+    return "B";
+  }
+  if (label === "C") {
+    if (placement <= 4) return "B";
+    if (placement >= bottomCutoff) return "D";
+    return "C";
+  }
+  if (label === "D") {
+    if (placement <= 4) return "C";
+    return "D";
+  }
+  return label || "A";
+}
+
+function deriveBmps2026OverviewEntries(normalizedTournament) {
+  const baseEntries = (normalizedTournament?.participants || []).map((participant) => ({
+    team: participant?.team?.name || "Unknown Team",
+    phase:
+      participant?.stage_entries?.[0]?.stage_name && participant?.stage_entries?.[0]?.group_name
+        ? `${participant.stage_entries[0].stage_name} - ${participant.stage_entries[0].group_name}`
+        : participant?.stage_entries?.[0]?.stage_name || "Participants",
+  }));
+  const derivedEntries = [...baseEntries];
+  const knownPhaseKeys = new Set(
+    derivedEntries.map((entry) => `${normalizeOrganizationName(entry.team)}::${String(entry.phase || "").toLowerCase()}`)
+  );
+
+  for (const stage of normalizedTournament?.stages || []) {
+    const nextStageName = getBmps2026NextStageName(stage?.name);
+    if (!isBmps2026PromotionStage(stage?.name) || !nextStageName) continue;
+
+    const rowsByGroup = new Map();
+    const groupedStandings = stage?.standings?.by_group || {};
+    Object.entries(groupedStandings).forEach(([groupName, rows]) => {
+      const groupLabel = String(groupName || "").replace(/^Group\s+/i, "").trim().toUpperCase();
+      const filteredRows = (rows || []).filter((row) => row?.team?.name);
+      if (groupLabel && filteredRows.length > 0) {
+        rowsByGroup.set(groupLabel, filteredRows);
+      }
+    });
+
+    for (const [group, rows] of rowsByGroup.entries()) {
+      const orderedRows = [...rows]
+        .sort((left, right) => {
+          if ((right.total_points || 0) !== (left.total_points || 0)) {
+            return (right.total_points || 0) - (left.total_points || 0);
+          }
+          if ((right.wins || 0) !== (left.wins || 0)) {
+            return (right.wins || 0) - (left.wins || 0);
+          }
+          if ((right.place_points || 0) !== (left.place_points || 0)) {
+            return (right.place_points || 0) - (left.place_points || 0);
+          }
+          return String(left.team?.name || "").localeCompare(String(right.team?.name || ""));
+        });
+
+      orderedRows.forEach((row, index) => {
+        const teamName = row?.team?.name || "Unknown Team";
+        const destinationGroup = getBmps2026MovementGroup(group, index + 1, orderedRows.length);
+        const phase = `${nextStageName} - Group ${destinationGroup}`;
+        const phaseKey = `${normalizeOrganizationName(teamName)}::${phase.toLowerCase()}`;
+        if (knownPhaseKeys.has(phaseKey)) return;
+        knownPhaseKeys.add(phaseKey);
+        derivedEntries.push({ team: teamName, phase });
+      });
+    }
+  }
+
+  return derivedEntries;
+}
+
 function insertRecord(entityName, payload) {
   const config = entityConfigs[entityName];
   const now = new Date().toISOString();
@@ -1040,12 +1261,101 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/api/admin/overview", (req, res) => {
+  const auth = resolveRequestAuth(req);
+  if (!auth.isAuthenticated) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const countForEntity = (entityName) => {
+    const config = entityConfigs[entityName];
+    if (!config?.table) return 0;
+    const row = db.prepare(`SELECT COUNT(*) AS count FROM ${config.table}`).get();
+    return Number(row?.count || 0);
+  };
+
+  const teams = db.prepare("SELECT name, logo_url FROM teams").all();
+  const activeTournaments = db
+    .prepare("SELECT id, name, participants, status FROM tournaments WHERE status != 'completed'")
+    .all();
+
+  const duplicateBuckets = new Map();
+  teams.forEach((team) => {
+    const key = normalizeOrganizationName(team?.name || "");
+    if (!key) return;
+    duplicateBuckets.set(key, (duplicateBuckets.get(key) || 0) + 1);
+  });
+  const duplicateOrgCount = [...duplicateBuckets.values()].filter((count) => count > 1).length;
+
+  const teamKeys = new Set(teams.map((team) => normalizeOrganizationName(team?.name || "")).filter(Boolean));
+  const participantNames = new Set();
+  let unresolvedParticipantCount = 0;
+
+  activeTournaments.forEach((tournament) => {
+    let participants = [];
+    if (tournament?.name === "Battlegrounds Mobile India Pro Series 2026") {
+      const normalizedTournament = getNormalizedTournament(tournament.id);
+      participants = deriveBmps2026OverviewEntries(normalizedTournament);
+    } else {
+      try {
+        participants = JSON.parse(tournament?.participants || "[]");
+      } catch {
+        participants = [];
+      }
+    }
+
+    participants.forEach((entry) => {
+      const name = entry?.team;
+      if (!name) return;
+      participantNames.add(name);
+      const key = normalizeOrganizationName(name);
+      if (key && !teamKeys.has(key)) {
+        unresolvedParticipantCount += 1;
+      }
+    });
+  });
+
+  const missingLogoCount = [...participantNames].filter((name) => {
+    const team = teams.find((row) => normalizeOrganizationName(row?.name || "") === normalizeOrganizationName(name));
+    return !(team?.logo_url || getTeamLogoByName(name));
+  }).length;
+
+  return res.json({
+    counts: {
+      tournaments: countForEntity("Tournament"),
+      teams: countForEntity("Team"),
+      matches: countForEntity("Match"),
+      news: countForEntity("NewsArticle"),
+      transfers: countForEntity("TransferWindow"),
+      activeTournaments: activeTournaments.length,
+    },
+    health: {
+      duplicateOrgCount,
+      unresolvedParticipantCount,
+      missingLogoCount,
+    },
+  });
+});
+
 app.get("/api/auth/me", (req, res) => {
   const auth = resolveRequestAuth(req);
   if (!auth.isAuthenticated) {
     return res.status(401).json({ error: "Not authenticated" });
   }
   return res.json(auth.user);
+});
+
+app.post("/api/fan/session", (req, res) => {
+  try {
+    const payload = fanSessionRequestSchema.parse(req.body || {});
+    const session = createFanSession(payload.display_name, payload.user_id);
+    return res.status(201).json(session);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid session payload", issues: error.issues });
+    }
+    throw error;
+  }
 });
 
 app.get("/api/search", (req, res) => {
@@ -1092,10 +1402,18 @@ app.post("/api/entities/:entity", (req, res) => {
     return;
   }
   try {
-    const payload = validateEntityPayload(entityName, req.body, "create");
+    const payload = withFanOwnership(
+      entityName,
+      validateEntityPayload(entityName, req.body, "create"),
+      req.fanSession
+    );
     const created = insertRecord(entityName, payload);
+    if (entityName === "FanProfile" || entityName === "FanPrediction" || entityName === "FanPollVote" || entityName === "FanChatMessage") {
+      console.log(`[fan-write:done] ${entityName}`, created?.id || "no-id");
+    }
     return res.status(201).json(created);
   } catch (error) {
+    console.error(`[fan-write:error] ${entityName}`, error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid payload", issues: error.issues });
     }
@@ -1143,8 +1461,15 @@ app.put("/api/entities/:entity/:id", (req, res) => {
   if (!ensureEntityWriteAccess(req, res, entityName)) {
     return;
   }
+  if (PUBLIC_WRITE_ENTITIES.has(entityName) && !ensurePublicRecordOwnership(req, res, entityName, req.params.id)) {
+    return;
+  }
   try {
-    const payload = validateEntityPayload(entityName, req.body, "update");
+    const payload = withFanOwnership(
+      entityName,
+      validateEntityPayload(entityName, req.body, "update"),
+      req.fanSession
+    );
     const updated = updateRecord(entityName, req.params.id, payload);
     return res.json(updated);
   } catch (error) {
@@ -1161,6 +1486,12 @@ app.delete("/api/entities/:entity/:id", (req, res) => {
   }
   if (!ensureEntityWriteAccess(req, res, req.params.entity)) {
     return;
+  }
+  if (PUBLIC_WRITE_ENTITIES.has(req.params.entity)) {
+    return res.status(405).json({
+      error: "Fan activity cannot be deleted from the client",
+      code: "fan_delete_not_allowed",
+    });
   }
   const ok = deleteRecord(req.params.entity, req.params.id);
   return res.json({ ok });

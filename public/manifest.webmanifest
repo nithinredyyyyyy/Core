@@ -1,0 +1,19 @@
+{
+  "name": "StageCore",
+  "short_name": "StageCore",
+  "description": "Esports tournament platform for standings, schedules, fan engagement, and live circuit coverage.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f2eb",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/images/core-logo.png",
+      "sizes": "738x742",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

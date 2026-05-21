@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   Asterisk,
+  CalendarDays,
+  ChevronRight,
+  Clock3,
   Newspaper,
+  Play,
   Radio,
   Swords,
   Target,
@@ -19,16 +23,16 @@ import StatusBadge from "../components/shared/StatusBadge";
 import LoadingSpinner from "../components/shared/LoadingSpinner";
 import TeamIdentity from "../components/shared/TeamIdentity";
 import LogoBlock from "../components/shared/LogoBlock";
-import { getTeamLogoByName } from "@/lib/teamLogos";
+import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import {
   getOrganizationMeta,
   isOrganizationHidden,
 } from "@/lib/organizationIdentity";
 import { useMinimumLoader } from "@/lib/useMinimumLoader";
-import {
-  decorateMatchesWithLiveStatus,
-  decorateTournamentsWithLiveStatus,
-} from "@/lib/liveCalendar";
+import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
+import { resolveTournamentLiveState } from "@/lib/tournamentLiveState";
+import { buildFanHubLink } from "@/lib/fanNavigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 18 },
@@ -51,8 +55,17 @@ const riseItem = {
   transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] },
 };
 
-const LAST_TOURNAMENT_NAME = "Battlegrounds Mobile India Series 2026";
 const CURRENT_CIRCUIT_PATTERNS = [/2026/i, /bmps/i, /bgis/i];
+
+const HOME_STAGE_STATUS_STYLES = {
+  completed:
+    "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  current:
+    "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  live: "border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300",
+  upcoming:
+    "border-slate-300/80 bg-background/90 text-muted-foreground dark:border-slate-700 dark:bg-slate-900/50",
+};
 
 function isCurrentCircuitArticle(article) {
   const text = `${article?.title || ""} ${article?.content || ""}`.toLowerCase();
@@ -89,6 +102,56 @@ function aggregateTournamentStandings(results, teamsMap, { includeHidden = false
   );
 }
 
+function getTournamentLogo(tournament) {
+  if (!tournament?.name) return null;
+  if (tournament.name === "Battlegrounds Mobile India Series 2026") return "/images/bgis-logo.png";
+  if (tournament.name === "Battlegrounds Mobile India Series 2023") return "/images/bgis-2023.png";
+  if (tournament.name === "Battlegrounds Mobile India Series 2024") return "/images/bgis-2024.png";
+  if (tournament.name === "Battlegrounds Mobile India Series 2025") return "/images/bgis-2025.png";
+  if (tournament.name === "India - Korea Invitational") return "/images/in-kr.png";
+  if (tournament.name === "Battlegrounds Mobile India Showdown 2025") return "/images/bmsd-2025.png";
+  if (tournament.name === "Battlegrounds Mobile India International Cup 2025") return "/images/bmic-2025.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2023") return "/images/bmps-2023.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2024") return "/images/bmps-2024.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2025") return "/images/bmps-2025.png";
+  if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") return "/images/bmps-2026.png";
+  return null;
+}
+
+function getTournamentChampionFromStages(tournament) {
+  const stages = Array.isArray(tournament?.stages) ? tournament.stages : [];
+  const finalsStage =
+    stages.find((stage) => stage?.name === "Grand Finals" && Array.isArray(stage?.standings) && stage.standings.length > 0) ||
+    [...stages]
+      .reverse()
+      .find((stage) => Array.isArray(stage?.standings) && stage.standings.length > 0);
+
+  if (!finalsStage) return null;
+
+  const championEntry =
+    [...finalsStage.standings]
+      .sort((a, b) => (a?.placement ?? 999) - (b?.placement ?? 999))[0] || null;
+
+  if (!championEntry) return null;
+
+  const rawName = championEntry.fullTeam || championEntry.team || "";
+  const meta = getOrganizationMeta(rawName);
+
+  return {
+    teamKey: meta.key,
+    rawTeamName: rawName,
+    teamName: meta.name,
+    totalPoints: championEntry.points || 0,
+    wins: championEntry.wwcd || 0,
+  };
+}
+
+function buildTournamentStageLink(tournamentId, stageName) {
+  if (!tournamentId) return "/tournaments";
+  const base = `/tournaments?id=${encodeURIComponent(tournamentId)}`;
+  return stageName ? `${base}&stage=${encodeURIComponent(stageName)}` : base;
+}
+
 function LightPanel({ className = "", children }) {
   return (
     <div
@@ -100,6 +163,7 @@ function LightPanel({ className = "", children }) {
 }
 
 export default function Home() {
+  const isMobile = useIsMobile();
   const { data: tournaments = [], isLoading: loadT } = useQuery({
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 100),
@@ -112,10 +176,11 @@ export default function Home() {
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("-scheduled_time", 120),
   });
-  const { data: results = [], isLoading: loadResults } = useQuery({
+  const { data: rawResults = [], isLoading: loadResults } = useQuery({
     queryKey: ["results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 2000),
+    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
   });
+  const results = React.useMemo(() => filterPublishedMatchResults(rawResults), [rawResults]);
   const { data: news = [] } = useQuery({
     queryKey: ["news"],
     queryFn: () => base44.entities.NewsArticle.list("-created_date", 100),
@@ -126,16 +191,23 @@ export default function Home() {
     3200
   );
 
-  if (loaderState.showLoader) {
-    return <LoadingSpinner isExiting={loaderState.isExiting} />;
-  }
-
-  const calendarMatches = decorateMatchesWithLiveStatus(matches, results);
-  const calendarTournaments = decorateTournamentsWithLiveStatus(
-    tournaments,
-    calendarMatches,
-    results
+  const liveState = React.useMemo(
+    () =>
+      resolveTournamentLiveState({
+        tournaments,
+        teams,
+        matches,
+        matchResults: results,
+      }),
+    [matches, results, teams, tournaments]
   );
+  const {
+    calendarMatches,
+    calendarTournaments,
+    featuredTournament,
+    featuredParticipantEntries,
+    stageBoard: featuredTournamentBoard,
+  } = liveState;
 
   const liveMatches = calendarMatches.filter((m) => m.status === "live");
   const ongoingTournaments = calendarTournaments.filter((t) => t.status === "ongoing");
@@ -148,18 +220,13 @@ export default function Home() {
         new Date(a.end_date || a.updated_date || a.created_date).getTime()
     );
   const upcomingMatches = calendarMatches.filter((m) => m.status === "scheduled").slice(0, 4);
-  const featuredTournament =
-    ongoingTournaments[0] || upcomingTournaments[0] || calendarTournaments[0];
   const currentCircuitNews = news.filter(isCurrentCircuitArticle);
   const featuredNews = currentCircuitNews[0] || news[0];
   const latestNews = (currentCircuitNews.length > 0 ? currentCircuitNews : news).slice(
     0,
     3
   );
-  const lastTournament =
-    completedTournaments.find(
-      (tournament) => tournament.name === LAST_TOURNAMENT_NAME
-    ) || completedTournaments[0];
+  const lastTournament = completedTournaments[0];
   const teamsMap = Object.fromEntries(teams.map((team) => [team.id, team]));
   const lastTournamentResults = lastTournament
     ? results.filter((result) => result.tournament_id === lastTournament.id)
@@ -171,24 +238,36 @@ export default function Home() {
       includeHidden: true,
     }
   );
-  const championTeam = lastTournamentStandings[0];
+  const championTeam =
+    getTournamentChampionFromStages(lastTournament) || lastTournamentStandings[0];
   const championLogo = championTeam?.rawTeamName
     ? getTeamLogoByName(championTeam.rawTeamName)
     : null;
-  const featuredTournamentResults = featuredTournament
-    ? results.filter((result) => result.tournament_id === featuredTournament.id)
-    : [];
-  const featuredTournamentStandings = aggregateTournamentStandings(
-    featuredTournamentResults,
-    teamsMap,
-    {
-      includeHidden: false,
-    }
+  const championLogoSurfaceTone = championTeam?.rawTeamName
+    ? getTeamLogoSurfaceTone(championTeam.rawTeamName)
+    : "light";
+  if (loaderState.showLoader) {
+    return <LoadingSpinner isExiting={loaderState.isExiting} />;
+  }
+
+  const featuredTournamentStandings = featuredTournamentBoard.standings.map((entry) => ({
+    teamKey: entry.teamId || entry.teamName,
+    rawTeamName: entry.logoName || entry.teamName,
+    teamName: entry.teamName,
+    totalPoints: entry.points || 0,
+    wins: entry.wwcd || 0,
+    group: entry.group || "-",
+    stage: featuredTournamentBoard.featuredStage || null,
+  }));
+  const prioritizeCurrentTournamentBoard = Boolean(
+    featuredTournament && featuredTournament.status !== "completed"
   );
   const homeBoardSource =
     featuredTournamentStandings.length > 0
       ? featuredTournamentStandings
-      : lastTournamentStandings;
+      : prioritizeCurrentTournamentBoard
+        ? []
+        : lastTournamentStandings;
   const homeBoard = homeBoardSource.slice(0, 5).map((team, index) => ({
     rank: index + 1,
     teamName: team.teamName,
@@ -201,21 +280,21 @@ export default function Home() {
         : "Completed",
     wwcd: team.wins,
     points: team.totalPoints || 0,
+    group: team.group || "-",
   }));
-  const boardHeadline =
-    featuredTournamentStandings.length > 0
-      ? featuredTournament?.status === "ongoing"
-        ? "Live tournament board."
-        : "Current tournament board."
-      : lastTournament
-        ? "Latest completed board."
-        : "Tournament board pending.";
-  const boardEyebrow =
-    featuredTournamentStandings.length > 0
-      ? "Tournament board"
-      : "Latest completed event";
-  const boardTournament =
-    featuredTournamentStandings.length > 0 ? featuredTournament : lastTournament;
+  const boardHeadline = prioritizeCurrentTournamentBoard
+    ? featuredTournament?.status === "ongoing"
+      ? "Live tournament board."
+      : "Current tournament board."
+    : lastTournament
+      ? "Latest completed board."
+      : "Tournament board pending.";
+  const boardEyebrow = prioritizeCurrentTournamentBoard
+    ? "Tournament board"
+    : "Recent event";
+  const boardTournament = prioritizeCurrentTournamentBoard
+    ? featuredTournament
+    : lastTournament;
   const boardLink = boardTournament
     ? `/tournaments?id=${encodeURIComponent(boardTournament.id)}`
     : "/tournaments";
@@ -229,15 +308,70 @@ export default function Home() {
   const featuredTournamentCalendar = new Map(
     (featuredTournament?.calendar || []).map((item) => [item.label, item.week])
   );
-  const featuredStages = (featuredTournament?.stages || [])
-    .filter((stage) => stage?.name)
-    .map((stage, index) => ({
-      key: `${stage.name}-${index}`,
-      name: stage.name,
-      week: featuredTournamentCalendar.get(stage.name) || null,
-      teamCount: stage.teamCount ?? stage.standings?.length ?? null,
-      status: stage.status || null,
-    }));
+  const featuredStageOrder = new Map(
+    (featuredTournament?.stages || [])
+      .filter((stage) => stage?.name)
+      .map((stage, index) => [stage.name, index])
+  );
+  const focusedStageIndex = featuredStageOrder.has(featuredTournamentBoard.featuredStage)
+    ? featuredStageOrder.get(featuredTournamentBoard.featuredStage)
+    : -1;
+  const featuredStages = (() => {
+    return (featuredTournament?.stages || [])
+      .filter((stage) => stage?.name)
+      .map((stage, index) => ({
+        key: `${stage.name}-${index}`,
+        name: stage.name,
+        week: featuredTournamentCalendar.get(stage.name) || null,
+        teamCount: stage.teamCount ?? stage.standings?.length ?? null,
+        status:
+          focusedStageIndex >= 0
+            ? index < focusedStageIndex
+              ? "completed"
+              : index === focusedStageIndex
+                ? featuredTournamentBoard.liveMatch
+                  ? "live"
+                  : featuredTournament?.status === "ongoing"
+                    ? "current"
+                    : "upcoming"
+                : "upcoming"
+            : stage.status || null,
+      }));
+  })();
+  const featuredSpotlightStage =
+    featuredStages.find((stage) => stage.status === "live" || stage.status === "current") ||
+    featuredStages[0] ||
+    null;
+  const featuredTournamentFacts = [
+    {
+      label: "Game",
+      value: featuredTournament?.game || "Multiple titles",
+    },
+    {
+      label: "Window",
+      value:
+        featuredTournament?.start_date && featuredTournament?.end_date
+          ? `${format(new Date(featuredTournament.start_date), "MMM d")} - ${format(new Date(featuredTournament.end_date), "MMM d, yyyy")}`
+          : "Calendar pending",
+    },
+    {
+      label: "Prize pool",
+      value: featuredTournament?.prize_pool || "TBA",
+    },
+    {
+      label: "Field",
+      value: featuredTournament?.max_teams
+        ? `${featuredTournament.max_teams} teams`
+        : featuredParticipantEntries.length > 0
+          ? `${featuredParticipantEntries.length} teams`
+          : "Field locking",
+    },
+  ];
+  const featuredTournamentLink = buildTournamentStageLink(featuredTournament?.id);
+  const featuredCurrentStageLink = buildTournamentStageLink(
+    featuredTournament?.id,
+    featuredSpotlightStage?.name || null
+  );
 
   const stackedLinks = [
     {
@@ -255,10 +389,13 @@ export default function Home() {
       desktopPose: "xl:right-[13rem] xl:bottom-2 xl:-rotate-[9deg]",
     },
     {
-      title: "Tournament Hub",
-      desc: "Open the active event and follow the stage board inside the tournament view.",
-      icon: Target,
-      link: boardLink,
+      title: "Fans",
+      desc: "Predictions, polls, chat, and community energy around every matchday.",
+      icon: Swords,
+      link: buildFanHubLink({
+        tournamentId: featuredTournament?.id,
+        stage: featuredTournamentBoard.featuredStage || "",
+      }),
       desktopPose: "xl:right-[6.5rem] xl:bottom-4 xl:-rotate-[2deg]",
     },
     {
@@ -278,6 +415,291 @@ export default function Home() {
       : "BGIS 2026 champion locked",
     featuredNews?.title || "News desk ready for drops",
   ];
+  const nextMatch = upcomingMatches[0] || null;
+  const fanHubLink = buildFanHubLink({
+    tournamentId: featuredTournament?.id,
+    stage: featuredTournamentBoard.featuredStage || "",
+  });
+  const featuredTournamentVisual =
+    featuredTournament?.banner_url ||
+    getTournamentLogo(featuredTournament) ||
+    championLogo ||
+    "/images/core-logo.png";
+  const mobileBoardLeaders = homeBoard.slice(0, 3);
+  const mobileQuickActions = [
+    {
+      title: "Live board",
+      detail: boardTournament?.name || "Tournament standings",
+      icon: TrendingUp,
+      link: boardLink,
+    },
+    {
+      title: "Fan hub",
+      detail: "Polls, predictions, chat",
+      icon: Swords,
+      link: fanHubLink,
+    },
+    {
+      title: "Events",
+      detail: `${calendarTournaments.length} tournaments tracked`,
+      icon: Trophy,
+      link: "/tournaments",
+    },
+    {
+      title: "News",
+      detail: "Roster and result drops",
+      icon: Newspaper,
+      link: "/news",
+    },
+  ];
+  const mobilePulseCards = [
+    {
+      label: "Live matches",
+      value: String(liveMatches.length),
+      tone: "border-white/10 bg-white/8 text-white",
+    },
+    {
+      label: "Upcoming",
+      value: String(upcomingMatches.length),
+      tone: "border-white/10 bg-white/8 text-white",
+    },
+    {
+      label: "News drops",
+      value: String(latestNews.length),
+      tone: "border-white/10 bg-white/8 text-white",
+    },
+  ];
+
+  if (isMobile) {
+    return (
+      <div className="mx-auto max-w-[420px] space-y-4 pb-4">
+        <motion.section {...fadeUp(0)}>
+          <div className="relative overflow-hidden rounded-[2.15rem] border border-white/10 bg-[linear-gradient(180deg,rgba(4,10,26,0.98),rgba(10,18,42,0.97)_58%,rgba(18,55,126,0.9))] p-4 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(96,165,250,0.2),transparent_24%),radial-gradient(circle_at_80%_16%,rgba(255,255,255,0.08),transparent_12%),linear-gradient(180deg,transparent_40%,rgba(255,255,255,0.06)_100%)]" />
+            <div className="relative mx-auto mb-4 h-1.5 w-20 rounded-full bg-white/40" />
+
+            <div className="relative overflow-hidden rounded-[1.8rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.04))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] backdrop-blur">
+              <div
+                className="absolute inset-y-0 right-0 w-[52%] bg-cover bg-center opacity-75"
+                style={{ backgroundImage: `linear-gradient(270deg, rgba(4,10,26,0.12), rgba(4,10,26,0.92) 78%), url('${featuredTournamentVisual}')` }}
+              />
+              <div className="relative flex min-h-[230px] flex-col justify-between">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-sky-200/90">
+                      Matchday Central
+                    </p>
+                    <h1 className="mt-2 max-w-[10ch] text-[2.05rem] font-black leading-[0.88] tracking-[-0.06em] text-white">
+                      Own the next drop.
+                    </h1>
+                  </div>
+                  <div className="rounded-full border border-red-400/20 bg-red-500/16 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-red-100 backdrop-blur">
+                    {liveMatches.length > 0 ? "Live" : featuredTournament?.status || "Ready"}
+                  </div>
+                </div>
+
+                <div className="relative max-w-[58%]">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/54">
+                    Featured Event
+                  </p>
+                  <p className="mt-2 text-[1.2rem] font-black leading-tight tracking-[-0.04em] text-white">
+                    {featuredTournament?.name || "Tournament spotlight"}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/64">
+                    {featuredSpotlightStage?.name || "Stage pending"}
+                    {featuredSpotlightStage?.week ? ` • ${featuredSpotlightStage.week}` : ""}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={featuredTournamentLink}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-slate-950 shadow-[0_12px_24px_rgba(255,255,255,0.16)]"
+                  >
+                    Open Event <Play className="h-3.5 w-3.5 fill-current" />
+                  </Link>
+                  <Link
+                    to={boardLink}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-white/92"
+                  >
+                    Board <TrendingUp className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2.5">
+              {mobilePulseCards.map((card) => (
+                <div
+                  key={card.label}
+                  className={`rounded-[1.35rem] border px-3 py-3 backdrop-blur ${card.tone}`}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/55">
+                    {card.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-black leading-none tracking-[-0.05em] text-white">
+                    {card.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              {mobileQuickActions.map((action) => (
+                <Link
+                  key={action.title}
+                  to={action.link}
+                  className="flex min-h-[104px] flex-col items-start justify-between rounded-[1.45rem] border border-white/10 bg-white/8 px-3.5 py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.12)] backdrop-blur"
+                >
+                  <div className="flex w-full items-start justify-between gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/14 text-white">
+                      <action.icon className="h-5 w-5" />
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-white/44" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-black uppercase tracking-[0.01em] text-white">
+                      {action.title}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs text-white/58">
+                      {action.detail}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {mobileBoardLeaders.length > 0 ? (
+              <div className="mt-4 rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05))] p-3.5 backdrop-blur">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/52">
+                      Top Board
+                    </p>
+                    <p className="mt-1 text-sm font-black uppercase tracking-[0.01em] text-white">
+                      Season Leaders
+                    </p>
+                  </div>
+                  <Link to={boardLink} className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-200">
+                    View all
+                  </Link>
+                </div>
+                <div className="mt-3 grid gap-2.5">
+                  {mobileBoardLeaders.map((team) => (
+                    <div
+                      key={`${team.rank}-${team.teamName}`}
+                      className="flex items-center gap-3 rounded-[1.2rem] border border-white/8 bg-black/12 px-3 py-3"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] bg-white/10 text-sm font-black text-white">
+                        {team.rank}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <TeamIdentity
+                          name={team.logoName || team.teamName}
+                          className="truncate text-sm font-black uppercase tracking-[0.01em] text-white"
+                        />
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/48">
+                          {team.wwcd} WWCD
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-black leading-none tracking-[-0.04em] text-white">
+                          {team.points}
+                        </p>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">
+                          pts
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </motion.section>
+
+        <motion.section {...fadeUp(0.08)}>
+          <div className="grid gap-3">
+            <div className="rounded-[1.7rem] border border-border/70 bg-card p-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Next Match
+                  </p>
+                  <p className="mt-2 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-foreground">
+                    {nextMatch
+                      ? `${nextMatch.stage || "Stage"} - Match ${nextMatch.match_number || "-"}`
+                      : "Schedule locking in"}
+                  </p>
+                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Clock3 className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {nextMatch?.scheduled_time
+                  ? format(new Date(nextMatch.scheduled_time), "MMM d, h:mm a")
+                  : "The next lobby time will appear here."}
+                {nextMatch?.map ? ` • ${nextMatch.map}` : ""}
+              </p>
+            </div>
+
+            <div className="rounded-[1.7rem] border border-border/70 bg-card p-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Fan Pulse
+                  </p>
+                  <p className="mt-2 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-foreground">
+                    Predictions, polls, and live chat.
+                  </p>
+                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Swords className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Jump into community picks and matchday energy without leaving the app flow.
+              </p>
+              <Link
+                to={fanHubLink}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-primary-foreground"
+              >
+                Open fan hub <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="rounded-[1.7rem] border border-border/70 bg-card p-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Headline Drop
+                  </p>
+                  <p className="mt-2 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-foreground">
+                    {featuredNews?.title || "News desk standing by"}
+                  </p>
+                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <CalendarDays className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {featuredNews?.created_date
+                  ? format(new Date(featuredNews.created_date), "MMM d, yyyy")
+                  : "Open the news desk for the latest circuit update."}
+              </p>
+              <Link
+                to={featuredNews ? `/news/${featuredNews.id}` : "/news"}
+                className="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-primary"
+              >
+                Read story <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+      </div>
+    );
+  }
 
   return (
       <div className="mx-auto max-w-[1380px] space-y-6 pb-4 md:space-y-8 md:pb-6">
@@ -355,6 +777,7 @@ export default function Home() {
                               sizeClass="h-48 w-48"
                               roundedClass="rounded-[2rem]"
                               paddingClass="p-5"
+                              surfaceTone={championLogoSurfaceTone}
                               className="border-white/10 bg-white/5"
                             />
                           ) : (
@@ -378,7 +801,7 @@ export default function Home() {
                             to={lastTournament ? `/tournaments?id=${lastTournament.id}` : "/tournaments"}
                             className="mt-3 block max-w-[13ch] text-[1.75rem] font-black uppercase leading-[0.92] tracking-[-0.05em] transition-opacity hover:opacity-80 md:text-[2rem]"
                           >
-                            {lastTournament?.name || LAST_TOURNAMENT_NAME}
+                            {lastTournament?.name || "Latest completed tournament"}
                           </Link>
                           <p className="mt-3 max-w-[34ch] text-sm leading-7 text-white/66">
                             {championTeam?.teamName
@@ -461,7 +884,7 @@ export default function Home() {
           </div>
         </motion.section>
 
-        <motion.section {...fadeUp(0.06)}>
+        <motion.section {...fadeUp(0.06)} className={isMobile ? "hidden md:block" : ""}>
           <div className="ticker-shell rounded-[24px] border border-border/70 bg-card px-0 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.05)] sm:rounded-full">
             <div className="ticker-track">
               {[...tickerItems, ...tickerItems].map((item, idx) => (
@@ -479,91 +902,153 @@ export default function Home() {
 
         <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
           <motion.div {...fadeUp(0.1)}>
-            <Link
-              to={featuredTournament ? `/tournaments?id=${featuredTournament.id}` : "/tournaments"}
-              className="block h-full"
-            >
               <LightPanel className="h-full p-4 transition-transform duration-300 hover:-translate-y-1 sm:p-5 md:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-                      Main event
-                    </p>
-                    <h2 className="mt-3 max-w-3xl text-[1.85rem] font-black uppercase leading-none tracking-[-0.06em] text-foreground sm:text-3xl md:text-[3.6rem]">
-                      {featuredTournament?.name || "Tournament spotlight"}
-                    </h2>
-                  </div>
-                  <Asterisk className="mt-1 hidden h-6 w-6 text-primary md:block" />
-                </div>
-
-                <div className="mt-5 grid gap-4 md:grid-cols-[0.95fr_1.05fr]">
-                  <div className="space-y-4">
-                    <p className="text-sm leading-7 text-muted-foreground">
-                      {featuredTournament?.description ||
-                        "Create tournaments and the dashboard will promote the current headline event automatically."}
-                    </p>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="rounded-[22px] border border-border/70 bg-secondary/55 p-4">
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                          Game
-                        </p>
-                        <p className="mt-2 text-sm font-bold text-foreground">
-                          {featuredTournament?.game || "Multiple titles"}
+                <div className="space-y-5">
+                  <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
+                            Main event
+                          </span>
+                          {featuredTournament?.status ? (
+                            <StatusBadge status={featuredTournament.status} />
+                          ) : null}
+                        </div>
+                        <Link to={featuredTournamentLink} className="inline-block">
+                          <h2 className="mt-4 max-w-3xl text-[1.9rem] font-black uppercase leading-[0.94] tracking-[-0.05em] text-foreground transition-colors hover:text-primary sm:text-[2.3rem] lg:text-[2.8rem]">
+                            {featuredTournament?.name || "Tournament spotlight"}
+                          </h2>
+                        </Link>
+                        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-[15px]">
+                          {featuredTournament?.description ||
+                            "Create tournaments and the dashboard will promote the current headline event automatically."}
                         </p>
                       </div>
-                      <div className="rounded-[22px] border border-border/70 bg-secondary/55 p-4">
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                          Prize pool
-                        </p>
-                        <p className="mt-2 text-sm font-bold text-foreground">
-                          {featuredTournament?.prize_pool || "TBA"}
-                        </p>
-                      </div>
+                      <Asterisk className="mt-1 hidden h-6 w-6 text-primary md:block" />
                     </div>
+
+                    <Link
+                      to={featuredCurrentStageLink}
+                      className="block rounded-[22px] border border-border/70 bg-[linear-gradient(135deg,rgba(251,146,60,0.08),rgba(255,255,255,0.98))] px-4 py-4 transition-transform hover:-translate-y-0.5 dark:bg-[linear-gradient(135deg,rgba(251,146,60,0.12),rgba(15,23,42,0.9))] sm:px-5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                            Current stage
+                          </p>
+                          <h3 className="mt-1.5 text-xl font-black uppercase tracking-[-0.04em] text-foreground sm:text-2xl">
+                            {featuredSpotlightStage?.name || "Stage pending"}
+                          </h3>
+                        </div>
+                        {featuredSpotlightStage?.status ? (
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
+                              HOME_STAGE_STATUS_STYLES[featuredSpotlightStage.status] ||
+                              HOME_STAGE_STATUS_STYLES.upcoming
+                            }`}
+                          >
+                            {featuredSpotlightStage.status}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 rounded-[18px] border border-primary/10 bg-background/75 px-4 py-3">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                          {featuredSpotlightStage?.week || "Schedule window pending"}
+                        </p>
+                        <p className="mt-2 text-sm font-black uppercase tracking-[0.01em] text-foreground">
+                          {featuredSpotlightStage?.teamCount ? `${featuredSpotlightStage.teamCount} teams in play` : "Field pending"}
+                        </p>
+                      </div>
+                    </Link>
                   </div>
 
-                  <div className="rounded-[22px] border border-border/70 bg-background/80 p-4 sm:rounded-[26px] sm:p-5">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {featuredTournamentFacts.map((fact) => (
+                      <div
+                        key={fact.label}
+                        className="rounded-[18px] border border-border/70 bg-secondary/30 px-4 py-3"
+                      >
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                          {fact.label}
+                        </p>
+                        <p className="mt-1.5 text-sm font-black uppercase tracking-[0.01em] text-foreground">
+                          {fact.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-[24px] border border-border/70 bg-background/85 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:p-5">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                           Tournament stages
                         </p>
-                        <h3 className="mt-2 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-foreground sm:text-xl">
+                        <h3 className="mt-2 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-foreground">
                           {featuredStages.length > 0
                             ? `${featuredStages.length} stages mapped`
                             : "Stage map pending"}
                         </h3>
                       </div>
-                      <Target className="h-5 w-5 text-primary" />
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                        <Target className="h-5 w-5" />
+                      </div>
                     </div>
+
                     {featuredStages.length > 0 ? (
-                      <div className="mt-4 space-y-3">
-                        {featuredStages.map((stage, index) => (
-                          <div
-                            key={stage.key}
-                            className="flex items-start gap-3 rounded-[20px] border border-border/70 bg-secondary/40 px-4 py-3"
-                          >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xs font-black text-primary">
-                              {index + 1}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-sm font-black uppercase tracking-[0.01em] text-foreground">
-                                  {stage.name}
-                                </p>
-                                {stage.status ? (
-                                  <span className="inline-flex rounded-full bg-background px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                                    {stage.status}
-                                  </span>
-                                ) : null}
+                      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {featuredStages.map((stage, index) => {
+                          const isSpotlight =
+                            stage.name === featuredSpotlightStage?.name &&
+                            stage.status === featuredSpotlightStage?.status;
+
+                          return (
+                            <Link
+                              key={stage.key}
+                              to={buildTournamentStageLink(
+                                featuredTournament?.id,
+                                stage.name
+                              )}
+                              className={`rounded-[18px] border px-4 py-3.5 transition-colors ${
+                                isSpotlight
+                                  ? "border-primary/25 bg-primary/10 shadow-[0_14px_32px_rgba(251,146,60,0.1)]"
+                                  : "border-border/70 bg-secondary/20 hover:border-primary/20 hover:bg-secondary/35"
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] text-sm font-black ${
+                                    isSpotlight
+                                      ? "bg-primary text-primary-foreground"
+                                      : "bg-primary/10 text-primary"
+                                  }`}
+                                >
+                                  {index + 1}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-black uppercase leading-tight tracking-[0.01em] text-foreground">
+                                    {stage.name}
+                                  </p>
+                                  {stage.status ? (
+                                    <span
+                                      className={`mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${
+                                        HOME_STAGE_STATUS_STYLES[stage.status] ||
+                                        HOME_STAGE_STATUS_STYLES.upcoming
+                                      }`}
+                                    >
+                                      {stage.status}
+                                    </span>
+                                  ) : null}
+                                  <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                                    <div>{stage.week || "Schedule window pending"}</div>
+                                    {stage.teamCount ? <div className="mt-1">{stage.teamCount} teams</div> : null}
+                                  </div>
+                                </div>
                               </div>
-                              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                {stage.week || "Schedule window pending"}
-                                {stage.teamCount ? (<><span className="px-1 text-muted-foreground/60">&bull;</span>{stage.teamCount} teams</>) : null}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                            </Link>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="mt-3 text-sm leading-7 text-muted-foreground">
@@ -574,7 +1059,6 @@ export default function Home() {
                   </div>
                 </div>
               </LightPanel>
-            </Link>
           </motion.div>
 
           <motion.div {...fadeUp(0.14)}>
@@ -597,44 +1081,59 @@ export default function Home() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {homeBoard.map((team) => (
-                  <motion.div
-                    key={`${team.rank}-${team.teamName}`}
-                    initial={{ opacity: 0, x: 18 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, amount: 0.45 }}
-                    transition={{ duration: 0.42, ease: "easeOut" }}
-                    whileHover={{ y: -3, transition: { duration: 0.18 } }}
-                    className="flex items-center gap-3 rounded-[20px] border border-border/70 bg-background/70 px-3 py-3 sm:gap-4 sm:rounded-[24px] sm:px-4 sm:py-4"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-secondary text-sm font-black text-foreground sm:h-10 sm:w-10">
-                      {team.rank}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <TeamIdentity
-                        name={team.logoName || team.teamName}
-                        className="truncate text-sm font-black uppercase tracking-[0.02em] text-foreground"
-                      />
-                      <div className="mt-1 flex items-center gap-2">
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                          {team.status}
+                {homeBoard.length > 0 ? (
+                  homeBoard.map((team) => (
+                    <motion.div
+                      key={`${team.rank}-${team.teamName}`}
+                      initial={{ opacity: 0, x: 18 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, amount: 0.45 }}
+                      transition={{ duration: 0.42, ease: "easeOut" }}
+                      whileHover={{ y: -3, transition: { duration: 0.18 } }}
+                      className="flex items-center gap-3 rounded-[20px] border border-border/70 bg-background/70 px-3 py-3 sm:gap-4 sm:rounded-[24px] sm:px-4 sm:py-4"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-secondary text-sm font-black text-foreground sm:h-10 sm:w-10">
+                        {team.rank}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <TeamIdentity
+                          name={team.logoName || team.teamName}
+                          className="truncate text-sm font-black uppercase tracking-[0.02em] text-foreground"
+                        />
+                        <div className="mt-1 flex items-center gap-2">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                            {team.status}
+                          </p>
+                          <span className="text-[10px] text-muted-foreground">&bull;</span>
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                            {team.wwcd} WWCD
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black tracking-[-0.04em] text-primary sm:text-2xl">
+                          {team.points || 0}
                         </p>
-                        <span className="text-[10px] text-muted-foreground">&bull;</span>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                          {team.wwcd} WWCD
+                          points
                         </p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-black tracking-[-0.04em] text-primary sm:text-2xl">
-                        {team.points || 0}
-                      </p>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        points
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="rounded-[24px] border border-border/70 bg-background/70 px-4 py-5">
+                    <p className="text-sm font-semibold text-foreground">
+                      {featuredTournament?.status === "ongoing"
+                        ? "Live tournament detected. Results are still syncing into the home board."
+                        : "Current tournament selected. Standings will appear here once results land."}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {featuredTournamentBoard.featuredStage
+                        ? `Stage focus: ${featuredTournamentBoard.featuredStage}. Open the tournament board for the full stage view.`
+                        : "Open the tournament page to track the active stage and upcoming schedule."}
+                    </p>
+                  </div>
+                )}
               </div>
             </LightPanel>
           </motion.div>

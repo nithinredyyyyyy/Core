@@ -1,3 +1,5 @@
+import { getTeamLogoByName } from "@/lib/teamLogos";
+
 export function normalizeStageBoardValue(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -46,9 +48,12 @@ function extractGroupLabel(rawValue) {
   return value || "-";
 }
 
-export function getStageBoardTeamGroups(featuredTournament) {
+export function getStageBoardTeamGroups(featuredTournament, participantEntries = null) {
   const map = new Map();
-  for (const participant of featuredTournament?.participants || []) {
+  const sourceEntries = Array.isArray(participantEntries)
+    ? participantEntries
+    : featuredTournament?.participants || [];
+  for (const participant of sourceEntries) {
     const key = normalizeStageBoardValue(participant.team);
     if (!key) continue;
     const rawGroup = participant.group_name || participant.group || participant.phase || "-";
@@ -71,11 +76,10 @@ export function compareStageBoardStandings(left, right) {
   const rightAverage = getAverageEliminationPosition(right);
   if (leftAverage !== rightAverage) return leftAverage - rightAverage;
 
-  if ((right.elims || 0) !== (left.elims || 0)) return (right.elims || 0) - (left.elims || 0);
   return String(left.teamName || "").localeCompare(String(right.teamName || ""));
 }
 
-export function getStageBoardData({ featuredTournament, teams, matches, matchResults, requestedStage }) {
+export function getStageBoardData({ featuredTournament, teams, matches, matchResults, requestedStage, participantEntries = null }) {
   if (!featuredTournament) {
     return {
       featuredStage: null,
@@ -101,7 +105,7 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
   }));
   const matchById = new Map(boardMatches.map((match) => [match.id, match]));
   const teamMap = new Map(teams.map((team) => [team.id, team]));
-  const groupMap = getStageBoardTeamGroups(featuredTournament);
+  const groupMap = getStageBoardTeamGroups(featuredTournament, participantEntries);
   const standingsMap = new Map();
 
   for (const result of tournamentResults) {
@@ -113,6 +117,7 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
       teamId: result.team_id,
       teamName: displayName,
       logoName: displayName,
+      logoSrc: team?.logo_url || getTeamLogoByName(displayName) || null,
       group: isGrandFinalsStage ? "-" : groupMap.get(normalizeStageBoardValue(displayName)) || "-",
       matches: 0,
       wwcd: 0,

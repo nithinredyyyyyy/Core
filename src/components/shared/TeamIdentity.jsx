@@ -1,6 +1,7 @@
 import React from "react";
-import { getTeamLogoByName } from "@/lib/teamLogos";
+import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import LogoBlock from "@/components/shared/LogoBlock";
+import { useTheme } from "@/lib/ThemeContext";
 
 export default function TeamIdentity({
   name,
@@ -13,8 +14,11 @@ export default function TeamIdentity({
   logoClassName,
   containerClassName = "",
   hideText = false,
+  surfaceToneOverride = null,
 }) {
+  const { theme } = useTheme();
   const teamLogo = getTeamLogoByName(name);
+  const logoSurfaceTone = surfaceToneOverride || getTeamLogoSurfaceTone(name);
   const defaultBlockSize = compact ? "h-8 w-8" : "h-10 w-10";
   const championLogoClass = compact ? "h-10 w-auto object-contain" : "h-11 w-auto object-contain";
   const plainChipSize = compact ? "h-6 w-6" : "h-7 w-7";
@@ -30,6 +34,7 @@ export default function TeamIdentity({
             sizeClass="h-9 w-9"
             roundedClass="rounded-lg"
             paddingClass="p-1.5"
+            surfaceTone={logoSurfaceTone}
             className="border-[#3a2e18] bg-[linear-gradient(180deg,_rgba(73,52,18,0.95),_rgba(28,21,12,0.98))] shadow-sm"
           />
         ) : (
@@ -40,6 +45,7 @@ export default function TeamIdentity({
               sizeClass="h-10 w-10"
               roundedClass="rounded-xl"
               paddingClass="p-1.5"
+              surfaceTone={logoSurfaceTone}
             />
           ) : (
           glowed ? (
@@ -52,6 +58,7 @@ export default function TeamIdentity({
                   sizeClass="h-20 w-20"
                   roundedClass="rounded-2xl"
                   paddingClass="p-3"
+                  surfaceTone={logoSurfaceTone}
                   className="border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.68),_rgba(2,6,23,0.76))] shadow-[0_8px_22px_rgba(15,23,42,0.14)]"
                   imgClassName={logoClassName || championLogoClass}
                 />
@@ -59,14 +66,25 @@ export default function TeamIdentity({
             </div>
           ) : (
             plain ? (
-              <span className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize}`}>
-                <img
-                  src={teamLogo}
-                  alt={`${name} logo`}
-                  className={logoClassName || `${plainImgSize} shrink-0 object-contain`}
-                  style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.16)) drop-shadow(0 0 1px rgba(11,31,61,0.08))" }}
-                />
-              </span>
+              theme === "dark" ? (
+                <span className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize}`}>
+                  <img
+                    src={teamLogo}
+                    alt={`${name} logo`}
+                    className={logoClassName || `${plainImgSize} shrink-0 object-contain`}
+                    style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.16)) drop-shadow(0 0 1px rgba(11,31,61,0.08))" }}
+                  />
+                </span>
+              ) : (
+                <span className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize}`}>
+                  <img
+                    src={teamLogo}
+                    alt={`${name} logo`}
+                    className={logoClassName || `${plainImgSize} shrink-0 object-contain`}
+                    style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.16)) drop-shadow(0 0 1px rgba(11,31,61,0.08))" }}
+                  />
+                </span>
+              )
             ) : (
               <LogoBlock
                 src={teamLogo}
@@ -74,6 +92,7 @@ export default function TeamIdentity({
                 sizeClass={defaultBlockSize}
                 roundedClass="rounded-xl"
                 paddingClass="p-1.5"
+                surfaceTone={logoSurfaceTone}
                 imgClassName={logoClassName || ""}
               />
             )

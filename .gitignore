@@ -35,3 +35,7 @@ dist-ssr
 
 .env
 .vite
+
+# Local temp/debug payloads
+tmp/
+tmp-*.json

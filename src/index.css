@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Pacifico&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -263,6 +263,313 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.poster-export-sheet {
+  position: relative;
+  width: 1080px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 34px;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 84% 10%, rgba(255, 255, 255, 0.1), transparent 22%),
+    linear-gradient(180deg, #2e7bd2 0%, #1c66bc 38%, #0e4d9f 100%);
+  color: #0f172a;
+}
+
+.poster-export-sheet__texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.24;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0,
+      rgba(255, 255, 255, 0.12) 2px,
+      transparent 2px,
+      transparent 10px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(9, 43, 96, 0.08));
+}
+
+.poster-export-card {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(247, 250, 252, 0.985));
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  box-shadow:
+    0 26px 64px rgba(9, 36, 79, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  padding: 20px 30px 16px;
+}
+
+.poster-export-krafton {
+  position: absolute;
+  left: 30px;
+  top: 20px;
+  border-radius: 16px;
+  background: #000;
+  color: #fff;
+  padding: 12px 18px 11px;
+}
+
+.poster-export-krafton__title {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.poster-export-krafton__sub {
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1;
+}
+
+.poster-export-brand {
+  position: absolute;
+  right: 30px;
+  top: 24px;
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+}
+
+.poster-export-hero {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  align-items: end;
+  column-gap: 24px;
+  margin-top: 86px;
+}
+
+.poster-export-hero__logo {
+  display: flex;
+  height: 112px;
+  width: 112px;
+  align-items: center;
+  justify-content: center;
+}
+
+.poster-export-hero__logo-img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.poster-export-hero__headline {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.poster-export-stagecode {
+  font-size: 92px;
+  font-weight: 900;
+  letter-spacing: -0.12em;
+  line-height: 0.82;
+  color: #1362c5;
+  min-width: 132px;
+}
+
+.poster-export-script {
+  padding-bottom: 8px;
+  color: #0f172a;
+  font-family: var(--font-heading);
+  font-size: 54px;
+  font-style: italic;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+.poster-export-group {
+  margin-top: 10px;
+  margin-left: 2px;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  color: #1357b0;
+  text-transform: uppercase;
+}
+
+.poster-export-main {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  column-gap: 22px;
+  margin-top: 14px;
+  flex: 1;
+  min-height: 0;
+}
+
+.poster-export-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+.poster-export-rail__segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  padding: 8px 6px;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.poster-export-rail__segment span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.poster-export-rail__segment--promote,
+.poster-export-rail__segment--safe {
+  border: 1px solid #5e9ae6;
+  background: linear-gradient(180deg, #72adf1 0%, #467fca 100%);
+}
+
+.poster-export-rail__segment--drop {
+  border: 1px solid #d45c72;
+  background: linear-gradient(180deg, #df6f85 0%, #b9384f 100%);
+}
+
+.poster-export-rail__segment--small {
+  flex: 0 0 86px;
+}
+
+.poster-export-rail__segment--medium {
+  flex: 0 0 172px;
+}
+
+.poster-export-rail__segment--large {
+  flex: 1 1 auto;
+}
+
+.poster-export-table {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.poster-export-table__head,
+.poster-export-row {
+  display: grid;
+  grid-template-columns: 52px 36px 322px 54px 76px 68px 86px 88px 84px;
+  align-items: center;
+  column-gap: 8px;
+}
+
+.poster-export-table__head {
+  border-bottom: 1px solid rgba(167, 184, 210, 0.72);
+  padding: 0 2px 9px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.poster-export-table__head span:nth-child(n + 4):not(:last-child),
+.poster-export-row__stat {
+  text-align: center;
+}
+
+.poster-export-table__head span:last-child {
+  text-align: right;
+}
+
+.poster-export-table__body {
+  display: grid;
+  min-height: 0;
+}
+
+.poster-export-row {
+  min-height: 52px;
+  border-bottom: 1px solid rgba(167, 184, 210, 0.52);
+  padding: 3px 2px;
+}
+
+.poster-export-row__rank {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.poster-export-row__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poster-export-row__logo-img {
+  height: 24px;
+  width: 24px;
+  object-fit: contain;
+}
+
+.poster-export-row__team {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  padding-right: 10px;
+}
+
+.poster-export-row__group {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1357b0;
+  letter-spacing: 0.08em;
+}
+
+.poster-export-row__stat {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.poster-export-row__total {
+  text-align: right;
+  font-size: 17px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.poster-export-footer {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  border-top: 2px solid #1562c4;
+  padding-top: 12px;
+  color: #4b5f7d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.poster-export-footer span:last-child {
+  text-align: right;
 }
 
 @keyframes preloader-vortex-spin {

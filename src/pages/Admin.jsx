@@ -9,8 +9,6 @@ import AdminResults from "../components/admin/ADMINRESULTS";
 import AdminNews from "../components/admin/AdminNews";
 import AdminTransfers from "../components/admin/AdminTransfers";
 import AdminInspector from "../components/admin/AdminInspector";
-import { getOrganizationMeta } from "@/lib/organizationIdentity";
-import { getTeamLogoByName } from "@/lib/teamLogos";
 
 const tabs = [
   { id: "tournaments", label: "Tournaments", icon: Trophy },
@@ -34,53 +32,28 @@ const TAB_DESCRIPTIONS = {
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("tournaments");
-  const { data: tournaments = [] } = useQuery({
-    queryKey: ["admin-tournaments-count"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 100),
+  const { data: overview = null } = useQuery({
+    queryKey: ["admin-overview"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/overview");
+      if (!response.ok) {
+        throw new Error(`Failed to load admin overview: ${response.status}`);
+      }
+      return response.json();
+    },
   });
-  const { data: teams = [] } = useQuery({
-    queryKey: ["admin-teams-count"],
-    queryFn: () => base44.entities.Team.list("-created_date", 200),
-  });
-  const { data: matches = [] } = useQuery({
-    queryKey: ["admin-matches-count"],
-    queryFn: () => base44.entities.Match.list("-created_date", 500),
-  });
-  const { data: news = [] } = useQuery({
-    queryKey: ["admin-news-count"],
-    queryFn: () => base44.entities.NewsArticle.list("-created_date", 200),
-  });
-  const { data: transfers = [] } = useQuery({
-    queryKey: ["admin-transfers-count"],
-    queryFn: () => base44.entities.TransferWindow.list("-date", 300),
-  });
-  const activeTournaments = tournaments.filter((tournament) => tournament.status !== "completed");
-  const duplicateOrgCount = (() => {
-    const buckets = new Map();
-    teams.forEach((team) => {
-      const key = getOrganizationMeta(team).key;
-      const current = buckets.get(key) || 0;
-      buckets.set(key, current + 1);
-    });
-    return [...buckets.values()].filter((count) => count > 1).length;
-  })();
-  const activeParticipants = activeTournaments.flatMap((tournament) =>
-    Array.isArray(tournament.participants) ? tournament.participants : []
-  );
-  const missingLogoCount = [...new Set(activeParticipants.map((entry) => entry?.team).filter(Boolean))].filter(
-    (name) => !getTeamLogoByName(name)
-  ).length;
-  const unresolvedParticipantCount = activeParticipants.filter((entry) => {
-    const targetKey = getOrganizationMeta(entry?.team).key;
-    return !teams.some((team) => getOrganizationMeta(team).key === targetKey);
-  }).length;
+
+  const activeTournaments = overview?.counts?.activeTournaments || 0;
+  const duplicateOrgCount = overview?.health?.duplicateOrgCount || 0;
+  const missingLogoCount = overview?.health?.missingLogoCount || 0;
+  const unresolvedParticipantCount = overview?.health?.unresolvedParticipantCount || 0;
 
   const overviewCards = [
-    { label: "Tournaments", value: activeTournaments.length, icon: Trophy },
-    { label: "Teams", value: teams.length, icon: Users },
-    { label: "Matches", value: matches.length, icon: Swords },
-    { label: "Stories", value: news.length, icon: Newspaper },
-    { label: "Transfers", value: transfers.length, icon: ArrowRightLeft },
+    { label: "Tournaments", value: activeTournaments, icon: Trophy },
+    { label: "Teams", value: overview?.counts?.teams || 0, icon: Users },
+    { label: "Matches", value: overview?.counts?.matches || 0, icon: Swords },
+    { label: "Stories", value: overview?.counts?.news || 0, icon: Newspaper },
+    { label: "Transfers", value: overview?.counts?.transfers || 0, icon: ArrowRightLeft },
   ];
 
   return (

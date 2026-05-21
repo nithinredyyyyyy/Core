@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import TournamentDetail from "../components/tournaments/TournamentDetail";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { decorateTournamentsWithLiveStatus } from "@/lib/liveCalendar";
+import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 
 const STATUS_BADGE_CLASSES = {
   upcoming: "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
@@ -46,9 +47,9 @@ function getTournamentSortValue(tournament) {
 
 function compareTournaments(a, b) {
   const statusPriority = {
-    completed: 0,
-    ongoing: 1,
-    upcoming: 2,
+    ongoing: 0,
+    upcoming: 1,
+    completed: 2,
   };
 
   const priorityDelta = (statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3);
@@ -72,10 +73,11 @@ export default function Tournaments() {
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("scheduled_time", 500),
   });
-  const { data: results = [] } = useQuery({
+  const { data: rawResults = [] } = useQuery({
     queryKey: ["results"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
   });
+  const results = React.useMemo(() => filterPublishedMatchResults(rawResults), [rawResults]);
 
   useEffect(() => {
     setSelectedId(searchParams.get("id") || null);
@@ -126,9 +128,11 @@ export default function Tournaments() {
     return (
       <TournamentDetail
         tournament={selected}
+        requestedStage={searchParams.get("stage") || ""}
         onBack={() => {
           const nextParams = new URLSearchParams(searchParams);
           nextParams.delete("id");
+          nextParams.delete("stage");
           setSearchParams(nextParams);
           setSelectedId(null);
         }}

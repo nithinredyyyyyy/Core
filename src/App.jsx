@@ -1,8 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
-import { useQuery } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import { SearchProvider } from '@/lib/SearchContext';
@@ -18,19 +17,10 @@ import NewsArticle from './pages/NewsArticle';
 import Fans from './pages/Fans';
 import Admin from './pages/Admin';
 import { ShieldAlert } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-
-const LOCAL_ADMIN_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+import { useAdminAccess } from '@/lib/adminAccess';
 
 function AdminAccessGate() {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isLocalAdmin = LOCAL_ADMIN_HOSTS.has(hostname);
-  const { data: authUser, isLoading } = useQuery({
-    queryKey: ['auth-me', isLocalAdmin ? 'local' : 'remote'],
-    queryFn: () => base44.auth.me(),
-    retry: false,
-    staleTime: 30_000,
-  });
+  const { authUser, isLocalAdmin, isLoading } = useAdminAccess();
 
   if (isLoading) {
     return (
@@ -64,20 +54,6 @@ function AdminAccessGate() {
   return <Admin />;
 }
 
-function LeaderboardAccessGate() {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isLocalAdmin = LOCAL_ADMIN_HOSTS.has(hostname);
-  const [searchParams] = useSearchParams();
-
-  if (isLocalAdmin) {
-    return <Leaderboard />;
-  }
-
-  const tournamentId = searchParams.get('tournament');
-  const target = tournamentId ? `/tournaments?id=${encodeURIComponent(tournamentId)}` : '/tournaments';
-  return <Navigate to={target} replace />;
-}
-
 const RoutedApp = () => {
   return (
     <Routes>
@@ -86,7 +62,7 @@ const RoutedApp = () => {
         <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/players/:playerIgn" element={<PlayerProfile />} />
-        <Route path="/leaderboard" element={<LeaderboardAccessGate />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/fans" element={<Fans />} />
         <Route path="/news" element={<News />} />
         <Route path="/news/:articleId" element={<NewsArticle />} />

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Search, Trophy, Users, Swords, Newspaper, X, UserCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { buildContextualFanHubLink } from "@/lib/fanNavigation";
 
 const RESULT_ICONS = {
   tournament: Trophy,
@@ -17,6 +18,8 @@ export default function GlobalSearch({ open, onClose }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const fansPath = buildContextualFanHubLink(location);
 
   useEffect(() => {
     if (open) {
@@ -45,7 +48,7 @@ export default function GlobalSearch({ open, onClose }) {
   const suggestions = [
     { icon: Trophy, label: "Tournaments", path: "/tournaments" },
     { icon: Users, label: "Teams", path: "/teams" },
-    { icon: Swords, label: "Fans", path: "/fans" },
+    { icon: Swords, label: "Fans", path: fansPath },
     { icon: Newspaper, label: "News", path: "/news" },
   ];
 
