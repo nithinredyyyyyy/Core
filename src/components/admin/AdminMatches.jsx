@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
 
 const MAPS = ["Erangel", "Miramar", "Rondo", "Haven", "Bind", "Split", "Ascent", "Icebox", "Breeze", "Fracture", "Pearl", "Lotus", "Sunset", "Other"];
 
@@ -31,6 +32,20 @@ function getStageGroupOptions(stage) {
     }
   }
 
+  const rotationRows = Array.isArray(stage?.mapRotation) ? stage.mapRotation : [];
+  const rotationGroups = new Set();
+  rotationRows.forEach((row) => {
+    Object.entries(row || {}).forEach(([key, value]) => {
+      if (!/^day\d+$/i.test(key)) return;
+      const normalized = String(value || "").trim().toUpperCase();
+      if (normalized) rotationGroups.add(`Group ${normalized}`);
+    });
+  });
+
+  if (rotationGroups.size > 0) {
+    return [...rotationGroups].sort();
+  }
+
   return [];
 }
 
@@ -38,11 +53,22 @@ function buildMatchKey(match) {
   return [match.tournament_id, match.stage, match.group_name || "", String(match.day || 0), String(match.match_number || 0)].join("::");
 }
 
-function getRotationGroup(stage, day) {
+function getRotationGroups(stage, day) {
   const rows = Array.isArray(stage?.mapRotation) ? stage.mapRotation : [];
   const key = `day${day}`;
-  const value = rows[0]?.[key];
-  return value ? `Group ${String(value).toUpperCase()}` : "";
+  return [...new Set(
+    rows
+      .map((row) => String(row?.[key] || "").trim().toUpperCase())
+      .filter(Boolean)
+      .map((value) => `Group ${value}`)
+  )];
+}
+
+function getRotationGroupLabel(stage, day) {
+  const groups = getRotationGroups(stage, day);
+  if (groups.length === 0) return "";
+  if (groups.length === 1) return groups[0];
+  return groups.join(" + ");
 }
 
 function getRotationRowsForDay(stage, day, requestedGroupName) {
@@ -90,23 +116,30 @@ function buildAutoSchedulePreview(autoForm, tournament, stageConfig) {
       return { entries: [], error: "This stage does not have stored map rotation data yet." };
     }
 
-    const inferredGroup = autoForm.group_name || getRotationGroup(stageConfig, day);
-    if (!inferredGroup) {
+    const inferredGroup = autoForm.group_name || getRotationGroupLabel(stageConfig, day);
+    const rotationGroups = getRotationGroups(stageConfig, day);
+    if (!autoForm.group_name && rotationGroups.length === 0) {
       return { entries: [], error: `No rotation group is mapped for Day ${day}.` };
     }
 
-    const dayRows = getRotationRowsForDay(stageConfig, day, inferredGroup);
+    const dayRows = getRotationRowsForDay(stageConfig, day, autoForm.group_name);
     if (!dayRows.length) {
-      return { entries: [], error: `No rotation rows found for ${inferredGroup} on Day ${day}.` };
+      return {
+        entries: [],
+        error: autoForm.group_name
+          ? `No rotation rows found for ${autoForm.group_name} on Day ${day}.`
+          : `No rotation rows found on Day ${day}.`,
+      };
     }
 
     const entries = dayRows.map((row, index) => {
       const scheduledTime = autoForm.start_time
         ? new Date(new Date(autoForm.start_time).getTime() + index * intervalMinutes * 60 * 1000).toISOString()
         : "";
+      const rowGroupValue = String(row?.[`day${day}`] || "").trim().toUpperCase();
       return {
         ...base,
-        group_name: inferredGroup,
+        group_name: rowGroupValue ? `Group ${rowGroupValue}` : autoForm.group_name || "",
         match_number: Number.isFinite(startMatch) && startMatch > 0 ? startMatch + index : Number(row.match) || index + 1,
         map: row.map || "Other",
         scheduled_time: scheduledTime,
@@ -145,6 +178,7 @@ export default function AdminMatches() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState(createFormSnapshot({}));
   const [autoForm, setAutoForm] = useState({
     tournament_id: "",
     stage: "",
@@ -212,24 +246,41 @@ export default function AdminMatches() {
     },
   });
 
+  const isFormMutating = createMatch.isPending || updateMatch.isPending || deleteMatch.isPending;
+  const isScheduleMutating = createMatchesBulk.isPending || updateStatus.isPending;
+
   const resetForm = () => {
     setShowForm(false);
     setEditing(null);
     setForm({});
+    setInitialFormSnapshot(createFormSnapshot({}));
+  };
+
+  const isFormDirty = createFormSnapshot(form) !== initialFormSnapshot;
+
+  const attemptCloseForm = () => {
+    if (!confirmDiscardIfDirty(isFormDirty)) return;
+    resetForm();
   };
 
   const openCreate = () => {
+    if (showForm && !confirmDiscardIfDirty(isFormDirty)) return;
     setEditing(null);
-    setForm({ status: "scheduled", stream_url: "" });
+    const nextForm = { status: "scheduled", stream_url: "" };
+    setForm(nextForm);
+    setInitialFormSnapshot(createFormSnapshot(nextForm));
     setShowForm(true);
   };
 
   const openEdit = (match) => {
+    if (showForm && editing !== match.id && !confirmDiscardIfDirty(isFormDirty)) return;
     setEditing(match.id);
-    setForm({
+    const nextForm = {
       ...match,
       scheduled_time: match.scheduled_time ? String(match.scheduled_time).slice(0, 16) : "",
-    });
+    };
+    setForm(nextForm);
+    setInitialFormSnapshot(createFormSnapshot(nextForm));
     setShowForm(true);
   };
 
@@ -243,7 +294,7 @@ export default function AdminMatches() {
   const autoStages = autoTournament?.stages?.map((stage) => stage.name) || [];
   const autoStageConfig = getStageConfig(autoTournament, autoForm.stage);
   const autoStageGroupOptions = getStageGroupOptions(autoStageConfig);
-  const inferredRotationGroup = autoForm.source === "rotation" ? getRotationGroup(autoStageConfig, Number(autoForm.day)) : "";
+  const inferredRotationGroup = autoForm.source === "rotation" ? getRotationGroupLabel(autoStageConfig, Number(autoForm.day)) : "";
   const autoSchedulePreview = useMemo(
     () => buildAutoSchedulePreview(autoForm, autoTournament, autoStageConfig),
     [autoForm, autoTournament, autoStageConfig]
@@ -409,7 +460,7 @@ export default function AdminMatches() {
                   : `${previewWithStatus.length} matches ready${autoSchedulePreview.inferredGroup ? ` · ${autoSchedulePreview.inferredGroup}` : ""}`}
               </p>
             </div>
-            <Button onClick={handleGenerateSchedule} disabled={createMatchesBulk.isPending || !!autoSchedulePreview.error || previewWithStatus.length === 0}>
+            <Button type="button" onClick={handleGenerateSchedule} disabled={createMatchesBulk.isPending || !!autoSchedulePreview.error || previewWithStatus.length === 0}>
               <Sparkles className="w-4 h-4 mr-2" />
               Create schedule
             </Button>
@@ -441,14 +492,14 @@ export default function AdminMatches() {
 
       <div className="flex justify-between items-center">
         <h2 className="font-semibold">Matches ({matches.length})</h2>
-        <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> New Match</Button>
+        <Button type="button" onClick={openCreate} size="sm" className="gap-2" disabled={isFormMutating || isScheduleMutating}><Plus className="w-4 h-4" /> New Match</Button>
       </div>
 
       {showForm && (
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
           <div className="flex justify-between">
             <h3 className="font-semibold">{editing ? "Edit" : "Create"} Match</h3>
-            <Button variant="ghost" size="icon" onClick={resetForm}><X className="w-4 h-4" /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={attemptCloseForm} disabled={isFormMutating}><X className="w-4 h-4" /></Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
@@ -503,8 +554,8 @@ export default function AdminMatches() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMatch.isPending || updateMatch.isPending}>
+            <Button type="button" variant="outline" onClick={attemptCloseForm} disabled={isFormMutating}>Cancel</Button>
+            <Button type="button" onClick={handleSubmit} disabled={createMatch.isPending || updateMatch.isPending}>
               <Save className="w-4 h-4 mr-2" /> {editing ? "Update" : "Create"}
             </Button>
           </div>
@@ -523,7 +574,7 @@ export default function AdminMatches() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={match.status} onValueChange={(value) => updateStatus.mutate({ id: match.id, status: value })}>
+              <Select value={match.status} onValueChange={(value) => updateStatus.mutate({ id: match.id, status: value })} disabled={isScheduleMutating}>
                 <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="scheduled">Scheduled</SelectItem>
@@ -531,8 +582,8 @@ export default function AdminMatches() {
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="ghost" size="icon" onClick={() => openEdit(match)}><Pencil className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => deleteMatch.mutate(match.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(match)} disabled={isFormMutating || isScheduleMutating}><Pencil className="w-4 h-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => deleteMatch.mutate(match.id)} disabled={isFormMutating || isScheduleMutating}><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
           </div>
         ))}

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
 
 const CATEGORIES = ["tournament", "patch_update", "roster_change", "announcement", "general"];
 const GAMES = ["BGMI", "Valorant", "CSGO", "Free Fire", "PUBG PC", "Apex Legends", "General"];
@@ -26,6 +27,7 @@ export default function AdminNews() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState(createFormSnapshot(EMPTY_FORM));
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -57,19 +59,32 @@ export default function AdminNews() {
     },
   });
 
+  const isMutating = createArticle.isPending || updateArticle.isPending || deleteArticle.isPending;
+
   const resetForm = () => {
     setShowForm(false);
     setEditing(null);
     setForm(EMPTY_FORM);
+    setInitialFormSnapshot(createFormSnapshot(EMPTY_FORM));
+  };
+
+  const isFormDirty = createFormSnapshot(form) !== initialFormSnapshot;
+
+  const attemptCloseForm = () => {
+    if (!confirmDiscardIfDirty(isFormDirty)) return;
+    resetForm();
   };
 
   const openCreate = () => {
+    if (showForm && !confirmDiscardIfDirty(isFormDirty)) return;
     setEditing(null);
     setForm(EMPTY_FORM);
+    setInitialFormSnapshot(createFormSnapshot(EMPTY_FORM));
     setShowForm(true);
   };
 
   const openEdit = (article) => {
+    if (showForm && editing !== article.id && !confirmDiscardIfDirty(isFormDirty)) return;
     setEditing(article.id);
     setForm({
       title: article.title || "",
@@ -79,6 +94,14 @@ export default function AdminNews() {
       thumbnail_url: article.thumbnail_url || "",
       content: article.content || "",
     });
+    setInitialFormSnapshot(createFormSnapshot({
+      title: article.title || "",
+      category: article.category || "general",
+      game: article.game || "General",
+      created_date: article.created_date ? String(article.created_date).slice(0, 10) : "",
+      thumbnail_url: article.thumbnail_url || "",
+      content: article.content || "",
+    }));
     setShowForm(true);
   };
 
@@ -104,14 +127,14 @@ export default function AdminNews() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="font-semibold">News Articles ({articles.length})</h2>
-        <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> New Article</Button>
+        <Button type="button" onClick={openCreate} size="sm" className="gap-2" disabled={isMutating}><Plus className="w-4 h-4" /> New Article</Button>
       </div>
 
       {showForm && (
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
           <div className="flex justify-between">
             <h3 className="font-semibold">{editing ? "Edit" : "New"} Article</h3>
-            <Button variant="ghost" size="icon" onClick={resetForm}><X className="w-4 h-4" /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={attemptCloseForm} disabled={isMutating}><X className="w-4 h-4" /></Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2"><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
@@ -137,8 +160,8 @@ export default function AdminNews() {
             <div className="md:col-span-2"><Label>Content *</Label><Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className="min-h-[120px]" /></div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createArticle.isPending || updateArticle.isPending}><Save className="w-4 h-4 mr-2" /> {editing ? "Update" : "Publish"}</Button>
+            <Button type="button" variant="outline" onClick={attemptCloseForm} disabled={isMutating}>Cancel</Button>
+            <Button type="button" onClick={handleSubmit} disabled={createArticle.isPending || updateArticle.isPending}><Save className="w-4 h-4 mr-2" /> {editing ? "Update" : "Publish"}</Button>
           </div>
         </div>
       )}
@@ -153,8 +176,8 @@ export default function AdminNews() {
               </p>
             </button>
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" onClick={() => openEdit(article)}><Pencil className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => deleteArticle.mutate(article.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(article)} disabled={isMutating}><Pencil className="w-4 h-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => deleteArticle.mutate(article.id)} disabled={isMutating}><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
           </div>
         ))}

@@ -24,21 +24,24 @@ export default function FanProfileCard({
     <FansPanel className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-violet-100 text-2xl font-black text-violet-600">
+          <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,rgba(251,146,60,0.16),rgba(255,255,255,0.98))] text-2xl font-black text-primary">
             {user?.displayName?.slice(0, 1) || "F"}
           </div>
           <div>
             <h2 className="text-[1.1rem] font-black tracking-[-0.03em] text-slate-900">
               {user?.displayName}
             </h2>
-            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-50 px-2.5 py-1 text-[10px] font-bold text-orange-500">
+            <p className="mt-1 text-[11px] leading-5 text-slate-500">
+              Your profile updates automatically as predictions settle and community actions stack up.
+            </p>
+            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
               <Award className="h-3 w-3" />
               {currentBadge}
             </div>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[1.9rem] font-black leading-none text-violet-600">{points}</p>
+          <p className="text-[1.9rem] font-black leading-none text-primary">{points}</p>
           <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-slate-500">Pts</p>
         </div>
       </div>
@@ -72,17 +75,23 @@ export default function FanProfileCard({
           <p className="text-[12px] text-slate-500">
             Progress to {nextBadge?.label || "Max"}
           </p>
-          <p className="text-[12px] font-bold text-violet-600">
+          <p className="text-[12px] font-bold text-primary">
             {points - currentBadgeMin} / {nextBadge ? nextBadge.min - currentBadgeMin : points} pts
           </p>
         </div>
         <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-slate-200">
-          <div className="h-full rounded-full bg-violet-500" style={{ width: `${progressValue}%` }} />
+          <div className="h-full rounded-full bg-primary" style={{ width: `${progressValue}%` }} />
         </div>
-        <p className="mt-2.5 text-[11px] text-slate-500">
-          Favorite team: <span className="font-semibold text-slate-700">{favoriteTeam || "Not selected yet"}</span>
-          {leaderboardRank ? <span> • Rank #{leaderboardRank}</span> : null}
-        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+            Favorite team: {favoriteTeam || "Not selected yet"}
+          </span>
+          {leaderboardRank ? (
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+              Rank #{leaderboardRank}
+            </span>
+          ) : null}
+        </div>
       </div>
     </FansPanel>
   );

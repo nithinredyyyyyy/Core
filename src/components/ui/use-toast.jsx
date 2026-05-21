@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 300;
+const TOAST_LIFETIME = 5000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -19,6 +20,7 @@ function genId() {
 }
 
 const toastTimeouts = new Map();
+const toastLifetimes = new Map();
 
 const addToRemoveQueue = (toastId) => {
   if (toastTimeouts.has(toastId)) {
@@ -44,6 +46,14 @@ const _clearFromRemoveQueue = (toastId) => {
   }
 };
 
+const clearToastLifetime = (toastId) => {
+  const timeout = toastLifetimes.get(toastId);
+  if (timeout) {
+    clearTimeout(timeout);
+    toastLifetimes.delete(toastId);
+  }
+};
+
 export const reducer = (state, action) => {
   switch (action.type) {
     case actionTypes.ADD_TOAST:
@@ -66,9 +76,11 @@ export const reducer = (state, action) => {
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
+        clearToastLifetime(toastId);
         addToRemoveQueue(toastId);
       } else {
         state.toasts.forEach((toast) => {
+          clearToastLifetime(toast.id);
           addToRemoveQueue(toast.id);
         });
       }
@@ -87,11 +99,13 @@ export const reducer = (state, action) => {
     }
     case actionTypes.REMOVE_TOAST:
       if (action.toastId === undefined) {
+        state.toasts.forEach((toast) => clearToastLifetime(toast.id));
         return {
           ...state,
           toasts: [],
         };
       }
+      clearToastLifetime(action.toastId);
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
@@ -112,6 +126,7 @@ function dispatch(action) {
 
 function toast({ ...props }) {
   const id = genId();
+  const duration = props.duration ?? TOAST_LIFETIME;
 
   const update = (props) =>
     dispatch({
@@ -133,6 +148,12 @@ function toast({ ...props }) {
       },
     },
   });
+
+  clearToastLifetime(id);
+  const lifetimeTimeout = setTimeout(() => {
+    dismiss();
+  }, duration);
+  toastLifetimes.set(id, lifetimeTimeout);
 
   return {
     id,

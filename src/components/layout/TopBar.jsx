@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Bell, Settings, Search, Sun, Moon, Radio, User, Sparkles, ShieldCheck } from "lucide-react";
+import { Bell, Settings, Search, Sun, Moon, Radio, User, Sparkles, ShieldCheck, Download, Smartphone } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import { AnimatePresence } from "framer-motion";
 import { BrandMark } from "../shared/BrandMark";
+import { buildContextualFanHubLink } from "@/lib/fanNavigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,22 +14,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const LOCAL_ADMIN_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+import { useAdminAccess } from "@/lib/adminAccess";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function TopBar() {
   const { theme, toggle } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
+  const isMobile = useIsMobile();
   const location = useLocation();
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  const isLocalAdmin = LOCAL_ADMIN_HOSTS.has(hostname);
-  const mobileNavItems = [
-    { label: "Home", path: "/" },
-    { label: "Events", path: "/tournaments" },
-    ...(isLocalAdmin ? [{ label: "Standings", path: "/leaderboard" }] : []),
-    { label: "Fans", path: "/fans" },
-    { label: "News", path: "/news" },
-  ];
+  const { hasAdminAccess } = useAdminAccess();
+  const { isInstallable, isInstalled, promptInstall } = useInstallPrompt();
+  const fansPath = buildContextualFanHubLink(location);
   const patchNotes = [
     "Patch watch: BMPS 2026 prize pool updated.",
     "Roster desk: 8Bit added Shubh to the active roster.",
@@ -41,18 +38,18 @@ export default function TopBar() {
         {searchOpen && <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />}
       </AnimatePresence>
 
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(249,246,241,0.92))] backdrop-blur dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(17,24,39,0.92))]">
+      <header className={isMobile ? "sticky top-0 z-40 border-b border-white/10 bg-[linear-gradient(180deg,rgba(7,13,31,0.82),rgba(10,18,42,0.72))] backdrop-blur" : "sticky top-0 z-40 border-b border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(249,246,241,0.92))] backdrop-blur dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(17,24,39,0.92))]"}>
         <div className="flex min-h-[4.5rem] items-center gap-2.5 px-3 sm:px-4 md:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3 md:hidden">
             <div
               data-core-logo-target="primary"
-              className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm md:hidden"
+              className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/95 shadow-[0_10px_30px_rgba(59,130,246,0.18)] md:hidden"
             >
               <BrandMark concept="site" className="h-8 w-8 object-contain" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-primary">Core</p>
-              <p className="truncate text-xs font-semibold text-foreground sm:text-sm">Esports command center</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-sky-300">Core</p>
+              <p className="truncate text-xs font-semibold text-white sm:text-sm">Esports command center</p>
             </div>
           </div>
 
@@ -126,6 +123,18 @@ export default function TopBar() {
                   <Search className="h-4 w-4" />
                   <span>Open global search</span>
                 </DropdownMenuItem>
+                {isInstallable && (
+                  <DropdownMenuItem onSelect={promptInstall} className="rounded-xl px-3 py-2.5">
+                    <Download className="h-4 w-4" />
+                    <span>Install mobile app</span>
+                  </DropdownMenuItem>
+                )}
+                {isInstalled && (
+                  <DropdownMenuItem className="rounded-xl px-3 py-2.5">
+                    <Smartphone className="h-4 w-4" />
+                    <span>App already installed</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem className="rounded-xl px-3 py-2.5">
                   <ShieldCheck className="h-4 w-4" />
                   <span>Coverage mode: competitive</span>
@@ -170,16 +179,14 @@ export default function TopBar() {
                     <span>Open tournament hubs</span>
                   </Link>
                 </DropdownMenuItem>
-                {isLocalAdmin ? (
-                  <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5">
-                    <Link to="/leaderboard">
-                      <Sparkles className="h-4 w-4" />
-                      <span>Open standings board</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ) : null}
                 <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5">
-                  <Link to="/fans">
+                  <Link to="/leaderboard">
+                    <Sparkles className="h-4 w-4" />
+                    <span>Open standings board</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5">
+                  <Link to={fansPath}>
                     <Radio className="h-4 w-4" />
                     <span>Open fan engagement</span>
                   </Link>
@@ -189,27 +196,23 @@ export default function TopBar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto px-3 pb-3 md:hidden">
-          {mobileNavItems.map((item) => {
-            const active = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  active ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+        <div className="flex items-center justify-between gap-3 px-3 pb-3 md:hidden">
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card text-muted-foreground"
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-left text-xs font-medium text-white/70 shadow-[0_10px_28px_rgba(0,0,0,0.16)] backdrop-blur"
           >
-            <Search className="h-3.5 w-3.5" />
+            <Search className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Search teams, matches, stories...</span>
           </button>
+          {isInstallable && (
+            <button
+              onClick={promptInstall}
+              className="flex shrink-0 items-center gap-1 rounded-full border border-sky-300/20 bg-sky-400/15 px-3 py-2 text-xs font-semibold text-sky-100"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Install
+            </button>
+          )}
         </div>
       </header>
     </>

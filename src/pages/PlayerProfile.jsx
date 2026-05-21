@@ -9,7 +9,8 @@ import LogoBlock from "@/components/shared/LogoBlock";
 import ProfilePanel from "@/components/shared/ProfilePanel";
 import ProfileStatGrid from "@/components/shared/ProfileStatGrid";
 import ResultsByYearTable from "@/components/shared/ResultsByYearTable";
-import { getTeamLogoByName } from "@/lib/teamLogos";
+import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
+import { decorateMatchesWithLiveStatus } from "@/lib/liveCalendar";
 import {
   buildPlayerAliasIndex,
   buildPlayerTeamHistoryMap,
@@ -23,6 +24,15 @@ import {
   getPrizeForOrganization,
   getTournamentResultForOrganization,
 } from "@/lib/tournamentResults";
+import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
+import {
+  BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES,
+  BMPS_2026_PLAYER_TEAM_OVERRIDES,
+  BMPS_2026_QUALIFIER_PLAYER_STATS,
+} from "@/lib/bmps2026PlayerStats";
+import { getPlayerPhotoByIgn } from "@/lib/playerPhotos";
+import { getPlayerDisplayName } from "@/lib/playerDisplayName";
+import { getFeaturedTournamentStage } from "@/lib/stageBoard";
 
 function decodeIgn(value) {
   try {
@@ -34,6 +44,13 @@ function decodeIgn(value) {
 
 function normalizeIgn(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeStatPlayerKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function isMajorTier(tier) {
@@ -128,10 +145,11 @@ export default function PlayerProfile() {
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 100),
   });
-  const { data: results = [], isLoading: resultsLoading } = useQuery({
+  const { data: rawResults = [], isLoading: resultsLoading } = useQuery({
     queryKey: ["results"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 3000),
   });
+  const results = useMemo(() => filterPublishedMatchResults(rawResults), [rawResults]);
   const { data: matches = [], isLoading: matchesLoading } = useQuery({
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("-scheduled_time", 2000),
@@ -178,6 +196,10 @@ export default function PlayerProfile() {
   );
   const isNormalizedLoading =
     normalizedStagesLoading || normalizedParticipantsLoading || normalizedStandingsLoading;
+  const decoratedMatches = useMemo(
+    () => decorateMatchesWithLiveStatus(matches, results),
+    [matches, results]
+  );
 
   const resolved = useMemo(() => {
     const siteTournamentNames = new Set(
@@ -338,7 +360,51 @@ export default function PlayerProfile() {
     "Unassigned";
   const teamTag = resolved.teamRow?.tag || resolved.teamMeta?.tag || "---";
   const teamLogo = getTeamLogoByName(teamName) || resolved.teamRow?.logo_url || null;
+  const teamLogoSurfaceTone = getTeamLogoSurfaceTone(teamName);
+  const playerPhoto = resolved.playerRow?.photo_url || getPlayerPhotoByIgn(decodedIgn);
+  const displayIgn = getPlayerDisplayName(decodedIgn);
   const currentTournament = resolved.relatedTournaments[0] || null;
+  const currentTournamentStageFocus = useMemo(() => {
+    if (!currentTournament?.id) return null;
+    const tournamentRow = tournaments.find((entry) => entry.id === currentTournament.id);
+    if (!tournamentRow) return null;
+    const tournamentMatches = decoratedMatches.filter((match) => match.tournament_id === currentTournament.id);
+    const tournamentResults = results.filter((entry) => entry.tournament_id === currentTournament.id);
+    return getFeaturedTournamentStage(tournamentRow, tournamentMatches, tournamentResults);
+  }, [currentTournament?.id, decoratedMatches, results, tournaments]);
+  const bmpsStatKills = useMemo(() => {
+    const playerRow = resolved.playerRow;
+    if (!playerRow) return null;
+
+    const aliasSet = new Set([normalizeStatPlayerKey(decodedIgn), normalizeStatPlayerKey(playerRow.ign)]);
+    playerAliases
+      .filter((alias) => alias.player_id === playerRow.id)
+      .forEach((alias) => aliasSet.add(normalizeStatPlayerKey(alias.alias)));
+
+    const matchingRows = BMPS_2026_QUALIFIER_PLAYER_STATS.filter((entry) =>
+      aliasSet.has(normalizeStatPlayerKey(entry.player))
+    );
+
+    if (matchingRows.length === 0) return null;
+
+    if (matchingRows.length === 1) {
+      return matchingRows[0].finishes;
+    }
+
+    const currentTeamKey = resolved.teamMeta?.key || null;
+    if (!currentTeamKey) return matchingRows[0].finishes;
+
+    const teamMatchedRow = matchingRows.find((entry) => {
+      const teamName =
+        BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES[`${entry.rank}:${entry.player}`] ||
+        BMPS_2026_PLAYER_TEAM_OVERRIDES[normalizeStatPlayerKey(entry.player)] ||
+        null;
+      if (!teamName) return false;
+      return getOrganizationMetaFromAliases(teamName, teamAliasIndex).key === currentTeamKey;
+    });
+
+    return (teamMatchedRow || matchingRows[0]).finishes;
+  }, [decodedIgn, playerAliases, resolved.playerRow, resolved.teamMeta, teamAliasIndex]);
   const appearanceYears = [...resolved.relatedTournaments.reduce((grouped, entry) => {
     const year = getHistoryYear(entry.date);
     const bucket = grouped.get(year) || [];
@@ -379,7 +445,7 @@ export default function PlayerProfile() {
   const primaryStats = [
     { icon: Shield, label: "Team tag", value: teamTag },
     { icon: UserCircle2, label: "Role", value: resolved.playerRow?.role || "Player" },
-    { icon: Swords, label: "Kills", value: resolved.playerRow?.total_kills || 0 },
+    { icon: Swords, label: "Kills", value: (bmpsStatKills ?? resolved.playerRow?.total_kills) || 0 },
     {
       icon: Trophy,
       label: "Matches",
@@ -394,7 +460,7 @@ export default function PlayerProfile() {
         ? Number(resolved.playerRow.avg_damage).toFixed(0)
         : "-",
     },
-    { label: "Latest phase", value: currentTournament?.phase || "Roster active" },
+    { label: "Latest phase", value: currentTournamentStageFocus || currentTournament?.phase || "Roster active" },
   ];
 
   if (isLoading) {
@@ -431,7 +497,7 @@ export default function PlayerProfile() {
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Player profile</p>
               <h1 className="mt-2 text-4xl font-black uppercase tracking-[-0.05em] text-foreground">
-                {decodedIgn}
+                {displayIgn}
               </h1>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 Current team: <span className="font-semibold text-foreground">{teamName}</span>
@@ -443,20 +509,31 @@ export default function PlayerProfile() {
           </div>
 
           <div className="flex items-center justify-center">
-            <LogoBlock
-              src={teamLogo}
-              alt={teamName}
-              sizeClass="h-56 w-56"
-              roundedClass="rounded-[30px]"
-              paddingClass="p-7"
-              className="border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.12),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
-            >
-              {!teamLogo ? (
-                <span className="text-5xl font-black uppercase text-primary">
-                  {teamTag.slice(0, 2)}
-                </span>
-              ) : null}
-            </LogoBlock>
+            {playerPhoto ? (
+              <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_52%,rgba(248,243,235,0.98)_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_58%,rgba(17,24,39,1)_100%)]">
+                <img
+                  src={playerPhoto}
+                  alt={displayIgn}
+                  className="h-full w-full object-contain object-bottom"
+                />
+              </div>
+            ) : (
+              <LogoBlock
+                src={teamLogo}
+                alt={teamName}
+                sizeClass="h-56 w-56"
+                roundedClass="rounded-[30px]"
+                paddingClass="p-7"
+                surfaceTone={teamLogoSurfaceTone}
+                className="border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.12),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
+              >
+                {!teamLogo ? (
+                  <span className="text-5xl font-black uppercase text-primary">
+                    {teamTag.slice(0, 2)}
+                  </span>
+                ) : null}
+              </LogoBlock>
+            )}
           </div>
         </div>
       </div>
@@ -509,6 +586,7 @@ export default function PlayerProfile() {
                 sizeClass="h-14 w-14"
                 roundedClass="rounded-2xl"
                 paddingClass="p-2.5"
+                surfaceTone={teamLogoSurfaceTone}
                 className="bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
               />
               <div>

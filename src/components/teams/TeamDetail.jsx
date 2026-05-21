@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { getTeamLogoByName } from "@/lib/teamLogos";
+import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import { format } from "date-fns";
 import { isOrganizationInactive } from "@/lib/organizationIdentity";
 import {
@@ -20,6 +20,8 @@ import {
   getPrizeForOrganization,
   getTournamentResultForOrganization,
 } from "@/lib/tournamentResults";
+import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
+import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 
 function getDisplayedTeamLogo(team) {
   return getTeamLogoByName(team?.name) || team?.logo_url || null;
@@ -58,10 +60,11 @@ export default function TeamDetail({ team, participant, onBack }) {
     queryFn: () => base44.entities.TeamAlias.list("-created_date", 2000),
   });
 
-  const { data: results = [] } = useQuery({
+  const { data: rawResults = [] } = useQuery({
     queryKey: ["results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 500),
+    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
   });
+  const results = useMemo(() => filterPublishedMatchResults(rawResults), [rawResults]);
 
   const { data: matches = [] } = useQuery({
     queryKey: ["matches"],
@@ -86,6 +89,7 @@ export default function TeamDetail({ team, participant, onBack }) {
   });
 
   const displayLogo = getDisplayedTeamLogo(team);
+  const displayLogoSurfaceTone = getTeamLogoSurfaceTone(team?.name);
   const status = getTeamStatus(team);
   const teamAliasIndex = useMemo(
     () => buildTeamAliasIndex(teams, teamAliases),
@@ -288,6 +292,7 @@ export default function TeamDetail({ team, participant, onBack }) {
                 sizeClass="h-56 w-56"
                 roundedClass="rounded-[30px]"
                 paddingClass="p-7"
+                surfaceTone={displayLogoSurfaceTone}
                 className="border-[#5a441c] bg-[linear-gradient(180deg,_rgba(24,20,15,0.95),_rgba(12,11,10,1))] shadow-[0_18px_60px_rgba(0,0,0,0.35)]"
               />
             ) : (
@@ -318,7 +323,7 @@ export default function TeamDetail({ team, participant, onBack }) {
                   to={`/players/${encodeURIComponent(player.name)}?team=${encodeURIComponent(team.name)}`}
                   className="block rounded-xl border border-border bg-secondary/20 p-4 transition-colors hover:border-primary/30"
                 >
-                  <p className="font-semibold text-foreground">{player.name}</p>
+                  <p className="font-semibold text-foreground">{getPlayerDisplayName(player.name)}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{player.country}</p>
                   {player.captain ? (
                     <p className="mt-2 inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">

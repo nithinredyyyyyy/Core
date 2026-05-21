@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import LogoBlock from "@/components/shared/LogoBlock";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
+import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
 
 const GAMES = ["BGMI", "Valorant", "CSGO", "Free Fire", "PUBG PC", "Apex Legends"];
 const ROLES = ["IGL", "Assaulter", "Filter", "Support"];
@@ -17,10 +18,12 @@ export default function AdminTeams() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState(createFormSnapshot({}));
   const [search, setSearch] = useState("");
   const [showPlayerForm, setShowPlayerForm] = useState(null);
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [playerForm, setPlayerForm] = useState({});
+  const [initialPlayerFormSnapshot, setInitialPlayerFormSnapshot] = useState(createFormSnapshot({}));
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -101,16 +104,34 @@ export default function AdminTeams() {
     },
   });
 
+  const isTeamMutating = createTeam.isPending || updateTeam.isPending || deleteTeam.isPending;
+  const isPlayerMutating = createPlayer.isPending || updatePlayer.isPending || deletePlayer.isPending;
+
   const resetForm = () => {
     setShowForm(false);
     setEditing(null);
     setForm({});
+    setInitialFormSnapshot(createFormSnapshot({}));
   };
 
   const resetPlayerForm = () => {
     setShowPlayerForm(null);
     setEditingPlayer(null);
     setPlayerForm({});
+    setInitialPlayerFormSnapshot(createFormSnapshot({}));
+  };
+
+  const isFormDirty = createFormSnapshot(form) !== initialFormSnapshot;
+  const isPlayerFormDirty = createFormSnapshot(playerForm) !== initialPlayerFormSnapshot;
+
+  const attemptCloseForm = () => {
+    if (!confirmDiscardIfDirty(isFormDirty)) return;
+    resetForm();
+  };
+
+  const attemptClosePlayerForm = () => {
+    if (!confirmDiscardIfDirty(isPlayerFormDirty)) return;
+    resetPlayerForm();
   };
 
   const handleSubmit = () => {
@@ -160,13 +181,18 @@ export default function AdminTeams() {
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Teams ({teams.length})</h2>
         <Button
+          type="button"
           onClick={() => {
-            setForm({});
+            if (showForm && !confirmDiscardIfDirty(isFormDirty)) return;
+            const nextForm = {};
+            setForm(nextForm);
             setEditing(null);
+            setInitialFormSnapshot(createFormSnapshot(nextForm));
             setShowForm(true);
           }}
           size="sm"
           className="gap-2"
+          disabled={isTeamMutating}
         >
           <Plus className="w-4 h-4" /> New Team
         </Button>
@@ -185,7 +211,7 @@ export default function AdminTeams() {
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
           <div className="flex justify-between">
             <h3 className="font-semibold">{editing ? "Edit" : "Create"} Team</h3>
-            <Button variant="ghost" size="icon" onClick={resetForm}>
+            <Button type="button" variant="ghost" size="icon" onClick={attemptCloseForm} disabled={isTeamMutating}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -215,8 +241,8 @@ export default function AdminTeams() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createTeam.isPending || updateTeam.isPending}>
+            <Button type="button" variant="outline" onClick={attemptCloseForm} disabled={isTeamMutating}>Cancel</Button>
+            <Button type="button" onClick={handleSubmit} disabled={createTeam.isPending || updateTeam.isPending}>
               <Save className="w-4 h-4 mr-2" /> {editing ? "Update" : "Create"}
             </Button>
           </div>
@@ -259,32 +285,41 @@ export default function AdminTeams() {
                 </div>
                 <div className="flex gap-1">
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => {
                       if (showPlayerForm === team.id && !editingPlayer) {
-                        resetPlayerForm();
+                        attemptClosePlayerForm();
                       } else {
                         setShowPlayerForm(team.id);
                         setEditingPlayer(null);
-                        setPlayerForm({});
+                        const nextPlayerForm = {};
+                        setPlayerForm(nextPlayerForm);
+                        setInitialPlayerFormSnapshot(createFormSnapshot(nextPlayerForm));
                       }
                     }}
+                    disabled={isPlayerMutating}
                   >
                     <UserPlus className="w-4 h-4" />
                   </Button>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      setForm({ ...team });
+                      if (showForm && editing !== team.id && !confirmDiscardIfDirty(isFormDirty)) return;
+                      const nextForm = { ...team };
+                      setForm(nextForm);
                       setEditing(team.id);
+                      setInitialFormSnapshot(createFormSnapshot(nextForm));
                       setShowForm(true);
                     }}
+                    disabled={isTeamMutating}
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteTeam.mutate(team.id)}>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => deleteTeam.mutate(team.id)} disabled={isTeamMutating}>
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </div>
@@ -297,18 +332,24 @@ export default function AdminTeams() {
                       <span className="font-medium">{player.ign}</span>
                       <span className="text-muted-foreground">{player.role}</span>
                       <button
+                        type="button"
                         onClick={() => {
                           setShowPlayerForm(team.id);
                           setEditingPlayer(player.id);
-                          setPlayerForm({ ign: player.ign || "", role: player.role || "" });
+                          const nextPlayerForm = { ign: player.ign || "", role: player.role || "" };
+                          setPlayerForm(nextPlayerForm);
+                          setInitialPlayerFormSnapshot(createFormSnapshot(nextPlayerForm));
                         }}
                         className="text-muted-foreground hover:text-foreground"
+                        disabled={isPlayerMutating}
                       >
                         <Pencil className="w-3 h-3" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => deletePlayer.mutate(player.id)}
                         className="text-destructive hover:text-destructive/80"
+                        disabled={isPlayerMutating}
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -334,10 +375,10 @@ export default function AdminTeams() {
                       <SelectContent>{ROLES.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <Button size="sm" onClick={handleAddPlayer} className="h-8" disabled={createPlayer.isPending || updatePlayer.isPending}>
+                  <Button type="button" size="sm" onClick={handleAddPlayer} className="h-8" disabled={createPlayer.isPending || updatePlayer.isPending}>
                     {editingPlayer ? "Update" : "Add"}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={resetPlayerForm} className="h-8">
+                  <Button type="button" variant="outline" size="sm" onClick={attemptClosePlayerForm} className="h-8" disabled={isPlayerMutating}>
                     Cancel
                   </Button>
                 </div>

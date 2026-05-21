@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import StatusBadge from "../shared/StatusBadge";
+import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
 
 const GAMES = ["BGMI", "Valorant", "CSGO", "Free Fire", "PUBG PC", "Apex Legends"];
 const DEFAULT_STAGES = [
@@ -126,6 +127,7 @@ export default function AdminTournaments() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState(createFormSnapshot({ ...EMPTY_FORM, stages: DEFAULT_STAGES.map((stage) => ({ ...stage })) }));
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -154,16 +156,35 @@ export default function AdminTournaments() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["tournaments"] }); toast({ title: "Tournament deleted" }); },
   });
 
-  const resetForm = () => { setShowForm(false); setEditing(null); setForm({ ...EMPTY_FORM, stages: DEFAULT_STAGES.map((stage) => ({ ...stage })) }); };
+  const isMutating = createMut.isPending || updateMut.isPending || deleteMut.isPending;
+
+  const resetForm = () => {
+    const nextForm = { ...EMPTY_FORM, stages: DEFAULT_STAGES.map((stage) => ({ ...stage })) };
+    setShowForm(false);
+    setEditing(null);
+    setForm(nextForm);
+    setInitialFormSnapshot(createFormSnapshot(nextForm));
+  };
+
+  const isFormDirty = createFormSnapshot(form) !== initialFormSnapshot;
+
+  const attemptCloseForm = () => {
+    if (!confirmDiscardIfDirty(isFormDirty)) return;
+    resetForm();
+  };
 
   const openCreate = () => {
-    setForm({ ...EMPTY_FORM, stages: DEFAULT_STAGES.map((stage) => ({ ...stage })) });
+    if (showForm && !confirmDiscardIfDirty(isFormDirty)) return;
+    const nextForm = { ...EMPTY_FORM, stages: DEFAULT_STAGES.map((stage) => ({ ...stage })) };
+    setForm(nextForm);
     setEditing(null);
+    setInitialFormSnapshot(createFormSnapshot(nextForm));
     setShowForm(true);
   };
 
   const openEdit = (t) => {
-    setForm({
+    if (showForm && editing !== t.id && !confirmDiscardIfDirty(isFormDirty)) return;
+    const nextForm = {
       ...EMPTY_FORM,
       ...t,
       stages: (t.stages || DEFAULT_STAGES).map((stage, index) => ({
@@ -178,8 +199,10 @@ export default function AdminTournaments() {
       awardsText: serializeRows(t.awards, ["title", "player", "team", "country", "inr", "usd"]),
       participantsRows: serializeParticipants(t.participants),
       rankingsText: JSON.stringify(t.rankings || [], null, 2),
-    });
+    };
+    setForm(nextForm);
     setEditing(t.id);
+    setInitialFormSnapshot(createFormSnapshot(nextForm));
     setShowForm(true);
   };
 
@@ -260,14 +283,14 @@ export default function AdminTournaments() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="font-semibold">Tournaments ({tournaments.length})</h2>
-        <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> New Tournament</Button>
+        <Button type="button" onClick={openCreate} size="sm" className="gap-2" disabled={isMutating}><Plus className="w-4 h-4" /> New Tournament</Button>
       </div>
 
       {showForm && (
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold">{editing ? "Edit" : "Create"} Tournament</h3>
-            <Button variant="ghost" size="icon" onClick={resetForm}><X className="w-4 h-4" /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={attemptCloseForm} disabled={isMutating}><X className="w-4 h-4" /></Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Name *</Label><Input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -370,7 +393,7 @@ export default function AdminTournaments() {
                         value={entry.playersText || ""}
                         onChange={(e) => updateParticipant(idx, "playersText", e.target.value)}
                       />
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeParticipant(idx)}>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeParticipant(idx)} disabled={isMutating}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -394,7 +417,7 @@ export default function AdminTournaments() {
           <div>
             <div className="flex justify-between items-center mb-2">
               <Label>Stages</Label>
-              <Button variant="outline" size="sm" onClick={addStage}><Plus className="w-3 h-3 mr-1" /> Add Stage</Button>
+              <Button type="button" variant="outline" size="sm" onClick={addStage}><Plus className="w-3 h-3 mr-1" /> Add Stage</Button>
             </div>
             <div className="space-y-2">
               {(form.stages || []).map((stage, idx) => (
@@ -416,7 +439,7 @@ export default function AdminTournaments() {
                         <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button variant="ghost" size="icon" onClick={() => removeStage(idx)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeStage(idx)} disabled={isMutating}><Trash2 className="w-3 h-3 text-destructive" /></Button>
                   </div>
                   <Textarea
                     placeholder="Stage summary shown in Stage Progression"
@@ -441,8 +464,8 @@ export default function AdminTournaments() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
+            <Button type="button" variant="outline" onClick={attemptCloseForm} disabled={isMutating}>Cancel</Button>
+            <Button type="button" onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
               <Save className="w-4 h-4 mr-2" /> {editing ? "Update" : "Create"}
             </Button>
           </div>
@@ -453,7 +476,7 @@ export default function AdminTournaments() {
       <div className="space-y-2">
         {visibleTournaments.map((t) => (
           <div key={t.id} className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
-            <button type="button" onClick={() => openEdit(t)} className="flex-1 text-left">
+            <button type="button" onClick={() => openEdit(t)} className="flex-1 text-left" disabled={isMutating}>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm">{t.name}</span>
                 <StatusBadge status={t.status} />
@@ -461,9 +484,9 @@ export default function AdminTournaments() {
               <p className="text-xs text-muted-foreground mt-0.5">{t.game} • {t.prize_pool || "No prize"} • {t.stages?.length || 0} stages</p>
             </button>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" onClick={() => openEdit(t)}>Edit</Button>
-              <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => deleteMut.mutate(t.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => openEdit(t)} disabled={isMutating}>Edit</Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(t)} disabled={isMutating}><Pencil className="w-4 h-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => deleteMut.mutate(t.id)} disabled={isMutating}><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
           </div>
         ))}

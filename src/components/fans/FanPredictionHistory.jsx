@@ -21,10 +21,10 @@ function PredictionStatusIcon({ status, points }) {
 export default function FanPredictionHistory({ predictions = [] }) {
   return (
     <FansPanel className="overflow-hidden">
-      <div className="border-b border-[#d9e1ef] px-4 py-3">
+      <div className="border-b border-border/70 px-4 py-3">
         <div className="flex items-center gap-2">
-          <History className="h-3.5 w-3.5 text-violet-500" />
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7b8dab]">Prediction history</p>
+          <History className="h-3.5 w-3.5 text-primary" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Prediction history</p>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export default function FanPredictionHistory({ predictions = [] }) {
           <p className="text-sm text-slate-400">Your saved predictions will appear here.</p>
         </div>
       ) : (
-        <div className="divide-y divide-[#eef2f8]">
+        <div className="divide-y divide-border/60">
           {predictions.map((prediction) => (
             <div key={prediction.id} className="px-4 py-3">
               <div className="flex items-start justify-between gap-3">

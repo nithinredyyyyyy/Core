@@ -8,7 +8,11 @@ import EmptyState from "../components/shared/EmptyState";
 import LogoBlock from "../components/shared/LogoBlock";
 import TeamDetail from "../components/teams/TeamDetail";
 import { base44 } from "@/api/base44Client";
-import { getTeamLogoByName } from "@/lib/teamLogos";
+import {
+  getTeamLogoByName,
+  getTeamLogoSurfaceTone,
+  isWideTeamLogo,
+} from "@/lib/teamLogos";
 import { buildLiveRoster } from "@/lib/rosterUtils";
 import {
   normalizeOrganizationName,
@@ -18,6 +22,7 @@ import {
   getOrganizationMetaFromAliases,
   resolveTeamByAlias,
 } from "@/lib/normalizedIdentity";
+import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 
 function LightPanel({ className = "", children }) {
   return (
@@ -33,6 +38,20 @@ const BMPS_TOURNAMENT_NAME = "Battlegrounds Mobile India Pro Series 2026";
 
 function getTeamCardLogo(name, fallbackLogo) {
   return getTeamLogoByName(name) || fallbackLogo || null;
+}
+
+function getTeamsPageLogoPresentation(name) {
+  if (isWideTeamLogo(name)) {
+    return {
+      paddingClass: "p-1.5",
+      imgClassName: "scale-[1.18]",
+    };
+  }
+
+  return {
+    paddingClass: "p-2.5",
+    imgClassName: "",
+  };
 }
 
 export default function Teams() {
@@ -94,11 +113,30 @@ export default function Teams() {
       Array.isArray(window?.entries) ? window.entries : []
     );
 
+    const participantMetaByKey = new Map();
     const byKey = new Map();
 
     participants.forEach((participant, index) => {
-      const resolvedTeam = resolveTeamByAlias(participant.team, teamAliasIndex);
       const meta = getOrganizationMetaFromAliases(participant.team, teamAliasIndex);
+      participantMetaByKey.set(meta.key, {
+        participant,
+        participantOrder: index,
+        participantRoster: Array.isArray(participant.players)
+          ? participant.players
+              .map((player) => (typeof player === "string" ? player : player?.name))
+              .filter(Boolean)
+          : [],
+      });
+    });
+
+    const candidateTeams = teams.filter((team) => participantMetaByKey.has(team.id));
+    const shouldUseParticipantFallback = candidateTeams.length === 0;
+
+    const buildCard = (teamLike, fallbackOrder = Number.MAX_SAFE_INTEGER) => {
+      const resolvedTeam =
+        typeof teamLike === "string" ? resolveTeamByAlias(teamLike, teamAliasIndex) : teamLike;
+      const meta = getOrganizationMetaFromAliases(teamLike, teamAliasIndex);
+      const participantMeta = participantMetaByKey.get(meta.key) || null;
       const matchingTeams = resolvedTeam
         ? teams.filter((team) => team.id === resolvedTeam.id)
         : teams.filter(
@@ -120,13 +158,8 @@ export default function Teams() {
         teamIds: representativeIds,
         players,
         transferEntries: mergedTransfers,
+        applyOverride: undefined,
       });
-
-      const participantRoster = Array.isArray(participant.players)
-        ? participant.players.map((player) =>
-            typeof player === "string" ? player : player?.name
-          )
-        : [];
 
       const totalMatches = matchingTeams.reduce(
         (sum, team) => sum + (Number(team.matches_played) || 0),
@@ -135,7 +168,7 @@ export default function Teams() {
 
       byKey.set(meta.key, {
         key: meta.key,
-        order: index,
+        order: participantMeta?.participantOrder ?? fallbackOrder,
         id: representative?.id || meta.key,
         name: meta.name,
         tag: meta.tag,
@@ -146,12 +179,26 @@ export default function Teams() {
         roster:
           liveRoster.length > 0
             ? liveRoster
-            : participantRoster.filter(Boolean),
-        participant,
+            : participantMeta?.participantRoster || [],
+        participant: participantMeta?.participant || null,
       });
-    });
+    };
 
-    return [...byKey.values()].sort((a, b) => a.order - b.order);
+    if (shouldUseParticipantFallback) {
+      participants.forEach((participant, index) => {
+        buildCard(participant.team, index);
+      });
+    } else {
+      candidateTeams.forEach((team) => {
+        buildCard(team);
+      });
+    }
+
+    return [...byKey.values()].sort((a, b) => {
+      const nameCompare = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      if (nameCompare !== 0) return nameCompare;
+      return a.order - b.order;
+    });
   }, [bmpsTournament, players, teamAliasIndex, teamAliases, teams, transferWindows]);
 
   const selectedTeam = useMemo(() => {
@@ -320,14 +367,17 @@ export default function Teams() {
         />
       ) : (
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredCards.map((card, index) => (
-            <motion.div
-              key={card.key}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className="overflow-hidden rounded-[24px] border border-border/70 bg-card p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]"
-            >
+          {filteredCards.map((card, index) => {
+            const logoPresentation = getTeamsPageLogoPresentation(card.name);
+
+            return (
+              <motion.div
+                key={card.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="overflow-hidden rounded-[24px] border border-border/70 bg-card p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]"
+              >
               <div className="flex items-center gap-3">
                 {card.logoUrl ? (
                   <LogoBlock
@@ -335,7 +385,9 @@ export default function Teams() {
                     alt={card.name}
                     sizeClass="h-14 w-14"
                     roundedClass="rounded-2xl"
-                    paddingClass="p-2.5"
+                    paddingClass={logoPresentation.paddingClass}
+                    imgClassName={logoPresentation.imgClassName}
+                    surfaceTone={getTeamLogoSurfaceTone(card.name)}
                     className="bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
                   />
                 ) : (
@@ -382,13 +434,14 @@ export default function Teams() {
                       to={`/players/${encodeURIComponent(player)}?team=${encodeURIComponent(card.name)}`}
                       className="block rounded-[14px] border border-border/70 bg-card/80 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:text-primary"
                     >
-                      {player}
+                      {getPlayerDisplayName(player)}
                     </Link>
                   ))}
                 </div>
               </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </section>
       )}
     </div>

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
 
 const EMPTY_FORM = {
   window: "",
@@ -21,6 +22,7 @@ export default function AdminTransfers() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState(createFormSnapshot(EMPTY_FORM));
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -70,28 +72,43 @@ export default function AdminTransfers() {
     },
   });
 
+  const isMutating = createMut.isPending || updateMut.isPending || deleteMut.isPending;
+
   const resetForm = () => {
     setShowForm(false);
     setEditing(null);
     setForm(EMPTY_FORM);
+    setInitialFormSnapshot(createFormSnapshot(EMPTY_FORM));
+  };
+
+  const isFormDirty = createFormSnapshot(form) !== initialFormSnapshot;
+
+  const attemptCloseForm = () => {
+    if (!confirmDiscardIfDirty(isFormDirty)) return;
+    resetForm();
   };
 
   const openCreate = () => {
+    if (showForm && !confirmDiscardIfDirty(isFormDirty)) return;
     setEditing(null);
     setForm(EMPTY_FORM);
+    setInitialFormSnapshot(createFormSnapshot(EMPTY_FORM));
     setShowForm(true);
   };
 
   const openEdit = (entry) => {
+    if (showForm && editing !== entry.id && !confirmDiscardIfDirty(isFormDirty)) return;
     setEditing(entry.id);
-    setForm({
+    const nextForm = {
       window: entry.window || "",
       date: entry.date || "",
       country: entry.country || "India",
       playersText: Array.isArray(entry.players) ? entry.players.join(", ") : "",
       oldTeam: entry.oldTeam || "",
       newTeam: entry.newTeam || "",
-    });
+    };
+    setForm(nextForm);
+    setInitialFormSnapshot(createFormSnapshot(nextForm));
     setShowForm(true);
   };
 
@@ -137,7 +154,7 @@ export default function AdminTransfers() {
           <h2 className="font-semibold">Transfer Windows ({transfers.length})</h2>
           <p className="text-sm text-muted-foreground">Manage incoming and outgoing roster moves.</p>
         </div>
-        <Button onClick={openCreate} size="sm" className="gap-2">
+        <Button type="button" onClick={openCreate} size="sm" className="gap-2" disabled={isMutating}>
           <Plus className="h-4 w-4" /> New Transfer
         </Button>
       </div>
@@ -146,7 +163,7 @@ export default function AdminTransfers() {
         <div className="space-y-4 rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">{editing ? "Edit" : "Create"} Transfer Entry</h3>
-            <Button variant="ghost" size="icon" onClick={resetForm}>
+            <Button type="button" variant="ghost" size="icon" onClick={attemptCloseForm} disabled={isMutating}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -195,8 +212,8 @@ export default function AdminTransfers() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
+            <Button type="button" variant="outline" onClick={attemptCloseForm} disabled={isMutating}>Cancel</Button>
+            <Button type="button" onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
               <Save className="mr-2 h-4 w-4" /> {editing ? "Update" : "Create"}
             </Button>
           </div>
@@ -230,10 +247,10 @@ export default function AdminTransfers() {
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(entry)} disabled={isMutating}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMut.mutate(entry.id)}>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => deleteMut.mutate(entry.id)} disabled={isMutating}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>

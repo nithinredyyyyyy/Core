@@ -24,14 +24,6 @@ export default function AdminInspector() {
     queryFn: () => base44.entities.Tournament.list("-created_date", 100),
   });
   const visibleTournaments = tournaments.filter((tournament) => tournament.status !== "completed");
-  const { data: matches = [] } = useQuery({
-    queryKey: ["inspector-matches"],
-    queryFn: () => base44.entities.Match.list("-created_date", 500),
-  });
-  const { data: results = [] } = useQuery({
-    queryKey: ["inspector-results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
-  });
   const { data: teams = [] } = useQuery({
     queryKey: ["inspector-teams"],
     queryFn: () => base44.entities.Team.list("-created_date", 300),
@@ -39,21 +31,25 @@ export default function AdminInspector() {
 
   const selectedTournament =
     tournaments.find((tournament) => tournament.id === selectedTournamentId) || tournaments[0] || null;
+  const { data: matches = [] } = useQuery({
+    queryKey: ["inspector-matches", selectedTournament?.id || ""],
+    enabled: Boolean(selectedTournament?.id),
+    queryFn: () => base44.entities.Match.filter({ tournament_id: selectedTournament.id }, "-created_date", 500),
+  });
+  const { data: results = [] } = useQuery({
+    queryKey: ["inspector-results", selectedTournament?.id || ""],
+    enabled: Boolean(selectedTournament?.id),
+    queryFn: () => base44.entities.MatchResult.filter({ tournament_id: selectedTournament.id }, "-created_date", 2500),
+  });
 
   const teamKeys = useMemo(
     () => new Set(teams.map((team) => normalizeOrganizationName(team.name))),
     [teams]
   );
 
-  const tournamentMatches = useMemo(
-    () => matches.filter((match) => match.tournament_id === selectedTournament?.id),
-    [matches, selectedTournament]
-  );
+  const tournamentMatches = useMemo(() => matches, [matches]);
 
-  const tournamentResults = useMemo(
-    () => results.filter((result) => result.tournament_id === selectedTournament?.id),
-    [results, selectedTournament]
-  );
+  const tournamentResults = useMemo(() => results, [results]);
 
   const participantPhaseGroups = useMemo(() => {
     const participants = selectedTournament?.participants || [];
