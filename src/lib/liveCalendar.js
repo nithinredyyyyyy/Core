@@ -17,8 +17,12 @@ export function deriveMatchStatus(match, options = {}) {
   const now = options.now || new Date();
   const resultCount =
     options.resultCount ??
-    (options.resultCountMap && match?.id ? options.resultCountMap.get(match.id) || 0 : 0);
-  const explicitStatus = String(match?.status || "").trim().toLowerCase();
+    (options.resultCountMap && match?.id
+      ? options.resultCountMap.get(match.id) || 0
+      : 0);
+  const explicitStatus = String(match?.status || "")
+    .trim()
+    .toLowerCase();
   const scheduled = parseDate(match?.scheduled_time);
 
   if (explicitStatus === "completed" || resultCount > 0) return "completed";
@@ -36,15 +40,17 @@ export function deriveMatchStatus(match, options = {}) {
 export function deriveTournamentStatus(tournament, options = {}) {
   const now = options.now || new Date();
   const matches = (options.matches || []).filter(
-    (match) => match?.tournament_id === tournament?.id
+    (match) => match?.tournament_id === tournament?.id,
   );
   const resultCountMap = options.resultCountMap || new Map();
   const derivedMatchStatuses = matches.map((match) =>
-    deriveMatchStatus(match, { now, resultCountMap })
+    deriveMatchStatus(match, { now, resultCountMap }),
   );
   const start = parseDate(tournament?.start_date);
   const end = parseDate(tournament?.end_date);
-  const explicitStatus = String(tournament?.status || "").trim().toLowerCase();
+  const explicitStatus = String(tournament?.status || "")
+    .trim()
+    .toLowerCase();
 
   if (explicitStatus === "completed") return "completed";
   if (explicitStatus === "live") return "ongoing";
@@ -52,12 +58,17 @@ export function deriveTournamentStatus(tournament, options = {}) {
 
   if (start && start.getTime() > now.getTime()) return "upcoming";
   if (end && end.getTime() < now.getTime()) return "completed";
-  if (start && start.getTime() <= now.getTime() && (!end || end.getTime() >= now.getTime())) {
+  if (
+    start &&
+    start.getTime() <= now.getTime() &&
+    (!end || end.getTime() >= now.getTime())
+  ) {
     return "ongoing";
   }
   if (explicitStatus === "ongoing") return "ongoing";
 
-  if (derivedMatchStatuses.some((status) => status === "scheduled")) return "upcoming";
+  if (derivedMatchStatuses.some((status) => status === "scheduled"))
+    return "upcoming";
   if (
     derivedMatchStatuses.length > 0 &&
     derivedMatchStatuses.every((status) => status === "completed")
@@ -69,7 +80,11 @@ export function deriveTournamentStatus(tournament, options = {}) {
   return explicitStatus || "upcoming";
 }
 
-export function decorateMatchesWithLiveStatus(matches = [], matchResults = [], now = new Date()) {
+export function decorateMatchesWithLiveStatus(
+  matches = [],
+  matchResults = [],
+  now = new Date(),
+) {
   const resultCountMap = buildMatchResultCountMap(matchResults);
   return matches.map((match) => ({
     ...match,
@@ -81,7 +96,7 @@ export function decorateTournamentsWithLiveStatus(
   tournaments = [],
   matches = [],
   matchResults = [],
-  now = new Date()
+  now = new Date(),
 ) {
   const resultCountMap = buildMatchResultCountMap(matchResults);
   return tournaments.map((tournament) => ({

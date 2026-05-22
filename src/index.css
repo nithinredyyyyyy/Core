@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Pacifico&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Pacifico&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'Manrope', sans-serif;
+    --font-heading: "Space Grotesk", sans-serif;
+    --font-body: "Manrope", sans-serif;
 
     --background: 32 33% 96%;
     --foreground: 222 47% 11%;
@@ -85,7 +85,11 @@
     @apply bg-background font-body text-foreground antialiased;
     background-image:
       radial-gradient(circle at top, rgba(251, 146, 60, 0.12), transparent 28%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.96));
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.92),
+        rgba(255, 255, 255, 0.96)
+      );
   }
 }
 
@@ -107,11 +111,15 @@
 }
 
 .card-shadow {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .card-shadow-md {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .pulse-glow {
@@ -119,8 +127,13 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .ticker-shell {
@@ -226,7 +239,8 @@
 }
 
 @keyframes preloader-breathe {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.45;
   }
@@ -237,7 +251,8 @@
 }
 
 @keyframes preloader-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -246,7 +261,8 @@
 }
 
 @keyframes preloader-zoom {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(0.94);
   }
   50% {
@@ -273,8 +289,16 @@
   border-radius: 34px;
   padding: 32px;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.18), transparent 28%),
-    radial-gradient(circle at 84% 10%, rgba(255, 255, 255, 0.1), transparent 22%),
+    radial-gradient(
+      circle at 18% 12%,
+      rgba(255, 255, 255, 0.18),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 84% 10%,
+      rgba(255, 255, 255, 0.1),
+      transparent 22%
+    ),
     linear-gradient(180deg, #2e7bd2 0%, #1c66bc 38%, #0e4d9f 100%);
   color: #0f172a;
 }
@@ -301,7 +325,11 @@
   flex-direction: column;
   overflow: hidden;
   border-radius: 32px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(247, 250, 252, 0.985));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.985),
+    rgba(247, 250, 252, 0.985)
+  );
   border: 1px solid rgba(255, 255, 255, 0.56);
   box-shadow:
     0 26px 64px rgba(9, 36, 79, 0.26),
@@ -588,7 +616,8 @@
 }
 
 @keyframes preloader-pulse-core {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.42;
     transform: scale(0.94);
   }
@@ -599,22 +628,29 @@
 }
 
 @keyframes preloader-core-flicker {
-  0%, 12%, 100% {
+  0%,
+  12%,
+  100% {
     opacity: 0.04;
   }
-  13%, 16% {
+  13%,
+  16% {
     opacity: 0.22;
   }
-  17%, 18% {
+  17%,
+  18% {
     opacity: 0.05;
   }
-  19%, 21% {
+  19%,
+  21% {
     opacity: 0.18;
   }
-  50%, 52% {
+  50%,
+  52% {
     opacity: 0.1;
   }
-  53%, 56% {
+  53%,
+  56% {
     opacity: 0.24;
   }
 }

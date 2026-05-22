@@ -1,13 +1,24 @@
 function normalizePlayers(players = []) {
-  return [...players].map((player) => String(player || "").trim()).filter(Boolean).sort();
+  return [...players]
+    .map((player) => String(player || "").trim())
+    .filter(Boolean)
+    .sort();
 }
 
 function buildTransferKey(entry) {
-  const oldTeam = String(entry.oldTeam || "").trim().toLowerCase();
-  const newTeam = String(entry.newTeam || "").trim().toLowerCase();
-  const window = String(entry.window || "").trim().toLowerCase();
+  const oldTeam = String(entry.oldTeam || "")
+    .trim()
+    .toLowerCase();
+  const newTeam = String(entry.newTeam || "")
+    .trim()
+    .toLowerCase();
+  const window = String(entry.window || "")
+    .trim()
+    .toLowerCase();
   const date = String(entry.date || "").trim();
-  const players = normalizePlayers(entry.players).map((player) => player.toLowerCase()).join("|");
+  const players = normalizePlayers(entry.players)
+    .map((player) => player.toLowerCase())
+    .join("|");
   return [window, date, oldTeam, newTeam, players].join("::");
 }
 

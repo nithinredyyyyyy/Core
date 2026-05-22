@@ -1,23 +1,23 @@
-import { Toaster } from "@/components/ui/toaster"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
-import { ThemeProvider } from '@/lib/ThemeContext';
-import { SearchProvider } from '@/lib/SearchContext';
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClientInstance } from "@/lib/query-client";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import PageNotFound from "./lib/PageNotFound";
+import { ThemeProvider } from "@/lib/ThemeContext";
+import { SearchProvider } from "@/lib/SearchContext";
 
-import AppLayout from './components/layout/AppLayout';
-import Home from './pages/Home';
-import Tournaments from './pages/Tournaments';
-import Teams from './pages/TEAMS';
-import PlayerProfile from './pages/PlayerProfile';
-import Leaderboard from './pages/LEADERBOARD';
-import News from './pages/News';
-import NewsArticle from './pages/NewsArticle';
-import Fans from './pages/Fans';
-import Admin from './pages/Admin';
-import { ShieldAlert } from 'lucide-react';
-import { useAdminAccess } from '@/lib/adminAccess';
+import AppLayout from "./components/layout/AppLayout";
+import Home from "./pages/Home";
+import Tournaments from "./pages/Tournaments";
+import Teams from "./pages/TEAMS";
+import PlayerProfile from "./pages/PlayerProfile";
+import Leaderboard from "./pages/LEADERBOARD";
+import News from "./pages/News";
+import NewsArticle from "./pages/NewsArticle";
+import Fans from "./pages/Fans";
+import Admin from "./pages/Admin";
+import { ShieldAlert } from "lucide-react";
+import { useAdminAccess } from "@/lib/adminAccess";
 
 function AdminAccessGate() {
   const { authUser, isLocalAdmin, isLoading } = useAdminAccess();
@@ -26,7 +26,9 @@ function AdminAccessGate() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-6">
         <div className="max-w-lg rounded-[24px] border border-border bg-card p-8 text-center shadow-sm">
-          <h1 className="text-2xl font-heading font-bold tracking-wide">Checking admin access…</h1>
+          <h1 className="text-2xl font-heading font-semibold tracking-wide">
+            Checking admin access…
+          </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Validating your control-room session.
           </p>
@@ -35,16 +37,19 @@ function AdminAccessGate() {
     );
   }
 
-  if (!isLocalAdmin && authUser?.role !== 'admin') {
+  if (!isLocalAdmin && authUser?.role !== "admin") {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-6">
         <div className="max-w-lg rounded-[24px] border border-border bg-card p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-            <ShieldAlert className="h-6 w-6 text-destructive" />
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-destructive/10">
+            <ShieldAlert className="size-6 text-destructive" />
           </div>
-          <h1 className="mt-4 text-2xl font-heading font-bold tracking-wide">ADMIN LOCKED</h1>
+          <h1 className="mt-4 text-2xl font-heading font-semibold tracking-wide">
+            ADMIN LOCKED
+          </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Set a valid admin key in this browser to unlock the control room on the deployed site.
+            Set a valid admin key in this browser to unlock the control room on
+            the deployed site.
           </p>
         </div>
       </div>
@@ -85,8 +90,7 @@ function App() {
         </QueryClientProvider>
       </SearchProvider>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
-
+export default App;

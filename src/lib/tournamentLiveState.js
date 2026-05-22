@@ -1,12 +1,12 @@
 import {
   buildParticipantEntries,
   resolveTournamentParticipantState,
-} from "@/lib/bmps2026Progression";
+} from "./bmps2026Progression.js";
 import {
   decorateMatchesWithLiveStatus,
   decorateTournamentsWithLiveStatus,
-} from "@/lib/liveCalendar";
-import { sortStageBoardMatches, getStageBoardData } from "@/lib/stageBoard";
+} from "./liveCalendar.js";
+import { sortStageBoardMatches, getStageBoardData } from "./stageBoard.js";
 
 export function getTournamentSortDate(tournament) {
   return new Date(
@@ -14,23 +14,23 @@ export function getTournamentSortDate(tournament) {
       tournament?.end_date ||
       tournament?.updated_date ||
       tournament?.created_date ||
-      0
+      0,
   ).getTime();
 }
 
 export function getFeaturedTournamentFromCalendar(
   calendarTournaments = [],
-  requestedTournamentId = ""
+  requestedTournamentId = "",
 ) {
   if (requestedTournamentId) {
     const requested = calendarTournaments.find(
-      (tournament) => tournament.id === requestedTournamentId
+      (tournament) => tournament.id === requestedTournamentId,
     );
     if (requested) return requested;
   }
 
   const ongoing = calendarTournaments.find(
-    (tournament) => tournament.status === "ongoing"
+    (tournament) => tournament.status === "ongoing",
   );
   if (ongoing) return ongoing;
 
@@ -59,11 +59,11 @@ export function resolveTournamentLiveState({
   const calendarTournaments = decorateTournamentsWithLiveStatus(
     tournaments,
     calendarMatches,
-    matchResults
+    matchResults,
   );
   const featuredTournament = getFeaturedTournamentFromCalendar(
     calendarTournaments,
-    requestedTournamentId
+    requestedTournamentId,
   );
   const featuredParticipantEntries = featuredTournament
     ? resolveTournamentParticipantState({
@@ -85,12 +85,14 @@ export function resolveTournamentLiveState({
   const featuredMatches = featuredTournament
     ? sortStageBoardMatches(
         calendarMatches.filter(
-          (match) => match.tournament_id === featuredTournament.id
-        )
+          (match) => match.tournament_id === featuredTournament.id,
+        ),
       )
     : [];
   const stageScopedMatches =
-    stageBoard.stageMatches.length > 0 ? stageBoard.stageMatches : featuredMatches;
+    stageBoard.stageMatches.length > 0
+      ? stageBoard.stageMatches
+      : featuredMatches;
 
   return {
     calendarMatches,

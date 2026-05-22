@@ -4,9 +4,21 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { db, entityConfigs, normalizeRecord, recomputeTeamStats, serializePayload } from "./db.js";
+import {
+  db,
+  entityConfigs,
+  normalizeRecord,
+  recomputeTeamStats,
+  serializePayload,
+} from "./db.js";
 import { normalizeOrganizationName } from "../src/lib/organizationIdentity.js";
 import { getTeamLogoByName } from "../src/lib/teamLogos.js";
+import { buildHomeViewModel } from "./homeView.js";
+import {
+  backfillImportedNewsMetadata,
+  importNewsFromSources,
+} from "./newsIngest.js";
+import { NEWS_SOURCES } from "./newsSources.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -15,9 +27,20 @@ const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
 const indexHtmlPath = path.join(distDir, "index.html");
 const LOCAL_ADMIN_IPS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
-const PUBLIC_WRITE_ENTITIES = new Set(["FanProfile", "FanPrediction", "FanPollVote", "FanChatMessage"]);
-const ADMIN_WRITE_ENTITIES = new Set(Object.keys(entityConfigs).filter((entityName) => !PUBLIC_WRITE_ENTITIES.has(entityName)));
-const FAN_SESSION_SECRET = String(process.env.CORE_FAN_SESSION_SECRET || randomUUID());
+const PUBLIC_WRITE_ENTITIES = new Set([
+  "FanProfile",
+  "FanPrediction",
+  "FanPollVote",
+  "FanChatMessage",
+]);
+const ADMIN_WRITE_ENTITIES = new Set(
+  Object.keys(entityConfigs).filter(
+    (entityName) => !PUBLIC_WRITE_ENTITIES.has(entityName),
+  ),
+);
+const FAN_SESSION_SECRET = String(
+  process.env.CORE_FAN_SESSION_SECRET || randomUUID(),
+);
 const CONFIGURED_CORS_ORIGINS = [
   ...String(process.env.FRONTEND_ORIGIN || "")
     .split(",")
@@ -40,6 +63,8 @@ const ALLOWED_CORS_ORIGINS = new Set([
   ...CONFIGURED_CORS_ORIGINS,
 ]);
 
+backfillImportedNewsMetadata();
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -51,7 +76,7 @@ app.use(
       }
       return callback(new Error(`CORS origin not allowed: ${origin}`));
     },
-  })
+  }),
 );
 app.use(express.json({ limit: "2mb" }));
 
@@ -64,27 +89,182 @@ app.get("/api/health", (_req, res) => {
 });
 
 const ORDERABLE_COLUMNS = {
-  Tournament: new Set(["created_date", "updated_date", "name", "start_date", "end_date", "status", "tier"]),
-  Team: new Set(["created_date", "updated_date", "name", "tag", "total_points", "wins", "matches_played"]),
-  Player: new Set(["created_date", "updated_date", "ign", "team_id", "total_kills", "matches_played", "avg_damage"]),
-  Match: new Set(["created_date", "updated_date", "scheduled_time", "stage", "group_name", "day", "match_number", "status"]),
-  MatchResult: new Set(["created_date", "updated_date", "placement", "total_points", "kill_points", "placement_points", "stage"]),
-  NewsArticle: new Set(["created_date", "updated_date", "title", "category", "featured", "game"]),
-  TransferWindow: new Set(["created_date", "updated_date", "window", "date", "country"]),
-  FanProfile: new Set(["created_date", "updated_date", "display_name", "favorite_team", "total_points", "accuracy_percent", "badge"]),
-  FanPrediction: new Set(["created_date", "updated_date", "prediction_date", "status", "awarded_points", "tournament_name"]),
-  FanPollVote: new Set(["created_date", "updated_date", "poll_key", "option", "display_name"]),
-  FanChatMessage: new Set(["created_date", "updated_date", "topic", "display_name", "tournament_name"]),
-  TeamAlias: new Set(["created_date", "updated_date", "alias", "normalized_alias", "alias_type"]),
-  PlayerAlias: new Set(["created_date", "updated_date", "alias", "normalized_alias"]),
-  PlayerTeamHistory: new Set(["created_date", "updated_date", "joined_date", "left_date", "role", "source"]),
-  TournamentStage: new Set(["created_date", "updated_date", "name", "slug", "stage_order", "stage_type", "status"]),
-  TournamentStageGroup: new Set(["created_date", "updated_date", "group_name", "group_order"]),
-  TournamentParticipant: new Set(["created_date", "updated_date", "seed", "invite_status", "final_rank", "prize_amount"]),
-  TournamentParticipantStageEntry: new Set(["created_date", "updated_date", "phase_label", "placement", "qualified", "eliminated"]),
-  TournamentParticipantPlayer: new Set(["created_date", "updated_date", "player_name", "country", "role", "is_captain", "is_substitute"]),
-  StageStanding: new Set(["created_date", "updated_date", "rank", "matches_played", "wins", "place_points", "elim_points", "total_points", "progression_status"]),
-  StageMatchBreakdown: new Set(["created_date", "updated_date", "placement", "kills", "total_points"]),
+  Tournament: new Set([
+    "created_date",
+    "updated_date",
+    "name",
+    "start_date",
+    "end_date",
+    "status",
+    "tier",
+  ]),
+  Team: new Set([
+    "created_date",
+    "updated_date",
+    "name",
+    "tag",
+    "total_points",
+    "wins",
+    "matches_played",
+  ]),
+  Player: new Set([
+    "created_date",
+    "updated_date",
+    "ign",
+    "team_id",
+    "total_kills",
+    "matches_played",
+    "avg_damage",
+  ]),
+  Match: new Set([
+    "created_date",
+    "updated_date",
+    "scheduled_time",
+    "stage",
+    "group_name",
+    "day",
+    "match_number",
+    "status",
+  ]),
+  MatchResult: new Set([
+    "created_date",
+    "updated_date",
+    "placement",
+    "total_points",
+    "kill_points",
+    "placement_points",
+    "stage",
+  ]),
+  NewsArticle: new Set([
+    "created_date",
+    "updated_date",
+    "title",
+    "category",
+    "featured",
+    "game",
+    "publication_status",
+    "verification_status",
+    "priority",
+    "source_type",
+    "source_name",
+  ]),
+  TransferWindow: new Set([
+    "created_date",
+    "updated_date",
+    "window",
+    "date",
+    "country",
+  ]),
+  FanProfile: new Set([
+    "created_date",
+    "updated_date",
+    "display_name",
+    "favorite_team",
+    "total_points",
+    "accuracy_percent",
+    "badge",
+  ]),
+  FanPrediction: new Set([
+    "created_date",
+    "updated_date",
+    "prediction_date",
+    "status",
+    "awarded_points",
+    "tournament_name",
+  ]),
+  FanPollVote: new Set([
+    "created_date",
+    "updated_date",
+    "poll_key",
+    "option",
+    "display_name",
+  ]),
+  FanChatMessage: new Set([
+    "created_date",
+    "updated_date",
+    "topic",
+    "display_name",
+    "tournament_name",
+  ]),
+  TeamAlias: new Set([
+    "created_date",
+    "updated_date",
+    "alias",
+    "normalized_alias",
+    "alias_type",
+  ]),
+  PlayerAlias: new Set([
+    "created_date",
+    "updated_date",
+    "alias",
+    "normalized_alias",
+  ]),
+  PlayerTeamHistory: new Set([
+    "created_date",
+    "updated_date",
+    "joined_date",
+    "left_date",
+    "role",
+    "source",
+  ]),
+  TournamentStage: new Set([
+    "created_date",
+    "updated_date",
+    "name",
+    "slug",
+    "stage_order",
+    "stage_type",
+    "status",
+  ]),
+  TournamentStageGroup: new Set([
+    "created_date",
+    "updated_date",
+    "group_name",
+    "group_order",
+  ]),
+  TournamentParticipant: new Set([
+    "created_date",
+    "updated_date",
+    "seed",
+    "invite_status",
+    "final_rank",
+    "prize_amount",
+  ]),
+  TournamentParticipantStageEntry: new Set([
+    "created_date",
+    "updated_date",
+    "phase_label",
+    "placement",
+    "qualified",
+    "eliminated",
+  ]),
+  TournamentParticipantPlayer: new Set([
+    "created_date",
+    "updated_date",
+    "player_name",
+    "country",
+    "role",
+    "is_captain",
+    "is_substitute",
+  ]),
+  StageStanding: new Set([
+    "created_date",
+    "updated_date",
+    "rank",
+    "matches_played",
+    "wins",
+    "place_points",
+    "elim_points",
+    "total_points",
+    "progression_status",
+  ]),
+  StageMatchBreakdown: new Set([
+    "created_date",
+    "updated_date",
+    "placement",
+    "kills",
+    "total_points",
+  ]),
 };
 
 const stringField = (min = 1) => z.string().trim().min(min);
@@ -167,11 +347,20 @@ const createSchemas = {
   }),
   NewsArticle: z.object({
     title: stringField(),
+    summary: z.string().optional(),
     content: stringField(),
     category: z.string().optional(),
     thumbnail_url: z.string().optional(),
     featured: z.number().int().min(0).max(1).optional(),
     game: z.string().optional(),
+    source_name: z.string().optional(),
+    source_url: z.string().optional(),
+    source_type: z.string().optional(),
+    verification_status: z.string().optional(),
+    publication_status: z.string().optional(),
+    priority: z.string().optional(),
+    is_auto_ingested: z.number().int().min(0).max(1).optional(),
+    import_hash: z.string().optional(),
     created_date: z.string().optional(),
     created_by: z.string().optional(),
   }),
@@ -312,7 +501,10 @@ const createSchemas = {
 };
 
 const updateSchemas = Object.fromEntries(
-  Object.entries(createSchemas).map(([entity, schema]) => [entity, schema.partial()])
+  Object.entries(createSchemas).map(([entity, schema]) => [
+    entity,
+    schema.partial(),
+  ]),
 );
 
 function getAllowedFilterColumns(config) {
@@ -340,12 +532,18 @@ function applyListQuery(entityName, config, query = {}, options = {}) {
       throw new Error(`Unsupported filter key: ${key}`);
     }
     whereClauses.push(`${key} = ?`);
-    params.push(config.jsonFields.includes(key) ? JSON.stringify(value) : value);
+    params.push(
+      config.jsonFields.includes(key) ? JSON.stringify(value) : value,
+    );
   }
 
   const maxListLimit = entityName === "MatchResult" ? 5000 : 500;
-  const safeLimit = Number.isFinite(Number(options.limit)) ? Math.min(Number(options.limit), maxListLimit) : null;
-  const safeSkip = Number.isFinite(Number(options.skip)) ? Math.max(Number(options.skip), 0) : 0;
+  const safeLimit = Number.isFinite(Number(options.limit))
+    ? Math.min(Number(options.limit), maxListLimit)
+    : null;
+  const safeSkip = Number.isFinite(Number(options.skip))
+    ? Math.max(Number(options.skip), 0)
+    : 0;
 
   let orderBy = "created_date DESC";
   if (options.sort_by) {
@@ -364,13 +562,77 @@ function applyListQuery(entityName, config, query = {}, options = {}) {
     sql += ` OFFSET ${safeSkip}`;
   }
 
-  return db.prepare(sql).all(...params).map((row) => normalizeRecord(config, row));
+  return db
+    .prepare(sql)
+    .all(...params)
+    .map((row) => normalizeRecord(config, row));
+}
+
+function getHomeSummaryPayload() {
+  const tournaments = applyListQuery(
+    "Tournament",
+    entityConfigs.Tournament,
+    {},
+    {
+      sort_by: "-created_date",
+      limit: 100,
+    },
+  );
+  const teams = applyListQuery(
+    "Team",
+    entityConfigs.Team,
+    {},
+    {
+      sort_by: "-total_points",
+      limit: 400,
+    },
+  );
+  const matches = applyListQuery(
+    "Match",
+    entityConfigs.Match,
+    {},
+    {
+      sort_by: "-scheduled_time",
+      limit: 80,
+    },
+  );
+  const results = applyListQuery(
+    "MatchResult",
+    entityConfigs.MatchResult,
+    {},
+    {
+      sort_by: "-created_date",
+      limit: 1200,
+    },
+  );
+  const news = getPublishedNewsArticles({
+    sort_by: "-created_date",
+    limit: 100,
+  });
+
+  return {
+    tournaments,
+    teams,
+    matches,
+    results,
+    news,
+  };
 }
 
 function validateEntityPayload(entityName, payload, mode = "create") {
-  const schema = mode === "update" ? updateSchemas[entityName] : createSchemas[entityName];
+  const schema =
+    mode === "update" ? updateSchemas[entityName] : createSchemas[entityName];
   if (!schema) return payload || {};
   return schema.parse(payload || {});
+}
+
+function getPublishedNewsArticles(options = {}) {
+  return applyListQuery(
+    "NewsArticle",
+    entityConfigs.NewsArticle,
+    { publication_status: "published" },
+    options,
+  );
 }
 
 function normalizeTournamentPayload(row) {
@@ -386,11 +648,15 @@ function decodeTokenSegment(value) {
 }
 
 function signFanSessionPayload(encodedPayload) {
-  return createHmac("sha256", FAN_SESSION_SECRET).update(String(encodedPayload)).digest("base64url");
+  return createHmac("sha256", FAN_SESSION_SECRET)
+    .update(String(encodedPayload))
+    .digest("base64url");
 }
 
 function createFanSession(displayName, preferredUserId) {
-  const safeName = String(displayName || "").trim() || `Fan${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const safeName =
+    String(displayName || "").trim() ||
+    `Fan${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const payload = {
     userId: String(preferredUserId || "").trim() || `fan-${randomUUID()}`,
     displayName: safeName,
@@ -453,7 +719,11 @@ function isLocalAdminRequest(req) {
 function resolveRequestAuth(req) {
   const configuredAdminKey = String(process.env.CORE_ADMIN_KEY || "").trim();
   const providedAdminKey = String(req.headers["x-core-admin-key"] || "").trim();
-  const authenticatedByKey = Boolean(configuredAdminKey && providedAdminKey && configuredAdminKey === providedAdminKey);
+  const authenticatedByKey = Boolean(
+    configuredAdminKey &&
+    providedAdminKey &&
+    configuredAdminKey === providedAdminKey,
+  );
   const authenticatedLocally = isLocalAdminRequest(req);
 
   if (authenticatedLocally || authenticatedByKey) {
@@ -609,7 +879,8 @@ function scoreTextMatch(value, query) {
   const compact = normalizeSearchValue(value);
   const compactQuery = normalizeSearchValue(query);
   if (normalized === query || compact === compactQuery) return 160;
-  if (normalized.startsWith(query) || compact.startsWith(compactQuery)) return 120;
+  if (normalized.startsWith(query) || compact.startsWith(compactQuery))
+    return 120;
   if (normalized.includes(query) || compact.includes(compactQuery)) return 75;
   return -1;
 }
@@ -620,22 +891,51 @@ function isShortCodeQuery(query) {
 }
 
 function getGlobalSearchResults(rawQuery, rawLimit = 10) {
-  const query = String(rawQuery || "").toLowerCase().trim();
+  const query = String(rawQuery || "")
+    .toLowerCase()
+    .trim();
   if (query.length < 2) return [];
 
-  const limit = Number.isFinite(Number(rawLimit)) ? Math.min(Math.max(Number(rawLimit), 1), 20) : 10;
+  const limit = Number.isFinite(Number(rawLimit))
+    ? Math.min(Math.max(Number(rawLimit), 1), 20)
+    : 10;
   const compactQuery = normalizeSearchValue(query);
   const shortCodeQuery = isShortCodeQuery(query);
-  const tournaments = db.prepare("SELECT * FROM tournaments").all().map(normalizeTournamentPayload);
-  const teams = db.prepare("SELECT * FROM teams").all().map((row) => normalizeRecord(entityConfigs.Team, row));
-  const teamAliases = db.prepare("SELECT * FROM team_aliases").all().map((row) => normalizeRecord(entityConfigs.TeamAlias, row));
-  const players = db.prepare("SELECT * FROM players").all().map((row) => normalizeRecord(entityConfigs.Player, row));
-  const playerAliases = db.prepare("SELECT * FROM player_aliases").all().map((row) => normalizeRecord(entityConfigs.PlayerAlias, row));
-  const matches = db.prepare("SELECT * FROM matches").all().map((row) => normalizeRecord(entityConfigs.Match, row));
-  const news = db.prepare("SELECT * FROM news_articles").all().map((row) => normalizeRecord(entityConfigs.NewsArticle, row));
+  const tournaments = db
+    .prepare("SELECT * FROM tournaments")
+    .all()
+    .map(normalizeTournamentPayload);
+  const teams = db
+    .prepare("SELECT * FROM teams")
+    .all()
+    .map((row) => normalizeRecord(entityConfigs.Team, row));
+  const teamAliases = db
+    .prepare("SELECT * FROM team_aliases")
+    .all()
+    .map((row) => normalizeRecord(entityConfigs.TeamAlias, row));
+  const players = db
+    .prepare("SELECT * FROM players")
+    .all()
+    .map((row) => normalizeRecord(entityConfigs.Player, row));
+  const playerAliases = db
+    .prepare("SELECT * FROM player_aliases")
+    .all()
+    .map((row) => normalizeRecord(entityConfigs.PlayerAlias, row));
+  const matches = db
+    .prepare("SELECT * FROM matches")
+    .all()
+    .map((row) => normalizeRecord(entityConfigs.Match, row));
+  const news = db
+    .prepare(
+      "SELECT * FROM news_articles WHERE publication_status = 'published'",
+    )
+    .all()
+    .map((row) => normalizeRecord(entityConfigs.NewsArticle, row));
 
   const teamById = new Map(teams.map((team) => [team.id, team]));
-  const tournamentById = new Map(tournaments.map((tournament) => [tournament.id, tournament]));
+  const tournamentById = new Map(
+    tournaments.map((tournament) => [tournament.id, tournament]),
+  );
 
   const organizations = new Map();
   teams.forEach((team) => {
@@ -660,7 +960,10 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
 
   const playerAliasMap = new Map();
   players.forEach((player) => {
-    playerAliasMap.set(player.id, new Set([player.ign, player.real_name].filter(Boolean)));
+    playerAliasMap.set(
+      player.id,
+      new Set([player.ign, player.real_name].filter(Boolean)),
+    );
   });
   playerAliases.forEach((alias) => {
     const existing = playerAliasMap.get(alias.player_id);
@@ -678,8 +981,12 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
       tournament.status,
       ...getTournamentSearchAliases(tournament),
     ].filter(Boolean);
-    let score = Math.max(...aliases.map((alias) => scoreTextMatch(alias, query)));
-    const exactAliasHit = aliases.some((alias) => normalizeSearchValue(alias) === compactQuery);
+    let score = Math.max(
+      ...aliases.map((alias) => scoreTextMatch(alias, query)),
+    );
+    const exactAliasHit = aliases.some(
+      (alias) => normalizeSearchValue(alias) === compactQuery,
+    );
     if (exactAliasHit) score = Math.max(score, 280);
     if (score < 0) return;
     results.push({
@@ -696,10 +1003,12 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     let score = Math.max(
       scoreTextMatch(organization.label, query),
       scoreTextMatch(organization.sub, query),
-      ...aliases.map((alias) => scoreTextMatch(alias, query))
+      ...aliases.map((alias) => scoreTextMatch(alias, query)),
     );
     const compactTag = normalizeSearchValue(organization.sub);
-    const exactAliasHit = aliases.some((alias) => normalizeSearchValue(alias) === compactQuery);
+    const exactAliasHit = aliases.some(
+      (alias) => normalizeSearchValue(alias) === compactQuery,
+    );
     if (compactTag && compactTag === compactQuery) score = Math.max(score, 250);
     if (exactAliasHit) score = Math.max(score, 220);
     if (score < 0) return;
@@ -719,9 +1028,11 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
       scoreTextMatch(player.ign, query),
       scoreTextMatch(player.real_name, query),
       scoreTextMatch(team?.name, query),
-      ...aliases.map((alias) => scoreTextMatch(alias, query))
+      ...aliases.map((alias) => scoreTextMatch(alias, query)),
     );
-    const exactAliasHit = aliases.some((alias) => normalizeSearchValue(alias) === compactQuery);
+    const exactAliasHit = aliases.some(
+      (alias) => normalizeSearchValue(alias) === compactQuery,
+    );
     if (exactAliasHit) score = Math.max(score, 210);
     if (score < 0) return;
     results.push({
@@ -740,7 +1051,7 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
       scoreTextMatch(stageLabel, query),
       scoreTextMatch(match.map, query),
       scoreTextMatch(tournament?.name, query),
-      scoreTextMatch(`match ${match.match_number || ""}`, query)
+      scoreTextMatch(`match ${match.match_number || ""}`, query),
     );
     if (score < 0) return;
     results.push({
@@ -756,7 +1067,7 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     let score = Math.max(
       scoreTextMatch(article.title, query),
       scoreTextMatch(article.category?.replace(/_/g, " "), query),
-      scoreTextMatch(article.game, query)
+      scoreTextMatch(article.game, query),
     );
     if (score < 0) return;
     if (shortCodeQuery) {
@@ -773,13 +1084,17 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
 
   return results
     .filter((result) => result.label && result.path)
-    .sort((left, right) => right.score - left.score || left.label.localeCompare(right.label))
+    .sort(
+      (left, right) =>
+        right.score - left.score || left.label.localeCompare(right.label),
+    )
     .filter((result, index, list) => {
       const duplicateIndex = list.findIndex(
         (item) =>
           item.type === result.type &&
           item.path === result.path &&
-          normalizeSearchValue(item.label) === normalizeSearchValue(result.label)
+          normalizeSearchValue(item.label) ===
+            normalizeSearchValue(result.label),
       );
       return duplicateIndex === index;
     })
@@ -791,7 +1106,8 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
   if (!stages.length) return [];
 
   const rows = db
-    .prepare(`
+    .prepare(
+      `
       SELECT
         mr.team_id,
         mr.placement,
@@ -809,14 +1125,18 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
       LEFT JOIN matches m ON m.id = mr.match_id
       JOIN teams tm ON tm.id = mr.team_id
       WHERE mr.tournament_id = ?
-    `)
+    `,
+    )
     .all(tournamentId);
 
   if (!rows.length) return [];
 
   const stageIdByName = new Map(stages.map((stage) => [stage.name, stage.id]));
   const groupIdByStageAndName = new Map(
-    stageGroups.map((group) => [`${group.stage_id}::${group.group_name}`, group.id])
+    stageGroups.map((group) => [
+      `${group.stage_id}::${group.group_name}`,
+      group.id,
+    ]),
   );
   const grouped = new Map();
 
@@ -830,9 +1150,13 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
       row.group_name && stageType !== "grand_finals"
         ? String(row.group_name).startsWith("Group ")
           ? row.group_name
-          : `Group ${String(row.group_name).replace(/^group\s+/i, "").toUpperCase()}`
+          : `Group ${String(row.group_name)
+              .replace(/^group\s+/i, "")
+              .toUpperCase()}`
         : null;
-    const groupId = normalizedGroupName ? groupIdByStageAndName.get(`${stageId}::${normalizedGroupName}`) || null : null;
+    const groupId = normalizedGroupName
+      ? groupIdByStageAndName.get(`${stageId}::${normalizedGroupName}`) || null
+      : null;
     const aggregateKey = `${stageId}::${groupId || "overall"}::${row.team_id}`;
 
     const existing = grouped.get(aggregateKey) || {
@@ -888,17 +1212,29 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
       .map((entry) => ({
         ...entry,
         average_elimination_position:
-          (entry.matches_played || 0) > 0 ? entry.placement_sum / entry.matches_played : null,
+          (entry.matches_played || 0) > 0
+            ? entry.placement_sum / entry.matches_played
+            : null,
       }))
       .sort((a, b) => {
-        if ((b.total_points || 0) !== (a.total_points || 0)) return (b.total_points || 0) - (a.total_points || 0);
-        if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
-        if ((b.place_points || 0) !== (a.place_points || 0)) return (b.place_points || 0) - (a.place_points || 0);
-        const aAverage = Number.isFinite(a.average_elimination_position) ? a.average_elimination_position : Number.POSITIVE_INFINITY;
-        const bAverage = Number.isFinite(b.average_elimination_position) ? b.average_elimination_position : Number.POSITIVE_INFINITY;
+        if ((b.total_points || 0) !== (a.total_points || 0))
+          return (b.total_points || 0) - (a.total_points || 0);
+        if ((b.wins || 0) !== (a.wins || 0))
+          return (b.wins || 0) - (a.wins || 0);
+        if ((b.place_points || 0) !== (a.place_points || 0))
+          return (b.place_points || 0) - (a.place_points || 0);
+        const aAverage = Number.isFinite(a.average_elimination_position)
+          ? a.average_elimination_position
+          : Number.POSITIVE_INFINITY;
+        const bAverage = Number.isFinite(b.average_elimination_position)
+          ? b.average_elimination_position
+          : Number.POSITIVE_INFINITY;
         if (aAverage !== bAverage) return aAverage - bAverage;
-        if ((b.elim_points || 0) !== (a.elim_points || 0)) return (b.elim_points || 0) - (a.elim_points || 0);
-        return String(a.team?.name || "").localeCompare(String(b.team?.name || ""));
+        if ((b.elim_points || 0) !== (a.elim_points || 0))
+          return (b.elim_points || 0) - (a.elim_points || 0);
+        return String(a.team?.name || "").localeCompare(
+          String(b.team?.name || ""),
+        );
       })
       .forEach((entry, index) => {
         derived.push({
@@ -912,31 +1248,39 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
 }
 
 function getNormalizedTournament(id) {
-  const tournamentRow = db.prepare("SELECT * FROM tournaments WHERE id = ?").get(id);
+  const tournamentRow = db
+    .prepare("SELECT * FROM tournaments WHERE id = ?")
+    .get(id);
   if (!tournamentRow) return null;
 
   const tournament = normalizeTournamentPayload(tournamentRow);
   const stages = db
-    .prepare("SELECT * FROM tournament_stages WHERE tournament_id = ? ORDER BY stage_order ASC, name ASC")
+    .prepare(
+      "SELECT * FROM tournament_stages WHERE tournament_id = ? ORDER BY stage_order ASC, name ASC",
+    )
     .all(id)
     .map((row) => normalizeRecord(entityConfigs.TournamentStage, row));
 
   const stageIds = stages.map((stage) => stage.id);
   const stageGroups = stageIds.length
     ? db
-        .prepare(`SELECT * FROM tournament_stage_groups WHERE stage_id IN (${stageIds.map(() => "?").join(", ")}) ORDER BY group_order ASC, group_name ASC`)
+        .prepare(
+          `SELECT * FROM tournament_stage_groups WHERE stage_id IN (${stageIds.map(() => "?").join(", ")}) ORDER BY group_order ASC, group_name ASC`,
+        )
         .all(...stageIds)
         .map((row) => normalizeRecord(entityConfigs.TournamentStageGroup, row))
     : [];
 
   const participants = db
-    .prepare(`
+    .prepare(
+      `
       SELECT tp.*, tm.name AS team_name, tm.tag AS team_tag, tm.logo_url AS team_logo_url
       FROM tournament_participants tp
       JOIN teams tm ON tm.id = tp.team_id
       WHERE tp.tournament_id = ?
       ORDER BY COALESCE(tp.final_rank, 9999), tm.name ASC
-    `)
+    `,
+    )
     .all(id)
     .map((row) => ({
       ...normalizeRecord(entityConfigs.TournamentParticipant, row),
@@ -951,34 +1295,43 @@ function getNormalizedTournament(id) {
   const participantIds = participants.map((participant) => participant.id);
   const participantStageEntries = participantIds.length
     ? db
-        .prepare(`
+        .prepare(
+          `
           SELECT tse.*, ts.name AS stage_name, tsg.group_name
           FROM tournament_participant_stage_entries tse
           JOIN tournament_stages ts ON ts.id = tse.stage_id
           LEFT JOIN tournament_stage_groups tsg ON tsg.id = tse.group_id
           WHERE tse.participant_id IN (${participantIds.map(() => "?").join(", ")})
           ORDER BY ts.stage_order ASC, COALESCE(tsg.group_order, 999), tse.placement ASC
-        `)
+        `,
+        )
         .all(...participantIds)
-        .map((row) => normalizeRecord(entityConfigs.TournamentParticipantStageEntry, row))
+        .map((row) =>
+          normalizeRecord(entityConfigs.TournamentParticipantStageEntry, row),
+        )
     : [];
 
   const participantPlayers = participantIds.length
     ? db
-        .prepare(`
+        .prepare(
+          `
           SELECT tpp.*, p.ign AS player_ign, p.role AS player_role, p.photo_url AS player_photo_url
           FROM tournament_participant_players tpp
           LEFT JOIN players p ON p.id = tpp.player_id
           WHERE tpp.participant_id IN (${participantIds.map(() => "?").join(", ")})
           ORDER BY tpp.player_name ASC
-        `)
+        `,
+        )
         .all(...participantIds)
-        .map((row) => normalizeRecord(entityConfigs.TournamentParticipantPlayer, row))
+        .map((row) =>
+          normalizeRecord(entityConfigs.TournamentParticipantPlayer, row),
+        )
     : [];
 
   const standings = stageIds.length
     ? db
-        .prepare(`
+        .prepare(
+          `
           SELECT ss.*, ts.name AS stage_name, tsg.group_name, tm.name AS team_name, tm.tag AS team_tag, tm.logo_url AS team_logo_url
           FROM stage_standings ss
           JOIN tournament_stages ts ON ts.id = ss.stage_id
@@ -986,7 +1339,8 @@ function getNormalizedTournament(id) {
           JOIN teams tm ON tm.id = ss.team_id
           WHERE ss.tournament_id = ?
           ORDER BY ts.stage_order ASC, COALESCE(tsg.group_order, 999), COALESCE(ss.rank, 9999), tm.name ASC
-        `)
+        `,
+        )
         .all(id)
         .map((row) => ({
           ...normalizeRecord(entityConfigs.StageStanding, row),
@@ -1001,7 +1355,11 @@ function getNormalizedTournament(id) {
         }))
     : [];
 
-  const derivedStandings = deriveStandingsFromMatchResults(id, stages, stageGroups);
+  const derivedStandings = deriveStandingsFromMatchResults(
+    id,
+    stages,
+    stageGroups,
+  );
   const persistedByBoard = new Map();
   standings.forEach((entry) => {
     const boardKey = `${entry.stage_id}::${entry.group_id || "overall"}`;
@@ -1021,7 +1379,10 @@ function getNormalizedTournament(id) {
   const selectedBoards = new Set();
   derivedByBoard.forEach((derivedList, boardKey) => {
     const persistedList = persistedByBoard.get(boardKey) || [];
-    if (persistedList.length === 0 || derivedList.length > persistedList.length) {
+    if (
+      persistedList.length === 0 ||
+      derivedList.length > persistedList.length
+    ) {
       selectedBoards.add(boardKey);
     }
   });
@@ -1077,7 +1438,7 @@ function getNormalizedTournament(id) {
           (groupedGroups.get(stage.id) || []).map((group) => [
             group.group_name,
             groupedStandings.get(`${stage.id}::${group.id}`) || [],
-          ])
+          ]),
         ),
       },
     })),
@@ -1094,7 +1455,9 @@ function isBmps2026PromotionStage(stageName) {
 }
 
 function getBmps2026NextStageName(stageName) {
-  const normalized = String(stageName || "").trim().toLowerCase();
+  const normalized = String(stageName || "")
+    .trim()
+    .toLowerCase();
   if (normalized === "round 1") return "Round 2";
   if (normalized === "round 2") return "Round 3";
   if (normalized === "round 3") return "Survival Stage";
@@ -1102,7 +1465,9 @@ function getBmps2026NextStageName(stageName) {
 }
 
 function getBmps2026MovementGroup(group, placement, totalTeams) {
-  const label = String(group || "").trim().toUpperCase();
+  const label = String(group || "")
+    .trim()
+    .toUpperCase();
   const total = Math.max(Number(totalTeams) || 0, 0);
   const bottomCutoff = Math.max(total - 3, 13);
 
@@ -1128,16 +1493,22 @@ function getBmps2026MovementGroup(group, placement, totalTeams) {
 }
 
 function deriveBmps2026OverviewEntries(normalizedTournament) {
-  const baseEntries = (normalizedTournament?.participants || []).map((participant) => ({
-    team: participant?.team?.name || "Unknown Team",
-    phase:
-      participant?.stage_entries?.[0]?.stage_name && participant?.stage_entries?.[0]?.group_name
-        ? `${participant.stage_entries[0].stage_name} - ${participant.stage_entries[0].group_name}`
-        : participant?.stage_entries?.[0]?.stage_name || "Participants",
-  }));
+  const baseEntries = (normalizedTournament?.participants || []).map(
+    (participant) => ({
+      team: participant?.team?.name || "Unknown Team",
+      phase:
+        participant?.stage_entries?.[0]?.stage_name &&
+        participant?.stage_entries?.[0]?.group_name
+          ? `${participant.stage_entries[0].stage_name} - ${participant.stage_entries[0].group_name}`
+          : participant?.stage_entries?.[0]?.stage_name || "Participants",
+    }),
+  );
   const derivedEntries = [...baseEntries];
   const knownPhaseKeys = new Set(
-    derivedEntries.map((entry) => `${normalizeOrganizationName(entry.team)}::${String(entry.phase || "").toLowerCase()}`)
+    derivedEntries.map(
+      (entry) =>
+        `${normalizeOrganizationName(entry.team)}::${String(entry.phase || "").toLowerCase()}`,
+    ),
   );
 
   for (const stage of normalizedTournament?.stages || []) {
@@ -1147,7 +1518,10 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
     const rowsByGroup = new Map();
     const groupedStandings = stage?.standings?.by_group || {};
     Object.entries(groupedStandings).forEach(([groupName, rows]) => {
-      const groupLabel = String(groupName || "").replace(/^Group\s+/i, "").trim().toUpperCase();
+      const groupLabel = String(groupName || "")
+        .replace(/^Group\s+/i, "")
+        .trim()
+        .toUpperCase();
       const filteredRows = (rows || []).filter((row) => row?.team?.name);
       if (groupLabel && filteredRows.length > 0) {
         rowsByGroup.set(groupLabel, filteredRows);
@@ -1155,23 +1529,28 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
     });
 
     for (const [group, rows] of rowsByGroup.entries()) {
-      const orderedRows = [...rows]
-        .sort((left, right) => {
-          if ((right.total_points || 0) !== (left.total_points || 0)) {
-            return (right.total_points || 0) - (left.total_points || 0);
-          }
-          if ((right.wins || 0) !== (left.wins || 0)) {
-            return (right.wins || 0) - (left.wins || 0);
-          }
-          if ((right.place_points || 0) !== (left.place_points || 0)) {
-            return (right.place_points || 0) - (left.place_points || 0);
-          }
-          return String(left.team?.name || "").localeCompare(String(right.team?.name || ""));
-        });
+      const orderedRows = [...rows].sort((left, right) => {
+        if ((right.total_points || 0) !== (left.total_points || 0)) {
+          return (right.total_points || 0) - (left.total_points || 0);
+        }
+        if ((right.wins || 0) !== (left.wins || 0)) {
+          return (right.wins || 0) - (left.wins || 0);
+        }
+        if ((right.place_points || 0) !== (left.place_points || 0)) {
+          return (right.place_points || 0) - (left.place_points || 0);
+        }
+        return String(left.team?.name || "").localeCompare(
+          String(right.team?.name || ""),
+        );
+      });
 
       orderedRows.forEach((row, index) => {
         const teamName = row?.team?.name || "Unknown Team";
-        const destinationGroup = getBmps2026MovementGroup(group, index + 1, orderedRows.length);
+        const destinationGroup = getBmps2026MovementGroup(
+          group,
+          index + 1,
+          orderedRows.length,
+        );
         const phase = `${nextStageName} - Group ${destinationGroup}`;
         const phaseKey = `${normalizeOrganizationName(teamName)}::${phase.toLowerCase()}`;
         if (knownPhaseKeys.has(phaseKey)) return;
@@ -1238,10 +1617,15 @@ function deleteRecord(entityName, id) {
     db.prepare("DELETE FROM match_results WHERE team_id = ?").run(id);
   }
   if (entityName === "Tournament") {
-    const matchIds = db.prepare("SELECT id FROM matches WHERE tournament_id = ?").all(id).map((row) => row.id);
+    const matchIds = db
+      .prepare("SELECT id FROM matches WHERE tournament_id = ?")
+      .all(id)
+      .map((row) => row.id);
     if (matchIds.length > 0) {
       const placeholders = matchIds.map(() => "?").join(", ");
-      db.prepare(`DELETE FROM match_results WHERE match_id IN (${placeholders})`).run(...matchIds);
+      db.prepare(
+        `DELETE FROM match_results WHERE match_id IN (${placeholders})`,
+      ).run(...matchIds);
     }
     db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(id);
     db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(id);
@@ -1251,7 +1635,12 @@ function deleteRecord(entityName, id) {
   }
 
   const result = db.prepare(`DELETE FROM ${config.table} WHERE id = ?`).run(id);
-  if (entityName === "MatchResult" || entityName === "Team" || entityName === "Tournament" || entityName === "Match") {
+  if (
+    entityName === "MatchResult" ||
+    entityName === "Team" ||
+    entityName === "Tournament" ||
+    entityName === "Match"
+  ) {
     recomputeTeamStats();
   }
   return result.changes > 0;
@@ -1270,13 +1659,17 @@ app.get("/api/admin/overview", (req, res) => {
   const countForEntity = (entityName) => {
     const config = entityConfigs[entityName];
     if (!config?.table) return 0;
-    const row = db.prepare(`SELECT COUNT(*) AS count FROM ${config.table}`).get();
+    const row = db
+      .prepare(`SELECT COUNT(*) AS count FROM ${config.table}`)
+      .get();
     return Number(row?.count || 0);
   };
 
   const teams = db.prepare("SELECT name, logo_url FROM teams").all();
   const activeTournaments = db
-    .prepare("SELECT id, name, participants, status FROM tournaments WHERE status != 'completed'")
+    .prepare(
+      "SELECT id, name, participants, status FROM tournaments WHERE status != 'completed'",
+    )
     .all();
 
   const duplicateBuckets = new Map();
@@ -1285,9 +1678,15 @@ app.get("/api/admin/overview", (req, res) => {
     if (!key) return;
     duplicateBuckets.set(key, (duplicateBuckets.get(key) || 0) + 1);
   });
-  const duplicateOrgCount = [...duplicateBuckets.values()].filter((count) => count > 1).length;
+  const duplicateOrgCount = [...duplicateBuckets.values()].filter(
+    (count) => count > 1,
+  ).length;
 
-  const teamKeys = new Set(teams.map((team) => normalizeOrganizationName(team?.name || "")).filter(Boolean));
+  const teamKeys = new Set(
+    teams
+      .map((team) => normalizeOrganizationName(team?.name || ""))
+      .filter(Boolean),
+  );
   const participantNames = new Set();
   let unresolvedParticipantCount = 0;
 
@@ -1316,7 +1715,11 @@ app.get("/api/admin/overview", (req, res) => {
   });
 
   const missingLogoCount = [...participantNames].filter((name) => {
-    const team = teams.find((row) => normalizeOrganizationName(row?.name || "") === normalizeOrganizationName(name));
+    const team = teams.find(
+      (row) =>
+        normalizeOrganizationName(row?.name || "") ===
+        normalizeOrganizationName(name),
+    );
     return !(team?.logo_url || getTeamLogoByName(name));
   }).length;
 
@@ -1352,7 +1755,9 @@ app.post("/api/fan/session", (req, res) => {
     return res.status(201).json(session);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid session payload", issues: error.issues });
+      return res
+        .status(400)
+        .json({ error: "Invalid session payload", issues: error.issues });
     }
     throw error;
   }
@@ -1360,6 +1765,109 @@ app.post("/api/fan/session", (req, res) => {
 
 app.get("/api/search", (req, res) => {
   return res.json(getGlobalSearchResults(req.query.q, req.query.limit));
+});
+
+app.get("/api/home/summary", (_req, res) => {
+  try {
+    return res.json(getHomeSummaryPayload());
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to build home summary" });
+  }
+});
+
+app.get("/api/home/view", (_req, res) => {
+  try {
+    const summary = getHomeSummaryPayload();
+    const mode = _req.query.mode === "mobile" ? "mobile" : "desktop";
+    return res.json(buildHomeViewModel(summary, { mode }));
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to build home view" });
+  }
+});
+
+app.get("/api/news/public", (req, res) => {
+  try {
+    const records = getPublishedNewsArticles(req.query);
+    return res.json(records);
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error.message || "Invalid news query" });
+  }
+});
+
+app.get("/api/news/public/:id", (req, res) => {
+  const record = getRecord("NewsArticle", req.params.id);
+  if (!record || record.publication_status !== "published") {
+    return res.status(404).json({ error: "Not found" });
+  }
+  return res.json(record);
+});
+
+app.get("/api/admin/news/sources", (req, res) => {
+  const auth = resolveRequestAuth(req);
+  if (!auth.isAuthenticated) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  return res.json(
+    NEWS_SOURCES.map((source) => ({
+      id: source.id,
+      name: source.name,
+      type: source.type,
+      url: source.url,
+      category: source.category,
+      game: source.game,
+      enabled: Boolean(source.enabled),
+      priority: source.priority || "routine",
+    })),
+  );
+});
+
+app.post("/api/admin/news/import", async (req, res) => {
+  const auth = resolveRequestAuth(req);
+  if (!auth.isAuthenticated) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  try {
+    const result = await importNewsFromSources({
+      sourceIds: Array.isArray(req.body?.source_ids) ? req.body.source_ids : [],
+      limitPerSource: Number.isFinite(Number(req.body?.limit_per_source))
+        ? Number(req.body.limit_per_source)
+        : 8,
+      manualUrl: req.body?.manual_url,
+      manualSourceName: req.body?.manual_source_name,
+      manualSourceType: req.body?.manual_source_type,
+      manualCategory: req.body?.manual_category,
+      manualGame: req.body?.manual_game,
+      manualPriority: req.body?.manual_priority,
+    });
+    return res.status(201).json(result);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error.message || "News import failed" });
+  }
+});
+
+app.post("/api/admin/news/backfill", (req, res) => {
+  const auth = resolveRequestAuth(req);
+  if (!auth.isAuthenticated) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  try {
+    return res.status(200).json(backfillImportedNewsMetadata());
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error.message || "News metadata refresh failed" });
+  }
 });
 
 app.get("/api/tournaments/:id/normalized", (req, res) => {
@@ -1389,7 +1897,9 @@ app.get("/api/entities/:entity", (req, res) => {
     const records = applyListQuery(entityName, config, query, req.query);
     return res.json(records);
   } catch (error) {
-    return res.status(400).json({ error: error.message || "Invalid list query" });
+    return res
+      .status(400)
+      .json({ error: error.message || "Invalid list query" });
   }
 });
 
@@ -1405,17 +1915,24 @@ app.post("/api/entities/:entity", (req, res) => {
     const payload = withFanOwnership(
       entityName,
       validateEntityPayload(entityName, req.body, "create"),
-      req.fanSession
+      req.fanSession,
     );
     const created = insertRecord(entityName, payload);
-    if (entityName === "FanProfile" || entityName === "FanPrediction" || entityName === "FanPollVote" || entityName === "FanChatMessage") {
+    if (
+      entityName === "FanProfile" ||
+      entityName === "FanPrediction" ||
+      entityName === "FanPollVote" ||
+      entityName === "FanChatMessage"
+    ) {
       console.log(`[fan-write:done] ${entityName}`, created?.id || "no-id");
     }
     return res.status(201).json(created);
   } catch (error) {
     console.error(`[fan-write:error] ${entityName}`, error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid payload", issues: error.issues });
+      return res
+        .status(400)
+        .json({ error: "Invalid payload", issues: error.issues });
     }
     throw error;
   }
@@ -1431,12 +1948,18 @@ app.post("/api/entities/:entity/bulk", (req, res) => {
   }
   const payload = Array.isArray(req.body) ? req.body : [];
   try {
-    const validatedPayload = payload.map((item) => validateEntityPayload(entityName, item, "create"));
-    const created = validatedPayload.map((item) => insertRecord(entityName, item));
+    const validatedPayload = payload.map((item) =>
+      validateEntityPayload(entityName, item, "create"),
+    );
+    const created = validatedPayload.map((item) =>
+      insertRecord(entityName, item),
+    );
     return res.status(201).json(created);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid bulk payload", issues: error.issues });
+      return res
+        .status(400)
+        .json({ error: "Invalid bulk payload", issues: error.issues });
     }
     throw error;
   }
@@ -1461,20 +1984,25 @@ app.put("/api/entities/:entity/:id", (req, res) => {
   if (!ensureEntityWriteAccess(req, res, entityName)) {
     return;
   }
-  if (PUBLIC_WRITE_ENTITIES.has(entityName) && !ensurePublicRecordOwnership(req, res, entityName, req.params.id)) {
+  if (
+    PUBLIC_WRITE_ENTITIES.has(entityName) &&
+    !ensurePublicRecordOwnership(req, res, entityName, req.params.id)
+  ) {
     return;
   }
   try {
     const payload = withFanOwnership(
       entityName,
       validateEntityPayload(entityName, req.body, "update"),
-      req.fanSession
+      req.fanSession,
     );
     const updated = updateRecord(entityName, req.params.id, payload);
     return res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid payload", issues: error.issues });
+      return res
+        .status(400)
+        .json({ error: "Invalid payload", issues: error.issues });
     }
     throw error;
   }

@@ -31,7 +31,9 @@ function groupNormalizedDataByTournament(rows, key = "tournament_id") {
 }
 
 function getTournamentStageOrder(tournament) {
-  const configuredStages = Array.isArray(tournament?.stages) ? tournament.stages : [];
+  const configuredStages = Array.isArray(tournament?.stages)
+    ? tournament.stages
+    : [];
   const explicitOrder = configuredStages.reduce((map, stage, index) => {
     if (stage?.name) {
       map[stage.name] = stage.order ?? index + 1;
@@ -56,7 +58,13 @@ function getTournamentStageOrder(tournament) {
   return { ...fallbackOrder, ...explicitOrder };
 }
 
-function getResolvedStageStandings(tournament, teams, matches, matchResults, stageName) {
+function getResolvedStageStandings(
+  tournament,
+  teams,
+  matches,
+  matchResults,
+  stageName,
+) {
   const derived = getStageBoardData({
     featuredTournament: tournament,
     teams,
@@ -79,12 +87,22 @@ function getResolvedStageStandings(tournament, teams, matches, matchResults, sta
     }));
   }
 
-  const stage = (tournament?.stages || []).find((entry) => entry?.name === stageName);
+  const stage = (tournament?.stages || []).find(
+    (entry) => entry?.name === stageName,
+  );
   return Array.isArray(stage?.standings) ? stage.standings : [];
 }
 
-function getResolvedNormalizedStageStandings({ tournament, teams, normalizedStages = [], normalizedStandings = [], stageName }) {
-  const targetStage = normalizedStages.find((stage) => stage?.name === stageName);
+function getResolvedNormalizedStageStandings({
+  tournament,
+  teams,
+  normalizedStages = [],
+  normalizedStandings = [],
+  stageName,
+}) {
+  const targetStage = normalizedStages.find(
+    (stage) => stage?.name === stageName,
+  );
   if (!targetStage) return [];
 
   const teamMap = new Map((teams || []).map((team) => [team.id, team]));
@@ -124,7 +142,10 @@ export function getTournamentResultForOrganization({
     ...tournament,
     stages:
       normalizedStages.length > 0
-        ? normalizedStages.map((stage) => ({ ...stage, order: stage.stage_order }))
+        ? normalizedStages.map((stage) => ({
+            ...stage,
+            order: stage.stage_order,
+          }))
         : tournament?.stages || [],
   });
   let bestStageRow = null;
@@ -146,9 +167,16 @@ export function getTournamentResultForOrganization({
             normalizedStandings,
             stageName: stage.name,
           })
-        : getResolvedStageStandings(tournament, teams, matches, matchResults, stage.name);
+        : getResolvedStageStandings(
+            tournament,
+            teams,
+            matches,
+            matchResults,
+            stage.name,
+          );
     const row = standings.find(
-      (entry) => normalizeOrganizationName(entry?.fullTeam || entry?.team) === targetKey
+      (entry) =>
+        normalizeOrganizationName(entry?.fullTeam || entry?.team) === targetKey,
     );
     if (!row) continue;
     const order = stageOrder[stage.name] ?? 0;
@@ -178,17 +206,28 @@ export function getTournamentResultForOrganization({
   return null;
 }
 
-export function getPrizeForOrganization(tournament, organizationName, placement) {
-  const prizeRows = Array.isArray(tournament?.prize_breakdown) ? tournament.prize_breakdown : [];
+export function getPrizeForOrganization(
+  tournament,
+  organizationName,
+  placement,
+) {
+  const prizeRows = Array.isArray(tournament?.prize_breakdown)
+    ? tournament.prize_breakdown
+    : [];
   const orgKey = normalizeOrganizationName(organizationName);
   const matchedByTeam =
-    prizeRows.find((entry) => normalizeOrganizationName(entry?.team) === orgKey) || null;
+    prizeRows.find(
+      (entry) => normalizeOrganizationName(entry?.team) === orgKey,
+    ) || null;
   if (matchedByTeam) return formatPrize(matchedByTeam);
 
   const normalizedPlacement = normalizePlacementValue(placement);
   if (normalizedPlacement) {
     const matchedByPlacement =
-      prizeRows.find((entry) => normalizePlacementValue(entry?.placement) === normalizedPlacement) || null;
+      prizeRows.find(
+        (entry) =>
+          normalizePlacementValue(entry?.placement) === normalizedPlacement,
+      ) || null;
     if (matchedByPlacement) return formatPrize(matchedByPlacement);
   }
 
@@ -202,7 +241,9 @@ export function buildNormalizedTournamentResultMaps({
 }) {
   return {
     stagesByTournament: groupNormalizedDataByTournament(normalizedStages),
-    participantsByTournament: groupNormalizedDataByTournament(normalizedParticipants),
+    participantsByTournament: groupNormalizedDataByTournament(
+      normalizedParticipants,
+    ),
     standingsByTournament: groupNormalizedDataByTournament(normalizedStandings),
   };
 }

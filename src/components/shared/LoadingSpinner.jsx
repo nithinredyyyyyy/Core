@@ -3,7 +3,9 @@ import React, { useEffect, useMemo, useState } from "react";
 function findVisibleLogoTarget() {
   if (typeof document === "undefined") return null;
 
-  const candidates = Array.from(document.querySelectorAll("[data-core-logo-target='primary']"));
+  const candidates = Array.from(
+    document.querySelectorAll("[data-core-logo-target='primary']"),
+  );
   const visibleTarget = candidates.find((node) => {
     const rect = node.getBoundingClientRect();
     const styles = window.getComputedStyle(node);
@@ -58,19 +60,20 @@ export default function LoadingSpinner({ isExiting = false }) {
     };
   }, [isExiting]);
 
-  const logoShellStyle = isExiting && targetRect
-    ? {
-        left: `${targetRect.centerX}px`,
-        top: `${targetRect.centerY}px`,
-        width: `${targetRect.width}px`,
-        height: `${targetRect.height}px`,
-      }
-    : {
-        left: "50%",
-        top: "42%",
-        width: `${initialSize}px`,
-        height: `${initialSize}px`,
-      };
+  const logoShellStyle =
+    isExiting && targetRect
+      ? {
+          left: `${targetRect.centerX}px`,
+          top: `${targetRect.centerY}px`,
+          width: `${targetRect.width}px`,
+          height: `${targetRect.height}px`,
+        }
+      : {
+          left: "50%",
+          top: "42%",
+          width: `${initialSize}px`,
+          height: `${initialSize}px`,
+        };
 
   return (
     <div className="fixed inset-0 z-[999] overflow-hidden bg-[#050505] text-white">
@@ -91,17 +94,25 @@ export default function LoadingSpinner({ isExiting = false }) {
           transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
-        <div className={`relative h-full w-full transition-opacity duration-500 ${isExiting ? "opacity-100" : "opacity-100"}`}>
-          <div className={`absolute inset-[10%] rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.28)_0%,rgba(217,70,239,0.18)_42%,rgba(0,0,0,0)_74%)] blur-3xl preloader-pulse-core transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`} />
-          <div className={`absolute inset-[2%] rounded-full border border-white/8 preloader-progress-ring transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`} />
+        <div
+          className={`relative size-full transition-opacity duration-500 ${isExiting ? "opacity-100" : "opacity-100"}`}
+        >
+          <div
+            className={`absolute inset-[10%] rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.28)_0%,rgba(217,70,239,0.18)_42%,rgba(0,0,0,0)_74%)] blur-3xl preloader-pulse-core transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`}
+          />
+          <div
+            className={`absolute inset-[2%] rounded-full border border-white/8 preloader-progress-ring transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`}
+          />
           <img
             src="/images/core-logo.png"
             alt="Core loading"
-            className={`relative z-10 h-full w-full object-contain ${
+            className={`relative z-10 size-full object-contain ${
               isExiting ? "preloader-exit-settle" : "preloader-vortex-spin"
             } preloader-motion-blur`}
           />
-          <div className={`pointer-events-none absolute inset-[31%] rounded-full bg-white/5 preloader-core-flicker transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`} />
+          <div
+            className={`pointer-events-none absolute inset-[31%] rounded-full bg-white/5 preloader-core-flicker transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`}
+          />
         </div>
       </div>
 

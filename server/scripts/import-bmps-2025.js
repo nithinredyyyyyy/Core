@@ -28,78 +28,378 @@ const tournament = {
     { week: "Jul 4 - Jul 6", label: "Grand Finals" },
   ],
   prize_breakdown: [
-    { placement: "1st", team: "Aryan x TMG Gaming", inr: "12,500,000", usd: "145,684.67" },
-    { placement: "2nd", team: "NoNx Esports", inr: "5,500,000", usd: "64,101.26" },
-    { placement: "3rd", team: "Los Hermanos Esports", inr: "3,500,000", usd: "40,791.71" },
-    { placement: "4th", team: "4Merical Esports", inr: "2,250,000", usd: "26,223.24" },
+    {
+      placement: "1st",
+      team: "Aryan x TMG Gaming",
+      inr: "12,500,000",
+      usd: "145,684.67",
+    },
+    {
+      placement: "2nd",
+      team: "NoNx Esports",
+      inr: "5,500,000",
+      usd: "64,101.26",
+    },
+    {
+      placement: "3rd",
+      team: "Los Hermanos Esports",
+      inr: "3,500,000",
+      usd: "40,791.71",
+    },
+    {
+      placement: "4th",
+      team: "4Merical Esports",
+      inr: "2,250,000",
+      usd: "26,223.24",
+    },
     { placement: "5th", team: "8Bit", inr: "1,800,000", usd: "20,978.59" },
     { placement: "6th", team: "Gods Omen", inr: "1,500,000", usd: "17,482.16" },
-    { placement: "7th", team: "4TR Official", inr: "1,400,000", usd: "16,316.68" },
+    {
+      placement: "7th",
+      team: "4TR Official",
+      inr: "1,400,000",
+      usd: "16,316.68",
+    },
     { placement: "8th", team: "TWOB", inr: "1,300,000", usd: "15,151.21" },
-    { placement: "9th", team: "Gods Reign", inr: "1,200,000", usd: "13,985.73" },
-    { placement: "10th", team: "K9 Esports", inr: "1,200,000", usd: "13,985.73" },
-    { placement: "11th", team: "Team Forever", inr: "800,000", usd: "9,323.82" },
-    { placement: "12th", team: "Inferno Squad", inr: "800,000", usd: "9,323.82" },
-    { placement: "13th", team: "Genesis Esports", inr: "700,000", usd: "8,158.34" },
+    {
+      placement: "9th",
+      team: "Gods Reign",
+      inr: "1,200,000",
+      usd: "13,985.73",
+    },
+    {
+      placement: "10th",
+      team: "K9 Esports",
+      inr: "1,200,000",
+      usd: "13,985.73",
+    },
+    {
+      placement: "11th",
+      team: "Team Forever",
+      inr: "800,000",
+      usd: "9,323.82",
+    },
+    {
+      placement: "12th",
+      team: "Inferno Squad",
+      inr: "800,000",
+      usd: "9,323.82",
+    },
+    {
+      placement: "13th",
+      team: "Genesis Esports",
+      inr: "700,000",
+      usd: "8,158.34",
+    },
     { placement: "14th", team: "Team Eggy", inr: "700,000", usd: "8,158.34" },
     { placement: "15th", team: "TEAM iNSANE", inr: "700,000", usd: "8,158.34" },
-    { placement: "16th", team: "2OP Official", inr: "500,000", usd: "5,827.39" },
-    { placement: "17th", team: "Alibaba Raiders", inr: "300,000", usd: "3,496.43" },
-    { placement: "18th", team: "Hyderabad Hydras", inr: "300,000", usd: "3,496.43" },
-    { placement: "19th", team: "Reckoning Esports", inr: "300,000", usd: "3,496.43" },
+    {
+      placement: "16th",
+      team: "2OP Official",
+      inr: "500,000",
+      usd: "5,827.39",
+    },
+    {
+      placement: "17th",
+      team: "Alibaba Raiders",
+      inr: "300,000",
+      usd: "3,496.43",
+    },
+    {
+      placement: "18th",
+      team: "Hyderabad Hydras",
+      inr: "300,000",
+      usd: "3,496.43",
+    },
+    {
+      placement: "19th",
+      team: "Reckoning Esports",
+      inr: "300,000",
+      usd: "3,496.43",
+    },
     { placement: "20th", team: "Orangutan", inr: "300,000", usd: "3,496.43" },
-    { placement: "21st", team: "True Rippers", inr: "200,000", usd: "2,330.95" },
-    { placement: "22nd", team: "MYSTERIOUS 4", inr: "200,000", usd: "2,330.95" },
-    { placement: "23rd", team: "Troy Tamilans Esports", inr: "200,000", usd: "2,330.95" },
-    { placement: "24th", team: "GodLike Esports", inr: "200,000", usd: "2,330.95" },
-    { placement: "25th", team: "Volcano Esports", inr: "200,000", usd: "2,330.95" },
-    { placement: "26th", team: "Learn From Past", inr: "100,000", usd: "1,165.48" },
+    {
+      placement: "21st",
+      team: "True Rippers",
+      inr: "200,000",
+      usd: "2,330.95",
+    },
+    {
+      placement: "22nd",
+      team: "MYSTERIOUS 4",
+      inr: "200,000",
+      usd: "2,330.95",
+    },
+    {
+      placement: "23rd",
+      team: "Troy Tamilans Esports",
+      inr: "200,000",
+      usd: "2,330.95",
+    },
+    {
+      placement: "24th",
+      team: "GodLike Esports",
+      inr: "200,000",
+      usd: "2,330.95",
+    },
+    {
+      placement: "25th",
+      team: "Volcano Esports",
+      inr: "200,000",
+      usd: "2,330.95",
+    },
+    {
+      placement: "26th",
+      team: "Learn From Past",
+      inr: "100,000",
+      usd: "1,165.48",
+    },
     { placement: "27th", team: "Wyld Fangs", inr: "100,000", usd: "1,165.48" },
     { placement: "28th", team: "BO7S", inr: "100,000", usd: "1,165.48" },
     { placement: "29th", team: "Team SouL", inr: "100,000", usd: "1,165.48" },
     { placement: "30th", team: "Jux Esports", inr: "100,000", usd: "1,165.48" },
     { placement: "31st", team: "Do Or Die", inr: "100,000", usd: "1,165.48" },
-    { placement: "32nd", team: "Team Shockwave", inr: "100,000", usd: "1,165.48" },
+    {
+      placement: "32nd",
+      team: "Team Shockwave",
+      inr: "100,000",
+      usd: "1,165.48",
+    },
   ],
   awards: [
-    { title: "MVP", player: "Levi", team: "NoNx Esports", country: "India", inr: "300,000", usd: "3,496.43" },
-    { title: "Finals MVP", player: "Levi", team: "NoNx Esports", country: "India", inr: "100,000", usd: "1,165.48" },
-    { title: "Best IGL", player: "DragonOP", team: "4Merical Esports", country: "India", inr: "150,000", usd: "1,748.22" },
-    { title: "Best Clutch", player: "NinjaBoi", team: "K9 Esports", country: "India", inr: "50,000", usd: "582.74" },
+    {
+      title: "MVP",
+      player: "Levi",
+      team: "NoNx Esports",
+      country: "India",
+      inr: "300,000",
+      usd: "3,496.43",
+    },
+    {
+      title: "Finals MVP",
+      player: "Levi",
+      team: "NoNx Esports",
+      country: "India",
+      inr: "100,000",
+      usd: "1,165.48",
+    },
+    {
+      title: "Best IGL",
+      player: "DragonOP",
+      team: "4Merical Esports",
+      country: "India",
+      inr: "150,000",
+      usd: "1,748.22",
+    },
+    {
+      title: "Best Clutch",
+      player: "NinjaBoi",
+      team: "K9 Esports",
+      country: "India",
+      inr: "50,000",
+      usd: "582.74",
+    },
   ],
   participants: [
-    { placement: 1, team: "Orangutan", phase: "Round 1", players: ["Aaru", "AKop", "WizzGOD", "Attanki", "Veyron", "RonaK"] },
-    { placement: 2, team: "Team SouL", phase: "Round 1", players: ["Manya", "Goblin", "NakuL", "LEGIT", "Rony"] },
-    { placement: 3, team: "Hyderabad Hydras", phase: "Round 1", players: ["Sarvit", "Moksh", "Ninjuu", "NinjA", "Rexboy", "Karthik"] },
-    { placement: 4, team: "TWOB", phase: "Round 1", players: ["Anonymous", "Rapido", "Kanha", "Kalyug", "Dashh05", "Pompy05"] },
-    { placement: 5, team: "Learn From Past", phase: "Round 1", players: ["iYash", "SahilOPAF", "HONEY", "Dope", "Armxn"] },
-    { placement: 6, team: "K9 Esports", phase: "Round 1", players: ["Omega", "NinjaBoi", "Slug", "Beast", "Arclyn", "Ravan"] },
-    { placement: 7, team: "Wyld Fangs", phase: "Round 1", players: ["SENSEI", "Saif", "Tracegod", "Fierce", "AnujTooOP"] },
-    { placement: 8, team: "True Rippers", phase: "Round 1", players: ["Jelly", "KioLmao", "SAM", "Ninzae", "Rudd"] },
-    { placement: 9, team: "8Bit", phase: "Round 3", players: ["Saumraj", "Troye", "GamlaBoy", "AquaNox", "Raiden", "Sheek"] },
-    { placement: 10, team: "GodLike Esports", phase: "Round 3", players: ["Punkk", "JONATHAN", "ADMINO", "Spower", "SIMP", "ZGOD"] },
-    { placement: 11, team: "Genesis Esports", phase: "Round 3", players: ["SHADOW", "Apollo", "Sam", "HunterZ", "Zap", "TOM"] },
-    { placement: 12, team: "4Merical Esports", phase: "Round 3", players: ["DragonOP", "PokoWNL", "BeardBaba", "Reaper", "VPIX"] },
-    { placement: 13, team: "NoNx Esports", phase: "Round 3", players: ["Roman", "RushBoy", "Lovish", "Levi", "Godx"] },
-    { placement: 14, team: "BO7S", phase: "Round 3", players: ["Doroki", "Ghostfxce", "Dusty", "Dizzy", "Topzzz"] },
-    { placement: 15, team: "Team Eggy", phase: "Round 3", players: ["EGGY", "Mernox", "DREAMS03", "JDGamingYT", "ProBGMI"] },
-    { placement: 16, team: "Jux Esports", phase: "Round 3", players: ["Niku", "Ribu", "Amazing", "Jax", "Suki", "Vardaan"] },
-    { placement: 17, team: "TEAM iNSANE", phase: "Round 3", players: ["Aadi", "Lazyy", "Atomm", "Cloudz", "Godz", "Yash"] },
-    { placement: 18, team: "Inferno Squad", phase: "Round 3", players: ["PmwiIGL", "OwenOG", "JatinOG", "Goten", "Executor", "OmegaOG"] },
-    { placement: 19, team: "2OP Official", phase: "Round 3", players: ["Aimhaxx", "Liability", "Botfire", "Shootpagalu", "Shady", "Hypnotized"] },
-    { placement: 20, team: "Gods Omen", phase: "Round 3", players: ["StoneBGMI", "GyroGod", "BadOP", "GOKU", "Suriya", "Superman"] },
-    { placement: 21, team: "Team Forever", phase: "Round 3", players: ["Owais", "Ash", "Thunder", "Shayaan", "Mafia36", "STORM"] },
-    { placement: 22, team: "Do Or Die", phase: "Round 3", players: ["Bhaalu", "AvnishOP", "ReapeR", "Ryzen", "Omega", "PixieOP"] },
-    { placement: 23, team: "Gods Reign", phase: "Round 3", players: ["DeltaPG", "Justin", "Destro", "Neyo", "Robin"] },
-    { placement: 24, team: "Reckoning Esports", phase: "Round 3", players: ["GravityJOD", "ViPER", "Dionysus", "Saumay", "MAX", "Ahu"] },
-    { placement: 25, team: "Aryan x TMG Gaming", phase: "Round 3", players: ["Aryan", "Syrax", "Devotee", "Hitler", "Vishu", "Manas4u"] },
-    { placement: 26, team: "Team Shockwave", phase: "Round 3", players: ["Shockwave", "Extrovert", "Shroud", "MadmanGod", "KrishOP"] },
-    { placement: 27, team: "Volcano Esports", phase: "Round 3", players: ["FLASH", "Arjun", "VEGITO", "PSYCHO", "REFLEXXX", "GIN"] },
-    { placement: 28, team: "Troy Tamilans Esports", phase: "Round 3", players: ["RanveerOG", "Hydro", "INFERNO", "Auxin", "Mac", "Ralphie"] },
-    { placement: 29, team: "Alibaba Raiders", phase: "Round 3", players: ["Wanted", "Kris", "Mj", "AryanOG", "WhiteT1ger", "FraggerNUB"] },
-    { placement: 30, team: "4TR Official", phase: "Round 3", players: ["Morty", "PainIsLive", "AKOP", "InfGod", "Utkarsh", "Action18"] },
-    { placement: 31, team: "MYSTERIOUS 4", phase: "Round 3", players: ["SKETCH", "Fragger", "SnowJOD", "HEROO", "JAXXX", "Danav"] },
-    { placement: 32, team: "Los Hermanos Esports", phase: "Round 3", players: ["ShaDow", "Kaalan", "SpyOp", "Evil", "AFU", "SayiP"] },
+    {
+      placement: 1,
+      team: "Orangutan",
+      phase: "Round 1",
+      players: ["Aaru", "AKop", "WizzGOD", "Attanki", "Veyron", "RonaK"],
+    },
+    {
+      placement: 2,
+      team: "Team SouL",
+      phase: "Round 1",
+      players: ["Manya", "Goblin", "NakuL", "LEGIT", "Rony"],
+    },
+    {
+      placement: 3,
+      team: "Hyderabad Hydras",
+      phase: "Round 1",
+      players: ["Sarvit", "Moksh", "Ninjuu", "NinjA", "Rexboy", "Karthik"],
+    },
+    {
+      placement: 4,
+      team: "TWOB",
+      phase: "Round 1",
+      players: ["Anonymous", "Rapido", "Kanha", "Kalyug", "Dashh05", "Pompy05"],
+    },
+    {
+      placement: 5,
+      team: "Learn From Past",
+      phase: "Round 1",
+      players: ["iYash", "SahilOPAF", "HONEY", "Dope", "Armxn"],
+    },
+    {
+      placement: 6,
+      team: "K9 Esports",
+      phase: "Round 1",
+      players: ["Omega", "NinjaBoi", "Slug", "Beast", "Arclyn", "Ravan"],
+    },
+    {
+      placement: 7,
+      team: "Wyld Fangs",
+      phase: "Round 1",
+      players: ["SENSEI", "Saif", "Tracegod", "Fierce", "AnujTooOP"],
+    },
+    {
+      placement: 8,
+      team: "True Rippers",
+      phase: "Round 1",
+      players: ["Jelly", "KioLmao", "SAM", "Ninzae", "Rudd"],
+    },
+    {
+      placement: 9,
+      team: "8Bit",
+      phase: "Round 3",
+      players: ["Saumraj", "Troye", "GamlaBoy", "AquaNox", "Raiden", "Sheek"],
+    },
+    {
+      placement: 10,
+      team: "GodLike Esports",
+      phase: "Round 3",
+      players: ["Punkk", "JONATHAN", "ADMINO", "Spower", "SIMP", "ZGOD"],
+    },
+    {
+      placement: 11,
+      team: "Genesis Esports",
+      phase: "Round 3",
+      players: ["SHADOW", "Apollo", "Sam", "HunterZ", "Zap", "TOM"],
+    },
+    {
+      placement: 12,
+      team: "4Merical Esports",
+      phase: "Round 3",
+      players: ["DragonOP", "PokoWNL", "BeardBaba", "Reaper", "VPIX"],
+    },
+    {
+      placement: 13,
+      team: "NoNx Esports",
+      phase: "Round 3",
+      players: ["Roman", "RushBoy", "Lovish", "Levi", "Godx"],
+    },
+    {
+      placement: 14,
+      team: "BO7S",
+      phase: "Round 3",
+      players: ["Doroki", "Ghostfxce", "Dusty", "Dizzy", "Topzzz"],
+    },
+    {
+      placement: 15,
+      team: "Team Eggy",
+      phase: "Round 3",
+      players: ["EGGY", "Mernox", "DREAMS03", "JDGamingYT", "ProBGMI"],
+    },
+    {
+      placement: 16,
+      team: "Jux Esports",
+      phase: "Round 3",
+      players: ["Niku", "Ribu", "Amazing", "Jax", "Suki", "Vardaan"],
+    },
+    {
+      placement: 17,
+      team: "TEAM iNSANE",
+      phase: "Round 3",
+      players: ["Aadi", "Lazyy", "Atomm", "Cloudz", "Godz", "Yash"],
+    },
+    {
+      placement: 18,
+      team: "Inferno Squad",
+      phase: "Round 3",
+      players: ["PmwiIGL", "OwenOG", "JatinOG", "Goten", "Executor", "OmegaOG"],
+    },
+    {
+      placement: 19,
+      team: "2OP Official",
+      phase: "Round 3",
+      players: [
+        "Aimhaxx",
+        "Liability",
+        "Botfire",
+        "Shootpagalu",
+        "Shady",
+        "Hypnotized",
+      ],
+    },
+    {
+      placement: 20,
+      team: "Gods Omen",
+      phase: "Round 3",
+      players: ["StoneBGMI", "GyroGod", "BadOP", "GOKU", "Suriya", "Superman"],
+    },
+    {
+      placement: 21,
+      team: "Team Forever",
+      phase: "Round 3",
+      players: ["Owais", "Ash", "Thunder", "Shayaan", "Mafia36", "STORM"],
+    },
+    {
+      placement: 22,
+      team: "Do Or Die",
+      phase: "Round 3",
+      players: ["Bhaalu", "AvnishOP", "ReapeR", "Ryzen", "Omega", "PixieOP"],
+    },
+    {
+      placement: 23,
+      team: "Gods Reign",
+      phase: "Round 3",
+      players: ["DeltaPG", "Justin", "Destro", "Neyo", "Robin"],
+    },
+    {
+      placement: 24,
+      team: "Reckoning Esports",
+      phase: "Round 3",
+      players: ["GravityJOD", "ViPER", "Dionysus", "Saumay", "MAX", "Ahu"],
+    },
+    {
+      placement: 25,
+      team: "Aryan x TMG Gaming",
+      phase: "Round 3",
+      players: ["Aryan", "Syrax", "Devotee", "Hitler", "Vishu", "Manas4u"],
+    },
+    {
+      placement: 26,
+      team: "Team Shockwave",
+      phase: "Round 3",
+      players: ["Shockwave", "Extrovert", "Shroud", "MadmanGod", "KrishOP"],
+    },
+    {
+      placement: 27,
+      team: "Volcano Esports",
+      phase: "Round 3",
+      players: ["FLASH", "Arjun", "VEGITO", "PSYCHO", "REFLEXXX", "GIN"],
+    },
+    {
+      placement: 28,
+      team: "Troy Tamilans Esports",
+      phase: "Round 3",
+      players: ["RanveerOG", "Hydro", "INFERNO", "Auxin", "Mac", "Ralphie"],
+    },
+    {
+      placement: 29,
+      team: "Alibaba Raiders",
+      phase: "Round 3",
+      players: ["Wanted", "Kris", "Mj", "AryanOG", "WhiteT1ger", "FraggerNUB"],
+    },
+    {
+      placement: 30,
+      team: "4TR Official",
+      phase: "Round 3",
+      players: ["Morty", "PainIsLive", "AKOP", "InfGod", "Utkarsh", "Action18"],
+    },
+    {
+      placement: 31,
+      team: "MYSTERIOUS 4",
+      phase: "Round 3",
+      players: ["SKETCH", "Fragger", "SnowJOD", "HEROO", "JAXXX", "Danav"],
+    },
+    {
+      placement: 32,
+      team: "Los Hermanos Esports",
+      phase: "Round 3",
+      players: ["ShaDow", "Kaalan", "SpyOp", "Evil", "AFU", "SayiP"],
+    },
   ],
   rankings: [
     {
@@ -112,11 +412,56 @@ const tournament = {
         { key: "knocks", label: "Knocks" },
       ],
       entries: [
-        { placement: 1, player: "Levi", team: "NoNx Esports", points: 114, finishes: 92, damage: 16662, survivalTime: "20:40", knocks: 61 },
-        { placement: 2, player: "Devotee", team: "Aryan x TMG Gaming", points: 91, finishes: 68, damage: 14279, survivalTime: "18:52", knocks: 62 },
-        { placement: 3, player: "Hitler", team: "Aryan x TMG Gaming", points: 79, finishes: 57, damage: 12438, survivalTime: "18:46", knocks: 59 },
-        { placement: 4, player: "Beast", team: "K9 Esports", points: 79, finishes: 56, damage: 12862, survivalTime: "18:21", knocks: 53 },
-        { placement: 5, player: "PainIsLive", team: "4TR Official", points: 79, finishes: 59, damage: 11693, survivalTime: "18:19", knocks: 47 },
+        {
+          placement: 1,
+          player: "Levi",
+          team: "NoNx Esports",
+          points: 114,
+          finishes: 92,
+          damage: 16662,
+          survivalTime: "20:40",
+          knocks: 61,
+        },
+        {
+          placement: 2,
+          player: "Devotee",
+          team: "Aryan x TMG Gaming",
+          points: 91,
+          finishes: 68,
+          damage: 14279,
+          survivalTime: "18:52",
+          knocks: 62,
+        },
+        {
+          placement: 3,
+          player: "Hitler",
+          team: "Aryan x TMG Gaming",
+          points: 79,
+          finishes: 57,
+          damage: 12438,
+          survivalTime: "18:46",
+          knocks: 59,
+        },
+        {
+          placement: 4,
+          player: "Beast",
+          team: "K9 Esports",
+          points: 79,
+          finishes: 56,
+          damage: 12862,
+          survivalTime: "18:21",
+          knocks: 53,
+        },
+        {
+          placement: 5,
+          player: "PainIsLive",
+          team: "4TR Official",
+          points: 79,
+          finishes: 59,
+          damage: 11693,
+          survivalTime: "18:19",
+          knocks: 47,
+        },
       ],
     },
     {
@@ -129,11 +474,56 @@ const tournament = {
         { key: "knocks", label: "Knocks" },
       ],
       entries: [
-        { placement: 1, player: "Levi", team: "NoNx Esports", points: 267, finishes: 35, damage: 5805, survivalTime: "19:12", knocks: 17 },
-        { placement: 2, player: "Devotee", team: "Aryan x TMG Gaming", points: 252, finishes: 31, damage: 6249, survivalTime: "18:23", knocks: 32 },
-        { placement: 3, player: "Kalyug", team: "TWOB", points: 213, finishes: 23, damage: 5891, survivalTime: "19:47", knocks: 29 },
-        { placement: 4, player: "Thunder", team: "Team Forever", points: 208, finishes: 27, damage: 4203, survivalTime: "17:53", knocks: 16 },
-        { placement: 5, player: "Godx", team: "NoNx Esports", points: 206, finishes: 22, damage: 5641, survivalTime: "20:16", knocks: 23 },
+        {
+          placement: 1,
+          player: "Levi",
+          team: "NoNx Esports",
+          points: 267,
+          finishes: 35,
+          damage: 5805,
+          survivalTime: "19:12",
+          knocks: 17,
+        },
+        {
+          placement: 2,
+          player: "Devotee",
+          team: "Aryan x TMG Gaming",
+          points: 252,
+          finishes: 31,
+          damage: 6249,
+          survivalTime: "18:23",
+          knocks: 32,
+        },
+        {
+          placement: 3,
+          player: "Kalyug",
+          team: "TWOB",
+          points: 213,
+          finishes: 23,
+          damage: 5891,
+          survivalTime: "19:47",
+          knocks: 29,
+        },
+        {
+          placement: 4,
+          player: "Thunder",
+          team: "Team Forever",
+          points: 208,
+          finishes: 27,
+          damage: 4203,
+          survivalTime: "17:53",
+          knocks: 16,
+        },
+        {
+          placement: 5,
+          player: "Godx",
+          team: "NoNx Esports",
+          points: 206,
+          finishes: 22,
+          damage: 5641,
+          survivalTime: "20:16",
+          knocks: 23,
+        },
       ],
     },
   ],
@@ -194,71 +584,368 @@ const tournament = {
       summary:
         "July 4th - July 6th, 2025 at Yashobhoomi Convention Centre, Delhi. 16 teams played 18 matches, with Aryan x TMG Gaming winning the championship on 136 total points.",
       standings: [
-        { placement: 1, team: "AXTMG", fullTeam: "Aryan x TMG Gaming", matches: 18, wwcd: 3, pos: 57, elimins: 79, points: 136, outcome: "Champion" },
-        { placement: 2, team: "NONX", fullTeam: "NoNx Esports", matches: 18, wwcd: 2, pos: 48, elimins: 84, points: 132, outcome: "Runner-up" },
-        { placement: 3, team: "LH", fullTeam: "Los hermanos", matches: 18, wwcd: 1, pos: 48, elimins: 78, points: 126, outcome: "3rd Place" },
-        { placement: 4, team: "4M", fullTeam: "4Merical Esports", matches: 18, wwcd: 3, pos: 54, elimins: 71, points: 125, outcome: "Top 4" },
-        { placement: 5, team: "8BIT", fullTeam: "iQOO8BIT", matches: 18, wwcd: 1, pos: 38, elimins: 78, points: 116, outcome: "Top 8" },
-        { placement: 6, team: "GOM", fullTeam: "Gods Omen", matches: 18, wwcd: 1, pos: 40, elimins: 74, points: 114, outcome: "Top 8" },
-        { placement: 7, team: "4TR", fullTeam: "4TR Official", matches: 18, wwcd: 2, pos: 45, elimins: 64, points: 109, outcome: "Top 8" },
-        { placement: 8, team: "TWOB", fullTeam: "TWOB", matches: 18, wwcd: 0, pos: 42, elimins: 67, points: 109, outcome: "Top 8" },
-        { placement: 9, team: "GDR", fullTeam: "OnePlus Gods Reign", matches: 18, wwcd: 0, pos: 32, elimins: 72, points: 104, outcome: "Finalist" },
-        { placement: 10, team: "K9", fullTeam: "OnePlus K9 Esports", matches: 18, wwcd: 1, pos: 34, elimins: 68, points: 102, outcome: "Finalist" },
-        { placement: 11, team: "TF", fullTeam: "Team Forever", matches: 18, wwcd: 1, pos: 30, elimins: 71, points: 101, outcome: "Finalist" },
-        { placement: 12, team: "INF", fullTeam: "Rising Inferno Esports", matches: 18, wwcd: 1, pos: 29, elimins: 65, points: 94, outcome: "Finalist" },
-        { placement: 13, team: "GEN", fullTeam: "GENESIS ESPORTS", matches: 18, wwcd: 1, pos: 23, elimins: 68, points: 91, outcome: "Finalist" },
-        { placement: 14, team: "EGGY", fullTeam: "Team Eggy", matches: 18, wwcd: 0, pos: 24, elimins: 64, points: 88, outcome: "Finalist" },
-        { placement: 15, team: "INSANE", fullTeam: "Team Insane Esports", matches: 18, wwcd: 0, pos: 18, elimins: 40, points: 58, outcome: "Finalist" },
-        { placement: 16, team: "2OP", fullTeam: "2oP Official", matches: 18, wwcd: 1, pos: 14, elimins: 26, points: 40, outcome: "Finalist" },
+        {
+          placement: 1,
+          team: "AXTMG",
+          fullTeam: "Aryan x TMG Gaming",
+          matches: 18,
+          wwcd: 3,
+          pos: 57,
+          elimins: 79,
+          points: 136,
+          outcome: "Champion",
+        },
+        {
+          placement: 2,
+          team: "NONX",
+          fullTeam: "NoNx Esports",
+          matches: 18,
+          wwcd: 2,
+          pos: 48,
+          elimins: 84,
+          points: 132,
+          outcome: "Runner-up",
+        },
+        {
+          placement: 3,
+          team: "LH",
+          fullTeam: "Los hermanos",
+          matches: 18,
+          wwcd: 1,
+          pos: 48,
+          elimins: 78,
+          points: 126,
+          outcome: "3rd Place",
+        },
+        {
+          placement: 4,
+          team: "4M",
+          fullTeam: "4Merical Esports",
+          matches: 18,
+          wwcd: 3,
+          pos: 54,
+          elimins: 71,
+          points: 125,
+          outcome: "Top 4",
+        },
+        {
+          placement: 5,
+          team: "8BIT",
+          fullTeam: "iQOO8BIT",
+          matches: 18,
+          wwcd: 1,
+          pos: 38,
+          elimins: 78,
+          points: 116,
+          outcome: "Top 8",
+        },
+        {
+          placement: 6,
+          team: "GOM",
+          fullTeam: "Gods Omen",
+          matches: 18,
+          wwcd: 1,
+          pos: 40,
+          elimins: 74,
+          points: 114,
+          outcome: "Top 8",
+        },
+        {
+          placement: 7,
+          team: "4TR",
+          fullTeam: "4TR Official",
+          matches: 18,
+          wwcd: 2,
+          pos: 45,
+          elimins: 64,
+          points: 109,
+          outcome: "Top 8",
+        },
+        {
+          placement: 8,
+          team: "TWOB",
+          fullTeam: "TWOB",
+          matches: 18,
+          wwcd: 0,
+          pos: 42,
+          elimins: 67,
+          points: 109,
+          outcome: "Top 8",
+        },
+        {
+          placement: 9,
+          team: "GDR",
+          fullTeam: "OnePlus Gods Reign",
+          matches: 18,
+          wwcd: 0,
+          pos: 32,
+          elimins: 72,
+          points: 104,
+          outcome: "Finalist",
+        },
+        {
+          placement: 10,
+          team: "K9",
+          fullTeam: "OnePlus K9 Esports",
+          matches: 18,
+          wwcd: 1,
+          pos: 34,
+          elimins: 68,
+          points: 102,
+          outcome: "Finalist",
+        },
+        {
+          placement: 11,
+          team: "TF",
+          fullTeam: "Team Forever",
+          matches: 18,
+          wwcd: 1,
+          pos: 30,
+          elimins: 71,
+          points: 101,
+          outcome: "Finalist",
+        },
+        {
+          placement: 12,
+          team: "INF",
+          fullTeam: "Rising Inferno Esports",
+          matches: 18,
+          wwcd: 1,
+          pos: 29,
+          elimins: 65,
+          points: 94,
+          outcome: "Finalist",
+        },
+        {
+          placement: 13,
+          team: "GEN",
+          fullTeam: "GENESIS ESPORTS",
+          matches: 18,
+          wwcd: 1,
+          pos: 23,
+          elimins: 68,
+          points: 91,
+          outcome: "Finalist",
+        },
+        {
+          placement: 14,
+          team: "EGGY",
+          fullTeam: "Team Eggy",
+          matches: 18,
+          wwcd: 0,
+          pos: 24,
+          elimins: 64,
+          points: 88,
+          outcome: "Finalist",
+        },
+        {
+          placement: 15,
+          team: "INSANE",
+          fullTeam: "Team Insane Esports",
+          matches: 18,
+          wwcd: 0,
+          pos: 18,
+          elimins: 40,
+          points: 58,
+          outcome: "Finalist",
+        },
+        {
+          placement: 16,
+          team: "2OP",
+          fullTeam: "2oP Official",
+          matches: 18,
+          wwcd: 1,
+          pos: 14,
+          elimins: 26,
+          points: 40,
+          outcome: "Finalist",
+        },
       ],
     },
   ],
 };
 
 const teams = [
-  { name: "Orangutan", tag: "OG", players: ["Aaru", "AKop", "WizzGOD", "Attanki", "Veyron", "RonaK"] },
-  { name: "Team SouL", tag: "SOUL", players: ["Manya", "Goblin", "NakuL", "LEGIT", "Rony"] },
-  { name: "Hyderabad Hydras", tag: "HH", players: ["Sarvit", "Moksh", "Ninjuu", "NinjA", "Rexboy", "Karthik"] },
-  { name: "TWOB", tag: "TWOB", players: ["Anonymous", "Rapido", "Kanha", "Kalyug", "Dashh05", "Pompy05"] },
-  { name: "Learn From Past", tag: "LFP", players: ["iYash", "SahilOPAF", "HONEY", "Dope", "Armxn"] },
-  { name: "K9 Esports", tag: "K9", players: ["Omega", "NinjaBoi", "Slug", "Beast", "Arclyn", "Ravan"] },
-  { name: "Wyld Fangs", tag: "WF", players: ["SENSEI", "Saif", "Tracegod", "Fierce", "AnujTooOP"] },
-  { name: "True Rippers", tag: "TR", players: ["Jelly", "KioLmao", "SAM", "Ninzae", "Rudd"] },
-  { name: "8Bit", tag: "8BIT", players: ["Saumraj", "Troye", "GamlaBoy", "AquaNox", "Raiden", "Sheek"] },
-  { name: "GodLike Esports", tag: "GODL", players: ["Punkk", "JONATHAN", "ADMINO", "Spower", "SIMP", "ZGOD"] },
-  { name: "Genesis Esports", tag: "GEN", players: ["SHADOW", "Apollo", "Sam", "HunterZ", "Zap", "TOM"] },
-  { name: "4Merical Esports", tag: "4M", players: ["DragonOP", "PokoWNL", "BeardBaba", "Reaper", "VPIX"] },
-  { name: "NoNx Esports", tag: "NONX", players: ["Roman", "RushBoy", "Lovish", "Levi", "Godx"] },
-  { name: "BO7S", tag: "BO7S", players: ["Doroki", "Ghostfxce", "Dusty", "Dizzy", "Topzzz"] },
-  { name: "Team Eggy", tag: "EGGY", players: ["EGGY", "Mernox", "DREAMS03", "JDGamingYT", "ProBGMI"] },
-  { name: "Jux Esports", tag: "JUX", players: ["Niku", "Ribu", "Amazing", "Jax", "Suki", "Vardaan"] },
-  { name: "TEAM iNSANE", tag: "INSANE", players: ["Aadi", "Lazyy", "Atomm", "Cloudz", "Godz", "Yash"] },
-  { name: "Inferno Squad", tag: "INF", players: ["PmwiIGL", "OwenOG", "JatinOG", "Goten", "Executor", "OmegaOG"] },
-  { name: "2OP Official", tag: "2OP", players: ["Aimhaxx", "Liability", "Botfire", "Shootpagalu", "Shady", "Hypnotized"] },
-  { name: "Gods Omen", tag: "GOM", players: ["StoneBGMI", "GyroGod", "BadOP", "GOKU", "Suriya", "Superman"] },
-  { name: "Team Forever", tag: "TF", players: ["Owais", "Ash", "Thunder", "Shayaan", "Mafia36", "STORM"] },
-  { name: "Do Or Die", tag: "DOD", players: ["Bhaalu", "AvnishOP", "ReapeR", "Ryzen", "Omega", "PixieOP"] },
-  { name: "Gods Reign", tag: "GDR", players: ["DeltaPG", "Justin", "Destro", "Neyo", "Robin"] },
-  { name: "Reckoning Esports", tag: "RGE", players: ["GravityJOD", "ViPER", "Dionysus", "Saumay", "MAX", "Ahu"] },
-  { name: "Aryan x TMG Gaming", tag: "AXTMG", players: ["Aryan", "Syrax", "Devotee", "Hitler", "Vishu", "Manas4u"] },
-  { name: "Team Shockwave", tag: "SHOCK", players: ["Shockwave", "Extrovert", "Shroud", "MadmanGod", "KrishOP"] },
-  { name: "Volcano Esports", tag: "VOL", players: ["FLASH", "Arjun", "VEGITO", "PSYCHO", "REFLEXXX", "GIN"] },
-  { name: "Troy Tamilans Esports", tag: "TROY", players: ["RanveerOG", "Hydro", "INFERNO", "Auxin", "Mac", "Ralphie"] },
-  { name: "Alibaba Raiders", tag: "AR", players: ["Wanted", "Kris", "Mj", "AryanOG", "WhiteT1ger", "FraggerNUB"] },
-  { name: "4TR Official", tag: "4TR", players: ["Morty", "PainIsLive", "AKOP", "InfGod", "Utkarsh", "Action18"] },
-  { name: "MYSTERIOUS 4", tag: "M4", players: ["SKETCH", "Fragger", "SnowJOD", "HEROO", "JAXXX", "Danav"] },
-  { name: "Los Hermanos Esports", tag: "LH", players: ["ShaDow", "Kaalan", "SpyOp", "Evil", "AFU", "SayiP"] },
+  {
+    name: "Orangutan",
+    tag: "OG",
+    players: ["Aaru", "AKop", "WizzGOD", "Attanki", "Veyron", "RonaK"],
+  },
+  {
+    name: "Team SouL",
+    tag: "SOUL",
+    players: ["Manya", "Goblin", "NakuL", "LEGIT", "Rony"],
+  },
+  {
+    name: "Hyderabad Hydras",
+    tag: "HH",
+    players: ["Sarvit", "Moksh", "Ninjuu", "NinjA", "Rexboy", "Karthik"],
+  },
+  {
+    name: "TWOB",
+    tag: "TWOB",
+    players: ["Anonymous", "Rapido", "Kanha", "Kalyug", "Dashh05", "Pompy05"],
+  },
+  {
+    name: "Learn From Past",
+    tag: "LFP",
+    players: ["iYash", "SahilOPAF", "HONEY", "Dope", "Armxn"],
+  },
+  {
+    name: "K9 Esports",
+    tag: "K9",
+    players: ["Omega", "NinjaBoi", "Slug", "Beast", "Arclyn", "Ravan"],
+  },
+  {
+    name: "Wyld Fangs",
+    tag: "WF",
+    players: ["SENSEI", "Saif", "Tracegod", "Fierce", "AnujTooOP"],
+  },
+  {
+    name: "True Rippers",
+    tag: "TR",
+    players: ["Jelly", "KioLmao", "SAM", "Ninzae", "Rudd"],
+  },
+  {
+    name: "8Bit",
+    tag: "8BIT",
+    players: ["Saumraj", "Troye", "GamlaBoy", "AquaNox", "Raiden", "Sheek"],
+  },
+  {
+    name: "GodLike Esports",
+    tag: "GODL",
+    players: ["Punkk", "JONATHAN", "ADMINO", "Spower", "SIMP", "ZGOD"],
+  },
+  {
+    name: "Genesis Esports",
+    tag: "GEN",
+    players: ["SHADOW", "Apollo", "Sam", "HunterZ", "Zap", "TOM"],
+  },
+  {
+    name: "4Merical Esports",
+    tag: "4M",
+    players: ["DragonOP", "PokoWNL", "BeardBaba", "Reaper", "VPIX"],
+  },
+  {
+    name: "NoNx Esports",
+    tag: "NONX",
+    players: ["Roman", "RushBoy", "Lovish", "Levi", "Godx"],
+  },
+  {
+    name: "BO7S",
+    tag: "BO7S",
+    players: ["Doroki", "Ghostfxce", "Dusty", "Dizzy", "Topzzz"],
+  },
+  {
+    name: "Team Eggy",
+    tag: "EGGY",
+    players: ["EGGY", "Mernox", "DREAMS03", "JDGamingYT", "ProBGMI"],
+  },
+  {
+    name: "Jux Esports",
+    tag: "JUX",
+    players: ["Niku", "Ribu", "Amazing", "Jax", "Suki", "Vardaan"],
+  },
+  {
+    name: "TEAM iNSANE",
+    tag: "INSANE",
+    players: ["Aadi", "Lazyy", "Atomm", "Cloudz", "Godz", "Yash"],
+  },
+  {
+    name: "Inferno Squad",
+    tag: "INF",
+    players: ["PmwiIGL", "OwenOG", "JatinOG", "Goten", "Executor", "OmegaOG"],
+  },
+  {
+    name: "2OP Official",
+    tag: "2OP",
+    players: [
+      "Aimhaxx",
+      "Liability",
+      "Botfire",
+      "Shootpagalu",
+      "Shady",
+      "Hypnotized",
+    ],
+  },
+  {
+    name: "Gods Omen",
+    tag: "GOM",
+    players: ["StoneBGMI", "GyroGod", "BadOP", "GOKU", "Suriya", "Superman"],
+  },
+  {
+    name: "Team Forever",
+    tag: "TF",
+    players: ["Owais", "Ash", "Thunder", "Shayaan", "Mafia36", "STORM"],
+  },
+  {
+    name: "Do Or Die",
+    tag: "DOD",
+    players: ["Bhaalu", "AvnishOP", "ReapeR", "Ryzen", "Omega", "PixieOP"],
+  },
+  {
+    name: "Gods Reign",
+    tag: "GDR",
+    players: ["DeltaPG", "Justin", "Destro", "Neyo", "Robin"],
+  },
+  {
+    name: "Reckoning Esports",
+    tag: "RGE",
+    players: ["GravityJOD", "ViPER", "Dionysus", "Saumay", "MAX", "Ahu"],
+  },
+  {
+    name: "Aryan x TMG Gaming",
+    tag: "AXTMG",
+    players: ["Aryan", "Syrax", "Devotee", "Hitler", "Vishu", "Manas4u"],
+  },
+  {
+    name: "Team Shockwave",
+    tag: "SHOCK",
+    players: ["Shockwave", "Extrovert", "Shroud", "MadmanGod", "KrishOP"],
+  },
+  {
+    name: "Volcano Esports",
+    tag: "VOL",
+    players: ["FLASH", "Arjun", "VEGITO", "PSYCHO", "REFLEXXX", "GIN"],
+  },
+  {
+    name: "Troy Tamilans Esports",
+    tag: "TROY",
+    players: ["RanveerOG", "Hydro", "INFERNO", "Auxin", "Mac", "Ralphie"],
+  },
+  {
+    name: "Alibaba Raiders",
+    tag: "AR",
+    players: ["Wanted", "Kris", "Mj", "AryanOG", "WhiteT1ger", "FraggerNUB"],
+  },
+  {
+    name: "4TR Official",
+    tag: "4TR",
+    players: ["Morty", "PainIsLive", "AKOP", "InfGod", "Utkarsh", "Action18"],
+  },
+  {
+    name: "MYSTERIOUS 4",
+    tag: "M4",
+    players: ["SKETCH", "Fragger", "SnowJOD", "HEROO", "JAXXX", "Danav"],
+  },
+  {
+    name: "Los Hermanos Esports",
+    tag: "LH",
+    players: ["ShaDow", "Kaalan", "SpyOp", "Evil", "AFU", "SayiP"],
+  },
 ];
 
-const finalsStandings = tournament.stages.find((stage) => stage.name === "Grand Finals").standings.map((entry) => ({
-  teamName: entry.fullTeam,
-  placement: entry.placement,
-  matches: entry.matches,
-  wwcd: entry.wwcd,
-  placementPoints: entry.pos,
-  killPoints: entry.elimins,
-  totalPoints: entry.points,
-}));
+const finalsStandings = tournament.stages
+  .find((stage) => stage.name === "Grand Finals")
+  .standings.map((entry) => ({
+    teamName: entry.fullTeam,
+    placement: entry.placement,
+    matches: entry.matches,
+    wwcd: entry.wwcd,
+    placementPoints: entry.pos,
+    killPoints: entry.elimins,
+    totalPoints: entry.points,
+  }));
 
 const grandFinalSchedule = [
   "2025-07-04T15:30:00+05:30",
@@ -281,7 +968,14 @@ const grandFinalSchedule = [
   "2025-07-06T19:05:00+05:30",
 ];
 
-const mapRotation = ["Erangel", "Miramar", "Sanhok", "Erangel", "Miramar", "Erangel"];
+const mapRotation = [
+  "Erangel",
+  "Miramar",
+  "Sanhok",
+  "Erangel",
+  "Miramar",
+  "Erangel",
+];
 
 const articles = [
   {
@@ -295,21 +989,31 @@ const articles = [
 ];
 
 const tx = db.transaction(() => {
-  const existingTournament = db.prepare("SELECT id FROM tournaments WHERE name = ?").get(tournament.name);
+  const existingTournament = db
+    .prepare("SELECT id FROM tournaments WHERE name = ?")
+    .get(tournament.name);
   if (existingTournament) {
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(existingTournament.id);
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(existingTournament.id);
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(existingTournament.id);
+    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
+      existingTournament.id,
+    );
+    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
+      existingTournament.id,
+    );
+    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
+      existingTournament.id,
+    );
   }
 
   const tournamentId = randomUUID();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO tournaments (
       id, name, game, tier, status, prize_pool, start_date, end_date, stages,
       description, banner_url, rules, max_teams, format_overview, calendar, prize_breakdown, awards, participants, rankings,
       created_date, updated_date, created_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `,
+  ).run(
     tournamentId,
     tournament.name,
     tournament.game,
@@ -331,7 +1035,7 @@ const tx = db.transaction(() => {
     JSON.stringify(tournament.rankings),
     now,
     now,
-    "admin@stagecore.local"
+    "admin@stagecore.local",
   );
 
   const findTeamByName = db.prepare("SELECT id FROM teams WHERE name = ?");
@@ -346,7 +1050,9 @@ const tx = db.transaction(() => {
       region=excluded.region,
       updated_date=excluded.updated_date
   `);
-  const deletePlayersByTeam = db.prepare("DELETE FROM players WHERE team_id = ?");
+  const deletePlayersByTeam = db.prepare(
+    "DELETE FROM players WHERE team_id = ?",
+  );
   const insertPlayer = db.prepare(`
     INSERT INTO players (
       id, ign, real_name, team_id, role, photo_url, total_kills, matches_played, avg_damage,
@@ -358,10 +1064,37 @@ const tx = db.transaction(() => {
   for (const team of teams) {
     const existing = findTeamByName.get(team.name);
     const teamId = existing?.id || randomUUID();
-    upsertTeam.run(teamId, team.name, team.tag, null, "BGMI", "India", 0, 0, 0, 0, now, now, "admin@stagecore.local");
+    upsertTeam.run(
+      teamId,
+      team.name,
+      team.tag,
+      null,
+      "BGMI",
+      "India",
+      0,
+      0,
+      0,
+      0,
+      now,
+      now,
+      "admin@stagecore.local",
+    );
     deletePlayersByTeam.run(teamId);
     for (const ign of team.players) {
-      insertPlayer.run(randomUUID(), ign, null, teamId, "Assaulter", null, 0, 0, 0, now, now, "admin@stagecore.local");
+      insertPlayer.run(
+        randomUUID(),
+        ign,
+        null,
+        teamId,
+        "Assaulter",
+        null,
+        0,
+        0,
+        0,
+        now,
+        now,
+        "admin@stagecore.local",
+      );
     }
     teamIds.set(team.name, teamId);
   }
@@ -404,7 +1137,7 @@ const tx = db.transaction(() => {
       Math.floor(index / 6) + 1,
       now,
       now,
-      "admin@stagecore.local"
+      "admin@stagecore.local",
     );
   });
 
@@ -421,7 +1154,7 @@ const tx = db.transaction(() => {
     3,
     now,
     now,
-    "admin@stagecore.local"
+    "admin@stagecore.local",
   );
 
   const insertResult = db.prepare(`
@@ -449,7 +1182,7 @@ const tx = db.transaction(() => {
       "Grand Finals",
       now,
       now,
-      "admin@stagecore.local"
+      "admin@stagecore.local",
     );
   }
 
@@ -462,7 +1195,18 @@ const tx = db.transaction(() => {
 
   for (const article of articles) {
     deleteArticle.run(article.title);
-    insertArticle.run(randomUUID(), article.title, article.content, article.category, null, article.featured, article.game, now, now, "admin@stagecore.local");
+    insertArticle.run(
+      randomUUID(),
+      article.title,
+      article.content,
+      article.category,
+      null,
+      article.featured,
+      article.game,
+      now,
+      now,
+      "admin@stagecore.local",
+    );
   }
 
   recomputeTeamStats();
@@ -470,4 +1214,6 @@ const tx = db.transaction(() => {
 
 tx();
 
-console.log("Imported BMPS 2025 tournament, participants, schedule, standings, rankings, and article.");
+console.log(
+  "Imported BMPS 2025 tournament, participants, schedule, standings, rankings, and article.",
+);

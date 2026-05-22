@@ -23,7 +23,10 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose onClick={() => dismiss(id)} aria-label="Close notification" />
+            <ToastClose
+              onClick={() => dismiss(id)}
+              aria-label="Close notification"
+            />
           </Toast>
         );
       })}

@@ -1,5 +1,7 @@
 function normalizePlayerKey(player) {
-  return String(player || "").trim().toLowerCase();
+  return String(player || "")
+    .trim()
+    .toLowerCase();
 }
 
 export function getNormalizedTransferEntries(transferEntries = []) {
@@ -30,9 +32,16 @@ export function dedupeRosterCaseInsensitive(roster = []) {
   return [...byKey.values()];
 }
 
-export function applyTransferMovesToRoster(baseRoster = [], transferMoves = [], normalizedTeam) {
+export function applyTransferMovesToRoster(
+  baseRoster = [],
+  transferMoves = [],
+  normalizedTeam,
+) {
   const rosterMap = new Map(
-    dedupeRosterCaseInsensitive(baseRoster).map((player) => [normalizePlayerKey(player), player])
+    dedupeRosterCaseInsensitive(baseRoster).map((player) => [
+      normalizePlayerKey(player),
+      player,
+    ]),
   );
 
   for (const move of transferMoves) {
@@ -69,13 +78,17 @@ export function buildLiveRoster({
   const baseRoster = dedupeRosterCaseInsensitive(
     players
       .filter((player) => teamIds.includes(player.team_id))
-      .map((player) => player.ign)
+      .map((player) => player.ign),
   );
 
   const teamTransfers = getNormalizedTransferEntries(transferEntries)
     .filter((entry) => {
-      const normalizedOld = entry.oldTeam ? normalizedTeam(entry.oldTeam) : null;
-      const normalizedNew = entry.newTeam ? normalizedTeam(entry.newTeam) : null;
+      const normalizedOld = entry.oldTeam
+        ? normalizedTeam(entry.oldTeam)
+        : null;
+      const normalizedNew = entry.newTeam
+        ? normalizedTeam(entry.newTeam)
+        : null;
       const current = normalizedTeam(teamName);
       return normalizedOld === current || normalizedNew === current;
     })
@@ -88,7 +101,7 @@ export function buildLiveRoster({
   const adjustedRoster = applyTransferMovesToRoster(
     baseRoster,
     teamTransfers,
-    normalizedTeam(teamName)
+    normalizedTeam(teamName),
   );
 
   return typeof applyOverride === "function"
@@ -105,8 +118,12 @@ export function buildRosterFromSnapshot({
 }) {
   const teamTransfers = getNormalizedTransferEntries(transferEntries)
     .filter((entry) => {
-      const normalizedOld = entry.oldTeam ? normalizedTeam(entry.oldTeam) : null;
-      const normalizedNew = entry.newTeam ? normalizedTeam(entry.newTeam) : null;
+      const normalizedOld = entry.oldTeam
+        ? normalizedTeam(entry.oldTeam)
+        : null;
+      const normalizedNew = entry.newTeam
+        ? normalizedTeam(entry.newTeam)
+        : null;
       const current = normalizedTeam(teamName);
       return normalizedOld === current || normalizedNew === current;
     })
@@ -119,7 +136,7 @@ export function buildRosterFromSnapshot({
   const adjustedRoster = applyTransferMovesToRoster(
     dedupeRosterCaseInsensitive(baseRoster),
     teamTransfers,
-    normalizedTeam(teamName)
+    normalizedTeam(teamName),
   );
 
   return typeof applyOverride === "function"

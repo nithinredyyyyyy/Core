@@ -1,5 +1,7 @@
 export function getMatchResultPublicationStatus(result) {
-  const raw = String(result?.publication_status || result?.status || "").trim().toLowerCase();
+  const raw = String(result?.publication_status || result?.status || "")
+    .trim()
+    .toLowerCase();
   if (raw === "draft") return "draft";
   return "published";
 }
@@ -15,7 +17,10 @@ export function filterPublishedMatchResults(results = []) {
     const matchId = result?.match_id;
     if (!matchId) continue;
     const hasDraft = getMatchResultPublicationStatus(result) !== "published";
-    matchDraftState.set(matchId, (matchDraftState.get(matchId) || false) || hasDraft);
+    matchDraftState.set(
+      matchId,
+      matchDraftState.get(matchId) || false || hasDraft,
+    );
   }
 
   return results.filter((result) => {

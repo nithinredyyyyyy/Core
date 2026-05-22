@@ -10,9 +10,11 @@ const statusStyles = {
 
 export default function StatusBadge({ status }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border ${statusStyles[status] || statusStyles.upcoming}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border ${statusStyles[status] || statusStyles.upcoming}`}
+    >
       {(status === "live" || status === "ongoing") && (
-        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+        <span className="size-1.5 rounded-full bg-current animate-pulse" />
       )}
       {status?.charAt(0).toUpperCase() + status?.slice(1)}
     </span>

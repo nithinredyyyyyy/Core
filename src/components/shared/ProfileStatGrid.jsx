@@ -1,5 +1,7 @@
 import React from "react";
 
+const EMPTY_ITEMS = [];
+
 function joinClassNames(...values) {
   return values.filter(Boolean).join(" ");
 }
@@ -9,11 +11,14 @@ const VARIANTS = {
     primaryGrid: "grid gap-3 sm:grid-cols-2 xl:grid-cols-4",
     secondaryGrid: "grid gap-3 md:grid-cols-3",
     card: "rounded-[20px] border border-border bg-background/75 p-4",
-    label: "mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground",
-    valueStrong: "mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-foreground",
+    label:
+      "mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground",
+    valueStrong:
+      "mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-foreground",
     value: "mt-2 text-lg font-semibold text-foreground",
-    accentLabel: "text-[10px] font-bold uppercase tracking-[0.18em] text-primary",
-    icon: "h-4 w-4 text-primary",
+    accentLabel:
+      "text-[10px] font-bold uppercase tracking-[0.18em] text-primary",
+    icon: "size-4 text-primary",
   },
   dark: {
     primaryGrid: "grid gap-3 sm:grid-cols-2 xl:grid-cols-4",
@@ -23,7 +28,7 @@ const VARIANTS = {
     valueStrong: "mt-2 text-2xl font-heading font-bold text-white",
     value: "mt-2 text-lg font-semibold text-white",
     accentLabel: "text-[10px] uppercase tracking-wider text-[#d0ad63]",
-    icon: "h-4 w-4 text-[#d0ad63]",
+    icon: "size-4 text-[#d0ad63]",
   },
 };
 
@@ -39,8 +44,8 @@ function StatTile({ item, styles, strong = true }) {
 }
 
 export default function ProfileStatGrid({
-  primary = [],
-  secondary = [],
+  primary = EMPTY_ITEMS,
+  secondary = EMPTY_ITEMS,
   variant = "light",
   className = "",
 }) {
@@ -58,7 +63,12 @@ export default function ProfileStatGrid({
       {secondary.length ? (
         <div className={styles.secondaryGrid}>
           {secondary.map((item) => (
-            <StatTile key={item.label} item={item} styles={styles} strong={false} />
+            <StatTile
+              key={item.label}
+              item={item}
+              styles={styles}
+              strong={false}
+            />
           ))}
         </div>
       ) : null}

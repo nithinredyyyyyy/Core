@@ -5,28 +5,42 @@ function detectStandaloneMode() {
 
   return Boolean(
     window.matchMedia?.("(display-mode: standalone)")?.matches ||
-      window.navigator?.standalone
+    window.navigator?.standalone,
   );
 }
 
 export function useInstallPrompt() {
-  const [installEvent, setInstallEvent] = React.useState(null);
-  const [isInstalled, setIsInstalled] = React.useState(detectStandaloneMode);
+  const [state, dispatch] = React.useReducer((current, action) => {
+    switch (action.type) {
+      case "set-install-event":
+        return { ...current, installEvent: action.event };
+      case "mark-installed":
+        return { ...current, installEvent: null, isInstalled: true };
+      case "sync-installed":
+        return { ...current, isInstalled: action.value };
+      case "clear-install-event":
+        return { ...current, installEvent: null };
+      default:
+        return current;
+    }
+  }, {
+    installEvent: null,
+    isInstalled: detectStandaloneMode(),
+  });
 
   React.useEffect(() => {
     const handleBeforeInstallPrompt = (event) => {
       event.preventDefault();
-      setInstallEvent(event);
+      dispatch({ type: "set-install-event", event });
     };
 
     const handleInstalled = () => {
-      setInstallEvent(null);
-      setIsInstalled(true);
+      dispatch({ type: "mark-installed" });
     };
 
     const mediaQuery = window.matchMedia?.("(display-mode: standalone)");
     const handleModeChange = () => {
-      setIsInstalled(detectStandaloneMode());
+      dispatch({ type: "sync-installed", value: detectStandaloneMode() });
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -34,28 +48,31 @@ export function useInstallPrompt() {
     mediaQuery?.addEventListener?.("change", handleModeChange);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
       window.removeEventListener("appinstalled", handleInstalled);
       mediaQuery?.removeEventListener?.("change", handleModeChange);
     };
   }, []);
 
   const promptInstall = React.useCallback(async () => {
-    if (!installEvent) return false;
+    if (!state.installEvent) return false;
 
-    await installEvent.prompt();
-    const choice = await installEvent.userChoice;
+    await state.installEvent.prompt();
+    const choice = await state.installEvent.userChoice;
     if (choice?.outcome === "accepted") {
-      setInstallEvent(null);
+      dispatch({ type: "clear-install-event" });
       return true;
     }
 
     return false;
-  }, [installEvent]);
+  }, [state.installEvent]);
 
   return {
-    isInstallable: Boolean(installEvent) && !isInstalled,
-    isInstalled,
+    isInstallable: Boolean(state.installEvent) && !state.isInstalled,
+    isInstalled: state.isInstalled,
     promptInstall,
   };
 }

@@ -293,20 +293,21 @@ const BMPS_2026_QUALIFIER_PLAYER_STATS_RAW = `
 292|VENGEANCE|0|0.00|0%|3
 `;
 
-export const BMPS_2026_QUALIFIER_PLAYER_STATS = BMPS_2026_QUALIFIER_PLAYER_STATS_RAW
-  .trim()
-  .split("\n")
-  .map((line) => {
-    const [rank, player, finishes, fpm, contribution, matches] = line.split("|");
-    return {
-      rank: Number(rank),
-      player,
-      finishes: Number(finishes),
-      fpm,
-      contribution,
-      matches: Number(matches),
-    };
-  });
+export const BMPS_2026_QUALIFIER_PLAYER_STATS =
+  BMPS_2026_QUALIFIER_PLAYER_STATS_RAW.trim()
+    .split("\n")
+    .map((line) => {
+      const [rank, player, finishes, fpm, contribution, matches] =
+        line.split("|");
+      return {
+        rank: Number(rank),
+        player,
+        finishes: Number(finishes),
+        fpm,
+        contribution,
+        matches: Number(matches),
+      };
+    });
 
 export const BMPS_2026_IGL_STATS = [
   {

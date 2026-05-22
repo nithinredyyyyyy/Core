@@ -21,10 +21,19 @@ const ENTITY_NAMES = [
   "StageStanding",
   "StageMatchBreakdown",
 ];
-const TOURNAMENT_JSON_FIELDS = ["stages", "calendar", "prize_breakdown", "awards", "participants", "rankings"];
+const TOURNAMENT_JSON_FIELDS = [
+  "stages",
+  "calendar",
+  "prize_breakdown",
+  "awards",
+  "participants",
+  "rankings",
+];
 const SAFE_IMPORT_META_ENV =
   typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
-const RAW_API_BASE_URL = String(SAFE_IMPORT_META_ENV.VITE_API_BASE_URL || "").trim();
+const RAW_API_BASE_URL = String(
+  SAFE_IMPORT_META_ENV.VITE_API_BASE_URL || "",
+).trim();
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 const FILE_PROTOCOL_API_BASE_URL = "http://127.0.0.1:4000";
 const FAN_USER_ID_KEY = "stagecore_fan_user_id";
@@ -49,7 +58,10 @@ function normalizeEntityRecord(entityName, record) {
     return { ...record, top_three: parseMaybeJson(record.top_three) || [] };
   }
   if (entityName === "TournamentStage") {
-    return { ...record, map_rotation: parseMaybeJson(record.map_rotation) || [] };
+    return {
+      ...record,
+      map_rotation: parseMaybeJson(record.map_rotation) || [],
+    };
   }
   if (entityName !== "Tournament") return record;
 
@@ -126,7 +138,9 @@ function persistFanSession(session) {
 }
 
 function buildApiUrl(path) {
-  const normalizedPath = String(path || "").startsWith("/") ? path : `/${path || ""}`;
+  const normalizedPath = String(path || "").startsWith("/")
+    ? path
+    : `/${path || ""}`;
   if (API_BASE_URL) {
     return `${API_BASE_URL}${normalizedPath}`;
   }
@@ -162,7 +176,11 @@ async function refreshFanSession(displayName, userId) {
 }
 
 async function request(path, options = {}) {
-  const { __fanSessionRetry = false, headers: requestHeaders = {}, ...fetchOptions } = options;
+  const {
+    __fanSessionRetry = false,
+    headers: requestHeaders = {},
+    ...fetchOptions
+  } = options;
   const adminKey = getStoredAdminKey();
   const fanSession = getStoredFanSession();
 
@@ -170,7 +188,9 @@ async function request(path, options = {}) {
     headers: {
       "Content-Type": "application/json",
       ...(adminKey ? { "X-Core-Admin-Key": adminKey } : {}),
-      ...(fanSession.token ? { "X-StageCore-Fan-Token": fanSession.token } : {}),
+      ...(fanSession.token
+        ? { "X-StageCore-Fan-Token": fanSession.token }
+        : {}),
       ...requestHeaders,
     },
     ...fetchOptions,
@@ -193,7 +213,10 @@ async function request(path, options = {}) {
       const previousSession = getStoredFanSession();
       clearStoredFanSession();
       if (previousSession.displayName || previousSession.userId) {
-        await refreshFanSession(previousSession.displayName, previousSession.userId);
+        await refreshFanSession(
+          previousSession.displayName,
+          previousSession.userId,
+        );
         return request(path, { ...options, __fanSessionRetry: true });
       }
     }
@@ -224,14 +247,14 @@ function createEntityClient(entityName) {
 
   return {
     list(sortBy, limit, skip) {
-      return request(`${basePath}${toQueryString({ sort_by: sortBy, limit, skip })}`).then((payload) =>
-        normalizeEntityResponse(entityName, payload)
-      );
+      return request(
+        `${basePath}${toQueryString({ sort_by: sortBy, limit, skip })}`,
+      ).then((payload) => normalizeEntityResponse(entityName, payload));
     },
     filter(query = {}, sortBy, limit, skip) {
-      return request(`${basePath}${toQueryString({ q: JSON.stringify(query), sort_by: sortBy, limit, skip })}`).then((payload) =>
-        normalizeEntityResponse(entityName, payload)
-      );
+      return request(
+        `${basePath}${toQueryString({ q: JSON.stringify(query), sort_by: sortBy, limit, skip })}`,
+      ).then((payload) => normalizeEntityResponse(entityName, payload));
     },
     create(data) {
       return request(basePath, {
@@ -246,7 +269,9 @@ function createEntityClient(entityName) {
       }).then((payload) => normalizeEntityResponse(entityName, payload));
     },
     get(id) {
-      return request(`${basePath}/${id}`).then((payload) => normalizeEntityResponse(entityName, payload));
+      return request(`${basePath}/${id}`).then((payload) =>
+        normalizeEntityResponse(entityName, payload),
+      );
     },
     update(id, data) {
       return request(`${basePath}/${id}`, {
@@ -267,7 +292,46 @@ function createEntityClient(entityName) {
 }
 
 export const base44 = {
-  entities: Object.fromEntries(ENTITY_NAMES.map((entityName) => [entityName, createEntityClient(entityName)])),
+  entities: Object.fromEntries(
+    ENTITY_NAMES.map((entityName) => [
+      entityName,
+      createEntityClient(entityName),
+    ]),
+  ),
+  home: {
+    summary() {
+      return request("/api/home/summary");
+    },
+    view(mode = "desktop") {
+      return request(`/api/home/view${toQueryString({ mode })}`);
+    },
+  },
+  news: {
+    listPublished(sortBy = "-created_date", limit = 50, skip) {
+      return request(
+        `/api/news/public${toQueryString({ sort_by: sortBy, limit, skip })}`,
+      ).then((payload) => normalizeEntityResponse("NewsArticle", payload));
+    },
+    getPublished(id) {
+      return request(`/api/news/public/${id}`).then((payload) =>
+        normalizeEntityResponse("NewsArticle", payload),
+      );
+    },
+    adminSources() {
+      return request("/api/admin/news/sources");
+    },
+    importFromSources(payload = {}) {
+      return request("/api/admin/news/import", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+    backfillImportedMetadata() {
+      return request("/api/admin/news/backfill", {
+        method: "POST",
+      });
+    },
+  },
   search: {
     global(query, limit = 10) {
       return request(`/api/search${toQueryString({ q: query, limit })}`);

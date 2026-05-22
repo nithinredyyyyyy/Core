@@ -2,15 +2,16 @@ import React from "react";
 import { BarChart3 } from "lucide-react";
 import FansPanel from "./FansPanel";
 
-export default function FanPolls({
-  sections = [],
-  onVote,
-}) {
+const EMPTY_SECTIONS = [];
+
+export default function FanPolls({ sections = EMPTY_SECTIONS, onVote }) {
   return (
     <FansPanel className="overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border/70 px-5 py-3.5">
-        <BarChart3 className="h-3.5 w-3.5 text-primary" />
-        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Live pulse</p>
+        <BarChart3 className="size-3.5 text-primary" />
+        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+          Live pulse
+        </p>
       </div>
 
       <div className="divide-y divide-border/70">
@@ -18,7 +19,9 @@ export default function FanPolls({
           <div key={section.title} className="px-5 py-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[14px] font-black text-slate-900">{section.title}</p>
+                <p className="text-[14px] font-black text-slate-900">
+                  {section.title}
+                </p>
                 <p className="mt-1 text-[11px] leading-5 text-slate-500">
                   {section.description ||
                     (section.interactive
@@ -26,16 +29,21 @@ export default function FanPolls({
                       : "Live signal shaped by the current tournament data.")}
                 </p>
               </div>
-              <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${section.interactive ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500"}`}>
-                {section.badgeLabel || (section.interactive ? "Fan vote" : "Stats")}
+              <span
+                className={`rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${section.interactive ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500"}`}
+              >
+                {section.badgeLabel ||
+                  (section.interactive ? "Fan vote" : "Stats")}
               </span>
             </div>
 
             <div className="mt-3.5 space-y-2">
               {section.options.map((option, optionIndex) => {
-                const active = section.interactive && section.userPick === option;
+                const active =
+                  section.interactive && section.userPick === option;
                 const livePercent = section.interactive
-                  ? section.results?.find((entry) => entry.option === option)?.percent || 0
+                  ? section.results?.find((entry) => entry.option === option)
+                      ?.percent || 0
                   : section.percentages?.[optionIndex] || 0;
 
                 return (
@@ -67,7 +75,9 @@ export default function FanPolls({
             {section.interactive ? (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-[#8b9ab6]">
-                  {section.userVoteCount > 0 ? "Your call is locked for this match pulse." : "Tap one option to lock your read."}
+                  {section.userVoteCount > 0
+                    ? "Your call is locked for this match pulse."
+                    : "Tap one option to lock your read."}
                 </p>
                 {section.userPick ? (
                   <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-primary">

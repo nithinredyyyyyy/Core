@@ -106,7 +106,10 @@ const bgisRosterEntries = [
   ["Mysterious 4", ["Sketch", "Naman", "Fragger", "Goku"]],
   ["Team Aryan", ["Aryan", "Devotee", "Henry", "Aimbot"]],
   ["Madkings Esports", ["Shadow", "ClutchGood", "Pro", "Syrax"]],
-  ["Rising Esports", ["DragonOP", "PokoWNL", "Yuva", "BeardBaba", "Shray", "Rico"]],
+  [
+    "Rising Esports",
+    ["DragonOP", "PokoWNL", "Yuva", "BeardBaba", "Shray", "Rico"],
+  ],
   ["Los Hermanos Esports", ["Zhyrx", "Altu", "Dope", "Phantom", "Shogun"]],
   ["SOA Esports", ["Mohit", "Dizzy", "Xzist", "XoXo", "Magic"]],
   ["GENxFM Esports", ["Damuuu", "Dhiraj", "Dipop", "Zeref", "Ghost"]],
@@ -135,7 +138,9 @@ const insertPlayerStmt = db.prepare(`
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
-const getTournamentStmt = db.prepare(`SELECT id, participants FROM tournaments WHERE name = ?`);
+const getTournamentStmt = db.prepare(
+  `SELECT id, participants FROM tournaments WHERE name = ?`,
+);
 const updateTournamentParticipantsStmt = db.prepare(`
   UPDATE tournaments
   SET participants = ?, updated_date = ?
@@ -146,7 +151,9 @@ function pickPrimaryTeam(aliases) {
   const matches = aliases.flatMap((alias) => findTeamByAliases.all(alias));
   if (matches.length === 0) return null;
 
-  return matches.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0))[0];
+  return matches.sort(
+    (a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0),
+  )[0];
 }
 
 function replacePlayers(teamId, players) {
@@ -166,7 +173,7 @@ function replacePlayers(teamId, players) {
       0,
       now,
       now,
-      "admin@stagecore.local"
+      "admin@stagecore.local",
     );
   }
 }
@@ -182,16 +189,23 @@ const tx = db.transaction(() => {
     }
   }
 
-  const tournament = getTournamentStmt.get("Battlegrounds Mobile India Series 2026");
+  const tournament = getTournamentStmt.get(
+    "Battlegrounds Mobile India Series 2026",
+  );
   if (tournament) {
     const participants = JSON.parse(tournament.participants || "[]");
-    const desiredKeys = new Set(bgisRosterEntries.map(([name]) => normalizeOrganizationName(name)));
+    const desiredKeys = new Set(
+      bgisRosterEntries.map(([name]) => normalizeOrganizationName(name)),
+    );
     const existingByKey = new Map(
-      participants.map((entry) => [normalizeOrganizationName(entry.team), entry])
+      participants.map((entry) => [
+        normalizeOrganizationName(entry.team),
+        entry,
+      ]),
     );
 
     const preserved = participants.filter(
-      (entry) => !desiredKeys.has(normalizeOrganizationName(entry.team))
+      (entry) => !desiredKeys.has(normalizeOrganizationName(entry.team)),
     );
 
     const patchedEntries = bgisRosterEntries.map(([team, players], index) => {
@@ -208,7 +222,7 @@ const tx = db.transaction(() => {
     updateTournamentParticipantsStmt.run(
       JSON.stringify([...preserved, ...patchedEntries]),
       now,
-      tournament.id
+      tournament.id,
     );
   }
 });

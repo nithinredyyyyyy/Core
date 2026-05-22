@@ -49,8 +49,12 @@ export function applyCurrentRosterOverride(teamName, roster) {
   }
 
   if (override.remove?.length) {
-    const removed = new Set(override.remove.map((player) => String(player).toLowerCase()));
-    nextRoster = nextRoster.filter((player) => !removed.has(String(player).toLowerCase()));
+    const removed = new Set(
+      override.remove.map((player) => String(player).toLowerCase()),
+    );
+    nextRoster = nextRoster.filter(
+      (player) => !removed.has(String(player).toLowerCase()),
+    );
   }
 
   if (override.add?.length) {

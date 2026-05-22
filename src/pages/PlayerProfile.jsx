@@ -43,7 +43,9 @@ function decodeIgn(value) {
 }
 
 function normalizeIgn(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function normalizeStatPlayerKey(value) {
@@ -63,15 +65,31 @@ function getHistoryYear(value) {
   return String(date.getFullYear());
 }
 
+function formatProfileDate(value, pattern, fallback) {
+  if (!value) return fallback;
+  return format(new Date(value), pattern);
+}
+
 function findParticipantTeamForPlayer(tournaments, ign) {
   const target = normalizeIgn(ign);
   for (const tournament of tournaments) {
-    const participants = Array.isArray(tournament?.participants) ? tournament.participants : [];
+    const participants = Array.isArray(tournament?.participants)
+      ? tournament.participants
+      : [];
     for (const participant of participants) {
-      const players = Array.isArray(participant?.players) ? participant.players : [];
-      const match = players.find(
-        (player) => normalizeIgn(typeof player === "string" ? player : player?.name) === target
-      );
+      const players = Array.isArray(participant?.players)
+        ? participant.players
+        : [];
+      let match = null;
+      for (const player of players) {
+        if (
+          normalizeIgn(typeof player === "string" ? player : player?.name) ===
+          target
+        ) {
+          match = player;
+          break;
+        }
+      }
       if (match) {
         return {
           tournament,
@@ -92,30 +110,43 @@ function resolveTournamentParticipantForPlayer({
   teamAliasIndex,
 }) {
   const target = normalizeIgn(ign);
-  const participants = Array.isArray(tournament?.participants) ? tournament.participants : [];
+  const participants = Array.isArray(tournament?.participants)
+    ? tournament.participants
+    : [];
 
-  const scored = participants
-    .filter(
-      (participant) =>
-        Array.isArray(participant?.players) &&
-        participant.players.some(
-          (player) =>
-            normalizeIgn(typeof player === "string" ? player : player?.name) === target
-        )
-    )
-    .map((participant) => {
-      const orgMeta = getOrganizationMetaFromAliases(participant.team, teamAliasIndex);
-      let score = 0;
-      if (preferredTeamMeta && orgMeta.key === preferredTeamMeta.key) score += 120;
-      if (historyOrgKeys.has(orgMeta.key)) score += 60;
-      return { participant, score };
-    })
-    .sort((left, right) => right.score - left.score);
+  let bestParticipant = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
 
-  return scored[0]?.participant || null;
+  for (const participant of participants) {
+    if (
+      !Array.isArray(participant?.players) ||
+      !participant.players.some(
+        (player) =>
+          normalizeIgn(typeof player === "string" ? player : player?.name) ===
+          target,
+      )
+    ) {
+      continue;
+    }
+
+    const orgMeta = getOrganizationMetaFromAliases(
+      participant.team,
+      teamAliasIndex,
+    );
+    let score = 0;
+    if (preferredTeamMeta && orgMeta.key === preferredTeamMeta.key) score += 120;
+    if (historyOrgKeys.has(orgMeta.key)) score += 60;
+
+    if (score > bestScore) {
+      bestParticipant = participant;
+      bestScore = score;
+    }
+  }
+
+  return bestParticipant;
 }
 
-export default function PlayerProfile() {
+function usePlayerProfileData() {
   const { playerIgn } = useParams();
   const [searchParams] = useSearchParams();
   const decodedIgn = decodeIgn(playerIgn);
@@ -133,14 +164,17 @@ export default function PlayerProfile() {
     queryKey: ["team-aliases"],
     queryFn: () => base44.entities.TeamAlias.list("-created_date", 2000),
   });
-  const { data: playerAliases = [], isLoading: playerAliasesLoading } = useQuery({
-    queryKey: ["player-aliases"],
-    queryFn: () => base44.entities.PlayerAlias.list("-created_date", 3000),
-  });
-  const { data: playerTeamHistory = [], isLoading: playerTeamHistoryLoading } = useQuery({
-    queryKey: ["player-team-history"],
-    queryFn: () => base44.entities.PlayerTeamHistory.list("-updated_date", 4000),
-  });
+  const { data: playerAliases = [], isLoading: playerAliasesLoading } =
+    useQuery({
+      queryKey: ["player-aliases"],
+      queryFn: () => base44.entities.PlayerAlias.list("-created_date", 3000),
+    });
+  const { data: playerTeamHistory = [], isLoading: playerTeamHistoryLoading } =
+    useQuery({
+      queryKey: ["player-team-history"],
+      queryFn: () =>
+        base44.entities.PlayerTeamHistory.list("-updated_date", 4000),
+    });
   const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 100),
@@ -149,41 +183,60 @@ export default function PlayerProfile() {
     queryKey: ["results"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 3000),
   });
-  const results = useMemo(() => filterPublishedMatchResults(rawResults), [rawResults]);
+  const results = useMemo(
+    () => filterPublishedMatchResults(rawResults),
+    [rawResults],
+  );
   const { data: matches = [], isLoading: matchesLoading } = useQuery({
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("-scheduled_time", 2000),
   });
-  const { data: normalizedStages = [], isLoading: normalizedStagesLoading } = useQuery({
-    queryKey: ["normalized-tournament-stages"],
-    queryFn: () => base44.entities.TournamentStage.list("stage_order", 1000),
-  });
-  const { data: normalizedParticipants = [], isLoading: normalizedParticipantsLoading } = useQuery({
+  const { data: normalizedStages = [], isLoading: normalizedStagesLoading } =
+    useQuery({
+      queryKey: ["normalized-tournament-stages"],
+      queryFn: () => base44.entities.TournamentStage.list("stage_order", 1000),
+    });
+  const {
+    data: normalizedParticipants = [],
+    isLoading: normalizedParticipantsLoading,
+  } = useQuery({
     queryKey: ["normalized-tournament-participants"],
-    queryFn: () => base44.entities.TournamentParticipant.list("-created_date", 2000),
+    queryFn: () =>
+      base44.entities.TournamentParticipant.list("-created_date", 2000),
   });
-  const { data: normalizedStandings = [], isLoading: normalizedStandingsLoading } = useQuery({
+  const {
+    data: normalizedStandings = [],
+    isLoading: normalizedStandingsLoading,
+  } = useQuery({
     queryKey: ["normalized-stage-standings"],
     queryFn: () => base44.entities.StageStanding.list("rank", 5000),
   });
   const { data: articles = [], isLoading: articlesLoading } = useQuery({
     queryKey: ["news"],
-    queryFn: () => base44.entities.NewsArticle.list("-created_date", 80),
+    queryFn: () => base44.news.listPublished("-created_date", 80),
   });
 
   const isLoading =
-    playersLoading || teamsLoading || teamAliasesLoading || playerAliasesLoading || playerTeamHistoryLoading || tournamentsLoading || resultsLoading || matchesLoading || articlesLoading;
+    playersLoading ||
+    teamsLoading ||
+    teamAliasesLoading ||
+    playerAliasesLoading ||
+    playerTeamHistoryLoading ||
+    tournamentsLoading ||
+    resultsLoading ||
+    matchesLoading ||
+    articlesLoading;
   const teamAliasIndex = useMemo(
     () => buildTeamAliasIndex(teams, teamAliases),
-    [teamAliases, teams]
+    [teamAliases, teams],
   );
   const playerAliasIndex = useMemo(
     () => buildPlayerAliasIndex(players, playerAliases),
-    [playerAliases, players]
+    [playerAliases, players],
   );
   const playerHistoryMap = useMemo(
     () => buildPlayerTeamHistoryMap(playerTeamHistory),
-    [playerTeamHistory]
+    [playerTeamHistory],
   );
   const normalizedResultMaps = useMemo(
     () =>
@@ -192,24 +245,36 @@ export default function PlayerProfile() {
         normalizedParticipants,
         normalizedStandings,
       }),
-    [normalizedParticipants, normalizedStages, normalizedStandings]
+    [normalizedParticipants, normalizedStages, normalizedStandings],
   );
   const isNormalizedLoading =
-    normalizedStagesLoading || normalizedParticipantsLoading || normalizedStandingsLoading;
+    normalizedStagesLoading ||
+    normalizedParticipantsLoading ||
+    normalizedStandingsLoading;
   const decoratedMatches = useMemo(
     () => decorateMatchesWithLiveStatus(matches, results),
-    [matches, results]
+    [matches, results],
   );
 
   const resolved = useMemo(() => {
     const siteTournamentNames = new Set(
-      (tournaments || []).map((entry) => String(entry?.name || "").trim()).filter(Boolean)
+      (tournaments || []).flatMap((entry) => {
+        const name = String(entry?.name || "").trim();
+        return name ? [name] : [];
+      }),
     );
-    const matchingPlayerRows = resolvePlayerRowsByAlias(decodedIgn, playerAliasIndex, players);
+    const matchingPlayerRows = resolvePlayerRowsByAlias(
+      decodedIgn,
+      playerAliasIndex,
+      players,
+    );
     const snapshotTeam = findParticipantTeamForPlayer(tournaments, decodedIgn);
 
-    const preferredTeamName = queryTeam || snapshotTeam?.participant?.team || null;
-    const preferredTeamMeta = preferredTeamName ? getOrganizationMetaFromAliases(preferredTeamName, teamAliasIndex) : null;
+    const preferredTeamName =
+      queryTeam || snapshotTeam?.participant?.team || null;
+    const preferredTeamMeta = preferredTeamName
+      ? getOrganizationMetaFromAliases(preferredTeamName, teamAliasIndex)
+      : null;
 
     const playerRow =
       pickBestPlayerRowForTeamContext(
@@ -218,12 +283,14 @@ export default function PlayerProfile() {
         playerAliasIndex,
         players,
         playerHistoryMap,
-        teamAliasIndex
+        teamAliasIndex,
       ) ||
       matchingPlayerRows[0] ||
       null;
 
-    const playerHistories = playerRow ? playerHistoryMap.get(playerRow.id) || [] : [];
+    const playerHistories = playerRow
+      ? playerHistoryMap.get(playerRow.id) || []
+      : [];
     const currentHistoryTeam =
       (preferredTeamMeta
         ? playerHistories
@@ -231,40 +298,52 @@ export default function PlayerProfile() {
             .find(
               (team) =>
                 team &&
-                getOrganizationMetaFromAliases(team, teamAliasIndex).key === preferredTeamMeta.key
+                getOrganizationMetaFromAliases(team, teamAliasIndex).key ===
+                  preferredTeamMeta.key,
             )
         : null) ||
       playerHistories
         .map((entry) => teams.find((team) => team.id === entry.team_id))
         .find(Boolean);
 
-    const fallbackTeamName = currentHistoryTeam?.name ||
+    const fallbackTeamName =
+      currentHistoryTeam?.name ||
       (playerRow?.team_id
         ? teams.find((team) => team.id === playerRow.team_id)?.name
         : null) ||
-      snapshotTeam?.participant?.team || queryTeam || null;
+      snapshotTeam?.participant?.team ||
+      queryTeam ||
+      null;
 
-    const teamMeta = fallbackTeamName ? getOrganizationMetaFromAliases(fallbackTeamName, teamAliasIndex) : null;
+    const teamMeta = fallbackTeamName
+      ? getOrganizationMetaFromAliases(fallbackTeamName, teamAliasIndex)
+      : null;
     const teamRow =
       currentHistoryTeam ||
       (playerRow?.team_id
         ? teams.find((team) => team.id === playerRow.team_id) || null
         : null) ||
       (teamMeta
-        ? teams.find((team) => getOrganizationMetaFromAliases(team, teamAliasIndex).key === teamMeta.key) || null
+        ? teams.find(
+            (team) =>
+              getOrganizationMetaFromAliases(team, teamAliasIndex).key ===
+              teamMeta.key,
+          ) || null
         : null);
 
     const historyOrgKeys = new Set(
-      playerHistories
-        .map((entry) => teams.find((team) => team.id === entry.team_id))
-        .filter(Boolean)
-        .map((team) => getOrganizationMetaFromAliases(team, teamAliasIndex).key)
-        .filter(Boolean)
+      playerHistories.reduce((keys, entry) => {
+        const team = teams.find((candidate) => candidate.id === entry.team_id);
+        if (!team) return keys;
+        const key = getOrganizationMetaFromAliases(team, teamAliasIndex).key;
+        if (key) keys.push(key);
+        return keys;
+      }, []),
     );
     if (teamMeta?.key) historyOrgKeys.add(teamMeta.key);
 
     const relatedTournaments = tournaments
-      .map((tournament) => {
+      .reduce((items, tournament) => {
         const participant = resolveTournamentParticipantForPlayer({
           tournament,
           ign: decodedIgn,
@@ -272,20 +351,20 @@ export default function PlayerProfile() {
           historyOrgKeys,
           teamAliasIndex,
         });
-        if (!participant) return null;
-        return {
+        if (!participant) return items;
+        items.push({
           id: tournament.id,
           name: tournament.name,
           phase: participant.phase || "Participant",
           placement: participant.placement || null,
           date: tournament.start_date || tournament.created_date,
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        });
+        return items;
+      }, [])
+      .toSorted((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
     const playerResults = tournaments
-      .map((tournament) => {
+      .reduce((items, tournament) => {
         const participant = resolveTournamentParticipantForPlayer({
           tournament,
           ign: decodedIgn,
@@ -293,7 +372,7 @@ export default function PlayerProfile() {
           historyOrgKeys,
           teamAliasIndex,
         });
-        if (!participant) return null;
+        if (!participant) return items;
         const resolvedResult = getTournamentResultForOrganization({
           tournament,
           organizationName: participant.team,
@@ -301,43 +380,59 @@ export default function PlayerProfile() {
           matches,
           matchResults: results,
           fallbackParticipant: participant,
-          normalizedStages: normalizedResultMaps.stagesByTournament.get(tournament.id) || [],
-          normalizedStandings: normalizedResultMaps.standingsByTournament.get(tournament.id) || [],
+          normalizedStages:
+            normalizedResultMaps.stagesByTournament.get(tournament.id) || [],
+          normalizedStandings:
+            normalizedResultMaps.standingsByTournament.get(tournament.id) || [],
         });
 
-        return {
+        const entry = {
           id: `${tournament.id}-${participant.team}`,
-          date: tournament.end_date || tournament.start_date || tournament.created_date || null,
+          date:
+            tournament.end_date ||
+            tournament.start_date ||
+            tournament.created_date ||
+            null,
           placement: resolvedResult?.placement || "-",
           tier: tournament.tier || "Unrated",
           tournament: tournament.name,
           team: getOrganizationMetaFromAliases(
             resolvedResult?.team || participant.team,
-            teamAliasIndex
+            teamAliasIndex,
           ).name,
           prize:
             getPrizeForOrganization(
               tournament,
               resolvedResult?.team || participant.team,
-              resolvedResult?.placement || participant.placement
+              resolvedResult?.placement || participant.placement,
             ) || "-",
         };
-      })
-      .filter((entry) => entry && isMajorTier(entry.tier))
-      .filter((entry) => siteTournamentNames.has(String(entry.tournament || "").trim()))
-      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        if (
+          isMajorTier(entry.tier) &&
+          siteTournamentNames.has(String(entry.tournament || "").trim())
+        ) {
+          items.push(entry);
+        }
+        return items;
+      }, [])
+      .toSorted((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
     const relatedArticles = articles
       .filter((article) => {
-        const haystack = `${article.title || ""} ${article.content || ""}`.toLowerCase();
+        const haystack =
+          `${article.title || ""} ${article.content || ""}`.toLowerCase();
         return (
           haystack.includes(normalizeIgn(decodedIgn)) ||
-          (teamMeta?.name ? haystack.includes(teamMeta.name.toLowerCase()) : false)
+          (teamMeta?.name
+            ? haystack.includes(teamMeta.name.toLowerCase())
+            : false)
         );
       })
       .slice(0, 3);
 
-    const teamResultRows = teamRow ? results.filter((row) => row.team_id === teamRow.id) : [];
+    const teamResultRows = teamRow
+      ? results.filter((row) => row.team_id === teamRow.id)
+      : [];
 
     return {
       playerRow,
@@ -350,7 +445,19 @@ export default function PlayerProfile() {
       teamResultRows,
       playerHistories,
     };
-  }, [articles, decodedIgn, matches, playerAliasIndex, playerHistoryMap, players, queryTeam, results, teamAliasIndex, teams, tournaments]);
+  }, [
+    articles,
+    decodedIgn,
+    matches,
+    playerAliasIndex,
+    playerHistoryMap,
+    players,
+    queryTeam,
+    results,
+    teamAliasIndex,
+    teams,
+    tournaments,
+  ]);
 
   const teamName =
     resolved.teamMeta?.name ||
@@ -359,30 +466,46 @@ export default function PlayerProfile() {
     searchParams.get("team") ||
     "Unassigned";
   const teamTag = resolved.teamRow?.tag || resolved.teamMeta?.tag || "---";
-  const teamLogo = getTeamLogoByName(teamName) || resolved.teamRow?.logo_url || null;
+  const teamLogo =
+    getTeamLogoByName(teamName) || resolved.teamRow?.logo_url || null;
   const teamLogoSurfaceTone = getTeamLogoSurfaceTone(teamName);
-  const playerPhoto = resolved.playerRow?.photo_url || getPlayerPhotoByIgn(decodedIgn);
+  const playerPhoto =
+    resolved.playerRow?.photo_url || getPlayerPhotoByIgn(decodedIgn);
   const displayIgn = getPlayerDisplayName(decodedIgn);
   const currentTournament = resolved.relatedTournaments[0] || null;
   const currentTournamentStageFocus = useMemo(() => {
     if (!currentTournament?.id) return null;
-    const tournamentRow = tournaments.find((entry) => entry.id === currentTournament.id);
+    const tournamentRow = tournaments.find(
+      (entry) => entry.id === currentTournament.id,
+    );
     if (!tournamentRow) return null;
-    const tournamentMatches = decoratedMatches.filter((match) => match.tournament_id === currentTournament.id);
-    const tournamentResults = results.filter((entry) => entry.tournament_id === currentTournament.id);
-    return getFeaturedTournamentStage(tournamentRow, tournamentMatches, tournamentResults);
+    const tournamentMatches = decoratedMatches.filter(
+      (match) => match.tournament_id === currentTournament.id,
+    );
+    const tournamentResults = results.filter(
+      (entry) => entry.tournament_id === currentTournament.id,
+    );
+    return getFeaturedTournamentStage(
+      tournamentRow,
+      tournamentMatches,
+      tournamentResults,
+    );
   }, [currentTournament?.id, decoratedMatches, results, tournaments]);
   const bmpsStatKills = useMemo(() => {
     const playerRow = resolved.playerRow;
     if (!playerRow) return null;
 
-    const aliasSet = new Set([normalizeStatPlayerKey(decodedIgn), normalizeStatPlayerKey(playerRow.ign)]);
-    playerAliases
-      .filter((alias) => alias.player_id === playerRow.id)
-      .forEach((alias) => aliasSet.add(normalizeStatPlayerKey(alias.alias)));
+    const aliasSet = new Set([
+      normalizeStatPlayerKey(decodedIgn),
+      normalizeStatPlayerKey(playerRow.ign),
+    ]);
+    for (const alias of playerAliases) {
+      if (alias.player_id !== playerRow.id) continue;
+      aliasSet.add(normalizeStatPlayerKey(alias.alias));
+    }
 
     const matchingRows = BMPS_2026_QUALIFIER_PLAYER_STATS.filter((entry) =>
-      aliasSet.has(normalizeStatPlayerKey(entry.player))
+      aliasSet.has(normalizeStatPlayerKey(entry.player)),
     );
 
     if (matchingRows.length === 0) return null;
@@ -400,56 +523,86 @@ export default function PlayerProfile() {
         BMPS_2026_PLAYER_TEAM_OVERRIDES[normalizeStatPlayerKey(entry.player)] ||
         null;
       if (!teamName) return false;
-      return getOrganizationMetaFromAliases(teamName, teamAliasIndex).key === currentTeamKey;
+      return (
+        getOrganizationMetaFromAliases(teamName, teamAliasIndex).key ===
+        currentTeamKey
+      );
     });
 
     return (teamMatchedRow || matchingRows[0]).finishes;
-  }, [decodedIgn, playerAliases, resolved.playerRow, resolved.teamMeta, teamAliasIndex]);
-  const appearanceYears = [...resolved.relatedTournaments.reduce((grouped, entry) => {
-    const year = getHistoryYear(entry.date);
-    const bucket = grouped.get(year) || [];
-    bucket.push(entry);
-    grouped.set(year, bucket);
-    return grouped;
-  }, new Map()).entries()]
-    .sort((a, b) => Number(b[0]) - Number(a[0]))
+  }, [
+    decodedIgn,
+    playerAliases,
+    resolved.playerRow,
+    resolved.teamMeta,
+    teamAliasIndex,
+  ]);
+  const appearanceYears = Array.from(
+    resolved.relatedTournaments.reduce((grouped, entry) => {
+      const year = getHistoryYear(entry.date);
+      const bucket = grouped.get(year) || [];
+      bucket.push(entry);
+      grouped.set(year, bucket);
+      return grouped;
+    }, new Map()).entries(),
+  )
+    .toSorted((a, b) => Number(b[0]) - Number(a[0]))
     .map(([year, entries]) => ({ year, entries }));
-  const resultYears = [...resolved.playerResults.reduce((grouped, entry) => {
-    const year = getHistoryYear(entry.date);
-    const bucket = grouped.get(year) || [];
-    bucket.push(entry);
-    grouped.set(year, bucket);
-    return grouped;
-  }, new Map()).entries()]
-    .sort((a, b) => Number(b[0]) - Number(a[0]))
+  const resultYears = Array.from(
+    resolved.playerResults.reduce((grouped, entry) => {
+      const year = getHistoryYear(entry.date);
+      const bucket = grouped.get(year) || [];
+      bucket.push(entry);
+      grouped.set(year, bucket);
+      return grouped;
+    }, new Map()).entries(),
+  )
+    .toSorted((a, b) => Number(b[0]) - Number(a[0]))
     .map(([year, entries]) => ({ year, entries }));
   const careerTeams = Array.from(
-    new Map(
-      resolved.playerHistories
-        .map((history) => {
-          const historyTeam = teams.find((entry) => entry.id === history.team_id);
-          if (!historyTeam) return null;
-          return {
-            id: history.id,
-            team: historyTeam.name,
-            joined: history.joined_date,
-            left: history.left_date,
-            role: history.role,
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => new Date(b.joined || b.left || 0) - new Date(a.joined || a.left || 0))
-        .map((entry) => [`${entry.team}-${entry.joined || ""}-${entry.left || ""}`, entry])
-    ).values()
+    resolved.playerHistories
+      .reduce((entries, history) => {
+        const historyTeam = teams.find((entry) => entry.id === history.team_id);
+        if (!historyTeam) return entries;
+        entries.push({
+          id: history.id,
+          team: historyTeam.name,
+          joined: history.joined_date,
+          left: history.left_date,
+          role: history.role,
+        });
+        return entries;
+      }, [])
+      .toSorted(
+        (a, b) =>
+          new Date(b.joined || b.left || 0) -
+          new Date(a.joined || a.left || 0),
+      )
+      .reduce((grouped, entry) => {
+        grouped.set(`${entry.team}-${entry.joined || ""}-${entry.left || ""}`, entry);
+        return grouped;
+      }, new Map())
+      .values(),
   );
   const primaryStats = [
     { icon: Shield, label: "Team tag", value: teamTag },
-    { icon: UserCircle2, label: "Role", value: resolved.playerRow?.role || "Player" },
-    { icon: Swords, label: "Kills", value: (bmpsStatKills ?? resolved.playerRow?.total_kills) || 0 },
+    {
+      icon: UserCircle2,
+      label: "Role",
+      value: resolved.playerRow?.role || "Player",
+    },
+    {
+      icon: Swords,
+      label: "Kills",
+      value: (bmpsStatKills ?? resolved.playerRow?.total_kills) || 0,
+    },
     {
       icon: Trophy,
       label: "Matches",
-      value: resolved.playerRow?.matches_played || resolved.teamResultRows.length || 0,
+      value:
+        resolved.playerRow?.matches_played ||
+        resolved.teamResultRows.length ||
+        0,
     },
   ];
   const secondaryStats = [
@@ -460,13 +613,63 @@ export default function PlayerProfile() {
         ? Number(resolved.playerRow.avg_damage).toFixed(0)
         : "-",
     },
-    { label: "Latest phase", value: currentTournamentStageFocus || currentTournament?.phase || "Roster active" },
+    {
+      label: "Latest phase",
+      value:
+        currentTournamentStageFocus ||
+        currentTournament?.phase ||
+        "Roster active",
+    },
   ];
+
+
+  return {
+    articles,
+    appearanceYears,
+    bmpsStatKills,
+    careerTeams,
+    currentTournament,
+    currentTournamentStageFocus,
+    decodedIgn,
+    displayIgn,
+    isLoading,
+    resolved,
+    resultYears,
+    primaryStats,
+    secondaryStats,
+    searchParams,
+    teamLogo,
+    teamLogoSurfaceTone,
+    teamName,
+    teamTag,
+    playerPhoto,
+  };
+}
+
+export default function PlayerProfile() {
+  const {
+    currentTournament,
+    currentTournamentStageFocus,
+    displayIgn,
+    isLoading,
+    resolved,
+    resultYears,
+    primaryStats,
+    secondaryStats,
+    searchParams,
+    teamLogo,
+    teamLogoSurfaceTone,
+    teamName,
+    teamTag,
+    playerPhoto,
+  } = usePlayerProfileData();
 
   if (isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Loading player</p>
+        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
+          Loading player
+        </p>
       </div>
     );
   }
@@ -487,7 +690,7 @@ export default function PlayerProfile() {
         to={teamName ? `/teams?team=${encodeURIComponent(teamName)}` : "/teams"}
         className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
+        <ArrowLeft className="size-3.5" />
         Back to teams
       </Link>
 
@@ -495,17 +698,28 @@ export default function PlayerProfile() {
         <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
           <div className="space-y-5">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Player profile</p>
-              <h1 className="mt-2 text-4xl font-black uppercase tracking-[-0.05em] text-foreground">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+                Player profile
+              </p>
+              <h1 className="mt-2 text-4xl font-semibold uppercase tracking-[-0.05em] text-foreground">
                 {displayIgn}
               </h1>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                Current team: <span className="font-semibold text-foreground">{teamName}</span>
-                {currentTournament ? ` • Active in ${currentTournament.name}` : ""}
+                Current team:{" "}
+                <span className="font-semibold text-foreground">
+                  {teamName}
+                </span>
+                {currentTournament
+                  ? ` • Active in ${currentTournament.name}`
+                  : ""}
               </p>
             </div>
 
-            <ProfileStatGrid primary={primaryStats} secondary={secondaryStats} variant="light" />
+            <ProfileStatGrid
+              primary={primaryStats}
+              secondary={secondaryStats}
+              variant="light"
+            />
           </div>
 
           <div className="flex items-center justify-center">
@@ -514,14 +728,14 @@ export default function PlayerProfile() {
                 <img
                   src={playerPhoto}
                   alt={displayIgn}
-                  className="h-full w-full object-contain object-bottom"
+                  className="size-full object-contain object-bottom"
                 />
               </div>
             ) : (
               <LogoBlock
                 src={teamLogo}
                 alt={teamName}
-                sizeClass="h-56 w-56"
+                sizeClass="size-56"
                 roundedClass="rounded-[30px]"
                 paddingClass="p-7"
                 surfaceTone={teamLogoSurfaceTone}
@@ -554,7 +768,9 @@ export default function PlayerProfile() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-foreground">{entry.name}</p>
+                      <p className="font-semibold text-foreground">
+                        {entry.name}
+                      </p>
                       <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                         {entry.phase}
                       </p>
@@ -563,8 +779,15 @@ export default function PlayerProfile() {
                       <p className="text-sm font-bold text-foreground">
                         {entry.placement ? `#${entry.placement}` : "—"}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {entry.date ? format(new Date(entry.date), "MMM d, yyyy") : "Date pending"}
+                      <p
+                        className="mt-1 text-xs text-muted-foreground"
+                        suppressHydrationWarning
+                      >
+                        {formatProfileDate(
+                          entry.date,
+                          "MMM d, yyyy",
+                          "Date pending",
+                        )}
                       </p>
                     </div>
                   </div>
@@ -583,7 +806,7 @@ export default function PlayerProfile() {
               <LogoBlock
                 src={teamLogo}
                 alt={teamName}
-                sizeClass="h-14 w-14"
+                sizeClass="size-14"
                 roundedClass="rounded-2xl"
                 paddingClass="p-2.5"
                 surfaceTone={teamLogoSurfaceTone}
@@ -606,15 +829,27 @@ export default function PlayerProfile() {
             ) : (
               <div className="mt-4 space-y-3">
                 {careerTeams.map((entry) => (
-                  <div key={entry.id} className="rounded-[18px] border border-border bg-background/75 p-4">
-                    <p className="font-semibold text-foreground">{entry.team}</p>
+                  <div
+                    key={entry.id}
+                    className="rounded-[18px] border border-border bg-background/75 p-4"
+                  >
+                    <p className="font-semibold text-foreground">
+                      {entry.team}
+                    </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                       {entry.role || "Player"}
                     </p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {entry.joined ? format(new Date(entry.joined), "MMM yyyy") : "Start unknown"}
+                    <p
+                      className="mt-2 text-xs text-muted-foreground"
+                      suppressHydrationWarning
+                    >
+                      {formatProfileDate(
+                        entry.joined,
+                        "MMM yyyy",
+                        "Start unknown",
+                      )}
                       {" · "}
-                      {entry.left ? format(new Date(entry.left), "MMM yyyy") : "Present"}
+                      {formatProfileDate(entry.left, "MMM yyyy", "Present")}
                     </p>
                   </div>
                 ))}
@@ -635,7 +870,9 @@ export default function PlayerProfile() {
                     to={`/news/${article.id}`}
                     className="block rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
                   >
-                    <p className="text-sm font-semibold text-foreground">{article.title}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {article.title}
+                    </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                       {article.category?.replace(/_/g, " ") || "Story"}
                     </p>
@@ -661,7 +898,7 @@ export default function PlayerProfile() {
             yearClassName="text-[11px] font-bold uppercase tracking-[0.18em] text-primary"
             tableClassName="w-full min-w-[760px] text-sm"
             headerRowClassName="border-b border-border text-left text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-            cellClassName="px-3 py-3"
+            cellClassName="p-3"
             bodyRowClassName="border-b border-border/70 last:border-b-0"
           />
         )}

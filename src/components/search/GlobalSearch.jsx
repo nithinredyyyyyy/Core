@@ -1,8 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Search, Trophy, Users, Swords, Newspaper, X, UserCircle } from "lucide-react";
+import {
+  Search,
+  Trophy,
+  Users,
+  Swords,
+  Newspaper,
+  X,
+  UserCircle,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { buildContextualFanHubLink } from "@/lib/fanNavigation";
 
@@ -24,7 +32,8 @@ export default function GlobalSearch({ open, onClose }) {
   useEffect(() => {
     if (open) {
       setQuery("");
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timeoutId = window.setTimeout(() => inputRef.current?.focus(), 50);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [open]);
 
@@ -60,50 +69,64 @@ export default function GlobalSearch({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center px-4 pt-20" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.97, y: -8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97 }}
-        transition={{ duration: 0.15 }}
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[100] flex items-start justify-center px-4 pt-20">
+      <button
+        type="button"
+        aria-label="Close global search"
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <LazyMotion features={domAnimation}>
+        <m.div
+          initial={{ opacity: 0, scale: 0.97, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.15 }}
+          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <Search className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+          <Search className="size-4 flex-shrink-0 text-muted-foreground" />
           <input
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search tournaments, teams, players, matches, news..."
+            placeholder="Search tournaments, teams, players, matches, news?"
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           {query ? (
-            <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground">
-              <X className="h-3.5 w-3.5" />
+            <button
+              onClick={() => setQuery("")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
             </button>
           ) : null}
-          <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground sm:block">ESC</kbd>
+          <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground sm:block">
+            ESC
+          </kbd>
         </div>
 
         <div className="max-h-72 overflow-y-auto p-2">
           {results.length > 0 ? (
-            results.map((result, index) => {
+            results.map((result) => {
               const Icon = RESULT_ICONS[result.type] || Search;
               return (
                 <button
-                  key={`${result.type}-${result.label}-${index}`}
+                  key={`${result.type}-${result.path ?? result.label}-${result.sub ?? ""}`}
                   onClick={() => go(result.path)}
                   className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="h-3.5 w-3.5 text-primary" />
+                    <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="size-3.5 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">{result.label}</p>
-                      <p className="text-[11px] capitalize text-muted-foreground">{result.sub}</p>
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {result.label}
+                      </p>
+                      <p className="text-[11px] capitalize text-muted-foreground">
+                        {result.sub}
+                      </p>
                     </div>
                     <span className="rounded bg-secondary px-2 py-0.5 text-[10px] capitalize text-muted-foreground">
                       {result.type}
@@ -113,7 +136,9 @@ export default function GlobalSearch({ open, onClose }) {
               );
             })
           ) : query.length >= 2 ? (
-            <p className="px-3 py-4 text-center text-sm text-muted-foreground">No results for "{query}"</p>
+            <p className="px-3 py-4 text-center text-sm text-muted-foreground">
+              No results for "{query}"
+            </p>
           ) : (
             <div>
               <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -126,17 +151,20 @@ export default function GlobalSearch({ open, onClose }) {
                   className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-secondary">
-                      <suggestion.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-lg bg-secondary">
+                      <suggestion.icon className="size-3.5 text-muted-foreground" />
                     </div>
-                    <span className="text-sm font-medium text-foreground">{suggestion.label}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {suggestion.label}
+                    </span>
                   </div>
                 </button>
               ))}
             </div>
           )}
         </div>
-      </motion.div>
+        </m.div>
+      </LazyMotion>
     </div>
   );
 }

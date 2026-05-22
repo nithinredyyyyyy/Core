@@ -6,7 +6,10 @@ export function createFormSnapshot(value) {
   }
 }
 
-export function confirmDiscardIfDirty(isDirty, message = "Discard unsaved changes?") {
+export function confirmDiscardIfDirty(
+  isDirty,
+  message = "Discard unsaved changes?",
+) {
   if (!isDirty) return true;
   if (typeof window === "undefined" || typeof window.confirm !== "function") {
     return false;
