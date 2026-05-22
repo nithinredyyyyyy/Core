@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -718,6 +718,10 @@ function useAdminMatchesState() {
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 50),
   });
+  const { data: allMatchResults = [] } = useQuery({
+    queryKey: ["match-results-all"],
+    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
+  });
   const availableTournaments = tournaments.filter(
     (tournament) => tournament.status !== "completed",
   );
@@ -842,10 +846,73 @@ function useAdminMatchesState() {
     () => new Set(matches.map((match) => buildMatchKey(match))),
     [matches],
   );
+  const matchIdsWithResults = useMemo(
+    () =>
+      allMatchResults.reduce((ids, result) => {
+        if (result.match_id) {
+          ids.add(result.match_id);
+        }
+        return ids;
+      }, new Set()),
+    [allMatchResults],
+  );
+  const staleScheduledMatchIds = useMemo(
+    () =>
+      matches.reduce((ids, match) => {
+        if (
+          match.status === "scheduled" &&
+          matchIdsWithResults.has(match.id)
+        ) {
+          ids.push(match.id);
+        }
+        return ids;
+      }, []),
+    [matches, matchIdsWithResults],
+  );
+  const syncInFlightRef = useRef(false);
   const previewWithStatus = autoSchedulePreview.entries.map((entry) => ({
     ...entry,
     alreadyExists: existingMatchKeys.has(buildMatchKey(entry)),
   }));
+
+  useEffect(() => {
+    if (syncInFlightRef.current || staleScheduledMatchIds.length === 0) return;
+
+    let cancelled = false;
+    syncInFlightRef.current = true;
+
+    const syncCompletedMatches = async () => {
+      try {
+        await Promise.all(
+          staleScheduledMatchIds.map((matchId) =>
+            base44.entities.Match.update(matchId, { status: "completed" }),
+          ),
+        );
+
+        if (!cancelled) {
+          await qc.invalidateQueries({ queryKey: ["matches"] });
+        }
+      } finally {
+        syncInFlightRef.current = false;
+      }
+    };
+
+    syncCompletedMatches();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [qc, staleScheduledMatchIds]);
+
+  const normalizedMatches = useMemo(
+    () =>
+      matches.map((match) =>
+        match.status === "scheduled" && matchIdsWithResults.has(match.id)
+          ? { ...match, status: "completed" }
+          : match,
+      ),
+    [matches, matchIdsWithResults],
+  );
 
   const handleSubmit = () => {
     if (!form.tournament_id || !form.stage) {
@@ -912,7 +979,7 @@ function useAdminMatchesState() {
     previewWithStatus,
     createMatchesBulk,
     handleGenerateSchedule,
-    matches,
+    matches: normalizedMatches,
     tournamentMap,
     openCreate,
     stages,
