@@ -175,6 +175,14 @@ export default function AdminResults() {
       qc.invalidateQueries({ queryKey: ["match-results-all"] }),
     ]);
 
+  const markMatchCompletedIfNeeded = async (matchId) => {
+    const match = matchMap[matchId];
+    if (!match || match.status !== "scheduled") return;
+
+    await base44.entities.Match.update(matchId, { status: "completed" });
+    await qc.invalidateQueries({ queryKey: ["matches"] });
+  };
+
   const getNextMatchId = (matchId) => {
     const currentIndex = availableMatches.findIndex((match) => match.id === matchId);
     if (currentIndex === -1) return "";
@@ -185,6 +193,8 @@ export default function AdminResults() {
     mutationFn: (data) => base44.entities.MatchResult.bulkCreate(data),
     onSuccess: async (_response, variables) => {
       await invalidateResultQueries();
+      const currentMatchId = variables?.[0]?.match_id || selectedMatch;
+      await markMatchCompletedIfNeeded(currentMatchId);
       const publicationStatus = variables?.[0]?.publication_status || "draft";
       if (publicationStatus === "published") {
         const currentMatchId = variables?.[0]?.match_id || selectedMatch;
@@ -212,6 +222,7 @@ export default function AdminResults() {
     mutationFn: ({ id, data }) => base44.entities.MatchResult.update(id, data),
     onSuccess: async () => {
       await invalidateResultQueries();
+      await markMatchCompletedIfNeeded(selectedMatch);
       resetEditResult();
       toast({ title: "Result updated" });
     },
