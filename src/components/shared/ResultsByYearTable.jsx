@@ -1,15 +1,21 @@
 import React from "react";
 import { format } from "date-fns";
 
+const EMPTY_BUCKETS = [];
+
+function formatResultsDate(value) {
+  return value ? format(new Date(value), "yyyy-MM-dd") : "TBA";
+}
+
 export default function ResultsByYearTable({
-  buckets = [],
+  buckets = EMPTY_BUCKETS,
   title = "Results by Year",
   wrapperClassName = "space-y-5 border-t border-border pt-5",
   headingClassName = "text-[11px] font-bold uppercase tracking-[0.18em] text-primary",
   yearClassName = "text-[11px] font-bold uppercase tracking-[0.18em] text-primary",
   tableClassName = "w-full min-w-[760px] text-sm",
   headerRowClassName = "border-b border-border text-left text-[11px] uppercase tracking-[0.18em] text-muted-foreground",
-  cellClassName = "px-3 py-3",
+  cellClassName = "p-3",
   bodyRowClassName = "border-b border-border/70 last:border-b-0",
   hoverRowClassName = "",
 }) {
@@ -40,9 +46,13 @@ export default function ResultsByYearTable({
                     className={`${bodyRowClassName}${hoverRowClassName ? ` ${hoverRowClassName}` : ""}`}
                   >
                     <td className={`${cellClassName} text-muted-foreground`}>
-                      {entry.date ? format(new Date(entry.date), "yyyy-MM-dd") : "TBA"}
+                      <span suppressHydrationWarning>
+                        {formatResultsDate(entry.date)}
+                      </span>
                     </td>
-                    <td className={`${cellClassName} font-semibold text-foreground`}>
+                    <td
+                      className={`${cellClassName} font-semibold text-foreground`}
+                    >
                       {entry.placement || "-"}
                     </td>
                     <td className={`${cellClassName} text-muted-foreground`}>

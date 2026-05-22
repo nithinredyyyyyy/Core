@@ -160,7 +160,10 @@ const ORGANIZATION_CANONICAL = {
   someonesdream: { name: "SomeOnes Dream", tag: "SOD" },
   zeroarkofficial: { name: "Zero Ark Official", tag: "ZAO" },
   santaesports: { name: "Santa Esports", tag: "SANTA" },
-  thundergodsxtortugagaming: { name: "ThunderGods X Tortuga Gaming", tag: "TDR" },
+  thundergodsxtortugagaming: {
+    name: "ThunderGods X Tortuga Gaming",
+    tag: "TDR",
+  },
   divinegaming: { name: "Divine Gaming", tag: "DIV" },
   blinkesports: { name: "Blink Esports", tag: "BLINK" },
   jaguaresports: { name: "Jaguar Esports", tag: "JAG" },
@@ -179,11 +182,12 @@ const ORGANIZATION_CANONICAL = {
 };
 
 export function normalizeOrganizationName(teamName) {
-  const compact = (teamName || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
+  const compact = (teamName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-  const withoutTitleSponsors = compact.replace(/^(iqoo|oneplus|heroxtreme|infinix)+/g, "");
+  const withoutTitleSponsors = compact.replace(
+    /^(iqoo|oneplus|heroxtreme|infinix)+/g,
+    "",
+  );
 
   return ORGANIZATION_ALIAS_MAP[withoutTitleSponsors] || withoutTitleSponsors;
 }
@@ -252,20 +256,16 @@ const INACTIVE_ORGANIZATION_NAMES = [
   "Hades H4K",
 ];
 
-const HIDDEN_ORGANIZATION_NAMES = [
-  "iQOO SouL",
-  "Team SouL",
-  "Team Soul",
-];
+const HIDDEN_ORGANIZATION_NAMES = ["iQOO SouL", "Team SouL", "Team Soul"];
 
 const INACTIVE_ORGANIZATION_KEYS = new Set(
-  INACTIVE_ORGANIZATION_NAMES
-    .map((name) => normalizeOrganizationName(name))
-    .filter((key) => key !== "teamredxross")
+  INACTIVE_ORGANIZATION_NAMES.map((name) =>
+    normalizeOrganizationName(name),
+  ).filter((key) => key !== "teamredxross"),
 );
 
 const HIDDEN_ORGANIZATION_KEYS = new Set(
-  HIDDEN_ORGANIZATION_NAMES.map((name) => normalizeOrganizationName(name))
+  HIDDEN_ORGANIZATION_NAMES.map((name) => normalizeOrganizationName(name)),
 );
 
 export function isOrganizationInactive(teamLike) {

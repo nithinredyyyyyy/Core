@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
-export function useMinimumLoader(isLoading, minDuration = 1800, exitDuration = 700) {
+export function useMinimumLoader(
+  isLoading,
+  minDuration = 1800,
+  exitDuration = 700,
+) {
   const [showLoader, setShowLoader] = useState(isLoading);
   const [isExiting, setIsExiting] = useState(false);
   const loadStartRef = useRef(null);

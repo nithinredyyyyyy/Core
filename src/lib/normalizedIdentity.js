@@ -19,7 +19,10 @@ export function buildTeamAliasIndex(teams = [], teamAliases = []) {
   };
 
   (teamAliases || []).forEach((alias) => {
-    register(alias.normalized_alias || normalizeLookupValue(alias.alias), byTeamId.get(alias.team_id));
+    register(
+      alias.normalized_alias || normalizeLookupValue(alias.alias),
+      byTeamId.get(alias.team_id),
+    );
   });
 
   (teams || []).forEach((team) => {
@@ -54,7 +57,9 @@ export function getOrganizationMetaFromAliases(teamLike, teamAliasIndex) {
 }
 
 export function buildPlayerAliasIndex(players = [], playerAliases = []) {
-  const byPlayerId = new Map((players || []).map((player) => [player.id, player]));
+  const byPlayerId = new Map(
+    (players || []).map((player) => [player.id, player]),
+  );
   const byNormalized = new Map();
 
   const register = (normalizedAlias, player) => {
@@ -67,7 +72,10 @@ export function buildPlayerAliasIndex(players = [], playerAliases = []) {
   };
 
   (playerAliases || []).forEach((alias) => {
-    register(alias.normalized_alias || normalizeLookupValue(alias.alias), byPlayerId.get(alias.player_id));
+    register(
+      alias.normalized_alias || normalizeLookupValue(alias.alias),
+      byPlayerId.get(alias.player_id),
+    );
   });
 
   (players || []).forEach((player) => {
@@ -80,15 +88,26 @@ export function buildPlayerAliasIndex(players = [], playerAliases = []) {
 export function resolvePlayerRowsByAlias(ign, playerAliasIndex, players = []) {
   const normalized = normalizeLookupValue(ign);
   if (!normalized) return [];
-  return playerAliasIndex?.byNormalized?.get(normalized) || (players || []).filter((player) => normalizeLookupValue(player.ign) === normalized);
+  return (
+    playerAliasIndex?.byNormalized?.get(normalized) ||
+    (players || []).filter(
+      (player) => normalizeLookupValue(player.ign) === normalized,
+    )
+  );
 }
 
 function getHistoryRecency(entry) {
-  return new Date(entry?.left_date || entry?.joined_date || entry?.updated_date || 0).getTime() || 0;
+  return (
+    new Date(
+      entry?.left_date || entry?.joined_date || entry?.updated_date || 0,
+    ).getTime() || 0
+  );
 }
 
 function getPlayerRecency(player) {
-  return new Date(player?.updated_date || player?.created_date || 0).getTime() || 0;
+  return (
+    new Date(player?.updated_date || player?.created_date || 0).getTime() || 0
+  );
 }
 
 export function pickBestPlayerRowForTeamContext(
@@ -97,7 +116,7 @@ export function pickBestPlayerRowForTeamContext(
   playerAliasIndex,
   players = [],
   playerTeamHistoryMap = new Map(),
-  teamAliasIndex
+  teamAliasIndex,
 ) {
   const candidates = resolvePlayerRowsByAlias(ign, playerAliasIndex, players);
   if (!preferredTeamLike || candidates.length <= 1) {
@@ -112,11 +131,13 @@ export function pickBestPlayerRowForTeamContext(
   const scored = candidates
     .map((player) => {
       const histories = playerTeamHistoryMap.get(player.id) || [];
-      const matchingHistories = histories.filter((entry) => entry.team_id === preferredTeam.id);
+      const matchingHistories = histories.filter(
+        (entry) => entry.team_id === preferredTeam.id,
+      );
       const openHistory = matchingHistories.find((entry) => !entry.left_date);
       const latestMatchingHistory = matchingHistories.reduce(
         (best, entry) => Math.max(best, getHistoryRecency(entry)),
-        0
+        0,
       );
 
       let score = 0;
@@ -156,7 +177,10 @@ export function buildPlayerTeamHistoryMap(playerTeamHistory = []) {
       const leftOpen = !left.left_date ? 1 : 0;
       const rightOpen = !right.left_date ? 1 : 0;
       if (leftOpen !== rightOpen) return rightOpen - leftOpen;
-      return new Date(right.joined_date || right.updated_date || 0) - new Date(left.joined_date || left.updated_date || 0);
+      return (
+        new Date(right.joined_date || right.updated_date || 0) -
+        new Date(left.joined_date || left.updated_date || 0)
+      );
     });
     byPlayerId.set(playerId, entries);
   }
@@ -167,5 +191,7 @@ export function buildPlayerTeamHistoryMap(playerTeamHistory = []) {
 export function normalizeOrganizationKeyWithAliases(teamLike, teamAliasIndex) {
   const resolved = resolveTeamByAlias(teamLike, teamAliasIndex);
   if (resolved?.id) return resolved.id;
-  return fallbackNormalizeOrganizationName(typeof teamLike === "string" ? teamLike : teamLike?.name);
+  return fallbackNormalizeOrganizationName(
+    typeof teamLike === "string" ? teamLike : teamLike?.name,
+  );
 }

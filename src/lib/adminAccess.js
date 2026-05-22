@@ -4,7 +4,8 @@ import { base44 } from "@/api/base44Client";
 export const LOCAL_ADMIN_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
 export function useAdminAccess() {
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const hostname =
+    typeof window !== "undefined" ? window.location.hostname : "";
   const isLocalAdmin = LOCAL_ADMIN_HOSTS.has(hostname);
 
   const { data: authUser, isLoading } = useQuery({

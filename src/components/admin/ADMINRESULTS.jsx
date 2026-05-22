@@ -685,7 +685,7 @@ export default function AdminResults() {
                       <p className="truncate font-medium">{entry.team_name}</p>
                     </div>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      Published {entry.baseline_total_points || 0} pts â€¢ Current #{entry.placement || "-"} â€¢ {entry.kill_points || 0} kills
+                      Published {entry.baseline_total_points || 0} pts • Current #{entry.placement || "-"} • {entry.kill_points || 0} kills
                     </p>
                   </div>
                   <div className="text-right">

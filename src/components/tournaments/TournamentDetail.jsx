@@ -1174,17 +1174,17 @@ function StageStandingsBoard({
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group A â†” B</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group A ? B</p>
                 <p className="mt-2 text-sm text-muted-foreground">Bottom 4 from Group A move to Group B.</p>
                 <p className="mt-1 text-sm text-muted-foreground">Top 4 from Group B move to Group A.</p>
               </div>
               <div className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group B â†” C</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group B ? C</p>
                 <p className="mt-2 text-sm text-muted-foreground">Bottom 4 from Group B move to Group C.</p>
                 <p className="mt-1 text-sm text-muted-foreground">Top 4 from Group C move to Group B.</p>
               </div>
               <div className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group C â†” D</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group C ? D</p>
                 <p className="mt-2 text-sm text-muted-foreground">Bottom 4 from Group C move to Group D.</p>
                 <p className="mt-1 text-sm text-muted-foreground">Top 4 from Group D move to Group C.</p>
               </div>
@@ -1567,8 +1567,8 @@ function MatchdayHub({ tournament, matches, matchResults }) {
                 <p className="text-sm font-semibold text-foreground">{bucket.label}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {bucket.matches.length} matches
-                  {bucket.stages.length ? ` Â· ${bucket.stages.join(" / ")}` : ""}
-                  {bucket.groups.length ? ` Â· ${bucket.groups.join(", ")}` : ""}
+                  {bucket.stages.length ? ` · ${bucket.stages.join(" / ")}` : ""}
+                  {bucket.groups.length ? ` · ${bucket.groups.join(", ")}` : ""}
                 </p>
               </div>
               <div className="text-right">
@@ -1585,12 +1585,12 @@ function MatchdayHub({ tournament, matches, matchResults }) {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">
-                          Match #{match.match_number || "-"} Â· {match.stage || "Stage TBA"}
+                          Match #{match.match_number || "-"} · {match.stage || "Stage TBA"}
                           {match.group_name ? ` (${match.group_name})` : ""}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {match.map || "Map TBA"}
-                          {match.scheduled_time ? ` Â· ${format(new Date(match.scheduled_time), "MMM d, h:mm a")}` : ""}
+                          {match.scheduled_time ? ` · ${format(new Date(match.scheduled_time), "MMM d, h:mm a")}` : ""}
                         </p>
                       </div>
                       <div className="text-right">

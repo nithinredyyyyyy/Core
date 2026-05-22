@@ -30,52 +30,215 @@ const tournament = {
     { week: "Jun 28 - Jun 30", label: "Grand Finals" },
   ],
   prize_breakdown: [
-    { placement: "1st", team: "TeamXSpark", inr: "6,000,000", usd: "71,973.21" },
-    { placement: "2nd", team: "Global Esports", inr: "3,000,000", usd: "35,986.61" },
-    { placement: "3rd", team: "Reckoning Esports", inr: "2,000,000", usd: "23,991.07" },
+    {
+      placement: "1st",
+      team: "TeamXSpark",
+      inr: "6,000,000",
+      usd: "71,973.21",
+    },
+    {
+      placement: "2nd",
+      team: "Global Esports",
+      inr: "3,000,000",
+      usd: "35,986.61",
+    },
+    {
+      placement: "3rd",
+      team: "Reckoning Esports",
+      inr: "2,000,000",
+      usd: "23,991.07",
+    },
     { placement: "4th", team: "Team SouL", inr: "1,500,000", usd: "17,993.30" },
-    { placement: "5th", team: "Venom Gaming", inr: "1,250,000", usd: "14,994.42" },
-    { placement: "6th", team: "Team Limra", inr: "1,000,000", usd: "11,995.54" },
+    {
+      placement: "5th",
+      team: "Venom Gaming",
+      inr: "1,250,000",
+      usd: "14,994.42",
+    },
+    {
+      placement: "6th",
+      team: "Team Limra",
+      inr: "1,000,000",
+      usd: "11,995.54",
+    },
     { placement: "7th", team: "8Bit", inr: "900,000", usd: "10,795.98" },
     { placement: "8th", team: "Team Tamilas", inr: "800,000", usd: "9,596.43" },
-    { placement: "9th", team: "Raven Esports", inr: "600,000", usd: "7,197.32" },
+    {
+      placement: "9th",
+      team: "Raven Esports",
+      inr: "600,000",
+      usd: "7,197.32",
+    },
     { placement: "10th", team: "FS Esports", inr: "600,000", usd: "7,197.32" },
     { placement: "11th", team: "TEAM iNSANE", inr: "400,000", usd: "4,798.21" },
     { placement: "12th", team: "Team Aaru", inr: "400,000", usd: "4,798.21" },
-    { placement: "13th", team: "Vasista Esports", inr: "250,000", usd: "2,998.88" },
-    { placement: "14th", team: "MOGO Esports", inr: "250,000", usd: "2,998.88" },
-    { placement: "15th", team: "Carnival Gaming", inr: "250,000", usd: "2,998.88" },
-    { placement: "16th", team: "Inferno Squad", inr: "250,000", usd: "2,998.88" },
+    {
+      placement: "13th",
+      team: "Vasista Esports",
+      inr: "250,000",
+      usd: "2,998.88",
+    },
+    {
+      placement: "14th",
+      team: "MOGO Esports",
+      inr: "250,000",
+      usd: "2,998.88",
+    },
+    {
+      placement: "15th",
+      team: "Carnival Gaming",
+      inr: "250,000",
+      usd: "2,998.88",
+    },
+    {
+      placement: "16th",
+      team: "Inferno Squad",
+      inr: "250,000",
+      usd: "2,998.88",
+    },
   ],
   awards: [
-    { title: "MVP", player: "NinjaBoi", team: "Global Esports", country: "India", inr: "250,000", usd: "2,998.88" },
-    { title: "Most Finishes", player: "NinjaBoi", team: "Global Esports", country: "India", inr: "100,000", usd: "1,199.55" },
-    { title: "Lone Survivor", player: "Robin", team: "MOGO Esports", country: "India", inr: "100,000", usd: "1,199.55" },
-    { title: "Rampage", player: "NinjaBoi", team: "Global Esports", country: "India", inr: "100,000", usd: "1,199.55" },
+    {
+      title: "MVP",
+      player: "NinjaBoi",
+      team: "Global Esports",
+      country: "India",
+      inr: "250,000",
+      usd: "2,998.88",
+    },
+    {
+      title: "Most Finishes",
+      player: "NinjaBoi",
+      team: "Global Esports",
+      country: "India",
+      inr: "100,000",
+      usd: "1,199.55",
+    },
+    {
+      title: "Lone Survivor",
+      player: "Robin",
+      team: "MOGO Esports",
+      country: "India",
+      inr: "100,000",
+      usd: "1,199.55",
+    },
+    {
+      title: "Rampage",
+      player: "NinjaBoi",
+      team: "Global Esports",
+      country: "India",
+      inr: "100,000",
+      usd: "1,199.55",
+    },
   ],
   participants: [
-    { placement: 1, team: "Global Esports", phase: "Semi Finals 1", players: ["Mavi", "NinjaBoi", "Beast", "Slug", "Arclyn"] },
-    { placement: 2, team: "Team Aaru", phase: "Semi Finals 1", players: ["Aaru", "Attanki", "Dionysus", "Veyron"] },
-    { placement: 3, team: "TeamXSpark", phase: "Semi Finals 1", players: ["NinjaJOD", "SPRAYGOD", "Sarang", "Shadow7", "Osmium"] },
-    { placement: 4, team: "Team Soul", phase: "Semi Finals 1", players: ["Spower", "Manya", "NakuL", "Rony", "Jokerr"] },
-    { placement: 5, team: "FS Esports", phase: "Semi Finals 1", players: ["Wizard", "Tracegod", "CLUCTH", "HITMAN", "FaTe"] },
-    { placement: 6, team: "Vasista Esports", phase: "Semi Finals 1", players: ["AustinX", "Siuuu786", "RageGod", "Mj", "K47"] },
-    { placement: 7, team: "Team Tamilas", phase: "Semi Finals 1", players: ["MantyOP", "Maxy", "MrIGL", "FoxOP"] },
-    { placement: 8, team: "Raven Esports", phase: "Semi Finals 1", players: ["AIMGOD", "HANZO", "HULK", "Reaper"] },
-    { placement: 9, team: "Carnival Gaming", phase: "Semi Finals 2", players: ["Goblin", "AkshaT", "Neyo", "Omega", "Hector", "Amit"] },
-    { placement: 10, team: "MOGO Esports", phase: "Semi Finals 2", players: ["Destro", "DeltaPG", "Justin", "SHOGUN", "Robin"] },
-    { placement: 11, team: "Team Limra", phase: "Semi Finals 2", players: ["GokulWNL", "PokoWNL", "Hesperos", "DragonOP"] },
-    { placement: 12, team: "Venom Gaming", phase: "Semi Finals 2", players: ["FurY", "VeNoM", "PHANTOM", "ALTU"] },
-    { placement: 13, team: "8BIT", phase: "Semi Finals 2", players: ["Juicy", "Mighty", "Aditya", "Mac", "MadMan"] },
-    { placement: 14, team: "Team iNSANE", phase: "Semi Finals 2", players: ["AFU", "ShaDow", "Evil", "SpyOp", "Kaalan"] },
-    { placement: 15, team: "Reckoning Esports", phase: "Semi Finals 2", players: ["ViPER", "HunterZ", "GravityJOD", "ShikariJOD", "IMMORTAL"] },
-    { placement: 16, team: "Inferno Squad", phase: "Semi Finals 2", players: ["OwenOG", "BarryOG", "OmegaOG", "Zin", "JatinOG", "ManthanOG"] },
+    {
+      placement: 1,
+      team: "Global Esports",
+      phase: "Semi Finals 1",
+      players: ["Mavi", "NinjaBoi", "Beast", "Slug", "Arclyn"],
+    },
+    {
+      placement: 2,
+      team: "Team Aaru",
+      phase: "Semi Finals 1",
+      players: ["Aaru", "Attanki", "Dionysus", "Veyron"],
+    },
+    {
+      placement: 3,
+      team: "TeamXSpark",
+      phase: "Semi Finals 1",
+      players: ["NinjaJOD", "SPRAYGOD", "Sarang", "Shadow7", "Osmium"],
+    },
+    {
+      placement: 4,
+      team: "Team Soul",
+      phase: "Semi Finals 1",
+      players: ["Spower", "Manya", "NakuL", "Rony", "Jokerr"],
+    },
+    {
+      placement: 5,
+      team: "FS Esports",
+      phase: "Semi Finals 1",
+      players: ["Wizard", "Tracegod", "CLUCTH", "HITMAN", "FaTe"],
+    },
+    {
+      placement: 6,
+      team: "Vasista Esports",
+      phase: "Semi Finals 1",
+      players: ["AustinX", "Siuuu786", "RageGod", "Mj", "K47"],
+    },
+    {
+      placement: 7,
+      team: "Team Tamilas",
+      phase: "Semi Finals 1",
+      players: ["MantyOP", "Maxy", "MrIGL", "FoxOP"],
+    },
+    {
+      placement: 8,
+      team: "Raven Esports",
+      phase: "Semi Finals 1",
+      players: ["AIMGOD", "HANZO", "HULK", "Reaper"],
+    },
+    {
+      placement: 9,
+      team: "Carnival Gaming",
+      phase: "Semi Finals 2",
+      players: ["Goblin", "AkshaT", "Neyo", "Omega", "Hector", "Amit"],
+    },
+    {
+      placement: 10,
+      team: "MOGO Esports",
+      phase: "Semi Finals 2",
+      players: ["Destro", "DeltaPG", "Justin", "SHOGUN", "Robin"],
+    },
+    {
+      placement: 11,
+      team: "Team Limra",
+      phase: "Semi Finals 2",
+      players: ["GokulWNL", "PokoWNL", "Hesperos", "DragonOP"],
+    },
+    {
+      placement: 12,
+      team: "Venom Gaming",
+      phase: "Semi Finals 2",
+      players: ["FurY", "VeNoM", "PHANTOM", "ALTU"],
+    },
+    {
+      placement: 13,
+      team: "8BIT",
+      phase: "Semi Finals 2",
+      players: ["Juicy", "Mighty", "Aditya", "Mac", "MadMan"],
+    },
+    {
+      placement: 14,
+      team: "Team iNSANE",
+      phase: "Semi Finals 2",
+      players: ["AFU", "ShaDow", "Evil", "SpyOp", "Kaalan"],
+    },
+    {
+      placement: 15,
+      team: "Reckoning Esports",
+      phase: "Semi Finals 2",
+      players: ["ViPER", "HunterZ", "GravityJOD", "ShikariJOD", "IMMORTAL"],
+    },
+    {
+      placement: 16,
+      team: "Inferno Squad",
+      phase: "Semi Finals 2",
+      players: ["OwenOG", "BarryOG", "OmegaOG", "Zin", "JatinOG", "ManthanOG"],
+    },
   ],
   rankings: [
     {
       title: "Finish Rankings",
       entries: [
-        { placement: 1, player: "NinjaBoi", team: "Global Esports", finishes: 37 },
+        {
+          placement: 1,
+          player: "NinjaBoi",
+          team: "Global Esports",
+          finishes: 37,
+        },
         { placement: 2, player: "Sarang", team: "TeamXSpark", finishes: 29 },
         { placement: 3, player: "GokulWNL", team: "Team Limra", finishes: 29 },
         { placement: 4, player: "NinjaJOD", team: "TeamXSpark", finishes: 27 },
@@ -148,55 +311,281 @@ const tournament = {
       summary:
         "June 28th - 30th, 2024 at Hitex Exhibition Center, Hyderabad. 16 teams played 18 matches across 3 matchdays, with TeamXSpark winning the title on 142 total points.",
       standings: [
-        { placement: 1, team: "TX", fullTeam: "Team XSpark", matches: 18, wwcd: 1, pos: 42, elimins: 100, points: 142, outcome: "Champion" },
-        { placement: 2, team: "GE", fullTeam: "GLOBAL ESPORTS", matches: 18, wwcd: 2, pos: 41, elimins: 93, points: 134, outcome: "Runner-up" },
-        { placement: 3, team: "RGE", fullTeam: "Reckoning Esports", matches: 18, wwcd: 2, pos: 61, elimins: 71, points: 132, outcome: "3rd Place" },
-        { placement: 4, team: "SOUL", fullTeam: "Team SouL", matches: 18, wwcd: 2, pos: 34, elimins: 82, points: 116, outcome: "Top 4" },
-        { placement: 5, team: "VENOM", fullTeam: "Venom Gaming", matches: 18, wwcd: 1, pos: 40, elimins: 76, points: 116, outcome: "Top 8" },
-        { placement: 6, team: "LIMRA", fullTeam: "Team Limra", matches: 18, wwcd: 1, pos: 37, elimins: 78, points: 115, outcome: "Top 8" },
-        { placement: 7, team: "8BIT", fullTeam: "8Bit", matches: 18, wwcd: 2, pos: 42, elimins: 65, points: 107, outcome: "Top 8" },
-        { placement: 8, team: "TT", fullTeam: "Team Tamilas", matches: 18, wwcd: 2, pos: 53, elimins: 53, points: 106, outcome: "Top 8" },
-        { placement: 9, team: "RAVEN", fullTeam: "Raven Esports", matches: 18, wwcd: 1, pos: 37, elimins: 63, points: 100, outcome: "Finalist" },
-        { placement: 10, team: "FS", fullTeam: "FS eSports", matches: 18, wwcd: 1, pos: 42, elimins: 57, points: 99, outcome: "Finalist" },
-        { placement: 11, team: "INSANE", fullTeam: "Team Insane", matches: 18, wwcd: 0, pos: 38, elimins: 58, points: 96, outcome: "Finalist" },
-        { placement: 12, team: "AARU", fullTeam: "TEAM AARU", matches: 18, wwcd: 0, pos: 31, elimins: 62, points: 93, outcome: "Finalist" },
-        { placement: 13, team: "VST", fullTeam: "Vasista Esports", matches: 18, wwcd: 2, pos: 45, elimins: 44, points: 89, outcome: "Finalist" },
-        { placement: 14, team: "MOGO", fullTeam: "MOGO ESPORTS", matches: 18, wwcd: 0, pos: 19, elimins: 60, points: 79, outcome: "Finalist" },
-        { placement: 15, team: "CG", fullTeam: "CARNIVAL GAMING", matches: 18, wwcd: 0, pos: 21, elimins: 44, points: 65, outcome: "Finalist" },
-        { placement: 16, team: "INFERNO", fullTeam: "Inferno Squad", matches: 18, wwcd: 0, pos: 2, elimins: 23, points: 25, outcome: "Finalist" },
+        {
+          placement: 1,
+          team: "TX",
+          fullTeam: "Team XSpark",
+          matches: 18,
+          wwcd: 1,
+          pos: 42,
+          elimins: 100,
+          points: 142,
+          outcome: "Champion",
+        },
+        {
+          placement: 2,
+          team: "GE",
+          fullTeam: "GLOBAL ESPORTS",
+          matches: 18,
+          wwcd: 2,
+          pos: 41,
+          elimins: 93,
+          points: 134,
+          outcome: "Runner-up",
+        },
+        {
+          placement: 3,
+          team: "RGE",
+          fullTeam: "Reckoning Esports",
+          matches: 18,
+          wwcd: 2,
+          pos: 61,
+          elimins: 71,
+          points: 132,
+          outcome: "3rd Place",
+        },
+        {
+          placement: 4,
+          team: "SOUL",
+          fullTeam: "Team SouL",
+          matches: 18,
+          wwcd: 2,
+          pos: 34,
+          elimins: 82,
+          points: 116,
+          outcome: "Top 4",
+        },
+        {
+          placement: 5,
+          team: "VENOM",
+          fullTeam: "Venom Gaming",
+          matches: 18,
+          wwcd: 1,
+          pos: 40,
+          elimins: 76,
+          points: 116,
+          outcome: "Top 8",
+        },
+        {
+          placement: 6,
+          team: "LIMRA",
+          fullTeam: "Team Limra",
+          matches: 18,
+          wwcd: 1,
+          pos: 37,
+          elimins: 78,
+          points: 115,
+          outcome: "Top 8",
+        },
+        {
+          placement: 7,
+          team: "8BIT",
+          fullTeam: "8Bit",
+          matches: 18,
+          wwcd: 2,
+          pos: 42,
+          elimins: 65,
+          points: 107,
+          outcome: "Top 8",
+        },
+        {
+          placement: 8,
+          team: "TT",
+          fullTeam: "Team Tamilas",
+          matches: 18,
+          wwcd: 2,
+          pos: 53,
+          elimins: 53,
+          points: 106,
+          outcome: "Top 8",
+        },
+        {
+          placement: 9,
+          team: "RAVEN",
+          fullTeam: "Raven Esports",
+          matches: 18,
+          wwcd: 1,
+          pos: 37,
+          elimins: 63,
+          points: 100,
+          outcome: "Finalist",
+        },
+        {
+          placement: 10,
+          team: "FS",
+          fullTeam: "FS eSports",
+          matches: 18,
+          wwcd: 1,
+          pos: 42,
+          elimins: 57,
+          points: 99,
+          outcome: "Finalist",
+        },
+        {
+          placement: 11,
+          team: "INSANE",
+          fullTeam: "Team Insane",
+          matches: 18,
+          wwcd: 0,
+          pos: 38,
+          elimins: 58,
+          points: 96,
+          outcome: "Finalist",
+        },
+        {
+          placement: 12,
+          team: "AARU",
+          fullTeam: "TEAM AARU",
+          matches: 18,
+          wwcd: 0,
+          pos: 31,
+          elimins: 62,
+          points: 93,
+          outcome: "Finalist",
+        },
+        {
+          placement: 13,
+          team: "VST",
+          fullTeam: "Vasista Esports",
+          matches: 18,
+          wwcd: 2,
+          pos: 45,
+          elimins: 44,
+          points: 89,
+          outcome: "Finalist",
+        },
+        {
+          placement: 14,
+          team: "MOGO",
+          fullTeam: "MOGO ESPORTS",
+          matches: 18,
+          wwcd: 0,
+          pos: 19,
+          elimins: 60,
+          points: 79,
+          outcome: "Finalist",
+        },
+        {
+          placement: 15,
+          team: "CG",
+          fullTeam: "CARNIVAL GAMING",
+          matches: 18,
+          wwcd: 0,
+          pos: 21,
+          elimins: 44,
+          points: 65,
+          outcome: "Finalist",
+        },
+        {
+          placement: 16,
+          team: "INFERNO",
+          fullTeam: "Inferno Squad",
+          matches: 18,
+          wwcd: 0,
+          pos: 2,
+          elimins: 23,
+          points: 25,
+          outcome: "Finalist",
+        },
       ],
     },
   ],
 };
 
 const teams = [
-  { name: "TeamXSpark", tag: "TX", players: ["NinjaJOD", "SPRAYGOD", "Sarang", "Shadow7", "Osmium"] },
-  { name: "Global Esports", tag: "GE", players: ["Mavi", "NinjaBoi", "Beast", "Slug", "Arclyn"] },
-  { name: "Reckoning Esports", tag: "RGE", players: ["ViPER", "HunterZ", "GravityJOD", "ShikariJOD", "IMMORTAL"] },
-  { name: "Team Soul", tag: "SOUL", players: ["Spower", "Manya", "NakuL", "Rony", "Jokerr"] },
-  { name: "Venom Gaming", tag: "VENOM", players: ["FurY", "VeNoM", "PHANTOM", "ALTU"] },
-  { name: "Team Limra", tag: "LIMRA", players: ["GokulWNL", "PokoWNL", "Hesperos", "DragonOP"] },
-  { name: "8BIT", tag: "8BIT", players: ["Juicy", "Mighty", "Aditya", "Mac", "MadMan"] },
-  { name: "Team Tamilas", tag: "TT", players: ["MantyOP", "Maxy", "MrIGL", "FoxOP"] },
-  { name: "Raven Esports", tag: "RAVEN", players: ["AIMGOD", "HANZO", "HULK", "Reaper"] },
-  { name: "FS Esports", tag: "FS", players: ["Wizard", "Tracegod", "CLUCTH", "HITMAN", "FaTe"] },
-  { name: "Team iNSANE", tag: "INSANE", players: ["AFU", "ShaDow", "Evil", "SpyOp", "Kaalan"] },
-  { name: "Team Aaru", tag: "AARU", players: ["Aaru", "Attanki", "Dionysus", "Veyron"] },
-  { name: "Vasista Esports", tag: "VST", players: ["AustinX", "Siuuu786", "RageGod", "Mj", "K47"] },
-  { name: "MOGO Esports", tag: "MOGO", players: ["Destro", "DeltaPG", "Justin", "SHOGUN", "Robin"] },
-  { name: "Carnival Gaming", tag: "CG", players: ["Goblin", "AkshaT", "Neyo", "Omega", "Hector", "Amit"] },
-  { name: "Inferno Squad", tag: "INFERNO", players: ["OwenOG", "BarryOG", "OmegaOG", "Zin", "JatinOG", "ManthanOG"] },
+  {
+    name: "TeamXSpark",
+    tag: "TX",
+    players: ["NinjaJOD", "SPRAYGOD", "Sarang", "Shadow7", "Osmium"],
+  },
+  {
+    name: "Global Esports",
+    tag: "GE",
+    players: ["Mavi", "NinjaBoi", "Beast", "Slug", "Arclyn"],
+  },
+  {
+    name: "Reckoning Esports",
+    tag: "RGE",
+    players: ["ViPER", "HunterZ", "GravityJOD", "ShikariJOD", "IMMORTAL"],
+  },
+  {
+    name: "Team Soul",
+    tag: "SOUL",
+    players: ["Spower", "Manya", "NakuL", "Rony", "Jokerr"],
+  },
+  {
+    name: "Venom Gaming",
+    tag: "VENOM",
+    players: ["FurY", "VeNoM", "PHANTOM", "ALTU"],
+  },
+  {
+    name: "Team Limra",
+    tag: "LIMRA",
+    players: ["GokulWNL", "PokoWNL", "Hesperos", "DragonOP"],
+  },
+  {
+    name: "8BIT",
+    tag: "8BIT",
+    players: ["Juicy", "Mighty", "Aditya", "Mac", "MadMan"],
+  },
+  {
+    name: "Team Tamilas",
+    tag: "TT",
+    players: ["MantyOP", "Maxy", "MrIGL", "FoxOP"],
+  },
+  {
+    name: "Raven Esports",
+    tag: "RAVEN",
+    players: ["AIMGOD", "HANZO", "HULK", "Reaper"],
+  },
+  {
+    name: "FS Esports",
+    tag: "FS",
+    players: ["Wizard", "Tracegod", "CLUCTH", "HITMAN", "FaTe"],
+  },
+  {
+    name: "Team iNSANE",
+    tag: "INSANE",
+    players: ["AFU", "ShaDow", "Evil", "SpyOp", "Kaalan"],
+  },
+  {
+    name: "Team Aaru",
+    tag: "AARU",
+    players: ["Aaru", "Attanki", "Dionysus", "Veyron"],
+  },
+  {
+    name: "Vasista Esports",
+    tag: "VST",
+    players: ["AustinX", "Siuuu786", "RageGod", "Mj", "K47"],
+  },
+  {
+    name: "MOGO Esports",
+    tag: "MOGO",
+    players: ["Destro", "DeltaPG", "Justin", "SHOGUN", "Robin"],
+  },
+  {
+    name: "Carnival Gaming",
+    tag: "CG",
+    players: ["Goblin", "AkshaT", "Neyo", "Omega", "Hector", "Amit"],
+  },
+  {
+    name: "Inferno Squad",
+    tag: "INFERNO",
+    players: ["OwenOG", "BarryOG", "OmegaOG", "Zin", "JatinOG", "ManthanOG"],
+  },
 ];
 
-const finalsStandings = tournament.stages.find((stage) => stage.name === "Grand Finals").standings.map((entry) => ({
-  teamName: entry.fullTeam,
-  placement: entry.placement,
-  matches: entry.matches,
-  wwcd: entry.wwcd,
-  placementPoints: entry.pos,
-  killPoints: entry.elimins,
-  totalPoints: entry.points,
-}));
+const finalsStandings = tournament.stages
+  .find((stage) => stage.name === "Grand Finals")
+  .standings.map((entry) => ({
+    teamName: entry.fullTeam,
+    placement: entry.placement,
+    matches: entry.matches,
+    wwcd: entry.wwcd,
+    placementPoints: entry.pos,
+    killPoints: entry.elimins,
+    totalPoints: entry.points,
+  }));
 
 const grandFinalSchedule = [
   "2024-06-28T13:30:00+05:30",
@@ -219,7 +608,14 @@ const grandFinalSchedule = [
   "2024-06-30T17:40:00+05:30",
 ];
 
-const mapRotation = ["Erangel", "Miramar", "Sanhok", "Vikendi", "Miramar", "Erangel"];
+const mapRotation = [
+  "Erangel",
+  "Miramar",
+  "Sanhok",
+  "Vikendi",
+  "Miramar",
+  "Erangel",
+];
 
 const articles = [
   {
@@ -233,21 +629,31 @@ const articles = [
 ];
 
 const tx = db.transaction(() => {
-  const existingTournament = db.prepare("SELECT id FROM tournaments WHERE name = ?").get(tournament.name);
+  const existingTournament = db
+    .prepare("SELECT id FROM tournaments WHERE name = ?")
+    .get(tournament.name);
   if (existingTournament) {
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(existingTournament.id);
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(existingTournament.id);
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(existingTournament.id);
+    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
+      existingTournament.id,
+    );
+    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
+      existingTournament.id,
+    );
+    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
+      existingTournament.id,
+    );
   }
 
   const tournamentId = randomUUID();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO tournaments (
       id, name, game, tier, status, prize_pool, start_date, end_date, stages,
       description, banner_url, rules, max_teams, format_overview, calendar, prize_breakdown, awards, participants, rankings,
       created_date, updated_date, created_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `,
+  ).run(
     tournamentId,
     tournament.name,
     tournament.game,
@@ -269,7 +675,7 @@ const tx = db.transaction(() => {
     JSON.stringify(tournament.rankings),
     now,
     now,
-    "admin@stagecore.local"
+    "admin@stagecore.local",
   );
 
   const findTeamByName = db.prepare("SELECT id FROM teams WHERE name = ?");
@@ -284,7 +690,9 @@ const tx = db.transaction(() => {
       region=excluded.region,
       updated_date=excluded.updated_date
   `);
-  const deletePlayersByTeam = db.prepare("DELETE FROM players WHERE team_id = ?");
+  const deletePlayersByTeam = db.prepare(
+    "DELETE FROM players WHERE team_id = ?",
+  );
   const insertPlayer = db.prepare(`
     INSERT INTO players (
       id, ign, real_name, team_id, role, photo_url, total_kills, matches_played, avg_damage,
@@ -296,10 +704,37 @@ const tx = db.transaction(() => {
   for (const team of teams) {
     const existing = findTeamByName.get(team.name);
     const teamId = existing?.id || randomUUID();
-    upsertTeam.run(teamId, team.name, team.tag, null, "BGMI", "India", 0, 0, 0, 0, now, now, "admin@stagecore.local");
+    upsertTeam.run(
+      teamId,
+      team.name,
+      team.tag,
+      null,
+      "BGMI",
+      "India",
+      0,
+      0,
+      0,
+      0,
+      now,
+      now,
+      "admin@stagecore.local",
+    );
     deletePlayersByTeam.run(teamId);
     for (const ign of team.players) {
-      insertPlayer.run(randomUUID(), ign, null, teamId, "Assaulter", null, 0, 0, 0, now, now, "admin@stagecore.local");
+      insertPlayer.run(
+        randomUUID(),
+        ign,
+        null,
+        teamId,
+        "Assaulter",
+        null,
+        0,
+        0,
+        0,
+        now,
+        now,
+        "admin@stagecore.local",
+      );
     }
     teamIds.set(team.name, teamId);
   }
@@ -342,7 +777,7 @@ const tx = db.transaction(() => {
       Math.floor(index / 6) + 1,
       now,
       now,
-      "admin@stagecore.local"
+      "admin@stagecore.local",
     );
   });
 
@@ -359,7 +794,7 @@ const tx = db.transaction(() => {
     3,
     now,
     now,
-    "admin@stagecore.local"
+    "admin@stagecore.local",
   );
 
   const insertResult = db.prepare(`
@@ -387,7 +822,7 @@ const tx = db.transaction(() => {
       "Grand Finals",
       now,
       now,
-      "admin@stagecore.local"
+      "admin@stagecore.local",
     );
   }
 
@@ -400,7 +835,18 @@ const tx = db.transaction(() => {
 
   for (const article of articles) {
     deleteArticle.run(article.title);
-    insertArticle.run(randomUUID(), article.title, article.content, article.category, null, article.featured, article.game, now, now, "admin@stagecore.local");
+    insertArticle.run(
+      randomUUID(),
+      article.title,
+      article.content,
+      article.category,
+      null,
+      article.featured,
+      article.game,
+      now,
+      now,
+      "admin@stagecore.local",
+    );
   }
 
   recomputeTeamStats();
@@ -408,4 +854,6 @@ const tx = db.transaction(() => {
 
 tx();
 
-console.log("Imported BGIS 2024 tournament, finalists, schedule, standings, rankings, and article.");
+console.log(
+  "Imported BGIS 2024 tournament, finalists, schedule, standings, rankings, and article.",
+);

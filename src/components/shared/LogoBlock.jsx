@@ -4,7 +4,7 @@ import { useTheme } from "@/lib/ThemeContext";
 export default function LogoBlock({
   src = null,
   alt = "",
-  sizeClass = "h-10 w-10",
+  sizeClass = "size-10",
   roundedClass = "rounded-xl",
   paddingClass = "p-2",
   className = "",
@@ -24,7 +24,7 @@ export default function LogoBlock({
           <img
             src={src}
             alt={alt}
-            className={`h-full w-full object-contain ${imgClassName}`}
+            className={`size-full object-contain ${imgClassName}`}
             style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.12))" }}
           />
         ) : (
@@ -42,7 +42,7 @@ export default function LogoBlock({
         <img
           src={src}
           alt={alt}
-          className={`h-full w-full object-contain ${imgClassName}`}
+          className={`size-full object-contain ${imgClassName}`}
           style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.12))" }}
         />
       ) : (

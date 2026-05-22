@@ -3,11 +3,17 @@ export function registerServiceWorker() {
     return;
   }
 
+  const safeImportMetaEnv =
+    typeof import.meta !== "undefined" && import.meta.env
+      ? import.meta.env
+      : {};
+  const isProd = Boolean(safeImportMetaEnv.PROD);
+
   const isLocalhost =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
 
-  if (!import.meta.env.PROD && !isLocalhost) {
+  if (!isProd && !isLocalhost) {
     return;
   }
 

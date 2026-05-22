@@ -321,6 +321,6 @@ export const BGIS_2026_PARTICIPANTS = [
 
 export function getBgis2026ParticipantMap(normalizeTeam) {
   return Object.fromEntries(
-    BGIS_2026_PARTICIPANTS.map((entry) => [normalizeTeam(entry.team), entry])
+    BGIS_2026_PARTICIPANTS.map((entry) => [normalizeTeam(entry.team), entry]),
   );
 }

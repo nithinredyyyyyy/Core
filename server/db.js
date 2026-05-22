@@ -104,11 +104,20 @@ const tableDefinitions = [
   `CREATE TABLE IF NOT EXISTS news_articles (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
+    summary TEXT,
     content TEXT NOT NULL,
     category TEXT DEFAULT 'general',
     thumbnail_url TEXT,
     featured INTEGER DEFAULT 0,
     game TEXT DEFAULT 'General',
+    source_name TEXT,
+    source_url TEXT,
+    source_type TEXT DEFAULT 'manual',
+    verification_status TEXT DEFAULT 'verified',
+    publication_status TEXT DEFAULT 'published',
+    priority TEXT DEFAULT 'routine',
+    is_auto_ingested INTEGER DEFAULT 0,
+    import_hash TEXT,
     created_date TEXT NOT NULL,
     updated_date TEXT NOT NULL,
     created_by TEXT
@@ -198,7 +207,9 @@ function applySqlMigrations() {
     .sort((a, b) => a.localeCompare(b));
 
   for (const file of files) {
-    const alreadyApplied = db.prepare("SELECT 1 FROM schema_migrations WHERE id = ?").get(file);
+    const alreadyApplied = db
+      .prepare("SELECT 1 FROM schema_migrations WHERE id = ?")
+      .get(file);
     if (alreadyApplied) continue;
 
     const sql = fs.readFileSync(path.join(migrationDir, file), "utf8").trim();
@@ -206,7 +217,9 @@ function applySqlMigrations() {
 
     const transaction = db.transaction(() => {
       db.exec(sql);
-      db.prepare("INSERT INTO schema_migrations (id, applied_date) VALUES (?, ?)").run(file, new Date().toISOString());
+      db.prepare(
+        "INSERT INTO schema_migrations (id, applied_date) VALUES (?, ?)",
+      ).run(file, new Date().toISOString());
     });
 
     transaction();
@@ -239,6 +252,23 @@ ensureColumn("fan_profiles", "correct_predictions", "INTEGER DEFAULT 0");
 ensureColumn("fan_predictions", "top_three", "TEXT");
 ensureColumn("fan_predictions", "status", "TEXT DEFAULT 'pending'");
 ensureColumn("fan_predictions", "awarded_points", "INTEGER DEFAULT 0");
+ensureColumn("news_articles", "source_name", "TEXT");
+ensureColumn("news_articles", "summary", "TEXT");
+ensureColumn("news_articles", "source_url", "TEXT");
+ensureColumn("news_articles", "source_type", "TEXT DEFAULT 'manual'");
+ensureColumn("news_articles", "verification_status", "TEXT DEFAULT 'verified'");
+ensureColumn("news_articles", "publication_status", "TEXT DEFAULT 'published'");
+ensureColumn("news_articles", "priority", "TEXT DEFAULT 'routine'");
+ensureColumn("news_articles", "is_auto_ingested", "INTEGER DEFAULT 0");
+ensureColumn("news_articles", "import_hash", "TEXT");
+db.exec(`
+  UPDATE news_articles
+  SET source_type = COALESCE(NULLIF(source_type, ''), 'manual'),
+      verification_status = COALESCE(NULLIF(verification_status, ''), 'verified'),
+      publication_status = COALESCE(NULLIF(publication_status, ''), 'published'),
+      priority = COALESCE(NULLIF(priority, ''), 'routine'),
+      is_auto_ingested = COALESCE(is_auto_ingested, 0)
+`);
 
 const parseJsonField = (value, fallback = []) => {
   if (!value) return fallback;
@@ -249,7 +279,10 @@ const parseJsonField = (value, fallback = []) => {
   }
 };
 
-const normalizeLookupValue = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const normalizeLookupValue = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 const TEAM_ALIAS_KEY_MAP = {
   godlike: "godlikeesports",
   godlikeesports: "godlikeesports",
@@ -407,16 +440,22 @@ const TEAM_ALIAS_KEY_MAP = {
   aresesports: "aresesport",
   oopsofficial: "oopsofficial",
 };
-const TEAM_ALIAS_VARIANTS = Object.entries(TEAM_ALIAS_KEY_MAP).reduce((acc, [alias, canonical]) => {
-  const list = acc.get(canonical) || new Set();
-  list.add(alias);
-  acc.set(canonical, list);
-  return acc;
-}, new Map());
+const TEAM_ALIAS_VARIANTS = Object.entries(TEAM_ALIAS_KEY_MAP).reduce(
+  (acc, [alias, canonical]) => {
+    const list = acc.get(canonical) || new Set();
+    list.add(alias);
+    acc.set(canonical, list);
+    return acc;
+  },
+  new Map(),
+);
 const canonicalizeTeamLookupValue = (value) => {
   const compact = normalizeLookupValue(value);
   if (!compact) return "";
-  const withoutSponsors = compact.replace(/^(iqoo|oneplus|heroxtreme|infinix)+/g, "");
+  const withoutSponsors = compact.replace(
+    /^(iqoo|oneplus|heroxtreme|infinix)+/g,
+    "",
+  );
   return TEAM_ALIAS_KEY_MAP[withoutSponsors] || withoutSponsors;
 };
 const slugify = (value) =>
@@ -425,7 +464,10 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "stage";
 
-const getPhaseStageName = (phase) => String(phase || "").split(/\s+-\s+Group\s+/i)[0]?.trim() || null;
+const getPhaseStageName = (phase) =>
+  String(phase || "")
+    .split(/\s+-\s+Group\s+/i)[0]
+    ?.trim() || null;
 const getPhaseGroupName = (phase) => {
   const match = String(phase || "").match(/group\s+([a-z0-9]+)/i);
   return match ? `Group ${String(match[1]).toUpperCase()}` : null;
@@ -464,7 +506,9 @@ const buildTeamLookup = () => {
 };
 
 const buildPlayerLookup = () => {
-  const players = db.prepare("SELECT id, ign, team_id, role FROM players").all();
+  const players = db
+    .prepare("SELECT id, ign, team_id, role FROM players")
+    .all();
   const exactMap = new Map();
   const anyTeamMap = new Map();
 
@@ -480,7 +524,11 @@ const buildPlayerLookup = () => {
 
 const resolveTeamRecord = (teamLookup, rawName) => {
   const normalized = normalizeLookupValue(rawName);
-  return teamLookup.get(normalized) || teamLookup.get(canonicalizeTeamLookupValue(rawName)) || null;
+  return (
+    teamLookup.get(normalized) ||
+    teamLookup.get(canonicalizeTeamLookupValue(rawName)) ||
+    null
+  );
 };
 
 const resolvePlayerRecord = (playerLookup, rawName, teamId) => {
@@ -494,7 +542,11 @@ const resolvePlayerRecord = (playerLookup, rawName, teamId) => {
 };
 
 function backfillNormalizedData() {
-  const tournaments = db.prepare("SELECT id, name, tier, start_date, end_date, stages, participants, rankings, created_date, updated_date FROM tournaments").all();
+  const tournaments = db
+    .prepare(
+      "SELECT id, name, tier, start_date, end_date, stages, participants, rankings, created_date, updated_date FROM tournaments",
+    )
+    .all();
   const teamLookup = buildTeamLookup();
   const playerLookup = buildPlayerLookup();
   const now = new Date().toISOString();
@@ -558,24 +610,43 @@ function backfillNormalizedData() {
       db.prepare(`DELETE FROM ${table}`).run();
     }
 
-    const teams = db.prepare("SELECT id, name, tag, created_date, updated_date FROM teams").all();
+    const teams = db
+      .prepare("SELECT id, name, tag, created_date, updated_date FROM teams")
+      .all();
     for (const team of teams) {
       const canonicalKey = canonicalizeTeamLookupValue(team.name || team.tag);
       const entries = new Map([
-        [normalizeLookupValue(team.name), { alias: team.name, type: "canonical_name" }],
-        [normalizeLookupValue(team.tag), { alias: team.tag, type: "canonical_tag" }],
+        [
+          normalizeLookupValue(team.name),
+          { alias: team.name, type: "canonical_name" },
+        ],
+        [
+          normalizeLookupValue(team.tag),
+          { alias: team.tag, type: "canonical_tag" },
+        ],
       ]);
       const variantAliases = TEAM_ALIAS_VARIANTS.get(canonicalKey) || new Set();
       for (const variant of variantAliases) {
         if (!variant) continue;
-        entries.set(normalizeLookupValue(variant), { alias: variant, type: "canonical_variant" });
+        entries.set(normalizeLookupValue(variant), {
+          alias: variant,
+          type: "canonical_variant",
+        });
       }
       for (const [normalizedAlias, value] of entries.entries()) {
         if (!normalizedAlias || !value.alias) continue;
         const aliasKey = `${team.id}:${normalizedAlias}`;
         if (seenTeamAliases.has(aliasKey)) continue;
         seenTeamAliases.add(aliasKey);
-        insertTeamAlias.run(randomUUID(), team.id, value.alias, normalizedAlias, value.type, team.created_date || now, team.updated_date || now);
+        insertTeamAlias.run(
+          randomUUID(),
+          team.id,
+          value.alias,
+          normalizedAlias,
+          value.type,
+          team.created_date || now,
+          team.updated_date || now,
+        );
       }
     }
 
@@ -585,14 +656,31 @@ function backfillNormalizedData() {
         const aliasKey = `${player.id}:${normalizedIgn}`;
         if (!seenPlayerAliases.has(aliasKey)) {
           seenPlayerAliases.add(aliasKey);
-          insertPlayerAlias.run(randomUUID(), player.id, player.ign, normalizedIgn, now, now);
+          insertPlayerAlias.run(
+            randomUUID(),
+            player.id,
+            player.ign,
+            normalizedIgn,
+            now,
+            now,
+          );
         }
       }
       if (player.team_id) {
         const historyKey = `${player.id}:${player.team_id}:current_player_record`;
         if (!seenPlayerTeamHistory.has(historyKey)) {
           seenPlayerTeamHistory.add(historyKey);
-          insertPlayerTeamHistory.run(randomUUID(), player.id, player.team_id, null, null, player.role || null, "current_player_record", now, now);
+          insertPlayerTeamHistory.run(
+            randomUUID(),
+            player.id,
+            player.team_id,
+            null,
+            null,
+            player.role || null,
+            "current_player_record",
+            now,
+            now,
+          );
         }
       }
     }
@@ -615,7 +703,9 @@ function backfillNormalizedData() {
           status: stage?.status || null,
           summary: stage?.summary || null,
           rules: stage?.rules || null,
-          mapRotation: Array.isArray(stage?.mapRotation) ? stage.mapRotation : [],
+          mapRotation: Array.isArray(stage?.mapRotation)
+            ? stage.mapRotation
+            : [],
           standings: Array.isArray(stage?.standings) ? stage.standings : [],
         });
       });
@@ -653,7 +743,7 @@ function backfillNormalizedData() {
           stage.rules,
           JSON.stringify(stage.mapRotation || []),
           tournament.created_date || now,
-          tournament.updated_date || now
+          tournament.updated_date || now,
         );
 
         const groupNames = new Set();
@@ -670,26 +760,46 @@ function backfillNormalizedData() {
           });
         });
         (stage.standings || []).forEach((entry) => {
-          if (entry?.grp) groupNames.add(`Group ${String(entry.grp).toUpperCase()}`);
-          if (entry?.group) groupNames.add(String(entry.group).startsWith("Group ") ? entry.group : `Group ${String(entry.group).toUpperCase()}`);
+          if (entry?.grp)
+            groupNames.add(`Group ${String(entry.grp).toUpperCase()}`);
+          if (entry?.group)
+            groupNames.add(
+              String(entry.group).startsWith("Group ")
+                ? entry.group
+                : `Group ${String(entry.group).toUpperCase()}`,
+            );
         });
 
         [...groupNames]
           .sort((a, b) => a.localeCompare(b))
           .forEach((groupName, groupIndex) => {
             const groupId = randomUUID();
-            insertGroup.run(groupId, stageId, groupName, groupIndex + 1, tournament.created_date || now, tournament.updated_date || now);
+            insertGroup.run(
+              groupId,
+              stageId,
+              groupName,
+              groupIndex + 1,
+              tournament.created_date || now,
+              tournament.updated_date || now,
+            );
           });
       }
 
-      const stageGroups = db.prepare(`
+      const stageGroups = db
+        .prepare(
+          `
         SELECT g.id, g.group_name, g.stage_id, s.name AS stage_name
         FROM tournament_stage_groups g
         JOIN tournament_stages s ON s.id = g.stage_id
         WHERE s.tournament_id = ?
-      `).all(tournament.id);
+      `,
+        )
+        .all(tournament.id);
       const groupIdByStageAndName = new Map(
-        stageGroups.map((group) => [`${group.stage_name}::${group.group_name}`, group.id])
+        stageGroups.map((group) => [
+          `${group.stage_name}::${group.group_name}`,
+          group.id,
+        ]),
       );
 
       const rankingMap = new Map();
@@ -723,14 +833,23 @@ function backfillNormalizedData() {
             participantId,
             tournament.id,
             teamRecord.id,
-            Number.isFinite(Number(participant?.placement)) ? Number(participant.placement) : participantIndex + 1,
+            Number.isFinite(Number(participant?.placement))
+              ? Number(participant.placement)
+              : participantIndex + 1,
             participant?.invite_status || participant?.status || null,
-            phaseStageName ? stageMetaByName.get(phaseStageName)?.id || null : null,
-            ranking?.stageName ? stageMetaByName.get(ranking.stageName)?.id || null : null,
-            ranking?.rank || (Number.isFinite(Number(participant?.placement)) ? Number(participant.placement) : null),
+            phaseStageName
+              ? stageMetaByName.get(phaseStageName)?.id || null
+              : null,
+            ranking?.stageName
+              ? stageMetaByName.get(ranking.stageName)?.id || null
+              : null,
+            ranking?.rank ||
+              (Number.isFinite(Number(participant?.placement))
+                ? Number(participant.placement)
+                : null),
             ranking?.prize || null,
             tournament.created_date || now,
-            tournament.updated_date || now
+            tournament.updated_date || now,
           );
         }
 
@@ -745,15 +864,22 @@ function backfillNormalizedData() {
               participantKey,
               "tournament_participant",
               tournament.created_date || now,
-              tournament.updated_date || now
+              tournament.updated_date || now,
             );
           }
         }
 
         const phaseStageName = getPhaseStageName(participant?.phase);
         const phaseGroupName = getPhaseGroupName(participant?.phase);
-        const stageId = phaseStageName ? stageMetaByName.get(phaseStageName)?.id || null : null;
-        const groupId = phaseStageName && phaseGroupName ? groupIdByStageAndName.get(`${phaseStageName}::${phaseGroupName}`) || null : null;
+        const stageId = phaseStageName
+          ? stageMetaByName.get(phaseStageName)?.id || null
+          : null;
+        const groupId =
+          phaseStageName && phaseGroupName
+            ? groupIdByStageAndName.get(
+                `${phaseStageName}::${phaseGroupName}`,
+              ) || null
+            : null;
         const stageEntryKey = `${participantId}:${stageId || "none"}:${groupId || "none"}`;
         if (stageId && !participantStageSeen.has(stageEntryKey)) {
           participantStageSeen.add(stageEntryKey);
@@ -763,25 +889,38 @@ function backfillNormalizedData() {
             stageId,
             groupId,
             participant?.phase || null,
-            Number.isFinite(Number(participant?.placement)) ? Number(participant.placement) : null,
+            Number.isFinite(Number(participant?.placement))
+              ? Number(participant.placement)
+              : null,
             0,
             0,
             null,
             tournament.created_date || now,
-            tournament.updated_date || now
+            tournament.updated_date || now,
           );
         }
 
-        (Array.isArray(participant?.players) ? participant.players : []).forEach((playerEntry) => {
-          const playerName = typeof playerEntry === "string"
-            ? playerEntry
-            : playerEntry?.name || playerEntry?.ign || playerEntry?.player_name || null;
+        (Array.isArray(participant?.players)
+          ? participant.players
+          : []
+        ).forEach((playerEntry) => {
+          const playerName =
+            typeof playerEntry === "string"
+              ? playerEntry
+              : playerEntry?.name ||
+                playerEntry?.ign ||
+                playerEntry?.player_name ||
+                null;
           if (!playerName) return;
           const playerKey = `${participantId}:${normalizeLookupValue(playerName)}`;
           if (participantPlayerSeen.has(playerKey)) return;
           participantPlayerSeen.add(playerKey);
 
-          const playerRecord = resolvePlayerRecord(playerLookup, playerName, teamRecord.id);
+          const playerRecord = resolvePlayerRecord(
+            playerLookup,
+            playerName,
+            teamRecord.id,
+          );
           const normalizedPlayerName = normalizeLookupValue(playerName);
           if (playerRecord?.id && normalizedPlayerName) {
             const aliasKey = `${playerRecord.id}:${normalizedPlayerName}`;
@@ -793,7 +932,7 @@ function backfillNormalizedData() {
                 playerName,
                 normalizedPlayerName,
                 tournament.created_date || now,
-                tournament.updated_date || now
+                tournament.updated_date || now,
               );
             }
             const historyKey = `${playerRecord.id}:${teamRecord.id}:tournament_participant:${tournament.id}`;
@@ -805,10 +944,12 @@ function backfillNormalizedData() {
                 teamRecord.id,
                 tournament.start_date || null,
                 tournament.end_date || null,
-                typeof playerEntry === "object" ? playerEntry?.role || playerRecord?.role || null : playerRecord?.role || null,
+                typeof playerEntry === "object"
+                  ? playerEntry?.role || playerRecord?.role || null
+                  : playerRecord?.role || null,
                 `tournament_participant:${tournament.id}`,
                 tournament.created_date || now,
-                tournament.updated_date || now
+                tournament.updated_date || now,
               );
             }
           }
@@ -817,12 +958,16 @@ function backfillNormalizedData() {
             participantId,
             playerRecord?.id || null,
             playerName,
-            typeof playerEntry === "object" ? playerEntry?.country || null : null,
+            typeof playerEntry === "object"
+              ? playerEntry?.country || null
+              : null,
             typeof playerEntry === "object" ? playerEntry?.role || null : null,
             typeof playerEntry === "object" && playerEntry?.is_captain ? 1 : 0,
-            typeof playerEntry === "object" && playerEntry?.is_substitute ? 1 : 0,
+            typeof playerEntry === "object" && playerEntry?.is_substitute
+              ? 1
+              : 0,
             tournament.created_date || now,
-            tournament.updated_date || now
+            tournament.updated_date || now,
           );
         });
       });
@@ -838,9 +983,13 @@ function backfillNormalizedData() {
           const groupName = entry?.grp
             ? `Group ${String(entry.grp).toUpperCase()}`
             : entry?.group
-              ? (String(entry.group).startsWith("Group ") ? entry.group : `Group ${String(entry.group).toUpperCase()}`)
+              ? String(entry.group).startsWith("Group ")
+                ? entry.group
+                : `Group ${String(entry.group).toUpperCase()}`
               : null;
-          const groupId = groupName ? groupIdByStageAndName.get(`${stage.name}::${groupName}`) || null : null;
+          const groupId = groupName
+            ? groupIdByStageAndName.get(`${stage.name}::${groupName}`) || null
+            : null;
           const standingKey = `${stageId}::${groupId || "overall"}::${teamRecord.id}`;
           if (seenStageStandingKeys.has(standingKey)) return;
           seenStageStandingKeys.add(standingKey);
@@ -850,15 +999,23 @@ function backfillNormalizedData() {
             stageId,
             groupId,
             teamRecord.id,
-            Number.isFinite(Number(entry?.placement)) ? Number(entry.placement) : null,
+            Number.isFinite(Number(entry?.placement))
+              ? Number(entry.placement)
+              : null,
             Number(entry?.matches || entry?.m || 0),
             Number(entry?.wwcd || entry?.wins || 0),
             Number(entry?.pos || entry?.place || entry?.place_points || 0),
-            Number(entry?.elimins || entry?.elims || entry?.kills || entry?.elim_points || 0),
+            Number(
+              entry?.elimins ||
+                entry?.elims ||
+                entry?.kills ||
+                entry?.elim_points ||
+                0,
+            ),
             Number(entry?.points || entry?.pts || entry?.total_points || 0),
             entry?.outcome || null,
             tournament.created_date || now,
-            tournament.updated_date || now
+            tournament.updated_date || now,
           );
         });
       });
@@ -873,47 +1030,167 @@ backfillNormalizedData();
 export const entityConfigs = {
   Tournament: {
     table: "tournaments",
-    fields: ["name", "game", "tier", "status", "prize_pool", "start_date", "end_date", "stages", "description", "banner_url", "rules", "max_teams", "format_overview", "calendar", "prize_breakdown", "awards", "participants", "rankings", "created_by"],
-    jsonFields: ["stages", "calendar", "prize_breakdown", "awards", "participants", "rankings"],
+    fields: [
+      "name",
+      "game",
+      "tier",
+      "status",
+      "prize_pool",
+      "start_date",
+      "end_date",
+      "stages",
+      "description",
+      "banner_url",
+      "rules",
+      "max_teams",
+      "format_overview",
+      "calendar",
+      "prize_breakdown",
+      "awards",
+      "participants",
+      "rankings",
+      "created_by",
+    ],
+    jsonFields: [
+      "stages",
+      "calendar",
+      "prize_breakdown",
+      "awards",
+      "participants",
+      "rankings",
+    ],
   },
   Team: {
     table: "teams",
-    fields: ["name", "tag", "logo_url", "game", "region", "total_kills", "total_points", "matches_played", "wins", "created_by"],
+    fields: [
+      "name",
+      "tag",
+      "logo_url",
+      "game",
+      "region",
+      "total_kills",
+      "total_points",
+      "matches_played",
+      "wins",
+      "created_by",
+    ],
     jsonFields: [],
   },
   Player: {
     table: "players",
-    fields: ["ign", "real_name", "team_id", "role", "photo_url", "total_kills", "matches_played", "avg_damage", "created_by"],
+    fields: [
+      "ign",
+      "real_name",
+      "team_id",
+      "role",
+      "photo_url",
+      "total_kills",
+      "matches_played",
+      "avg_damage",
+      "created_by",
+    ],
     jsonFields: [],
   },
   Match: {
     table: "matches",
-    fields: ["tournament_id", "stage", "group_name", "match_number", "map", "status", "scheduled_time", "stream_url", "day", "created_by"],
+    fields: [
+      "tournament_id",
+      "stage",
+      "group_name",
+      "match_number",
+      "map",
+      "status",
+      "scheduled_time",
+      "stream_url",
+      "day",
+      "created_by",
+    ],
     jsonFields: [],
   },
   MatchResult: {
     table: "match_results",
-    fields: ["match_id", "tournament_id", "team_id", "placement", "kill_points", "placement_points", "total_points", "matches_count", "wins_count", "stage", "created_by"],
+    fields: [
+      "match_id",
+      "tournament_id",
+      "team_id",
+      "placement",
+      "kill_points",
+      "placement_points",
+      "total_points",
+      "matches_count",
+      "wins_count",
+      "stage",
+      "created_by",
+    ],
     jsonFields: [],
   },
   NewsArticle: {
     table: "news_articles",
-    fields: ["title", "content", "category", "thumbnail_url", "featured", "game", "created_date", "created_by"],
+    fields: [
+      "title",
+      "summary",
+      "content",
+      "category",
+      "thumbnail_url",
+      "featured",
+      "game",
+      "source_name",
+      "source_url",
+      "source_type",
+      "verification_status",
+      "publication_status",
+      "priority",
+      "is_auto_ingested",
+      "import_hash",
+      "created_date",
+      "created_by",
+    ],
     jsonFields: [],
   },
   TransferWindow: {
     table: "transfer_windows",
-    fields: ["window", "date", "country", "players", "oldTeam", "newTeam", "created_by"],
+    fields: [
+      "window",
+      "date",
+      "country",
+      "players",
+      "oldTeam",
+      "newTeam",
+      "created_by",
+    ],
     jsonFields: ["players"],
   },
   FanProfile: {
     table: "fan_profiles",
-    fields: ["user_id", "display_name", "favorite_team", "total_points", "accuracy_percent", "badge", "predictions_count", "correct_predictions", "created_by"],
+    fields: [
+      "user_id",
+      "display_name",
+      "favorite_team",
+      "total_points",
+      "accuracy_percent",
+      "badge",
+      "predictions_count",
+      "correct_predictions",
+      "created_by",
+    ],
     jsonFields: [],
   },
   FanPrediction: {
     table: "fan_predictions",
-    fields: ["user_id", "display_name", "tournament_id", "tournament_name", "prediction_date", "lock_time", "winner_team", "top_fragger", "top_three", "status", "awarded_points", "created_by"],
+    fields: [
+      "user_id",
+      "display_name",
+      "tournament_id",
+      "tournament_name",
+      "prediction_date",
+      "lock_time",
+      "winner_team",
+      "top_fragger",
+      "top_three",
+      "status",
+      "awarded_points",
+      "created_by",
+    ],
     jsonFields: ["top_three"],
   },
   FanPollVote: {
@@ -923,7 +1200,15 @@ export const entityConfigs = {
   },
   FanChatMessage: {
     table: "fan_chat_messages",
-    fields: ["user_id", "display_name", "tournament_id", "tournament_name", "topic", "body", "created_by"],
+    fields: [
+      "user_id",
+      "display_name",
+      "tournament_id",
+      "tournament_name",
+      "topic",
+      "body",
+      "created_by",
+    ],
     jsonFields: [],
   },
   TeamAlias: {
@@ -938,12 +1223,29 @@ export const entityConfigs = {
   },
   PlayerTeamHistory: {
     table: "player_team_history",
-    fields: ["player_id", "team_id", "joined_date", "left_date", "role", "source"],
+    fields: [
+      "player_id",
+      "team_id",
+      "joined_date",
+      "left_date",
+      "role",
+      "source",
+    ],
     jsonFields: [],
   },
   TournamentStage: {
     table: "tournament_stages",
-    fields: ["tournament_id", "name", "slug", "stage_order", "stage_type", "status", "summary", "rules", "map_rotation"],
+    fields: [
+      "tournament_id",
+      "name",
+      "slug",
+      "stage_order",
+      "stage_type",
+      "status",
+      "summary",
+      "rules",
+      "map_rotation",
+    ],
     jsonFields: ["map_rotation"],
   },
   TournamentStageGroup: {
@@ -953,22 +1255,60 @@ export const entityConfigs = {
   },
   TournamentParticipant: {
     table: "tournament_participants",
-    fields: ["tournament_id", "team_id", "seed", "invite_status", "start_stage_id", "final_stage_id", "final_rank", "prize_amount"],
+    fields: [
+      "tournament_id",
+      "team_id",
+      "seed",
+      "invite_status",
+      "start_stage_id",
+      "final_stage_id",
+      "final_rank",
+      "prize_amount",
+    ],
     jsonFields: [],
   },
   TournamentParticipantStageEntry: {
     table: "tournament_participant_stage_entries",
-    fields: ["participant_id", "stage_id", "group_id", "phase_label", "placement", "qualified", "eliminated", "notes"],
+    fields: [
+      "participant_id",
+      "stage_id",
+      "group_id",
+      "phase_label",
+      "placement",
+      "qualified",
+      "eliminated",
+      "notes",
+    ],
     jsonFields: [],
   },
   TournamentParticipantPlayer: {
     table: "tournament_participant_players",
-    fields: ["participant_id", "player_id", "player_name", "country", "role", "is_captain", "is_substitute"],
+    fields: [
+      "participant_id",
+      "player_id",
+      "player_name",
+      "country",
+      "role",
+      "is_captain",
+      "is_substitute",
+    ],
     jsonFields: [],
   },
   StageStanding: {
     table: "stage_standings",
-    fields: ["tournament_id", "stage_id", "group_id", "team_id", "rank", "matches_played", "wins", "place_points", "elim_points", "total_points", "progression_status"],
+    fields: [
+      "tournament_id",
+      "stage_id",
+      "group_id",
+      "team_id",
+      "rank",
+      "matches_played",
+      "wins",
+      "place_points",
+      "elim_points",
+      "total_points",
+      "progression_status",
+    ],
     jsonFields: [],
   },
   StageMatchBreakdown: {
@@ -987,6 +1327,9 @@ export function normalizeRecord(config, row) {
   if (Object.prototype.hasOwnProperty.call(normalized, "featured")) {
     normalized.featured = Boolean(normalized.featured);
   }
+  if (Object.prototype.hasOwnProperty.call(normalized, "is_auto_ingested")) {
+    normalized.is_auto_ingested = Boolean(normalized.is_auto_ingested);
+  }
   return normalized;
 }
 
@@ -995,23 +1338,28 @@ export function serializePayload(config, payload) {
   for (const field of config.fields) {
     if (Object.prototype.hasOwnProperty.call(payload, field)) {
       const value = payload[field];
-      serialized[field] = config.jsonFields.includes(field) ? JSON.stringify(value ?? []) : value;
+      serialized[field] = config.jsonFields.includes(field)
+        ? JSON.stringify(value ?? [])
+        : value;
     }
   }
   return serialized;
 }
 
 export function recomputeTeamStats() {
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE teams
     SET total_kills = 0,
         total_points = 0,
         matches_played = 0,
         wins = 0,
         updated_date = ?
-  `).run(new Date().toISOString());
+  `,
+  ).run(new Date().toISOString());
 
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE teams
     SET total_kills = COALESCE((
           SELECT SUM(mr.kill_points) FROM match_results mr WHERE mr.team_id = teams.id
@@ -1032,5 +1380,6 @@ export function recomputeTeamStats() {
           ) FROM match_results mr WHERE mr.team_id = teams.id
         ), 0),
         updated_date = ?
-  `).run(new Date().toISOString());
+  `,
+  ).run(new Date().toISOString());
 }

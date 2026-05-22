@@ -24,7 +24,7 @@ const ROUND_ONE_GROUP_B_TEAMS = new Set(
     "Higgboson Esports",
     "HADX Esports",
     "WindGod Esports",
-  ].map((name) => normalizeTeam(name))
+  ].map((name) => normalizeTeam(name)),
 );
 
 function normalizeTeam(value) {
@@ -60,70 +60,340 @@ const tournament = {
   rules:
     "Points system: 1st place 10, 2nd 6, 3rd 5, 4th 4, 5th 3, 6th 2, 7th-8th 1, 9th-16th 0. Each elimination gives 1 point. Tiebreakers are resolved by total WWCDs, then total placement points, then total elimination points, then the best placement rank in the most recent match. Allocation: the champion qualifies for the PUBG Mobile World Cup 2026.",
   participants: [
-    { placement: 1, team: "Team Versatile", phase: "Round 1 - Group D", players: ["DeadPlayer", "Nobi"] },
-    { placement: 2, team: "Godsent Legions", phase: "Round 1 - Group C", players: [] },
-    { placement: 3, team: "NONX Esports", phase: "Round 1 - Group C", players: [] },
-    { placement: 4, team: "Rising Esports", phase: "Round 1 - Group C", players: ["Yuva", "BeardBaba", "Shrey"] },
-    { placement: 5, team: "Phoenix Esports", phase: "Round 1 - Group D", players: [] },
-    { placement: 6, team: "Gods Reign", phase: "Round 1 - Group D", players: ["Destro", "DeltaPG", "Justin", "Neyo", "AquaNox"] },
-    { placement: 7, team: "True Rippers", phase: "Round 1 - Group D", players: [] },
+    {
+      placement: 1,
+      team: "Team Versatile",
+      phase: "Round 1 - Group D",
+      players: ["DeadPlayer", "Nobi"],
+    },
+    {
+      placement: 2,
+      team: "Godsent Legions",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 3,
+      team: "NONX Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 4,
+      team: "Rising Esports",
+      phase: "Round 1 - Group C",
+      players: ["Yuva", "BeardBaba", "Shrey"],
+    },
+    {
+      placement: 5,
+      team: "Phoenix Esports",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 6,
+      team: "Gods Reign",
+      phase: "Round 1 - Group D",
+      players: ["Destro", "DeltaPG", "Justin", "Neyo", "AquaNox"],
+    },
+    {
+      placement: 7,
+      team: "True Rippers",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
     { placement: 8, team: "iQOO SouL", phase: "BMPS 2026", players: [] },
-    { placement: 9, team: "White Walkers", phase: "BMPS 2026", players: ["Aditya", "Vegito", "Mernox", "Guru", "Sheek"] },
+    {
+      placement: 9,
+      team: "White Walkers",
+      phase: "BMPS 2026",
+      players: ["Aditya", "Vegito", "Mernox", "Guru", "Sheek"],
+    },
     { placement: 10, team: "7Gods Esports", phase: "BMPS 2026", players: [] },
-    { placement: 11, team: "Team Apex Gaming", phase: "BMPS 2026", players: [] },
-    { placement: 12, team: "Likitha Esports", phase: "Round 1 - Group C", players: ["Smoker46", "XoXo45", "Starboyy", "Inferno", "Magic"] },
-    { placement: 13, team: "K9 Esports", phase: "BMPS 2026", players: ["Stranger", "Saumraj", "Smoker46", "Taurus", "SnowJOD"] },
+    {
+      placement: 11,
+      team: "Team Apex Gaming",
+      phase: "BMPS 2026",
+      players: [],
+    },
+    {
+      placement: 12,
+      team: "Likitha Esports",
+      phase: "Round 1 - Group C",
+      players: ["Smoker46", "XoXo45", "Starboyy", "Inferno", "Magic"],
+    },
+    {
+      placement: 13,
+      team: "K9 Esports",
+      phase: "BMPS 2026",
+      players: ["Stranger", "Saumraj", "Smoker46", "Taurus", "SnowJOD"],
+    },
     { placement: 14, team: "Divine Gaming", phase: "BMPS 2026", players: [] },
-    { placement: 15, team: "GodLike Esports", phase: "BMPS 2026", players: ["Spower", "ADMINO", "Godz", "Manya", "Saumay"] },
-    { placement: 16, team: "Vasista Esports", phase: "BMPS 2026", players: ["Beast", "Hector", "Rony", "Aimbot", "Dionysus"] },
-    { placement: 17, team: "Aura X Esports", phase: "Round 1 - Group C", players: [] },
+    {
+      placement: 15,
+      team: "GodLike Esports",
+      phase: "BMPS 2026",
+      players: ["Spower", "ADMINO", "Godz", "Manya", "Saumay"],
+    },
+    {
+      placement: 16,
+      team: "Vasista Esports",
+      phase: "BMPS 2026",
+      players: ["Beast", "Hector", "Rony", "Aimbot", "Dionysus"],
+    },
+    {
+      placement: 17,
+      team: "Aura X Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
     { placement: 18, team: "Lastade Esports", phase: "BMPS 2026", players: [] },
-    { placement: 19, team: "Myth Official", phase: "BMPS 2026", players: ["Harshil", "Lucifer", "Daddy", "Detrox", "Aryton"] },
-    { placement: 20, team: "DCxSCR Esports", phase: "Round 1 - Group D", players: [] },
-    { placement: 21, team: "Learn From Past", phase: "BMPS 2026", players: ["Termi", "RushBoy", "MAX", "Honey", "SHADOWW"] },
-    { placement: 22, team: "Esport Social", phase: "Round 1 - Group D", players: [] },
-    { placement: 23, team: "Autobotz Esports", phase: "Round 1 - Group D", players: ["Areeb", "Lobster", "Ralphie", "FanOP", "Eggy666"] },
-    { placement: 24, team: "Mysterious4", phase: "Round 1 - Group C", players: ["Sketch", "Naman", "Fragger", "Goku"] },
+    {
+      placement: 19,
+      team: "Myth Official",
+      phase: "BMPS 2026",
+      players: ["Harshil", "Lucifer", "Daddy", "Detrox", "Aryton"],
+    },
+    {
+      placement: 20,
+      team: "DCxSCR Esports",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 21,
+      team: "Learn From Past",
+      phase: "BMPS 2026",
+      players: ["Termi", "RushBoy", "MAX", "Honey", "SHADOWW"],
+    },
+    {
+      placement: 22,
+      team: "Esport Social",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 23,
+      team: "Autobotz Esports",
+      phase: "Round 1 - Group D",
+      players: ["Areeb", "Lobster", "Ralphie", "FanOP", "Eggy666"],
+    },
+    {
+      placement: 24,
+      team: "Mysterious4",
+      phase: "Round 1 - Group C",
+      players: ["Sketch", "Naman", "Fragger", "Goku"],
+    },
     { placement: 25, team: "HADX Esports", phase: "BMPS 2026", players: [] },
-    { placement: 26, team: "iQOO Reckoning Esports", phase: "BMPS 2026", players: ["Levi", "Lovish", "Roman", "SahilOPAF", "Pro"] },
-    { placement: 27, team: "iQOO Revenant XSpark", phase: "BMPS 2026", players: ["NinjaJOD", "Pain09", "Tracegod", "Sukuna", "Proton"] },
-    { placement: 28, team: "4TR Official", phase: "BMPS 2026", players: ["Anonymous", "Arther", "Viper", "Rapido", "Flexjod"] },
-    { placement: 29, team: "Wyld Fangs", phase: "BMPS 2026", players: ["SPRAYGOD", "Goten", "Kanha", "SENSEI", "Sam999"] },
-    { placement: 30, team: "Genesis Esports", phase: "BMPS 2026", players: ["ViPER", "GravityJOD", "HunterZ", "FurY", "Zap"] },
-    { placement: 31, team: "iQOO 8Bit", phase: "BMPS 2026", players: ["Juicy", "Sarang", "Skipz", "Hexy", "Radien", "Shubh"] },
-    { placement: 32, team: "Victores Sumus", phase: "BMPS 2026", players: ["Owais", "Mafia36", "VeNoM", "ScaryJod", "Paritosh"] },
-    { placement: 33, team: "MadKings", phase: "BMPS 2026", players: ["SHADOW", "ClutchGod"] },
-    { placement: 34, team: "Rapid Chaos Esports", phase: "Round 1 - Group C", players: [] },
-    { placement: 35, team: "Futurise Esports Empire Originals", phase: "Round 1 - Group D", players: [] },
+    {
+      placement: 26,
+      team: "iQOO Reckoning Esports",
+      phase: "BMPS 2026",
+      players: ["Levi", "Lovish", "Roman", "SahilOPAF", "Pro"],
+    },
+    {
+      placement: 27,
+      team: "iQOO Revenant XSpark",
+      phase: "BMPS 2026",
+      players: ["NinjaJOD", "Pain09", "Tracegod", "Sukuna", "Proton"],
+    },
+    {
+      placement: 28,
+      team: "4TR Official",
+      phase: "BMPS 2026",
+      players: ["Anonymous", "Arther", "Viper", "Rapido", "Flexjod"],
+    },
+    {
+      placement: 29,
+      team: "Wyld Fangs",
+      phase: "BMPS 2026",
+      players: ["SPRAYGOD", "Goten", "Kanha", "SENSEI", "Sam999"],
+    },
+    {
+      placement: 30,
+      team: "Genesis Esports",
+      phase: "BMPS 2026",
+      players: ["ViPER", "GravityJOD", "HunterZ", "FurY", "Zap"],
+    },
+    {
+      placement: 31,
+      team: "iQOO 8Bit",
+      phase: "BMPS 2026",
+      players: ["Juicy", "Sarang", "Skipz", "Hexy", "Radien", "Shubh"],
+    },
+    {
+      placement: 32,
+      team: "Victores Sumus",
+      phase: "BMPS 2026",
+      players: ["Owais", "Mafia36", "VeNoM", "ScaryJod", "Paritosh"],
+    },
+    {
+      placement: 33,
+      team: "MadKings",
+      phase: "BMPS 2026",
+      players: ["SHADOW", "ClutchGod"],
+    },
+    {
+      placement: 34,
+      team: "Rapid Chaos Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 35,
+      team: "Futurise Esports Empire Originals",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
     { placement: 36, team: "Team H4K", phase: "BMPS 2026", players: [] },
-    { placement: 37, team: "Godsent Esports", phase: "Round 1 - Group D", players: [] },
-    { placement: 38, team: "Team Doxy", phase: "Round 1 - Group D", players: [] },
-    { placement: 39, team: "GENxFM Esports", phase: "Round 1 - Group C", players: [] },
+    {
+      placement: 37,
+      team: "Godsent Esports",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 38,
+      team: "Team Doxy",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 39,
+      team: "GENxFM Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
     { placement: 40, team: "RiotNationz", phase: "BMPS 2026", players: [] },
-    { placement: 41, team: "T7xOrion Esports", phase: "Round 1 - Group C", players: [] },
+    {
+      placement: 41,
+      team: "T7xOrion Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
     { placement: 42, team: "Jaguar Esports", phase: "BMPS 2026", players: [] },
-    { placement: 43, team: "Oops Official", phase: "Round 1 - Group D", players: [] },
-    { placement: 44, team: "Blink Esports", phase: "Round 1 - Group C", players: [] },
-    { placement: 45, team: "Nebula Esports", phase: "BMPS 2026", players: ["Aadi", "KnowMe", "KRATOS", "Phoenix", "Arjun"] },
-    { placement: 46, team: "Quantum Sparks", phase: "Round 1 - Group D", players: [] },
-    { placement: 47, team: "iQOO Team Tamillas", phase: "BMPS 2026", players: [] },
-    { placement: 48, team: "Ares Esport", phase: "Round 1 - Group C", players: [] },
-    { placement: 49, team: "Santa Esports", phase: "Round 1 - Group C", players: [] },
-    { placement: 50, team: "iQOO Orangutan", phase: "BMPS 2026", players: ["AKop", "Aaru", "Attanki", "WizzGOD"] },
-    { placement: 51, team: "SomeOnes Dream", phase: "Round 1 - Group D", players: [] },
+    {
+      placement: 43,
+      team: "Oops Official",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 44,
+      team: "Blink Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 45,
+      team: "Nebula Esports",
+      phase: "BMPS 2026",
+      players: ["Aadi", "KnowMe", "KRATOS", "Phoenix", "Arjun"],
+    },
+    {
+      placement: 46,
+      team: "Quantum Sparks",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 47,
+      team: "iQOO Team Tamillas",
+      phase: "BMPS 2026",
+      players: [],
+    },
+    {
+      placement: 48,
+      team: "Ares Esport",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 49,
+      team: "Santa Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 50,
+      team: "iQOO Orangutan",
+      phase: "BMPS 2026",
+      players: ["AKop", "Aaru", "Attanki", "WizzGOD"],
+    },
+    {
+      placement: 51,
+      team: "SomeOnes Dream",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
     { placement: 52, team: "WindGod Esports", phase: "BMPS 2026", players: [] },
-    { placement: 53, team: "Higgboson Esports", phase: "BMPS 2026", players: [] },
-    { placement: 54, team: "Team Flying Esports", phase: "Round 1 - Group C", players: [] },
+    {
+      placement: 53,
+      team: "Higgboson Esports",
+      phase: "BMPS 2026",
+      players: [],
+    },
+    {
+      placement: 54,
+      team: "Team Flying Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
     { placement: 55, team: "Naqsh Esports", phase: "BMPS 2026", players: [] },
-    { placement: 56, team: "Team Aryan", phase: "Round 1 - Group D", players: ["Aryan", "Devotee", "Syrax", "Pro", "Raiden"] },
-    { placement: 57, team: "Troy Tamilian Esports", phase: "BMPS 2026", players: [] },
-    { placement: 58, team: "Jaapi Esports", phase: "Round 1 - Group D", players: [] },
-    { placement: 59, team: "ThunderGods X Tortuga Gaming", phase: "Round 1 - Group C", players: [] },
-    { placement: 60, team: "Zero Ark Official", phase: "Round 1 - Group C", players: [] },
-    { placement: 61, team: "7AcesXTRB Esports", phase: "Round 1 - Group C", players: [] },
-    { placement: 62, team: "Team RedXRoss", phase: "Round 1 - Group D", players: ["Phoenix", "Lucifer", "Arto", "Beast04"] },
-    { placement: 63, team: "Welt Esports", phase: "BMPS 2026", players: ["GokulWNL", "Shyam", "DragonOP", "Rico", "PokoWNL"] },
-    { placement: 64, team: "Meta Ninza", phase: "BMPS 2026", players: ["Shadow7", "Fierce", "Apollo"] },
+    {
+      placement: 56,
+      team: "Team Aryan",
+      phase: "Round 1 - Group D",
+      players: ["Aryan", "Devotee", "Syrax", "Pro", "Raiden"],
+    },
+    {
+      placement: 57,
+      team: "Troy Tamilian Esports",
+      phase: "BMPS 2026",
+      players: [],
+    },
+    {
+      placement: 58,
+      team: "Jaapi Esports",
+      phase: "Round 1 - Group D",
+      players: [],
+    },
+    {
+      placement: 59,
+      team: "ThunderGods X Tortuga Gaming",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 60,
+      team: "Zero Ark Official",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 61,
+      team: "7AcesXTRB Esports",
+      phase: "Round 1 - Group C",
+      players: [],
+    },
+    {
+      placement: 62,
+      team: "Team RedXRoss",
+      phase: "Round 1 - Group D",
+      players: ["Phoenix", "Lucifer", "Arto", "Beast04"],
+    },
+    {
+      placement: 63,
+      team: "Welt Esports",
+      phase: "BMPS 2026",
+      players: ["GokulWNL", "Shyam", "DragonOP", "Rico", "PokoWNL"],
+    },
+    {
+      placement: 64,
+      team: "Meta Ninza",
+      phase: "BMPS 2026",
+      players: ["Shadow7", "Fierce", "Apollo"],
+    },
   ],
   stages: [
     {
@@ -133,11 +403,46 @@ const tournament = {
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 2, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 3, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 4, map: "Erangel", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 5, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 6, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
+        {
+          match: 2,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 3,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 4,
+          map: "Erangel",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 5,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 6,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
       ],
       summary:
         "May 6th - 9th, 2026. 64 invited teams begin the league phase. Teams are split into Groups A-D with 16 teams each. The round runs for 4 matchdays with 6 matches per day, for 24 matches total. After Round 1, promotion and relegation apply: the top 4 teams from Groups B/C/D move up one group, the 5th-12th placed teams remain in the same group, and the bottom 4 teams from Groups A/B/C move down one group.",
@@ -149,11 +454,46 @@ const tournament = {
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 2, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 3, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 4, map: "Erangel", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 5, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 6, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
+        {
+          match: 2,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 3,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 4,
+          map: "Erangel",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 5,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 6,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
       ],
       summary:
         "May 11th - 14th, 2026. The reshuffled Groups A-D continue the league phase. Teams again play 4 matchdays with 6 matches per day for 24 matches total. After Round 2, promotion and relegation apply with the same system: top 4 from Groups B/C/D move up, 5th-12th stay, and bottom 4 from Groups A/B/C move down.",
@@ -165,11 +505,46 @@ const tournament = {
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 2, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 3, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 4, map: "Erangel", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 5, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 6, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
+        {
+          match: 2,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 3,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 4,
+          map: "Erangel",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 5,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 6,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
       ],
       summary:
         "May 16th - 19th, 2026. The third league round continues with the updated group order. Promotion and relegation are applied once more after this round: top 4 from Groups B/C/D move up, 5th-12th remain in place, and bottom 4 from Groups A/B/C move down.",
@@ -181,11 +556,46 @@ const tournament = {
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 2, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 3, map: "Erangel", day1: "C", day2: "B", day3: "D", day4: "A" },
-        { match: 4, map: "Erangel", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 5, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
-        { match: 6, map: "Miramar", day1: "B", day2: "C", day3: "A", day4: "D" },
+        {
+          match: 2,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 3,
+          map: "Erangel",
+          day1: "C",
+          day2: "B",
+          day3: "D",
+          day4: "A",
+        },
+        {
+          match: 4,
+          map: "Erangel",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 5,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
+        {
+          match: 6,
+          map: "Miramar",
+          day1: "B",
+          day2: "C",
+          day3: "A",
+          day4: "D",
+        },
       ],
       summary:
         "May 28th - 31st, 2026. The final league round decides qualification. There is no reshuffling after Round 4. At the end of this round, the top 8 teams of Group A qualify for Grand Finals, the bottom 8 of Group A plus the top 8 of Group B advance to Semi Finals, the bottom 8 of Group B plus all 16 teams of Group C plus the top 8 of Group D move to Survival Stage, and the bottom 8 of Group D are eliminated.",
@@ -211,7 +621,8 @@ const tournament = {
       order: 7,
       status: "upcoming",
       teamCount: 16,
-      summary: "June 13th - 14th, 2026. 16 teams play 12 matches across 2 matchdays, with the top 2 teams advancing to the Grand Finals.",
+      summary:
+        "June 13th - 14th, 2026. 16 teams play 12 matches across 2 matchdays, with the top 2 teams advancing to the Grand Finals.",
     },
     {
       name: "Grand Finals",
@@ -225,7 +636,8 @@ const tournament = {
 };
 
 tournament.participants = tournament.participants.map((entry) => {
-  const rosterOverride = BMPS_2026_ROSTERS[normalizeOrganizationName(entry.team)];
+  const rosterOverride =
+    BMPS_2026_ROSTERS[normalizeOrganizationName(entry.team)];
 
   return {
     ...entry,
@@ -251,22 +663,32 @@ const articles = [
 ];
 
 const tx = db.transaction(() => {
-  const existingTournament = db.prepare("SELECT id FROM tournaments WHERE name = ?").get(tournament.name);
+  const existingTournament = db
+    .prepare("SELECT id FROM tournaments WHERE name = ?")
+    .get(tournament.name);
 
   if (existingTournament) {
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(existingTournament.id);
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(existingTournament.id);
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(existingTournament.id);
+    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
+      existingTournament.id,
+    );
+    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
+      existingTournament.id,
+    );
+    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
+      existingTournament.id,
+    );
   }
 
   const tournamentId = randomUUID();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO tournaments (
       id, name, game, tier, status, prize_pool, start_date, end_date, stages,
       description, banner_url, rules, max_teams, format_overview, calendar,
       participants, created_date, updated_date, created_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `,
+  ).run(
     tournamentId,
     tournament.name,
     tournament.game,
@@ -285,7 +707,7 @@ const tx = db.transaction(() => {
     JSON.stringify(tournament.participants),
     now,
     now,
-    "admin@stagecore.local"
+    "admin@stagecore.local",
   );
 
   const deleteArticle = db.prepare("DELETE FROM news_articles WHERE title = ?");
@@ -307,7 +729,7 @@ const tx = db.transaction(() => {
       article.game,
       now,
       now,
-      "admin@stagecore.local"
+      "admin@stagecore.local",
     );
   }
 });

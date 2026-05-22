@@ -1,7 +1,10 @@
-import { getTeamLogoByName } from "@/lib/teamLogos";
+import { getTeamLogoByName } from "./teamLogos.js";
 
 export function normalizeStageBoardValue(value) {
-  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 export function sortStageBoardMatches(matches) {
@@ -9,7 +12,9 @@ export function sortStageBoardMatches(matches) {
     const dayDelta = (Number(a.day) || 0) - (Number(b.day) || 0);
     if (dayDelta !== 0) return dayDelta;
 
-    const timeDelta = new Date(a.scheduled_time || 0).getTime() - new Date(b.scheduled_time || 0).getTime();
+    const timeDelta =
+      new Date(a.scheduled_time || 0).getTime() -
+      new Date(b.scheduled_time || 0).getTime();
     if (timeDelta !== 0) return timeDelta;
 
     const numberDelta = (a.match_number || 0) - (b.match_number || 0);
@@ -18,10 +23,18 @@ export function sortStageBoardMatches(matches) {
   });
 }
 
-export function getFeaturedTournamentStage(featuredTournament, tournamentMatches, tournamentResults) {
-  const liveStage = tournamentMatches.find((match) => match.status === "live")?.stage;
+export function getFeaturedTournamentStage(
+  featuredTournament,
+  tournamentMatches,
+  tournamentResults,
+) {
+  const liveStage = tournamentMatches.find(
+    (match) => match.status === "live",
+  )?.stage;
   if (liveStage) return liveStage;
-  const scheduledStage = tournamentMatches.find((match) => match.status === "scheduled")?.stage;
+  const scheduledStage = tournamentMatches.find(
+    (match) => match.status === "scheduled",
+  )?.stage;
   if (scheduledStage) return scheduledStage;
   const declaredStages = Array.isArray(featuredTournament?.stages)
     ? featuredTournament.stages.map((stage) => stage?.name).filter(Boolean)
@@ -48,7 +61,10 @@ function extractGroupLabel(rawValue) {
   return value || "-";
 }
 
-export function getStageBoardTeamGroups(featuredTournament, participantEntries = null) {
+export function getStageBoardTeamGroups(
+  featuredTournament,
+  participantEntries = null,
+) {
   const map = new Map();
   const sourceEntries = Array.isArray(participantEntries)
     ? participantEntries
@@ -56,7 +72,8 @@ export function getStageBoardTeamGroups(featuredTournament, participantEntries =
   for (const participant of sourceEntries) {
     const key = normalizeStageBoardValue(participant.team);
     if (!key) continue;
-    const rawGroup = participant.group_name || participant.group || participant.phase || "-";
+    const rawGroup =
+      participant.group_name || participant.group || participant.phase || "-";
     map.set(key, extractGroupLabel(rawGroup));
   }
   return map;
@@ -68,18 +85,30 @@ function getAverageEliminationPosition(row) {
 }
 
 export function compareStageBoardStandings(left, right) {
-  if ((right.points || 0) !== (left.points || 0)) return (right.points || 0) - (left.points || 0);
-  if ((right.wwcd || 0) !== (left.wwcd || 0)) return (right.wwcd || 0) - (left.wwcd || 0);
-  if ((right.placementPoints || 0) !== (left.placementPoints || 0)) return (right.placementPoints || 0) - (left.placementPoints || 0);
+  if ((right.points || 0) !== (left.points || 0))
+    return (right.points || 0) - (left.points || 0);
+  if ((right.wwcd || 0) !== (left.wwcd || 0))
+    return (right.wwcd || 0) - (left.wwcd || 0);
+  if ((right.placementPoints || 0) !== (left.placementPoints || 0))
+    return (right.placementPoints || 0) - (left.placementPoints || 0);
 
   const leftAverage = getAverageEliminationPosition(left);
   const rightAverage = getAverageEliminationPosition(right);
   if (leftAverage !== rightAverage) return leftAverage - rightAverage;
 
-  return String(left.teamName || "").localeCompare(String(right.teamName || ""));
+  return String(left.teamName || "").localeCompare(
+    String(right.teamName || ""),
+  );
 }
 
-export function getStageBoardData({ featuredTournament, teams, matches, matchResults, requestedStage, participantEntries = null }) {
+export function getStageBoardData({
+  featuredTournament,
+  teams,
+  matches,
+  matchResults,
+  requestedStage,
+  participantEntries = null,
+}) {
   if (!featuredTournament) {
     return {
       featuredStage: null,
@@ -91,25 +120,47 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
     };
   }
 
-  const tournamentMatches = matches.filter((match) => match.tournament_id === featuredTournament.id);
-  const tournamentResults = matchResults.filter((result) => result.tournament_id === featuredTournament.id);
-  const featuredStage = requestedStage || getFeaturedTournamentStage(featuredTournament, tournamentMatches, tournamentResults);
-  const isGrandFinalsStage = String(featuredStage || "").trim().toLowerCase() === "grand finals";
-  const strictStageMatches = sortStageBoardMatches(
-    tournamentMatches.filter((match) => !featuredStage || match.stage === featuredStage)
+  const tournamentMatches = matches.filter(
+    (match) => match.tournament_id === featuredTournament.id,
   );
-  const rawBoardMatches = strictStageMatches.length > 0 ? strictStageMatches : sortStageBoardMatches(tournamentMatches);
+  const tournamentResults = matchResults.filter(
+    (result) => result.tournament_id === featuredTournament.id,
+  );
+  const featuredStage =
+    requestedStage ||
+    getFeaturedTournamentStage(
+      featuredTournament,
+      tournamentMatches,
+      tournamentResults,
+    );
+  const isGrandFinalsStage =
+    String(featuredStage || "")
+      .trim()
+      .toLowerCase() === "grand finals";
+  const strictStageMatches = sortStageBoardMatches(
+    tournamentMatches.filter(
+      (match) => !featuredStage || match.stage === featuredStage,
+    ),
+  );
+  const rawBoardMatches =
+    strictStageMatches.length > 0
+      ? strictStageMatches
+      : sortStageBoardMatches(tournamentMatches);
   const boardMatches = rawBoardMatches.map((match, index) => ({
     ...match,
     board_match_number: index + 1,
   }));
   const matchById = new Map(boardMatches.map((match) => [match.id, match]));
   const teamMap = new Map(teams.map((team) => [team.id, team]));
-  const groupMap = getStageBoardTeamGroups(featuredTournament, participantEntries);
+  const groupMap = getStageBoardTeamGroups(
+    featuredTournament,
+    participantEntries,
+  );
   const standingsMap = new Map();
 
   for (const result of tournamentResults) {
-    if (featuredStage && result.stage && result.stage !== featuredStage) continue;
+    if (featuredStage && result.stage && result.stage !== featuredStage)
+      continue;
     const team = teamMap.get(result.team_id);
     const displayName = team?.name || result.team_name || "Unknown Team";
     const key = result.team_id || normalizeStageBoardValue(displayName);
@@ -118,7 +169,9 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
       teamName: displayName,
       logoName: displayName,
       logoSrc: team?.logo_url || getTeamLogoByName(displayName) || null,
-      group: isGrandFinalsStage ? "-" : groupMap.get(normalizeStageBoardValue(displayName)) || "-",
+      group: isGrandFinalsStage
+        ? "-"
+        : groupMap.get(normalizeStageBoardValue(displayName)) || "-",
       matches: 0,
       wwcd: 0,
       placementPoints: 0,
@@ -128,7 +181,12 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
       matchCells: {},
     };
 
-    const wins = result.wins_count && result.wins_count > 0 ? result.wins_count : result.placement === 1 ? 1 : 0;
+    const wins =
+      result.wins_count && result.wins_count > 0
+        ? result.wins_count
+        : result.placement === 1
+          ? 1
+          : 0;
     const match = matchById.get(result.match_id);
     row.matches += result.matches_count || 1;
     row.wwcd += wins;
@@ -155,7 +213,8 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
   const standings = [...standingsMap.values()]
     .map((row) => ({
       ...row,
-      averageEliminationPosition: row.matches > 0 ? row.placementSum / row.matches : null,
+      averageEliminationPosition:
+        row.matches > 0 ? row.placementSum / row.matches : null,
     }))
     .sort(compareStageBoardStandings)
     .map((row, index) => ({ ...row, rank: index + 1 }));
@@ -166,7 +225,9 @@ export function getStageBoardData({ featuredTournament, teams, matches, matchRes
     standings,
     liveMatch: boardMatches.find((match) => match.status === "live") || null,
     nextMatch:
-      boardMatches.find((match) => match.status === "scheduled" && match.scheduled_time) ||
+      boardMatches.find(
+        (match) => match.status === "scheduled" && match.scheduled_time,
+      ) ||
       boardMatches.find((match) => match.status === "scheduled") ||
       null,
     leader: standings[0] || null,
