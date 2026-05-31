@@ -9,9 +9,7 @@
   "scripts": {
     "dev": "vite",
     "server": "node --env-file=.env server/index.js",
-    "start": "node --env-file=.env server/index.js",
-    "stream-worker": "node --env-file=.env server/streamWorker.js",
-    "stream-worker:once": "node --env-file=.env server/streamWorker.js --once",
+    "start": "node server/index.js",
     "build": "node tools/build.js",
     "build:vite": "vite build --configLoader runner",
     "build:fallback": "powershell -ExecutionPolicy Bypass -File .\\tools\\build-fallback.ps1",
