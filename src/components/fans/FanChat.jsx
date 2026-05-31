@@ -19,11 +19,11 @@ export default function FanChat({
 
   return (
     <FansPanel className="overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-3.5">
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))] px-5 py-4">
         <div className="flex items-center gap-2">
           <MessageSquare className="size-3.5 text-primary" />
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
-            Community chat
+          <p className="type-kicker text-primary">
+            Community floor
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ export default function FanChat({
             <select
               value={selectedTopic}
               onChange={(event) => onTopicChange?.(event.target.value)}
-              className="h-8 rounded-full border border-slate-200 bg-slate-50 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground outline-none"
+              className="h-8 rounded-full border border-slate-200 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground outline-none dark:bg-white/[0.05]"
             >
               {topicOptions.map((topic) => (
                 <option key={topic} value={topic}>
@@ -40,8 +40,8 @@ export default function FanChat({
               ))}
             </select>
           ) : null}
-          <p className="text-[10px] text-muted-foreground">
-            live • updates every 5s
+          <p className="type-kicker text-muted-foreground">
+            live | updates every 5s
           </p>
         </div>
       </div>
@@ -53,19 +53,19 @@ export default function FanChat({
               {messages.map((entry) => (
                 <div
                   key={entry.id}
-                  className="rounded-[16px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3.5"
+                  className="rounded-[18px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4 dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-black uppercase tracking-[0.06em] text-slate-900">
+                      <p className="type-title-md uppercase text-slate-900 dark:text-white">
                         {entry.author}
                       </p>
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-primary">
+                      <p className="type-kicker mt-1 text-primary">
                         {entry.topic}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                  <p className="type-body-sm mt-3 text-slate-500 dark:text-slate-300">
                     {entry.body}
                   </p>
                 </div>
@@ -76,10 +76,10 @@ export default function FanChat({
               <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Sparkles className="size-6" />
               </div>
-              <p className="mt-4 text-base font-semibold text-slate-500">
-                Be the first to send a message!
+              <p className="type-title-md mt-4 text-slate-500 dark:text-slate-200">
+                Open the floor
               </p>
-              <p className="mt-2 max-w-[240px] text-sm leading-6 text-slate-400">
+              <p className="type-body-sm mt-2 max-w-[260px] text-slate-400">
                 Drop a quick take, prediction reaction, or matchday thought to
                 get the conversation started.
               </p>
@@ -88,7 +88,7 @@ export default function FanChat({
         </div>
 
         <div className="border-t border-border/70 px-5 py-4">
-          <div className="mb-2 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.16em] text-slate-400">
+          <div className="type-kicker mb-2 flex items-center justify-between gap-3 text-slate-400">
             <span>Keep it quick, readable, and match-focused</span>
             <span>{remaining} characters left</span>
           </div>
@@ -98,13 +98,15 @@ export default function FanChat({
               onChange={(event) => onDraftChange(event.target.value)}
               maxLength={220}
               placeholder="Say something…"
-              className="h-11 flex-1 rounded-[14px] border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-primary/40"
+              aria-label="Chat message"
+              className="h-12 flex-1 rounded-[16px] border border-slate-200 bg-white px-4 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-primary/40 dark:bg-white/[0.05] dark:text-white"
             />
             <button
               type="button"
               onClick={onSubmit}
               disabled={!draft.trim() || isSubmitting}
-              className="flex size-11 items-center justify-center rounded-[14px] bg-primary text-white shadow-[0_10px_22px_rgba(251,146,60,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label="Send message"
+              className="flex size-12 items-center justify-center rounded-[16px] bg-primary text-white shadow-[0_12px_24px_rgba(251,146,60,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send className="size-4" />
             </button>

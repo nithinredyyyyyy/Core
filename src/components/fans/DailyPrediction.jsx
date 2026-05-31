@@ -26,13 +26,13 @@ export default function DailyPrediction({
 
   return (
     <FansPanel className="overflow-hidden">
-      <div className="border-b border-border/70 px-5 py-3.5">
+      <div className="border-b border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))] px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
-              Daily prediction
+            <p className="type-kicker text-primary">
+              Prediction board
             </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm font-medium text-muted-foreground">
               <span suppressHydrationWarning>
                 {predictionContext?.scheduled
                   ? format(predictionContext.scheduled, "EEEE, MMM d")
@@ -45,27 +45,27 @@ export default function DailyPrediction({
               </span>
             </p>
             {predictionContext ? (
-              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
-                {predictionContext.stage} • {predictionContext.group}
+              <p className="type-kicker mt-1 text-slate-500">
+                {predictionContext.stage} | {predictionContext.group}
                 {predictionContext.matchNumber
-                  ? ` • M${predictionContext.matchNumber}`
+                  ? ` | M${predictionContext.matchNumber}`
                   : ""}
-                {predictionContext.day ? ` • Day ${predictionContext.day}` : ""}
-                {predictionContext.map ? ` • ${predictionContext.map}` : ""}
+                {predictionContext.day ? ` | Day ${predictionContext.day}` : ""}
+                {predictionContext.map ? ` | ${predictionContext.map}` : ""}
               </p>
             ) : null}
             {predictionContext?.slateMatches ||
             predictionContext?.activeTeamCount ? (
-              <p className="mt-1 text-[11px] leading-5 text-slate-500">
+              <p className="type-caption mt-1 text-slate-500">
                 {predictionContext?.slateMatches
                   ? `${predictionContext.slateMatches} upcoming match${predictionContext.slateMatches === 1 ? "" : "es"}`
                   : "Upcoming slate"}
                 {predictionContext?.activeTeamCount
-                  ? ` • ${predictionContext.activeTeamCount} teams playing`
+                  ? ` | ${predictionContext.activeTeamCount} teams playing`
                   : ""}
               </p>
             ) : null}
-            <p className="mt-2 text-[12px] leading-5 text-slate-500">
+            <p className="type-body-sm mt-3 max-w-[44ch] text-slate-500">
               Build one winner call, one fragger call, and a three-team podium
               before the lock hits.
             </p>
@@ -98,8 +98,8 @@ export default function DailyPrediction({
         </span>
       </div>
 
-      <div className="space-y-4 px-5 py-4">
-        <div className="rounded-[16px] border border-border/70 bg-secondary/35 px-4 py-3">
+      <div className="space-y-5 p-5">
+        <div className="rounded-[18px] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.18))] px-4 py-3 dark:bg-white/[0.05]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               {predictionOptions.length} teams in pool
@@ -118,7 +118,7 @@ export default function DailyPrediction({
         </div>
 
         <div>
-          <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="type-kicker inline-flex items-center gap-2 text-muted-foreground">
             <Trophy className="size-3.5 text-amber-500" />
             Predict winner
           </p>
@@ -126,7 +126,8 @@ export default function DailyPrediction({
             disabled={isPredictionLocked}
             value={predictionWinner}
             onChange={(event) => setPredictionWinner(event.target.value)}
-            className="mt-2.5 h-11 w-full rounded-[14px] border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-700 outline-none transition-colors focus:border-primary/40"
+            aria-label="Predict winner"
+            className="mt-2.5 h-12 w-full rounded-[16px] border border-slate-200 bg-white px-4 text-[15px] text-slate-700 outline-none transition-colors focus:border-primary/40"
           >
             <option value="">Select a team…</option>
             {predictionOptions.map((team) => (
@@ -138,7 +139,7 @@ export default function DailyPrediction({
         </div>
 
         <div>
-          <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="type-kicker inline-flex items-center gap-2 text-muted-foreground">
             <Crosshair className="size-3.5 text-rose-400" />
             Top fragger (player IGN)
           </p>
@@ -147,12 +148,13 @@ export default function DailyPrediction({
             value={predictionTopFragger}
             onChange={(event) => setPredictionTopFragger(event.target.value)}
             placeholder="Enter player IGN…"
-            className="mt-2.5 h-11 w-full rounded-[14px] border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-primary/40"
+            aria-label="Top fragger player IGN"
+            className="mt-2.5 h-12 w-full rounded-[16px] border border-slate-200 bg-white px-4 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-primary/40"
           />
         </div>
 
         <div>
-          <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="type-kicker inline-flex items-center gap-2 text-muted-foreground">
             <Crown className="size-3.5 text-indigo-500" />
             Top 3 teams ({predictionTopThree.length}/3 selected)
           </p>
@@ -166,7 +168,7 @@ export default function DailyPrediction({
                     type="button"
                     disabled={isPredictionLocked}
                     onClick={() => toggleTopThree(team.name)}
-                    className={`rounded-[12px] border px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.04em] transition-all ${
+                    className={`rounded-[14px] border px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.08em] transition-all ${
                       active
                         ? "border-primary bg-primary/10 text-primary shadow-[0_8px_18px_rgba(251,146,60,0.12)]"
                         : "border-slate-200 bg-white text-slate-700 hover:border-primary/30"
@@ -193,7 +195,7 @@ export default function DailyPrediction({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] leading-5 text-slate-500">
+          <p className="type-caption max-w-[38ch] text-slate-500">
             {isPredictionLocked
               ? "This slate is locked. Your next chance opens with the next active match window."
               : "Strong picks come from locking a winner first, then narrowing the top-three field."}

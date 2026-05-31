@@ -3,13 +3,14 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import { format } from "date-fns";
-import { ArrowUpRight, Trophy } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Flame, Trophy } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import TeamIdentity from "../components/shared/TeamIdentity";
 import StatusBadge from "../components/shared/StatusBadge";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 import { resolveTournamentLiveState } from "@/lib/tournamentLiveState";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function buildBoardLink(tournamentId, stage) {
   const params = new URLSearchParams();
@@ -323,6 +324,102 @@ function FeaturedStandingsSection({
         </div>
       </div>
     </m.section>
+  );
+}
+
+function MobileLeaderboardHero({ featuredTournament, stageBoard }) {
+  return (
+    <div className="rounded-[2rem] bg-[linear-gradient(180deg,#ffb39f_0%,#ff9b89_100%)] p-5 shadow-[0_22px_40px_rgba(121,30,48,0.16)]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-full bg-white/50 text-[#2d1419]">
+            <Flame className="size-4" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#2d1419]">Standings</p>
+            <p className="text-[11px] text-[#6b3741]">Live board</p>
+          </div>
+        </div>
+        <div className="rounded-full bg-[rgba(27,10,21,0.92)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+          {featuredTournament?.status || "live"}
+        </div>
+      </div>
+      <h1 className="mt-4 max-w-[9ch] text-[2.2rem] font-medium leading-[0.95] text-[#2d1419]">
+        Track every point swing
+      </h1>
+      <p className="mt-2 text-sm leading-6 text-[#6b3741]">
+        Featured tournament standings, live match focus, and top teams in one board.
+      </p>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-[1.35rem] bg-[linear-gradient(180deg,rgba(27,10,21,0.96),rgba(16,8,14,0.98))] p-3.5 text-white">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/46">
+            Stage leader
+          </p>
+          <p className="mt-3 text-lg font-semibold text-white">
+            {stageBoard.leader?.teamName || "Pending"}
+          </p>
+          <p className="mt-1 text-[11px] text-white/58">
+            {stageBoard.leader ? `${stageBoard.leader.points} pts` : "Standings syncing"}
+          </p>
+        </div>
+        <div className="rounded-[1.35rem] bg-[linear-gradient(180deg,rgba(27,10,21,0.96),rgba(16,8,14,0.98))] p-3.5 text-white">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/46">
+            Match focus
+          </p>
+          <p className="mt-3 text-lg font-semibold text-white">
+            {stageBoard.liveMatch
+              ? `Match ${stageBoard.liveMatch.match_number || "-"}`
+              : stageBoard.nextMatch
+                ? `Match ${stageBoard.nextMatch.match_number || "-"}`
+                : "Awaiting"}
+          </p>
+          <p className="mt-1 text-[11px] text-white/58">
+            {stageBoard.liveMatch?.map || stageBoard.nextMatch?.map || "Lobby update soon"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileStandingCard({ team }) {
+  return (
+    <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(28,10,20,0.96),rgba(17,8,14,0.98))] p-4 text-white shadow-[0_16px_26px_rgba(44,13,22,0.16)]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/8 text-sm font-bold text-white">
+            {team.rank}
+          </div>
+          <div className="min-w-0">
+            <TeamIdentity
+              name={team.logoName || team.teamName}
+              className="truncate text-sm font-semibold text-white"
+              contained
+              logoClassName="h-6 w-auto object-contain"
+            />
+            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/45">
+              {team.matches} matches | {team.wwcd} WWCD
+            </p>
+          </div>
+        </div>
+        <ChevronRight className="size-4 text-white/35" />
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-[1rem] bg-white/[0.05] px-2 py-2.5">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Place</p>
+          <p className="mt-1 text-sm font-semibold text-white">{team.placementPoints}</p>
+        </div>
+        <div className="rounded-[1rem] bg-white/[0.05] px-2 py-2.5">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Elims</p>
+          <p className="mt-1 text-sm font-semibold text-white">{team.elims}</p>
+        </div>
+        <div className="rounded-[1rem] bg-white/[0.05] px-2 py-2.5">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Points</p>
+          <p className="mt-1 text-sm font-semibold text-white">{team.points}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -681,30 +778,54 @@ function buildTeamMapStats({
 
 function useLeaderboardData() {
   const [searchParams] = useSearchParams();
+  const requestedTournamentId = searchParams.get("tournament");
+  const requestedStage = searchParams.get("stage");
 
   const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
-    queryKey: ["tournaments"],
+    queryKey: ["leaderboard-tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 100),
   });
+  const queryTournament = useMemo(() => {
+    if (requestedTournamentId) {
+      const requested = tournaments.find(
+        (tournament) => tournament.id === requestedTournamentId,
+      );
+      if (requested) return requested;
+    }
+    return (
+      tournaments.find((tournament) => tournament.status === "ongoing") ||
+      tournaments[0] ||
+      null
+    );
+  }, [requestedTournamentId, tournaments]);
   const { data: matches = [], isLoading: matchesLoading } = useQuery({
-    queryKey: ["matches"],
-    queryFn: () => base44.entities.Match.list("scheduled_time", 300),
+    queryKey: ["leaderboard-matches", queryTournament?.id],
+    queryFn: () =>
+      base44.entities.Match.filter(
+        { tournament_id: queryTournament.id },
+        "-scheduled_time",
+        300,
+      ),
+    enabled: Boolean(queryTournament?.id),
   });
   const { data: rawMatchResults = [], isLoading: resultsLoading } = useQuery({
-    queryKey: ["match-results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
+    queryKey: ["leaderboard-match-results", queryTournament?.id],
+    queryFn: () =>
+      base44.entities.MatchResult.filter(
+        { tournament_id: queryTournament.id },
+        "-created_date",
+        5000,
+      ),
+    enabled: Boolean(queryTournament?.id),
   });
   const matchResults = useMemo(
     () => filterPublishedMatchResults(rawMatchResults),
     [rawMatchResults],
   );
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
-    queryKey: ["teams"],
+    queryKey: ["leaderboard-teams"],
     queryFn: () => base44.entities.Team.list("-created_date", 300),
   });
-
-  const requestedTournamentId = searchParams.get("tournament");
-  const requestedStage = searchParams.get("stage");
 
   const liveState = useMemo(
     () =>
@@ -850,6 +971,7 @@ function useLeaderboardData() {
 }
 
 export default function Leaderboard() {
+  const isMobile = useIsMobile();
   const {
     isLoading,
     boardIntro,
@@ -870,6 +992,60 @@ export default function Leaderboard() {
           Loading standings
         </p>
       </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <LazyMotion features={domAnimation}>
+        <div className="mx-auto max-w-[420px] space-y-4 pb-4 text-[#2d1419]">
+          <m.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
+            <MobileLeaderboardHero
+              featuredTournament={featuredTournament}
+              stageBoard={stageBoard}
+            />
+          </m.section>
+
+          <m.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+            <div className="rounded-[1.8rem] bg-[linear-gradient(180deg,rgba(28,10,20,0.96),rgba(17,8,14,0.98))] p-4 text-white shadow-[0_18px_30px_rgba(44,13,22,0.16)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                    Stage focus
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-white">
+                    {stageBoard.featuredStage || "Standings"}
+                  </p>
+                </div>
+                <Link
+                  to={`/tournaments${tournamentQuery}`}
+                  className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white"
+                >
+                  Hub
+                </Link>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-[1rem] bg-white/[0.05] p-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Mapped matches</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{stageBoard.stageMatches.length}</p>
+                </div>
+                <div className="rounded-[1rem] bg-white/[0.05] p-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Teams ranked</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{stageBoard.standings.length}</p>
+                </div>
+              </div>
+            </div>
+          </m.section>
+
+          <m.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <div className="space-y-3">
+              {stageBoard.standings.slice(0, 12).map((team) => (
+                <MobileStandingCard key={team.teamId || team.teamName} team={team} />
+              ))}
+            </div>
+          </m.section>
+        </div>
+      </LazyMotion>
     );
   }
 

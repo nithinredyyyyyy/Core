@@ -41,7 +41,10 @@ export const NEWS_SOURCES = [
 export function getEnabledNewsSources(selectedIds = []) {
   const selected = new Set(
     Array.isArray(selectedIds)
-      ? selectedIds.map((value) => String(value || "").trim()).filter(Boolean)
+      ? selectedIds.flatMap((value) => {
+          const normalized = String(value || "").trim();
+          return normalized ? [normalized] : [];
+        })
       : [],
   );
 

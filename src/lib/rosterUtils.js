@@ -75,14 +75,15 @@ export function buildLiveRoster({
   transferEntries = [],
   applyOverride,
 }) {
+  const teamIdSet = new Set(teamIds);
   const baseRoster = dedupeRosterCaseInsensitive(
-    players
-      .filter((player) => teamIds.includes(player.team_id))
-      .map((player) => player.ign),
+    players.flatMap((player) =>
+      teamIdSet.has(player.team_id) ? [player.ign] : [],
+    ),
   );
 
-  const teamTransfers = getNormalizedTransferEntries(transferEntries)
-    .filter((entry) => {
+  const teamTransfers = getNormalizedTransferEntries(transferEntries).flatMap(
+    (entry) => {
       const normalizedOld = entry.oldTeam
         ? normalizedTeam(entry.oldTeam)
         : null;
@@ -90,13 +91,17 @@ export function buildLiveRoster({
         ? normalizedTeam(entry.newTeam)
         : null;
       const current = normalizedTeam(teamName);
-      return normalizedOld === current || normalizedNew === current;
-    })
-    .map((entry) => ({
-      ...entry,
-      oldTeam: entry.oldTeam ? normalizedTeam(entry.oldTeam) : null,
-      newTeam: entry.newTeam ? normalizedTeam(entry.newTeam) : null,
-    }));
+      return normalizedOld === current || normalizedNew === current
+        ? [
+            {
+              ...entry,
+              oldTeam: entry.oldTeam ? normalizedTeam(entry.oldTeam) : null,
+              newTeam: entry.newTeam ? normalizedTeam(entry.newTeam) : null,
+            },
+          ]
+        : [];
+    },
+  );
 
   const adjustedRoster = applyTransferMovesToRoster(
     baseRoster,
@@ -116,8 +121,8 @@ export function buildRosterFromSnapshot({
   transferEntries = [],
   applyOverride,
 }) {
-  const teamTransfers = getNormalizedTransferEntries(transferEntries)
-    .filter((entry) => {
+  const teamTransfers = getNormalizedTransferEntries(transferEntries).flatMap(
+    (entry) => {
       const normalizedOld = entry.oldTeam
         ? normalizedTeam(entry.oldTeam)
         : null;
@@ -125,13 +130,17 @@ export function buildRosterFromSnapshot({
         ? normalizedTeam(entry.newTeam)
         : null;
       const current = normalizedTeam(teamName);
-      return normalizedOld === current || normalizedNew === current;
-    })
-    .map((entry) => ({
-      ...entry,
-      oldTeam: entry.oldTeam ? normalizedTeam(entry.oldTeam) : null,
-      newTeam: entry.newTeam ? normalizedTeam(entry.newTeam) : null,
-    }));
+      return normalizedOld === current || normalizedNew === current
+        ? [
+            {
+              ...entry,
+              oldTeam: entry.oldTeam ? normalizedTeam(entry.oldTeam) : null,
+              newTeam: entry.newTeam ? normalizedTeam(entry.newTeam) : null,
+            },
+          ]
+        : [];
+    },
+  );
 
   const adjustedRoster = applyTransferMovesToRoster(
     dedupeRosterCaseInsensitive(baseRoster),

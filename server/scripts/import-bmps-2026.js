@@ -44,7 +44,7 @@ const tournament = {
   max_teams: 64,
   banner_url: "/images/bmps-2026.png",
   format_overview:
-    "BMPS 2026 is the fifth edition of the Battlegrounds Mobile India Pro Series. The tournament begins with a 64-team Qualifiers Stage using a four-group promotion and relegation system, followed by Survival Stage, Semi Finals, Last Chance, and the Grand Finals at Jaipur Convention Center from June 19 to June 21, 2026.",
+    "BMPS 2026 is the fifth edition of the Battlegrounds Mobile India Pro Series. The tournament begins with a 64-team league phase using a four-group promotion and relegation system through Round 3. Round 4 then locks the groups and advances teams based on individual group standings into Grand Finals, Semi Finals, Survival Stage, or elimination before the Jaipur Grand Finals from June 19 to June 21, 2026.",
   calendar: [
     { week: "May 6 - May 9", label: "Round 1" },
     { week: "May 11 - May 14", label: "Round 2" },
@@ -555,50 +555,50 @@ const tournament = {
       status: "upcoming",
       teamCount: 64,
       mapRotation: [
-        { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
+        { match: 1, map: "Rondo", day1: "B", day2: "A", day3: "C", day4: "D" },
         {
           match: 2,
           map: "Erangel",
-          day1: "C",
-          day2: "B",
-          day3: "D",
-          day4: "A",
+          day1: "B",
+          day2: "A",
+          day3: "C",
+          day4: "D",
         },
         {
           match: 3,
           map: "Erangel",
-          day1: "C",
-          day2: "B",
-          day3: "D",
-          day4: "A",
+          day1: "B",
+          day2: "A",
+          day3: "C",
+          day4: "D",
         },
         {
           match: 4,
           map: "Erangel",
-          day1: "B",
-          day2: "C",
-          day3: "A",
-          day4: "D",
+          day1: "C",
+          day2: "D",
+          day3: "B",
+          day4: "A",
         },
         {
           match: 5,
           map: "Miramar",
-          day1: "B",
-          day2: "C",
-          day3: "A",
-          day4: "D",
+          day1: "C",
+          day2: "D",
+          day3: "B",
+          day4: "A",
         },
         {
           match: 6,
           map: "Miramar",
-          day1: "B",
-          day2: "C",
-          day3: "A",
-          day4: "D",
+          day1: "C",
+          day2: "D",
+          day3: "B",
+          day4: "A",
         },
       ],
       summary:
-        "May 28th - 31st, 2026. The final league round decides qualification. There is no reshuffling after Round 4. At the end of this round, the top 8 teams of Group A qualify for Grand Finals, the bottom 8 of Group A plus the top 8 of Group B advance to Semi Finals, the bottom 8 of Group B plus all 16 teams of Group C plus the top 8 of Group D move to Survival Stage, and the bottom 8 of Group D are eliminated.",
+        "May 28th - 31st, 2026. The final league round decides qualification and there is no promotion or relegation after this stage. Each group advances independently based on its own standings: Group A sends its top 8 teams to Grand Finals and its bottom 8 teams to Semi Finals, Group B sends its top 8 teams to Semi Finals and its bottom 8 teams to Survival Stage, Group C sends all 16 teams to Survival Stage, and Group D sends its top 8 teams to Survival Stage while its bottom 8 teams are eliminated.",
     },
     {
       name: "Survival Stage",
@@ -606,7 +606,7 @@ const tournament = {
       status: "upcoming",
       teamCount: 32,
       summary:
-        "June 2nd - 5th, 2026. 32 teams compete across 4 matchdays: 8 from Qualifiers Group B, 16 from Qualifiers Group C, and 8 from Qualifiers Group D. Teams are divided into 4 groups of 8, play a round-robin format for 12 matches each, and the top 8 overall advance to Semi Finals.",
+        "June 2nd - 5th, 2026. 32 teams compete across 4 matchdays: the bottom 8 teams from Round 4 Group B, all 16 teams from Round 4 Group C, and the top 8 teams from Round 4 Group D. Teams are divided into 4 groups of 8, play a round-robin format for 12 matches each, and the top 8 overall advance forward.",
     },
     {
       name: "Semi Finals",
@@ -614,7 +614,7 @@ const tournament = {
       status: "upcoming",
       teamCount: 24,
       summary:
-        "June 9th - 12th, 2026. 24 teams play across 4 matchdays: 8 from Qualifiers Group A, 8 from Qualifiers Group B, and 8 from Survival Stage. Teams are divided into 3 groups of 8, use a double round-robin format, and play 16 matches each. The top 6 reach Grand Finals, teams placed 7th-22nd move to Last Chance, and the bottom 2 are eliminated.",
+        "June 9th - 12th, 2026. 24 teams play across 4 matchdays: the bottom 8 teams from Round 4 Group A, the top 8 teams from Round 4 Group B, and the 8 teams advancing from Survival Stage. Teams are divided into 3 groups of 8, use a double round-robin format, and play 16 matches each. The top 6 reach Grand Finals, teams placed 7th-22nd move to Last Chance, and the bottom 2 are eliminated.",
     },
     {
       name: "Last Chance Stage",
@@ -630,7 +630,7 @@ const tournament = {
       status: "upcoming",
       teamCount: 16,
       summary:
-        "June 19th - 21st, 2026 at Jaipur Convention Center, Jaipur, India. 16 teams compete across 3 matchdays and 18 matches: 8 from Group A after Round 4, 6 from Semi Finals, and 2 from Last Chance Stage.",
+        "June 19th - 21st, 2026 at Jaipur Convention Center, Jaipur, India. 16 teams compete across 3 matchdays and 18 matches: 8 direct qualifiers from Round 4 Group A, 6 teams from Semi Finals, and 2 teams from Last Chance Stage.",
     },
   ],
 };

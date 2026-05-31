@@ -5,7 +5,7 @@ export default function LogoBlock({
   src = null,
   alt = "",
   sizeClass = "size-10",
-  roundedClass = "rounded-xl",
+  roundedClass = "rounded-md",
   paddingClass = "p-2",
   className = "",
   imgClassName = "",
@@ -18,7 +18,7 @@ export default function LogoBlock({
   if (shouldUseDarkSurface) {
     return (
       <div
-        className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-700/80 bg-[linear-gradient(180deg,_rgba(30,41,59,0.98),_rgba(15,23,42,0.98))] shadow-[0_8px_22px_rgba(2,6,23,0.28)] ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
+        className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
       >
         {src ? (
           <img
@@ -36,7 +36,7 @@ export default function LogoBlock({
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-[linear-gradient(180deg,_rgba(255,255,255,0.98),_rgba(241,245,249,0.94))] shadow-[0_4px_12px_rgba(15,23,42,0.06)] ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
     >
       {src ? (
         <img

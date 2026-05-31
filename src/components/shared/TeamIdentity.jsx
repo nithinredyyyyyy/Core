@@ -12,6 +12,7 @@ export default function TeamIdentity({
   glowed = false,
   plain = false,
   logoClassName,
+  logoBlockClassName = "",
   containerClassName = "",
   hideText = false,
   surfaceToneOverride = null,
@@ -36,19 +37,20 @@ export default function TeamIdentity({
             src={teamLogo}
             alt={`${name} logo`}
             sizeClass="size-9"
-            roundedClass="rounded-lg"
+            roundedClass="rounded-md"
             paddingClass="p-1.5"
             surfaceTone={logoSurfaceTone}
-            className="border-[#3a2e18] bg-[linear-gradient(180deg,_rgba(73,52,18,0.95),_rgba(28,21,12,0.98))] shadow-sm"
+            className={`border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white ${logoBlockClassName}`}
           />
         ) : contained ? (
           <LogoBlock
             src={teamLogo}
             alt={`${name} logo`}
-            sizeClass="size-10"
-            roundedClass="rounded-xl"
+            sizeClass={compact ? "size-9" : "size-10"}
+            roundedClass="rounded-md"
             paddingClass="p-1.5"
             surfaceTone={logoSurfaceTone}
+            className={logoBlockClassName}
           />
         ) : glowed ? (
           <div className="relative flex items-center justify-center rounded-2xl border border-[#3b3022] bg-[radial-gradient(circle_at_top,_rgba(255,201,107,0.22),_rgba(44,30,14,0.96)_58%,_rgba(18,12,8,0.98)_100%)] px-4 py-3 shadow-[0_12px_30px_rgba(255,184,77,0.2)]">
@@ -105,10 +107,11 @@ export default function TeamIdentity({
             src={teamLogo}
             alt={`${name} logo`}
             sizeClass={defaultBlockSize}
-            roundedClass="rounded-xl"
+            roundedClass="rounded-md"
             paddingClass="p-1.5"
             surfaceTone={logoSurfaceTone}
             imgClassName={logoClassName || ""}
+            className={logoBlockClassName}
           />
         )
       ) : null}

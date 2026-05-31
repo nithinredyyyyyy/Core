@@ -1,7 +1,9 @@
-﻿import React from "react";
-import { Award, Crosshair, Star, Target } from "lucide-react";
+import React from "react";
+import { Crosshair, Star, Target } from "lucide-react";
+import FanBadgeEmblem from "./FanBadgeEmblem";
 import FansPanel from "./FansPanel";
 import { BADGE_RULES, getBadgeForPoints, getNextBadge } from "./BadgeDisplay";
+import { normalizeBadgeName } from "@/lib/fanBadges";
 
 export default function FanProfileCard({
   profile,
@@ -11,7 +13,7 @@ export default function FanProfileCard({
 }) {
   const points = Number(profile?.total_points || 0);
   const nextBadge = getNextBadge(points);
-  const currentBadge = profile?.badge || getBadgeForPoints(0);
+  const currentBadge = normalizeBadgeName(profile?.badge || getBadgeForPoints(0));
   const currentBadgeMin =
     BADGE_RULES.find((rule) => rule.label === currentBadge)?.min || 0;
   const nextBadgeMin = nextBadge?.min || currentBadgeMin;
@@ -38,9 +40,8 @@ export default function FanProfileCard({
               Your profile updates automatically as predictions settle and
               community actions stack up.
             </p>
-            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
-              <Award className="size-3" />
-              {currentBadge}
+            <div className="mt-3">
+              <FanBadgeEmblem badge={currentBadge} compact />
             </div>
           </div>
         </div>

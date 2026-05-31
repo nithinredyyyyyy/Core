@@ -19,6 +19,7 @@ import {
   importNewsFromSources,
 } from "./newsIngest.js";
 import { NEWS_SOURCES } from "./newsSources.js";
+import { registerStreamExtractionRoutes } from "./streamExtraction.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -26,12 +27,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
 const indexHtmlPath = path.join(distDir, "index.html");
-const LOCAL_ADMIN_IPS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 const PUBLIC_WRITE_ENTITIES = new Set([
   "FanProfile",
   "FanPrediction",
   "FanPollVote",
   "FanChatMessage",
+  "FanFollowItem",
+  "SavedMatch",
+  "FantasySquad",
+  "FanCommentReaction",
+]);
+const PUBLIC_DELETE_ENTITIES = new Set([
+  "FanFollowItem",
+  "SavedMatch",
+  "FantasySquad",
+  "FanCommentReaction",
 ]);
 const ADMIN_WRITE_ENTITIES = new Set(
   Object.keys(entityConfigs).filter(
@@ -41,15 +51,28 @@ const ADMIN_WRITE_ENTITIES = new Set(
 const FAN_SESSION_SECRET = String(
   process.env.CORE_FAN_SESSION_SECRET || randomUUID(),
 );
+const AUTH_SESSION_SECRET = String(
+  process.env.CORE_AUTH_SESSION_SECRET || randomUUID(),
+);
+const GOOGLE_CLIENT_ID = String(
+  process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "",
+).trim();
+function splitTrimmedValues(rawValue) {
+  return String(rawValue || "")
+    .split(",")
+    .flatMap((value) => {
+      const normalized = value.trim();
+      return normalized ? [normalized] : [];
+    });
+}
+const ADMIN_EMAILS = new Set(
+  splitTrimmedValues(
+    process.env.CORE_ADMIN_EMAILS || "sathkrishna3@gmail.com",
+  ).map((value) => value.toLowerCase()),
+);
 const CONFIGURED_CORS_ORIGINS = [
-  ...String(process.env.FRONTEND_ORIGIN || "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean),
-  ...String(process.env.CORS_ORIGIN || "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean),
+  ...splitTrimmedValues(process.env.FRONTEND_ORIGIN || ""),
+  ...splitTrimmedValues(process.env.CORS_ORIGIN || ""),
 ];
 const ALLOWED_CORS_ORIGINS = new Set([
   "http://localhost:5173",
@@ -63,7 +86,9 @@ const ALLOWED_CORS_ORIGINS = new Set([
   ...CONFIGURED_CORS_ORIGINS,
 ]);
 
-backfillImportedNewsMetadata();
+if (process.env.CORE_BACKFILL_NEWS_ON_STARTUP === "1") {
+  backfillImportedNewsMetadata();
+}
 
 app.use(
   cors({
@@ -185,6 +210,36 @@ const ORDERABLE_COLUMNS = {
     "topic",
     "display_name",
     "tournament_name",
+  ]),
+  FanFollowItem: new Set([
+    "created_date",
+    "updated_date",
+    "target_type",
+    "target_label",
+    "display_name",
+  ]),
+  SavedMatch: new Set([
+    "created_date",
+    "updated_date",
+    "match_id",
+    "display_name",
+  ]),
+  FantasySquad: new Set([
+    "created_date",
+    "updated_date",
+    "week_label",
+    "tournament_name",
+    "total_points",
+    "status",
+    "display_name",
+  ]),
+  FanCommentReaction: new Set([
+    "created_date",
+    "updated_date",
+    "comment_id",
+    "reaction",
+    "vote_value",
+    "display_name",
   ]),
   TeamAlias: new Set([
     "created_date",
@@ -348,8 +403,10 @@ const createSchemas = {
   NewsArticle: z.object({
     title: stringField(),
     summary: z.string().optional(),
+    ai_summary: z.string().optional(),
     content: stringField(),
     category: z.string().optional(),
+    tags: z.array(z.string()).optional(),
     thumbnail_url: z.string().optional(),
     featured: z.number().int().min(0).max(1).optional(),
     game: z.string().optional(),
@@ -377,9 +434,14 @@ const createSchemas = {
     user_id: stringField(),
     display_name: stringField(),
     favorite_team: z.string().optional(),
+    profile_image: z.string().max(750000).optional(),
     total_points: intField().optional(),
+    xp_points: intField().optional(),
+    login_streak: intField().optional(),
     accuracy_percent: numberField().optional(),
     badge: z.string().optional(),
+    rank_badge: z.string().optional(),
+    badge_inventory: z.array(z.string()).optional(),
     predictions_count: intField().optional(),
     correct_predictions: intField().optional(),
     created_by: z.string().optional(),
@@ -412,6 +474,42 @@ const createSchemas = {
     tournament_name: z.string().optional(),
     topic: z.string().optional(),
     body: stringField(),
+    created_by: z.string().optional(),
+  }),
+  FanFollowItem: z.object({
+    user_id: stringField(),
+    display_name: stringField(),
+    target_type: stringField(),
+    target_id: z.string().optional(),
+    target_label: stringField(),
+    created_by: z.string().optional(),
+  }),
+  SavedMatch: z.object({
+    user_id: stringField(),
+    display_name: stringField(),
+    match_id: stringField(),
+    note: z.string().optional(),
+    created_by: z.string().optional(),
+  }),
+  FantasySquad: z.object({
+    user_id: stringField(),
+    display_name: stringField(),
+    tournament_id: z.string().optional(),
+    tournament_name: z.string().optional(),
+    week_label: z.string().optional(),
+    picks: z.array(z.any()).optional(),
+    captain_player_id: z.string().optional(),
+    captain_name: z.string().optional(),
+    total_points: intField().optional(),
+    status: z.string().optional(),
+    created_by: z.string().optional(),
+  }),
+  FanCommentReaction: z.object({
+    user_id: stringField(),
+    display_name: stringField(),
+    comment_id: stringField(),
+    reaction: z.string().optional(),
+    vote_value: intField().optional(),
     created_by: z.string().optional(),
   }),
   TeamAlias: z.object({
@@ -532,9 +630,7 @@ function applyListQuery(entityName, config, query = {}, options = {}) {
       throw new Error(`Unsupported filter key: ${key}`);
     }
     whereClauses.push(`${key} = ?`);
-    params.push(
-      config.jsonFields.includes(key) ? JSON.stringify(value) : value,
-    );
+    params.push(serializeFilterValue(config, key, value));
   }
 
   const maxListLimit = entityName === "MatchResult" ? 5000 : 500;
@@ -653,6 +749,12 @@ function signFanSessionPayload(encodedPayload) {
     .digest("base64url");
 }
 
+function signAuthSessionPayload(encodedPayload) {
+  return createHmac("sha256", AUTH_SESSION_SECRET)
+    .update(String(encodedPayload))
+    .digest("base64url");
+}
+
 function createFanSession(displayName, preferredUserId) {
   const safeName =
     String(displayName || "").trim() ||
@@ -668,6 +770,30 @@ function createFanSession(displayName, preferredUserId) {
   return {
     userId: payload.userId,
     displayName: payload.displayName,
+    token: `${encodedPayload}.${signature}`,
+  };
+}
+
+function createAuthSession(user) {
+  const payload = {
+    userId: String(user?.id || "").trim() || `user-${randomUUID()}`,
+    email: String(user?.email || "").trim(),
+    fullName: String(user?.full_name || user?.displayName || "").trim(),
+    role: String(user?.role || "fan").trim() || "fan",
+    authMethod: String(user?.auth_method || "custom").trim() || "custom",
+    issuedAt: new Date().toISOString(),
+  };
+  const encodedPayload = encodeTokenSegment(JSON.stringify(payload));
+  const signature = signAuthSessionPayload(encodedPayload);
+
+  return {
+    user: {
+      id: payload.userId,
+      email: payload.email,
+      full_name: payload.fullName,
+      role: payload.role,
+      auth_method: payload.authMethod,
+    },
     token: `${encodedPayload}.${signature}`,
   };
 }
@@ -708,12 +834,49 @@ function resolveFanSession(req) {
   }
 }
 
-function getDirectRequestIp(req) {
-  return String(req.socket?.remoteAddress || req.ip || "").trim();
+function resolveAppAuthSession(req) {
+  const rawToken = String(req.headers["x-stagecore-auth-token"] || "").trim();
+  if (!rawToken) return null;
+
+  const [encodedPayload, providedSignature] = rawToken.split(".");
+  if (!encodedPayload || !providedSignature) return null;
+
+  const expectedSignature = signAuthSessionPayload(encodedPayload);
+  const providedBuffer = Buffer.from(providedSignature, "utf8");
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return null;
+  }
+
+  if (!timingSafeEqual(providedBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(decodeTokenSegment(encodedPayload));
+    if (!payload?.userId) {
+      return null;
+    }
+
+    return {
+      token: rawToken,
+      user: {
+        id: String(payload.userId),
+        email: String(payload.email || ""),
+        full_name: String(payload.fullName || ""),
+        role: String(payload.role || "fan"),
+        auth_method: String(payload.authMethod || "custom"),
+      },
+      issuedAt: payload.issuedAt || null,
+    };
+  } catch {
+    return null;
+  }
 }
 
-function isLocalAdminRequest(req) {
-  return LOCAL_ADMIN_IPS.has(getDirectRequestIp(req));
+function getDirectRequestIp(req) {
+  return String(req.socket?.remoteAddress || req.ip || "").trim();
 }
 
 function resolveRequestAuth(req) {
@@ -724,18 +887,25 @@ function resolveRequestAuth(req) {
     providedAdminKey &&
     configuredAdminKey === providedAdminKey,
   );
-  const authenticatedLocally = isLocalAdminRequest(req);
 
-  if (authenticatedLocally || authenticatedByKey) {
+  if (authenticatedByKey) {
     return {
       isAuthenticated: true,
       user: {
-        id: authenticatedLocally ? "local-admin" : "token-admin",
-        email: authenticatedLocally ? "admin@core.local" : "admin@core.remote",
-        full_name: authenticatedLocally ? "Local Admin" : "Remote Admin",
+        id: "token-admin",
+        email: "admin@core.remote",
+        full_name: "Remote Admin",
         role: "admin",
-        auth_method: authenticatedLocally ? "local_machine" : "admin_key",
+        auth_method: "admin_key",
       },
+    };
+  }
+
+  const appSession = resolveAppAuthSession(req);
+  if (appSession?.user) {
+    return {
+      isAuthenticated: true,
+      user: appSession.user,
     };
   }
 
@@ -743,6 +913,30 @@ function resolveRequestAuth(req) {
     isAuthenticated: false,
     user: null,
   };
+}
+
+function isConfiguredAdminEmail(email) {
+  return ADMIN_EMAILS.has(String(email || "").trim().toLowerCase());
+}
+
+function requireAdminAccess(req, res) {
+  const auth = resolveRequestAuth(req);
+  if (!auth.isAuthenticated) {
+    res.status(401).json({
+      error: "Not authenticated",
+      code: "auth_required",
+    });
+    return false;
+  }
+  if (auth.user?.role !== "admin") {
+    res.status(403).json({
+      error: "Admin permission required",
+      code: "admin_required",
+    });
+    return false;
+  }
+  req.coreAuth = auth;
+  return true;
 }
 
 function ensureEntityWriteAccess(req, res, entityName) {
@@ -829,14 +1023,22 @@ function buildAcronym(value) {
   const parts = String(value || "")
     .replace(/[:()/.-]/g, " ")
     .split(/\s+/)
-    .filter(Boolean);
-  const letters = parts
-    .filter((part) => !/^\d+$/.test(part))
-    .map((part) => part[0]?.toUpperCase())
-    .filter(Boolean)
-    .join("");
+    .flatMap((part) => {
+      const normalized = part.trim();
+      return normalized ? [normalized] : [];
+    });
+  const letters = parts.reduce((result, part) => {
+    if (/^\d+$/.test(part)) return result;
+    const initial = part[0]?.toUpperCase();
+    return initial ? `${result}${initial}` : result;
+  }, "");
   const year = parts.find((part) => /^\d{4}$/.test(part));
   return year ? `${letters} ${year}` : letters;
+}
+
+function serializeFilterValue(config, key, value) {
+  const jsonFieldSet = new Set(config.jsonFields);
+  return jsonFieldSet.has(key) ? JSON.stringify(value) : value;
 }
 
 function getTournamentSearchAliases(tournament) {
@@ -1101,6 +1303,11 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     .slice(0, limit)
     .map(({ score, ...result }) => result);
 }
+
+registerStreamExtractionRoutes({
+  app,
+  requireAdmin: requireAdminAccess,
+});
 
 function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
   if (!stages.length) return [];
@@ -1460,7 +1667,25 @@ function getBmps2026NextStageName(stageName) {
     .toLowerCase();
   if (normalized === "round 1") return "Round 2";
   if (normalized === "round 2") return "Round 3";
-  if (normalized === "round 3") return "Survival Stage";
+  if (normalized === "round 3") return "Round 4";
+  return null;
+}
+
+function getBmps2026StageDestination({ stageName, group, placement }) {
+  const normalizedStage = String(stageName || "")
+    .trim()
+    .toLowerCase();
+  const normalizedGroup = String(group || "")
+    .trim()
+    .toUpperCase();
+
+  if (normalizedStage === "round 4") {
+    if (normalizedGroup === "A") return placement <= 8 ? "Grand Finals" : "Semi Finals";
+    if (normalizedGroup === "B") return placement <= 8 ? "Semi Finals" : "Survival Stage";
+    if (normalizedGroup === "C") return "Survival Stage";
+    if (normalizedGroup === "D") return placement <= 8 ? "Survival Stage" : null;
+  }
+
   return null;
 }
 
@@ -1513,7 +1738,9 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
 
   for (const stage of normalizedTournament?.stages || []) {
     const nextStageName = getBmps2026NextStageName(stage?.name);
-    if (!isBmps2026PromotionStage(stage?.name) || !nextStageName) continue;
+    const isRound4 = String(stage?.name || "").trim().toLowerCase() === "round 4";
+    if (!isBmps2026PromotionStage(stage?.name) && !isRound4) continue;
+    if (!isRound4 && !nextStageName) continue;
 
     const rowsByGroup = new Map();
     const groupedStandings = stage?.standings?.by_group || {};
@@ -1529,7 +1756,7 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
     });
 
     for (const [group, rows] of rowsByGroup.entries()) {
-      const orderedRows = [...rows].sort((left, right) => {
+      const orderedRows = rows.toSorted((left, right) => {
         if ((right.total_points || 0) !== (left.total_points || 0)) {
           return (right.total_points || 0) - (left.total_points || 0);
         }
@@ -1546,12 +1773,20 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
 
       orderedRows.forEach((row, index) => {
         const teamName = row?.team?.name || "Unknown Team";
-        const destinationGroup = getBmps2026MovementGroup(
-          group,
-          index + 1,
-          orderedRows.length,
-        );
-        const phase = `${nextStageName} - Group ${destinationGroup}`;
+        const destinationStage = isRound4
+          ? getBmps2026StageDestination({
+              stageName: stage?.name,
+              group,
+              placement: index + 1,
+            })
+          : nextStageName;
+        if (!destinationStage) return;
+        const destinationGroup = isRound4
+          ? null
+          : getBmps2026MovementGroup(group, index + 1, orderedRows.length);
+        const phase = destinationGroup
+          ? `${destinationStage} - Group ${destinationGroup}`
+          : destinationStage;
         const phaseKey = `${normalizeOrganizationName(teamName)}::${phase.toLowerCase()}`;
         if (knownPhaseKeys.has(phaseKey)) return;
         knownPhaseKeys.add(phaseKey);
@@ -1683,9 +1918,10 @@ app.get("/api/admin/overview", (req, res) => {
   ).length;
 
   const teamKeys = new Set(
-    teams
-      .map((team) => normalizeOrganizationName(team?.name || ""))
-      .filter(Boolean),
+    teams.flatMap((team) => {
+      const normalized = normalizeOrganizationName(team?.name || "");
+      return normalized ? [normalized] : [];
+    }),
   );
   const participantNames = new Set();
   let unresolvedParticipantCount = 0;
@@ -1746,6 +1982,71 @@ app.get("/api/auth/me", (req, res) => {
     return res.status(401).json({ error: "Not authenticated" });
   }
   return res.json(auth.user);
+});
+
+app.post("/api/auth/google", async (req, res) => {
+  const payloadSchema = z.object({
+    credential: z.string().min(1),
+  });
+
+  try {
+    const payload = payloadSchema.parse(req.body || {});
+
+    if (!GOOGLE_CLIENT_ID) {
+      return res.status(500).json({
+        error: "Google sign-in is not configured",
+        code: "google_signin_not_configured",
+      });
+    }
+
+    const verifyResponse = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(payload.credential)}`,
+    );
+
+    if (!verifyResponse.ok) {
+      return res.status(401).json({
+        error: "Invalid Google credential",
+        code: "google_signin_invalid_token",
+      });
+    }
+
+    const googleProfile = await verifyResponse.json();
+    if (
+      String(googleProfile?.aud || "").trim() !== GOOGLE_CLIENT_ID ||
+      String(googleProfile?.email_verified || "").toLowerCase() !== "true"
+    ) {
+      return res.status(401).json({
+        error: "Google credential could not be verified",
+        code: "google_signin_verification_failed",
+      });
+    }
+
+    const session = createAuthSession({
+      id: `google:${String(googleProfile.sub || "").trim()}`,
+      email: googleProfile.email,
+      full_name:
+        googleProfile.name ||
+        googleProfile.given_name ||
+        String(googleProfile.email || "").split("@")[0] ||
+        "StageCore User",
+      role: isConfiguredAdminEmail(googleProfile.email) ? "admin" : "fan",
+      auth_method: "google",
+    });
+
+    return res.status(201).json(session);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: "Invalid Google sign-in payload",
+        issues: error.issues,
+      });
+    }
+
+    return res.status(500).json({
+      error: error?.message || "Google sign-in failed",
+      code: "google_signin_failed",
+    });
+  }
 });
 
 app.post("/api/fan/session", (req, res) => {
@@ -2016,10 +2317,17 @@ app.delete("/api/entities/:entity/:id", (req, res) => {
     return;
   }
   if (PUBLIC_WRITE_ENTITIES.has(req.params.entity)) {
-    return res.status(405).json({
-      error: "Fan activity cannot be deleted from the client",
-      code: "fan_delete_not_allowed",
-    });
+    if (!PUBLIC_DELETE_ENTITIES.has(req.params.entity)) {
+      return res.status(405).json({
+        error: "Fan activity cannot be deleted from the client",
+        code: "fan_delete_not_allowed",
+      });
+    }
+    if (
+      !ensurePublicRecordOwnership(req, res, req.params.entity, req.params.id)
+    ) {
+      return;
+    }
   }
   const ok = deleteRecord(req.params.entity, req.params.id);
   return res.json({ ok });
@@ -2040,6 +2348,12 @@ app.use((req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   console.error(error);
+  if (error instanceof z.ZodError) {
+    return res.status(400).json({
+      error: "Invalid payload",
+      issues: error.issues,
+    });
+  }
   return res.status(500).json({ error: "Internal server error" });
 });
 

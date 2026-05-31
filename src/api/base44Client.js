@@ -10,6 +10,10 @@ const ENTITY_NAMES = [
   "FanPrediction",
   "FanPollVote",
   "FanChatMessage",
+  "FanFollowItem",
+  "SavedMatch",
+  "FantasySquad",
+  "FanCommentReaction",
   "TeamAlias",
   "PlayerAlias",
   "PlayerTeamHistory",
@@ -39,6 +43,15 @@ const FILE_PROTOCOL_API_BASE_URL = "http://127.0.0.1:4000";
 const FAN_USER_ID_KEY = "stagecore_fan_user_id";
 const FAN_USER_NAME_KEY = "stagecore_fan_user_name";
 const FAN_TOKEN_KEY = "stagecore_fan_token";
+const AUTH_USER_ID_KEY = "stagecore_auth_user_id";
+const AUTH_USER_EMAIL_KEY = "stagecore_auth_user_email";
+const AUTH_USER_NAME_KEY = "stagecore_auth_user_name";
+const AUTH_USER_ROLE_KEY = "stagecore_auth_user_role";
+const AUTH_USER_METHOD_KEY = "stagecore_auth_user_method";
+const AUTH_TOKEN_KEY = "stagecore_auth_token";
+const GOOGLE_CLIENT_ID = String(
+  SAFE_IMPORT_META_ENV.VITE_GOOGLE_CLIENT_ID || "",
+).trim();
 
 function parseMaybeJson(value) {
   if (typeof value !== "string") return value;
@@ -51,11 +64,26 @@ function parseMaybeJson(value) {
 
 function normalizeEntityRecord(entityName, record) {
   if (!record || typeof record !== "object") return record;
+  if (entityName === "NewsArticle") {
+    return {
+      ...record,
+      tags: parseMaybeJson(record.tags) || [],
+    };
+  }
   if (entityName === "TransferWindow") {
     return { ...record, players: parseMaybeJson(record.players) || [] };
   }
+  if (entityName === "FanProfile") {
+    return {
+      ...record,
+      badge_inventory: parseMaybeJson(record.badge_inventory) || [],
+    };
+  }
   if (entityName === "FanPrediction") {
     return { ...record, top_three: parseMaybeJson(record.top_three) || [] };
+  }
+  if (entityName === "FantasySquad") {
+    return { ...record, picks: parseMaybeJson(record.picks) || [] };
   }
   if (entityName === "TournamentStage") {
     return {
@@ -104,6 +132,42 @@ function getStoredFanSession() {
   }
 }
 
+function getStoredAuthSession() {
+  if (typeof window === "undefined") {
+    return {
+      user: null,
+      token: "",
+    };
+  }
+
+  try {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+    const id = window.localStorage.getItem(AUTH_USER_ID_KEY) || "";
+    const email = window.localStorage.getItem(AUTH_USER_EMAIL_KEY) || "";
+    const fullName = window.localStorage.getItem(AUTH_USER_NAME_KEY) || "";
+    const role = window.localStorage.getItem(AUTH_USER_ROLE_KEY) || "";
+    const authMethod = window.localStorage.getItem(AUTH_USER_METHOD_KEY) || "";
+
+    return {
+      token,
+      user: token
+        ? {
+            id,
+            email,
+            full_name: fullName,
+            role,
+            auth_method: authMethod,
+          }
+        : null,
+    };
+  } catch {
+    return {
+      user: null,
+      token: "",
+    };
+  }
+}
+
 function clearStoredFanSession() {
   if (typeof window === "undefined") {
     return { userId: "", displayName: "", token: "" };
@@ -123,6 +187,25 @@ function clearStoredFanSession() {
   };
 }
 
+function clearStoredAuthSession() {
+  if (typeof window === "undefined") {
+    return { user: null, token: "" };
+  }
+
+  try {
+    window.localStorage.removeItem(AUTH_USER_ID_KEY);
+    window.localStorage.removeItem(AUTH_USER_EMAIL_KEY);
+    window.localStorage.removeItem(AUTH_USER_NAME_KEY);
+    window.localStorage.removeItem(AUTH_USER_ROLE_KEY);
+    window.localStorage.removeItem(AUTH_USER_METHOD_KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // Ignore localStorage cleanup errors.
+  }
+
+  return { user: null, token: "" };
+}
+
 function persistFanSession(session) {
   if (typeof window === "undefined") return session;
 
@@ -130,6 +213,29 @@ function persistFanSession(session) {
     window.localStorage.setItem(FAN_USER_ID_KEY, session.userId || "");
     window.localStorage.setItem(FAN_USER_NAME_KEY, session.displayName || "");
     window.localStorage.setItem(FAN_TOKEN_KEY, session.token || "");
+  } catch {
+    // Ignore localStorage write errors and still return the in-memory session.
+  }
+
+  return session;
+}
+
+function persistAuthSession(session) {
+  if (typeof window === "undefined") return session;
+
+  try {
+    window.localStorage.setItem(AUTH_TOKEN_KEY, session?.token || "");
+    window.localStorage.setItem(AUTH_USER_ID_KEY, session?.user?.id || "");
+    window.localStorage.setItem(AUTH_USER_EMAIL_KEY, session?.user?.email || "");
+    window.localStorage.setItem(
+      AUTH_USER_NAME_KEY,
+      session?.user?.full_name || "",
+    );
+    window.localStorage.setItem(AUTH_USER_ROLE_KEY, session?.user?.role || "");
+    window.localStorage.setItem(
+      AUTH_USER_METHOD_KEY,
+      session?.user?.auth_method || "",
+    );
   } catch {
     // Ignore localStorage write errors and still return the in-memory session.
   }
@@ -183,11 +289,15 @@ async function request(path, options = {}) {
   } = options;
   const adminKey = getStoredAdminKey();
   const fanSession = getStoredFanSession();
+  const authSession = getStoredAuthSession();
 
   const response = await fetch(buildApiUrl(path), {
     headers: {
       "Content-Type": "application/json",
       ...(adminKey ? { "X-Core-Admin-Key": adminKey } : {}),
+      ...(authSession.token
+        ? { "X-StageCore-Auth-Token": authSession.token }
+        : {}),
       ...(fanSession.token
         ? { "X-StageCore-Fan-Token": fanSession.token }
         : {}),
@@ -332,6 +442,20 @@ export const base44 = {
       });
     },
   },
+  retention: {
+    follow(type, targetId, targetLabel, session) {
+      return request("/api/entities/FanFollowItem", {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: session.userId,
+          display_name: session.displayName,
+          target_type: type,
+          target_id: targetId,
+          target_label: targetLabel,
+        }),
+      }).then((payload) => normalizeEntityResponse("FanFollowItem", payload));
+    },
+  },
   search: {
     global(query, limit = 10) {
       return request(`/api/search${toQueryString({ q: query, limit })}`);
@@ -342,13 +466,68 @@ export const base44 = {
       return request(`/api/tournaments/${id}/normalized`);
     },
   },
+  streamExtraction: {
+    health() {
+      return request("/api/stream-extraction/health");
+    },
+    listSessions(status) {
+      return request(
+        `/api/stream-extraction/sessions${toQueryString({ status })}`,
+      );
+    },
+    createSession(payload) {
+      return request("/api/stream-extraction/sessions", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+    updateSession(id, payload) {
+      return request(`/api/stream-extraction/sessions/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+    },
+    runWorkerOnce() {
+      return request("/api/stream-extraction/worker/run-once", {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+    },
+    listFrameJobs(sessionId) {
+      return request(`/api/stream-extraction/sessions/${sessionId}/frame-jobs`);
+    },
+    listOcrResults(sessionId) {
+      return request(`/api/stream-extraction/sessions/${sessionId}/results`);
+    },
+    listMatchStats(sessionId, matchKey) {
+      return request(
+        `/api/stream-extraction/sessions/${sessionId}/match-stats${toQueryString({ match_key: matchKey })}`,
+      );
+    },
+    aggregateMatchStats(payload) {
+      return request("/api/stream-extraction/match-stats/aggregate", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+  },
   auth: {
+    getStoredSession() {
+      return getStoredAuthSession();
+    },
+    clearSession() {
+      return clearStoredAuthSession();
+    },
     async me() {
       const adminKey = getStoredAdminKey();
+      const authSession = getStoredAuthSession();
       const response = await fetch(buildApiUrl("/api/auth/me"), {
         headers: {
           "Content-Type": "application/json",
           ...(adminKey ? { "X-Core-Admin-Key": adminKey } : {}),
+          ...(authSession.token
+            ? { "X-StageCore-Auth-Token": authSession.token }
+            : {}),
         },
       });
 
@@ -363,7 +542,16 @@ export const base44 = {
 
       return response.json();
     },
-    logout() {},
+    async signInWithGoogle(credential) {
+      const session = await request("/api/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ credential }),
+      });
+      return persistAuthSession(session);
+    },
+    logout() {
+      clearStoredAuthSession();
+    },
     redirectToLogin() {},
   },
   fan: {
@@ -373,11 +561,15 @@ export const base44 = {
     clearSession() {
       return clearStoredFanSession();
     },
-    async createSession(displayName) {
+    async createSession(displayName, preferredUserId) {
       const existing = getStoredFanSession();
       const payload = {
         ...(displayName ? { display_name: displayName } : {}),
-        ...(existing.userId ? { user_id: existing.userId } : {}),
+        ...(preferredUserId
+          ? { user_id: preferredUserId }
+          : existing.userId
+            ? { user_id: existing.userId }
+            : {}),
       };
       const session = await request("/api/fan/session", {
         method: "POST",
@@ -394,3 +586,5 @@ export const base44 = {
     },
   },
 };
+
+export { GOOGLE_CLIENT_ID };

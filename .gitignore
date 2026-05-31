@@ -39,3 +39,7 @@ dist-ssr
 # Local temp/debug payloads
 tmp/
 tmp-*.json
+auth
+auth-wal
+*.sql
+topbar-tail.txt

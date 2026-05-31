@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import Database from "libsql";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -9,12 +9,22 @@ const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "data");
 const migrationDir = path.join(__dirname, "db", "migrations");
 const dbPath = path.join(dataDir, "stagecore.sqlite");
+const tursoUrl = String(process.env.TURSO_DATABASE_URL || "").trim();
+const tursoAuthToken = String(process.env.TURSO_AUTH_TOKEN || "").trim();
+const isRemoteLibsql = Boolean(tursoUrl);
 
-fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(migrationDir, { recursive: true });
+if (!isRemoteLibsql) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
-export const db = new Database(dbPath);
-db.pragma("journal_mode = WAL");
+export const db = isRemoteLibsql
+  ? new Database(tursoUrl, tursoAuthToken ? { authToken: tursoAuthToken } : {})
+  : new Database(dbPath);
+
+if (!isRemoteLibsql) {
+  db.pragma("journal_mode = WAL");
+}
 
 const tableDefinitions = [
   `CREATE TABLE IF NOT EXISTS tournaments (
@@ -105,8 +115,10 @@ const tableDefinitions = [
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     summary TEXT,
+    ai_summary TEXT,
     content TEXT NOT NULL,
     category TEXT DEFAULT 'general',
+    tags TEXT,
     thumbnail_url TEXT,
     featured INTEGER DEFAULT 0,
     game TEXT DEFAULT 'General',
@@ -140,8 +152,13 @@ const tableDefinitions = [
     display_name TEXT NOT NULL,
     favorite_team TEXT,
     total_points INTEGER DEFAULT 0,
+    xp_points INTEGER DEFAULT 0,
+    login_streak INTEGER DEFAULT 0,
     accuracy_percent REAL DEFAULT 0,
     badge TEXT DEFAULT 'Bronze',
+    rank_badge TEXT DEFAULT 'Bronze',
+    badge_inventory TEXT,
+    profile_image TEXT,
     predictions_count INTEGER DEFAULT 0,
     correct_predictions INTEGER DEFAULT 0,
     created_date TEXT NOT NULL,
@@ -183,6 +200,54 @@ const tableDefinitions = [
     tournament_name TEXT,
     topic TEXT,
     body TEXT NOT NULL,
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS fan_follow_items (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    target_id TEXT,
+    target_label TEXT NOT NULL,
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS saved_matches (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    match_id TEXT NOT NULL,
+    note TEXT,
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS fantasy_squads (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    tournament_id TEXT,
+    tournament_name TEXT,
+    week_label TEXT,
+    picks TEXT,
+    captain_player_id TEXT,
+    captain_name TEXT,
+    total_points INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS fan_comment_reactions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    comment_id TEXT NOT NULL,
+    reaction TEXT,
+    vote_value INTEGER DEFAULT 0,
     created_date TEXT NOT NULL,
     updated_date TEXT NOT NULL,
     created_by TEXT
@@ -246,7 +311,12 @@ ensureColumn("matches", "group_name", "TEXT");
 ensureColumn("match_results", "matches_count", "INTEGER DEFAULT 1");
 ensureColumn("match_results", "wins_count", "INTEGER DEFAULT 0");
 ensureColumn("fan_profiles", "favorite_team", "TEXT");
+ensureColumn("fan_profiles", "xp_points", "INTEGER DEFAULT 0");
+ensureColumn("fan_profiles", "login_streak", "INTEGER DEFAULT 0");
 ensureColumn("fan_profiles", "badge", "TEXT DEFAULT 'Bronze'");
+ensureColumn("fan_profiles", "rank_badge", "TEXT DEFAULT 'Bronze'");
+ensureColumn("fan_profiles", "badge_inventory", "TEXT");
+ensureColumn("fan_profiles", "profile_image", "TEXT");
 ensureColumn("fan_profiles", "predictions_count", "INTEGER DEFAULT 0");
 ensureColumn("fan_profiles", "correct_predictions", "INTEGER DEFAULT 0");
 ensureColumn("fan_predictions", "top_three", "TEXT");
@@ -254,6 +324,8 @@ ensureColumn("fan_predictions", "status", "TEXT DEFAULT 'pending'");
 ensureColumn("fan_predictions", "awarded_points", "INTEGER DEFAULT 0");
 ensureColumn("news_articles", "source_name", "TEXT");
 ensureColumn("news_articles", "summary", "TEXT");
+ensureColumn("news_articles", "ai_summary", "TEXT");
+ensureColumn("news_articles", "tags", "TEXT");
 ensureColumn("news_articles", "source_url", "TEXT");
 ensureColumn("news_articles", "source_type", "TEXT DEFAULT 'manual'");
 ensureColumn("news_articles", "verification_status", "TEXT DEFAULT 'verified'");
@@ -268,6 +340,13 @@ db.exec(`
       publication_status = COALESCE(NULLIF(publication_status, ''), 'published'),
       priority = COALESCE(NULLIF(priority, ''), 'routine'),
       is_auto_ingested = COALESCE(is_auto_ingested, 0)
+`);
+db.exec(`
+  UPDATE fan_profiles
+  SET badge_inventory = COALESCE(badge_inventory, '[]'),
+      rank_badge = COALESCE(NULLIF(rank_badge, ''), badge, 'Bronze'),
+      xp_points = COALESCE(xp_points, total_points, 0),
+      login_streak = COALESCE(login_streak, 0)
 `);
 
 const parseJsonField = (value, fallback = []) => {
@@ -771,7 +850,7 @@ function backfillNormalizedData() {
         });
 
         [...groupNames]
-          .sort((a, b) => a.localeCompare(b))
+          .toSorted((a, b) => a.localeCompare(b))
           .forEach((groupName, groupIndex) => {
             const groupId = randomUUID();
             insertGroup.run(
@@ -1025,7 +1104,9 @@ function backfillNormalizedData() {
   transaction();
 }
 
-backfillNormalizedData();
+if (process.env.CORE_BACKFILL_NORMALIZED_ON_STARTUP === "1") {
+  backfillNormalizedData();
+}
 
 export const entityConfigs = {
   Tournament: {
@@ -1129,8 +1210,10 @@ export const entityConfigs = {
     fields: [
       "title",
       "summary",
+      "ai_summary",
       "content",
       "category",
+      "tags",
       "thumbnail_url",
       "featured",
       "game",
@@ -1145,7 +1228,7 @@ export const entityConfigs = {
       "created_date",
       "created_by",
     ],
-    jsonFields: [],
+    jsonFields: ["tags"],
   },
   TransferWindow: {
     table: "transfer_windows",
@@ -1167,13 +1250,18 @@ export const entityConfigs = {
       "display_name",
       "favorite_team",
       "total_points",
+      "xp_points",
+      "login_streak",
       "accuracy_percent",
       "badge",
+      "rank_badge",
+      "badge_inventory",
+      "profile_image",
       "predictions_count",
       "correct_predictions",
       "created_by",
     ],
-    jsonFields: [],
+    jsonFields: ["badge_inventory"],
   },
   FanPrediction: {
     table: "fan_predictions",
@@ -1207,6 +1295,52 @@ export const entityConfigs = {
       "tournament_name",
       "topic",
       "body",
+      "created_by",
+    ],
+    jsonFields: [],
+  },
+  FanFollowItem: {
+    table: "fan_follow_items",
+    fields: [
+      "user_id",
+      "display_name",
+      "target_type",
+      "target_id",
+      "target_label",
+      "created_by",
+    ],
+    jsonFields: [],
+  },
+  SavedMatch: {
+    table: "saved_matches",
+    fields: ["user_id", "display_name", "match_id", "note", "created_by"],
+    jsonFields: [],
+  },
+  FantasySquad: {
+    table: "fantasy_squads",
+    fields: [
+      "user_id",
+      "display_name",
+      "tournament_id",
+      "tournament_name",
+      "week_label",
+      "picks",
+      "captain_player_id",
+      "captain_name",
+      "total_points",
+      "status",
+      "created_by",
+    ],
+    jsonFields: ["picks"],
+  },
+  FanCommentReaction: {
+    table: "fan_comment_reactions",
+    fields: [
+      "user_id",
+      "display_name",
+      "comment_id",
+      "reaction",
+      "vote_value",
       "created_by",
     ],
     jsonFields: [],
@@ -1335,10 +1469,11 @@ export function normalizeRecord(config, row) {
 
 export function serializePayload(config, payload) {
   const serialized = {};
+  const jsonFieldSet = new Set(config.jsonFields);
   for (const field of config.fields) {
     if (Object.prototype.hasOwnProperty.call(payload, field)) {
       const value = payload[field];
-      serialized[field] = config.jsonFields.includes(field)
+      serialized[field] = jsonFieldSet.has(field)
         ? JSON.stringify(value ?? [])
         : value;
     }

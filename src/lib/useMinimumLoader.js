@@ -1,45 +1,89 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 
 export function useMinimumLoader(
   isLoading,
   minDuration = 1800,
   exitDuration = 700,
 ) {
-  const [showLoader, setShowLoader] = useState(isLoading);
-  const [isExiting, setIsExiting] = useState(false);
-  const loadStartRef = useRef(null);
+  const [, forceRender] = useReducer((count) => count + 1, 0);
+  const previousLoadingRef = useRef(isLoading);
+  const loadStartRef = useRef(isLoading ? Date.now() : null);
+  const exitStartRef = useRef(null);
+  const exitEndRef = useRef(null);
 
-  useEffect(() => {
-    let holdTimeoutId;
-    let exitTimeoutId;
+  if (previousLoadingRef.current !== isLoading) {
+    const now = Date.now();
+    previousLoadingRef.current = isLoading;
 
     if (isLoading) {
-      if (!loadStartRef.current) {
-        loadStartRef.current = Date.now();
-      }
-      setIsExiting(false);
-      setShowLoader(true);
+      loadStartRef.current = now;
+      exitStartRef.current = null;
+      exitEndRef.current = null;
+    } else if (loadStartRef.current) {
+      const holdUntil = loadStartRef.current + minDuration;
+      exitStartRef.current = holdUntil;
+      exitEndRef.current = holdUntil + exitDuration;
     } else {
-      const startedAt = loadStartRef.current;
-      const elapsed = startedAt ? Date.now() - startedAt : minDuration;
-      const remaining = Math.max(minDuration - elapsed, 0);
+      exitStartRef.current = null;
+      exitEndRef.current = null;
+    }
+  }
 
-      holdTimeoutId = window.setTimeout(() => {
-        setIsExiting(true);
+  useEffect(() => {
+    const timeoutIds = [];
 
-        exitTimeoutId = window.setTimeout(() => {
-          setShowLoader(false);
-          setIsExiting(false);
-          loadStartRef.current = null;
-        }, exitDuration);
-      }, remaining);
+    if (!isLoading) {
+      const now = Date.now();
+      const exitStartAt = exitStartRef.current;
+      const exitEndAt = exitEndRef.current;
+
+      if (exitStartAt && exitStartAt > now) {
+        timeoutIds.push(
+          window.setTimeout(() => {
+            forceRender();
+          }, exitStartAt - now),
+        );
+      }
+
+      if (exitEndAt && exitEndAt > now) {
+        timeoutIds.push(
+          window.setTimeout(() => {
+            loadStartRef.current = null;
+            exitStartRef.current = null;
+            exitEndRef.current = null;
+            forceRender();
+          }, exitEndAt - now),
+        );
+      }
     }
 
     return () => {
-      if (holdTimeoutId) window.clearTimeout(holdTimeoutId);
-      if (exitTimeoutId) window.clearTimeout(exitTimeoutId);
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
     };
   }, [isLoading, minDuration, exitDuration]);
 
-  return { showLoader, isExiting };
+  const now = Date.now();
+  const exitStartAt = exitStartRef.current;
+  const exitEndAt = exitEndRef.current;
+
+  if (isLoading) {
+    return { showLoader: true, isExiting: false };
+  }
+
+  if (!loadStartRef.current) {
+    return { showLoader: false, isExiting: false };
+  }
+
+  if (!exitStartAt || now < exitStartAt) {
+    return { showLoader: true, isExiting: false };
+  }
+
+  if (!exitEndAt || now < exitEndAt) {
+    return { showLoader: true, isExiting: true };
+  }
+
+  loadStartRef.current = null;
+  exitStartRef.current = null;
+  exitEndRef.current = null;
+  return { showLoader: false, isExiting: false };
 }

@@ -9,11 +9,13 @@ export function registerServiceWorker() {
       : {};
   const isProd = Boolean(safeImportMetaEnv.PROD);
 
-  const isLocalhost =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-
-  if (!isProd && !isLocalhost) {
+  if (!isProd) {
+    // Remove any old local registrations so dev QA always uses fresh assets.
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister();
+      });
+    });
     return;
   }
 

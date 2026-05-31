@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BMPS Round 3 Groups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@700&family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --shell: rgba(18, 10, 6, 0.78);
+      --shell-text: rgba(255, 241, 232, 0.88);
+      --card: rgba(255, 248, 244, 0.94);
+      --card-line: rgba(120, 66, 33, 0.12);
+      --ink: #16120f;
+      --muted: #7f5a45;
+      --accent: #c75219;
+      --shadow: 0 14px 34px rgba(37, 16, 8, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Poppins", sans-serif;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(180deg, rgba(84, 18, 2, 0.18), rgba(20, 5, 0, 0.5)),
+        url("images/story.png") center center / cover no-repeat;
+      color: white;
+    }
+
+    .app-shell {
+      width: min(1280px, 100%);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 320px minmax(320px, 1fr);
+      gap: 30px;
+      align-items: center;
+      padding: 28px;
+      backdrop-filter: blur(8px);
+    }
+
+    .controls {
+      background: var(--shell);
+      border: 1px solid rgba(255, 244, 236, 0.12);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 209, 183, 0.14);
+      color: #ffd9c0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+    }
+
+    .intro {
+      margin-top: 14px;
+      color: var(--shell-text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .control-group {
+      margin-top: 24px;
+    }
+
+    .control-label {
+      display: block;
+      margin-bottom: 12px;
+      color: rgba(255, 241, 232, 0.74);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .download-button {
+      width: 100%;
+      background: linear-gradient(135deg, #ffcc9e, #ff8a43);
+      color: #341505;
+      box-shadow: 0 18px 34px rgba(255, 124, 52, 0.28);
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 22px;
+      font-size: 14px;
+      color: var(--shell-text);
+    }
+
+    .tips {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--shell-text);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .preview-area {
+      display: grid;
+      place-items: center;
+    }
+
+    .poster-stage {
+      width: min(92vw, calc(86vh * 4 / 5));
+      aspect-ratio: 4 / 5;
+      padding: 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36);
+    }
+
+    .poster {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 146, 54, 0.2), rgba(34, 10, 2, 0.42)),
+        url("images/story.png") center center / cover no-repeat;
+      padding: 18px;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .poster::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 4px solid rgba(170, 34, 4, 0.48);
+      pointer-events: none;
+    }
+
+    .poster::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 22% 14%, rgba(255, 227, 183, 0.34), transparent 16%),
+        radial-gradient(circle at 80% 12%, rgba(255, 244, 230, 0.08), transparent 12%);
+      pointer-events: none;
+    }
+
+    .poster-inner {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      padding: 6px 6px 0;
+    }
+
+    .poster-header {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .hero-logo {
+      width: 62px;
+      object-fit: contain;
+      filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.16));
+    }
+
+    .hero-title {
+      font-size: clamp(34px, 4.2vw, 50px);
+      line-height: 0.9;
+      letter-spacing: -0.05em;
+      font-weight: 900;
+      color: #0d0d0d;
+      text-transform: uppercase;
+    }
+
+    .hero-subtitle {
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #7f3012;
+      font-weight: 700;
+    }
+
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .group-card {
+      background: rgba(255, 248, 244, 0.8);
+      border-radius: 22px;
+      border: 1px solid rgba(255, 243, 236, 0.95);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+      padding: 12px 10px 10px;
+      min-height: 100%;
+    }
+
+    .group-card-header {
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .group-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 82px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(132, 49, 18, 0.1);
+      color: #8a2a10;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .team-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .team-row {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 7px;
+      align-items: center;
+      min-height: 22px;
+      padding: 4px 3px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .team-logo-wrap {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      overflow: hidden;
+    }
+
+    .team-logo {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+    }
+
+    .team-badge {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #211511, #8a2a10);
+      color: white;
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .team-name {
+      color: var(--ink);
+      font-size: 9px;
+      line-height: 1.1;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .poster-foot {
+      text-align: center;
+      color: #ffffff;
+      font-family: "Bai Jamjuree", sans-serif;
+      letter-spacing: 0.42em;
+      font-weight: 700;
+      font-size: 10px;
+      padding-bottom: 2px;
+      line-height: 1;
+      margin-top: 2px;
+      text-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .app-shell {
+        grid-template-columns: 1fr;
+        padding: 18px;
+        gap: 20px;
+      }
+
+      .groups-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="controls">
+      <span class="eyebrow">Group Draw</span>
+      <h1>Round 3 Groups In A Single 4x5 Frame</h1>
+      <p class="intro">
+        This page is focused only on the groups poster: four framed columns, one for each group, using the same orange BMPS design language as your standings pages.
+      </p>
+
+      <div class="control-group">
+        <span class="control-label">Download</span>
+        <button class="download-button" id="downloadBtn">Download PNG</button>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div class="tips">
+        Missing logos are shown as compact initials badges so the frame still looks complete.
+      </div>
+    </aside>
+
+    <main class="preview-area">
+      <div class="poster-stage">
+        <section class="poster" id="poster">
+          <div class="poster-inner">
+            <header class="poster-header">
+              <img class="hero-logo" src="images/bmps%202026.png" alt="BMPS 2026 logo">
+              <h1 class="hero-title">ROUND 3 GROUPS</h1>
+              <div class="hero-subtitle">Group Allocation</div>
+            </header>
+
+            <section class="groups-grid" id="groupsGrid"></section>
+
+            <footer class="poster-foot">CORE ESPORTS</footer>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const groups = [
+      {
+        name: "Group A",
+        teams: [
+          { name: "Team Tamilas", logo: "images/tt black.png" },
+          { name: "Divine Gaming", logo: "images/Divine.png" },
+          { name: "Revenant XSpark", logo: "images/RNTxspark.png" },
+          { name: "Nebula Esports", logo: "images/nbla.png" },
+          { name: "Team Soul", logo: "images/team soul.png" },
+          { name: "Victores Sumus", logo: "images/victorous.png" },
+          { name: "Reckoning Esports", logo: "images/reckoning.png" },
+          { name: "Meta Ninza", logo: "images/meta ninza.png" },
+          { name: "Wyld Fangs", logo: "images/wyld fangs.png" },
+          { name: "White Walkers", logo: "images/white walkers.png" },
+          { name: "Orangutan", logo: "images/orangutan.png" },
+          { name: "7Gods Esports", logo: "images/7 gods esports.png" },
+          { name: "Vasista Esports", logo: "images/vasista.png" },
+          { name: "Team H4K", logo: "images/H4K.png" },
+          { name: "Welt Esports", logo: "images/welt esports.png" },
+          { name: "Genesis Esports", logo: "images/Gensis.png" }
+        ]
+      },
+      {
+        name: "Group B",
+        teams: [
+          { name: "Learn From Past", logo: "images/learn from past.png" },
+          { name: "K9 Esports", logo: "images/k9 esports.png" },
+          { name: "WindGod Esports", logo: "images/WindGod Esports.png" },
+          { name: "GodLike Esports", logo: "images/godlike.png" },
+          { name: "Zero Ark Official", logo: "images/Zero Ark Official.png" },
+          { name: "Mysterious 4", logo: "images/m4.png" },
+          { name: "8Bit", logo: "images/8bit.png" },
+          { name: "Myth Official", logo: "images/myth esports.png" },
+          { name: "Ares Esport", logo: "images/ares esports.png" },
+          { name: "HADX Esports", logo: "images/HADX.png" },
+          { name: "Naqsh Esports", logo: "images/naqsh black.png" },
+          { name: "Jaguar Esports", logo: "images/jaguar black.png" },
+          { name: "True Rippers", logo: "images/tr black.png" },
+          { name: "Godsent Esports", logo: "images/godsent esports black.png" },
+          { name: "4TR Official", logo: "images/4TR-B.png" },
+          { name: "Gods Reign", logo: "images/Gods Reign.png" }
+        ]
+      },
+      {
+        name: "Group C",
+        teams: [
+          { name: "Higgboson Esports", logo: "images/higg boson black.png" },
+          { name: "Riot Nationz", logo: "images/RiotNationz.png" },
+          { name: "Rapid Chaos Esports", logo: "images/Rapid Chaos Esports.png" },
+          { name: "Lastade Esports", logo: "images/Lastade Esports.png" },
+          { name: "Rising Esports", logo: "images/rising esports.png" },
+          { name: "Team Apex Gaming", logo: "images/Team Apex Gaming.png" },
+          { name: "GenXFM Esports", logo: "images/GENxFM ESPORTS.png" },
+          { name: "Autobotz Esports", logo: "images/Autobotz Esports.png" },
+          { name: "Madkings Esports", logo: "images/madkings.png" },
+          { name: "Blink Esports", logo: "images/Blink Esports.png" },
+          { name: "Aura X Esports", logo: "images/Aura X Esports.png" },
+          { name: "Troy Tamilian Esports", logo: "images/Troy Tamilian Esports.png" },
+          { name: "Team Aryan", badge: "TA" },
+          { name: "Team RedXRoss", logo: "images/TeamRedXross.png" },
+          { name: "Team Doxy", logo: "images/doxy black.png" },
+          { name: "Oops Official", logo: "images/oops official.png" }
+        ]
+      },
+      {
+        name: "Group D",
+        teams: [
+          { name: "7AcesXTRB Esports", logo: "images/7ACESxTRB ESPORTS.png" },
+          { name: "Godsent Legions", logo: "images/godsent legion.png" },
+          { name: "Santa Esports", logo: "images/santa esports.png" },
+          { name: "T7xOrion Esports", logo: "images/T7xORION ESPORTS.png" },
+          { name: "Team Versatile", badge: "TV" },
+          { name: "Quantum Sparks", logo: "images/QUANTUM SPARKS.png" },
+          { name: "Likitha Esports", logo: "images/Likitha Esports.png" },
+          { name: "NoNx Esports", logo: "images/nonx esports.png" },
+          { name: "Phoenix Esports", logo: "images/phoneix.png" },
+          { name: "ThunderGods X Tortuga Gaming", badge: "TG" },
+          { name: "SomeOnes Dream", logo: "images/someones dream.png" },
+          { name: "Esport Social", logo: "images/ESPORT SOCIAL.png" },
+          { name: "Futurise Esports Empire Originals", logo: "images/FUTURISE ESPORTS.png" },
+          { name: "Team Flying Esports", logo: "images/Team Flying esports.png" },
+          { name: "DCxSCR Esports", logo: "images/DCxSCR Esports.png" },
+          { name: "Jaapi Esports", logo: "images/JAAPI ESPORTS.png" }
+        ]
+      }
+    ];
+
+    const groupsGrid = document.getElementById("groupsGrid");
+    const poster = document.getElementById("poster");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const statusEl = document.getElementById("status");
+
+    function createTeamRow(team) {
+      const row = document.createElement("div");
+      row.className = "team-row";
+
+      const logoWrap = document.createElement("div");
+      logoWrap.className = "team-logo-wrap";
+
+      if (team.logo) {
+        const img = document.createElement("img");
+        img.className = "team-logo";
+        img.src = team.logo;
+        img.alt = team.name;
+        img.addEventListener("error", () => {
+          logoWrap.innerHTML = `<div class="team-badge">${team.badge || makeBadge(team.name)}</div>`;
+        }, { once: true });
+        logoWrap.appendChild(img);
+      } else {
+        logoWrap.innerHTML = `<div class="team-badge">${team.badge || makeBadge(team.name)}</div>`;
+      }
+
+      const name = document.createElement("div");
+      name.className = "team-name";
+      name.textContent = team.name;
+
+      row.appendChild(logoWrap);
+      row.appendChild(name);
+      return row;
+    }
+
+    function makeBadge(name) {
+      return name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+    }
+
+    function renderGroups() {
+      groupsGrid.innerHTML = "";
+      groups.forEach((group) => {
+        const card = document.createElement("article");
+        card.className = "group-card";
+
+        const header = document.createElement("div");
+        header.className = "group-card-header";
+        header.innerHTML = `<div class="group-label">${group.name}</div>`;
+
+        const list = document.createElement("div");
+        list.className = "team-list";
+        group.teams.forEach((team) => list.appendChild(createTeamRow(team)));
+
+        card.appendChild(header);
+        card.appendChild(list);
+        groupsGrid.appendChild(card);
+      });
+    }
+
+    async function waitForAssets() {
+      const images = Array.from(poster.querySelectorAll("img"));
+      await Promise.all(images.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.addEventListener("load", resolve, { once: true });
+          img.addEventListener("error", resolve, { once: true });
+        });
+      }));
+
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    }
+
+    async function downloadPoster() {
+      statusEl.textContent = "Preparing export...";
+      downloadBtn.disabled = true;
+
+      try {
+        await waitForAssets();
+
+        const canvas = await html2canvas(poster, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "round-3-groups-4x5.png";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        statusEl.textContent = "Download complete.";
+      } catch (error) {
+        console.error(error);
+        statusEl.textContent = "Export failed. Refresh and try again.";
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    }
+
+    renderGroups();
+    downloadBtn.addEventListener("click", downloadPoster);
+  </script>
+</body>
+</html>

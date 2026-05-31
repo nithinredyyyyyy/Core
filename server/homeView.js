@@ -237,35 +237,40 @@ export function buildHomeViewModel(summary, options = {}) {
     (featuredTournament?.calendar || []).map((item) => [item.label, item.week]),
   );
   const featuredStageOrder = new Map(
-    (featuredTournament?.stages || [])
-      .filter((stage) => stage?.name)
-      .map((stage, index) => [stage.name, index]),
+    (featuredTournament?.stages || []).flatMap((stage, index) =>
+      stage?.name ? [[stage.name, index]] : [],
+    ),
   );
   const focusedStageIndex = featuredStageOrder.has(
     featuredTournamentBoard?.featuredStage,
   )
     ? featuredStageOrder.get(featuredTournamentBoard.featuredStage)
     : -1;
-  const featuredStages = (featuredTournament?.stages || [])
-    .filter((stage) => stage?.name)
-    .map((stage, index) => ({
-      key: `${stage.name}-${index}`,
-      name: stage.name,
-      week: featuredTournamentCalendar.get(stage.name) || null,
-      teamCount: stage.teamCount ?? stage.standings?.length ?? null,
-      status:
-        focusedStageIndex >= 0
-          ? index < focusedStageIndex
-            ? "completed"
-            : index === focusedStageIndex
-              ? featuredTournamentBoard?.liveMatch
-                ? "live"
-                : featuredTournament?.status === "ongoing"
-                  ? "current"
-                  : "upcoming"
-              : "upcoming"
-          : stage.status || null,
-    }));
+  const featuredStages = (featuredTournament?.stages || []).flatMap(
+    (stage, index) =>
+      stage?.name
+        ? [
+            {
+              key: `${stage.name}-${index}`,
+              name: stage.name,
+              week: featuredTournamentCalendar.get(stage.name) || null,
+              teamCount: stage.teamCount ?? stage.standings?.length ?? null,
+              status:
+                focusedStageIndex >= 0
+                  ? index < focusedStageIndex
+                    ? "completed"
+                    : index === focusedStageIndex
+                      ? featuredTournamentBoard?.liveMatch
+                        ? "live"
+                        : featuredTournament?.status === "ongoing"
+                          ? "current"
+                          : "upcoming"
+                      : "upcoming"
+                  : stage.status || null,
+            },
+          ]
+        : [],
+  );
   const featuredSpotlightStage =
     featuredStages.find(
       (stage) => stage.status === "live" || stage.status === "current",

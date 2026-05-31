@@ -259,9 +259,13 @@ const INACTIVE_ORGANIZATION_NAMES = [
 const HIDDEN_ORGANIZATION_NAMES = ["iQOO SouL", "Team SouL", "Team Soul"];
 
 const INACTIVE_ORGANIZATION_KEYS = new Set(
-  INACTIVE_ORGANIZATION_NAMES.map((name) =>
-    normalizeOrganizationName(name),
-  ).filter((key) => key !== "teamredxross"),
+  INACTIVE_ORGANIZATION_NAMES.reduce((keys, name) => {
+    const normalized = normalizeOrganizationName(name);
+    if (normalized !== "teamredxross") {
+      keys.push(normalized);
+    }
+    return keys;
+  }, []),
 );
 
 const HIDDEN_ORGANIZATION_KEYS = new Set(

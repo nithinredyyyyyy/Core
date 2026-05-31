@@ -107,22 +107,22 @@ function getResolvedNormalizedStageStandings({
 
   const teamMap = new Map((teams || []).map((team) => [team.id, team]));
 
-  return normalizedStandings
-    .filter((entry) => entry.stage_id === targetStage.id)
-    .map((entry) => {
-      const team = teamMap.get(entry.team_id);
-      return {
-        placement: entry.rank,
-        team: team?.name || "Unknown Team",
-        fullTeam: team?.name || "Unknown Team",
-        grp: undefined,
-        matches: entry.matches_played || 0,
-        wwcd: entry.wins || 0,
-        pos: entry.place_points || 0,
-        elimins: entry.elim_points || 0,
-        points: entry.total_points || 0,
-      };
+  return normalizedStandings.reduce((rows, entry) => {
+    if (entry.stage_id !== targetStage.id) return rows;
+    const team = teamMap.get(entry.team_id);
+    rows.push({
+      placement: entry.rank,
+      team: team?.name || "Unknown Team",
+      fullTeam: team?.name || "Unknown Team",
+      grp: undefined,
+      matches: entry.matches_played || 0,
+      wwcd: entry.wins || 0,
+      pos: entry.place_points || 0,
+      elimins: entry.elim_points || 0,
+      points: entry.total_points || 0,
     });
+    return rows;
+  }, []);
 }
 
 export function getTournamentResultForOrganization({
@@ -155,6 +155,7 @@ export function getTournamentResultForOrganization({
     normalizedStages.length > 0
       ? normalizedStages.map((stage) => ({ name: stage.name }))
       : tournament?.stages || [];
+  const standingsByStageAndTeam = new Map();
 
   for (const stage of sourceStages) {
     if (!stage?.name) continue;
@@ -174,10 +175,20 @@ export function getTournamentResultForOrganization({
             matchResults,
             stage.name,
           );
-    const row = standings.find(
-      (entry) =>
-        normalizeOrganizationName(entry?.fullTeam || entry?.team) === targetKey,
-    );
+
+    for (const entry of standings) {
+      const normalizedKey = normalizeOrganizationName(
+        entry?.fullTeam || entry?.team,
+      );
+      if (normalizedKey) {
+        standingsByStageAndTeam.set(`${stage.name}::${normalizedKey}`, entry);
+      }
+    }
+  }
+
+  for (const stage of sourceStages) {
+    if (!stage?.name) continue;
+    const row = standingsByStageAndTeam.get(`${stage.name}::${targetKey}`);
     if (!row) continue;
     const order = stageOrder[stage.name] ?? 0;
     if (order >= bestOrder) {
