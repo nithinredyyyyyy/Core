@@ -141,12 +141,13 @@ npm run stream-worker
 
 Do not run this locally for full YouTube streams on a weak machine. The worker is isolated from the site UI and is meant to run on a separate cloud box with `yt-dlp`, `ffmpeg`, and OCR.
 
-The included [render.yaml](/C:/Users/surak/core/render.yaml) now defines two services:
+The included [render.yaml](/C:/Users/surak/core/render.yaml) deploys the web/API service only:
 
 - `core-site`: the StageCore web/API service
-- `core-stream-worker`: a Docker worker that polls queued stream sessions
 
-For Render, set the same `CORE_ADMIN_KEY` on both services, then set `STREAM_API_BASE_URL` on `core-stream-worker` to your deployed `core-site` URL, for example:
+Deploy this first so the backend has a stable public URL. Then create the stream worker separately using [docs/render-worker.yaml](/C:/Users/surak/core/docs/render-worker.yaml) or the Docker commands in the worker guide.
+
+For the worker, set the same `CORE_ADMIN_KEY` as the web service, then set `STREAM_API_BASE_URL` to your deployed `core-site` URL, for example:
 
 ```bash
 https://core-site.onrender.com
