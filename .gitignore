@@ -43,3 +43,11 @@ auth
 auth-wal
 *.sql
 topbar-tail.txt
+
+# Local reference/export project and browser profiles
+default project/
+chrome-*-profile/
+edge-*-profile/
+Crashpad/
+*.dmp
+*.pma

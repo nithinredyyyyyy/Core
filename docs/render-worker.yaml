@@ -1,0 +1,22 @@
+services:
+  - type: worker
+    name: core-stream-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile.stream-worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORE_ADMIN_KEY
+        sync: false
+      - key: STREAM_API_BASE_URL
+        sync: false
+      - key: STREAM_WORKER_NAME
+        value: render-bmps-worker
+      - key: STREAM_WORKER_LOOP_MS
+        value: "15000"
+      - key: STREAM_FRAME_SAMPLE_INTERVAL_SECONDS
+        value: "2"
+      - key: STREAM_CROP_PRESET
+        value: bmps_marked_feed_stats
+      - key: STREAM_OCR_MODE
+        value: tesseract
