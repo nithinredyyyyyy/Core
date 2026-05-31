@@ -1,11 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import HomeMobile from "@/components/home/HomeMobile";
 import HomeDesktop from "@/components/home/HomeDesktop";
-import { useMinimumLoader } from "@/lib/useMinimumLoader";
-import { buildFanHubLink } from "@/lib/fanNavigation";
 import {
   HOME_STAGE_STATUS_STYLES,
   buildTournamentStageLink,
@@ -19,12 +16,6 @@ export default function Home() {
     queryKey: ["home-view", homeMode],
     queryFn: () => base44.home.view(homeMode),
   });
-
-  const loaderState = useMinimumLoader(loadHome, 3200);
-
-  if (loaderState.showLoader) {
-    return <LoadingSpinner isExiting={loaderState.isExiting} />;
-  }
   const featuredTournament = homeView?.featuredTournament || null;
   const featuredSpotlightStage = homeView?.featuredSpotlightStage || null;
   const featuredTournamentBoard = homeView?.featuredTournamentBoard || {
@@ -58,36 +49,34 @@ export default function Home() {
     },
     {
       title: "Fans",
-      desc: "Predictions, polls, chat, and community energy around every matchday.",
-      icon: "Swords",
-      link: buildFanHubLink({
-        tournamentId: featuredTournament?.id,
-        stage: featuredTournamentBoard.featuredStage || "",
-      }),
+      desc: "Predictions, fantasy squads, polls, fan clubs, and the live community floor.",
+      icon: "Waves",
+      link: "/fans",
       desktopPose: "xl:right-[6.5rem] xl:bottom-4 xl:-rotate-[2deg]",
     },
     {
-      title: "News Desk",
-      desc: "Roster moves, result drops, and quick editorial updates.",
+      title: "News",
+      desc: "Transfers, announcements, patch notes, and AI-assisted editorial coverage.",
       icon: "Newspaper",
       link: "/news",
       desktopPose: "xl:right-0 xl:bottom-6 xl:rotate-[6deg]",
     },
   ];
-  const fanHubLink = buildFanHubLink({
-    tournamentId: featuredTournament?.id,
-    stage: featuredTournamentBoard.featuredStage || "",
-  });
   const mobileQuickActions = (homeView?.mobileQuickActions || []).map(
     (action) =>
-      action.icon === "Swords"
-        ? { ...action, link: fanHubLink }
-        : action.tournamentId
+      action.tournamentId
           ? {
               ...action,
+              title: action.title,
+              icon: action.icon,
               link: `/tournaments?id=${encodeURIComponent(action.tournamentId)}`,
             }
-          : { ...action, link: action.link || "/tournaments" },
+          : {
+              ...action,
+              title: action.title,
+              icon: action.icon,
+              link: action.link || "/tournaments",
+            },
   );
 
   if (isMobile) {
@@ -105,8 +94,6 @@ export default function Home() {
         mobileQuickActions={mobileQuickActions}
         mobileBoardLeaders={homeView?.mobileBoardLeaders || []}
         nextMatch={homeView?.nextMatch || null}
-        fanHubLink={fanHubLink}
-        featuredNews={homeView?.featuredNews || null}
       />
     );
   }
@@ -134,7 +121,6 @@ export default function Home() {
       buildTournamentStageLink={buildTournamentStageLink}
       HOME_STAGE_STATUS_STYLES={HOME_STAGE_STATUS_STYLES}
       lastTournament={homeView?.lastTournament || null}
-      latestNews={homeView?.latestNews || []}
       upcomingMatches={homeView?.upcomingMatches || []}
     />
   );

@@ -7,22 +7,22 @@ const EMPTY_SECTIONS = [];
 export default function FanPolls({ sections = EMPTY_SECTIONS, onVote }) {
   return (
     <FansPanel className="overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-border/70 px-5 py-3.5">
+      <div className="flex items-center gap-2 border-b border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))] px-5 py-4">
         <BarChart3 className="size-3.5 text-primary" />
-        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
-          Live pulse
+        <p className="type-kicker text-primary">
+          Poll arena
         </p>
       </div>
 
       <div className="divide-y divide-border/70">
         {sections.map((section) => (
-          <div key={section.title} className="px-5 py-4">
+          <div key={section.title} className="p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[14px] font-black text-slate-900">
+                <p className="type-title-md text-slate-900 dark:text-white">
                   {section.title}
                 </p>
-                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                <p className="type-caption mt-1 text-slate-500 dark:text-slate-400">
                   {section.description ||
                     (section.interactive
                       ? "Lock one call before the match tone shifts."
@@ -53,10 +53,10 @@ export default function FanPolls({ sections = EMPTY_SECTIONS, onVote }) {
                     onClick={() => {
                       if (section.interactive) onVote(section.pollKey, option);
                     }}
-                    className={`relative w-full overflow-hidden rounded-[14px] border px-3.5 py-3 text-left text-[12px] font-bold uppercase transition-all ${
+                    className={`relative w-full overflow-hidden rounded-[16px] border px-3.5 py-3.5 text-left text-[12px] font-bold uppercase tracking-[0.04em] transition-all ${
                       active
                         ? "border-primary/25 bg-primary/10 text-primary shadow-[0_8px_18px_rgba(251,146,60,0.12)]"
-                        : "border-slate-200 bg-white text-slate-900"
+                        : "border-slate-200 bg-white text-slate-900 dark:bg-white/[0.04] dark:text-white"
                     } ${section.interactive ? "cursor-pointer" : "cursor-default"}`}
                   >
                     <span
@@ -74,7 +74,7 @@ export default function FanPolls({ sections = EMPTY_SECTIONS, onVote }) {
 
             {section.interactive ? (
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8b9ab6]">
+                <p className="type-kicker text-[#8b9ab6]">
                   {section.userVoteCount > 0
                     ? "Your call is locked for this match pulse."
                     : "Tap one option to lock your read."}

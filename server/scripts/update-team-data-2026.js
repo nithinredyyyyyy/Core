@@ -151,9 +151,13 @@ function pickPrimaryTeam(aliases) {
   const matches = aliases.flatMap((alias) => findTeamByAliases.all(alias));
   if (matches.length === 0) return null;
 
-  return matches.sort(
-    (a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0),
-  )[0];
+  return matches.reduce((latest, match) => {
+    if (!latest) return match;
+    return new Date(match.created_date || 0) >
+      new Date(latest.created_date || 0)
+      ? match
+      : latest;
+  }, null);
 }
 
 function replacePlayers(teamId, players) {

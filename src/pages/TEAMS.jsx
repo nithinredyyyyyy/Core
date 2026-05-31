@@ -25,7 +25,7 @@ import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 function LightPanel({ className = "", children }) {
   return (
     <div
-      className={`rounded-[28px] border border-border/70 bg-card shadow-[0_20px_60px_rgba(15,23,42,0.06)] ${className}`}
+      className={`rounded-lg border border-border/70 bg-card shadow-sm ${className}`}
     >
       {children}
     </div>
@@ -53,50 +53,50 @@ function getTeamsPageLogoPresentation(name) {
 }
 
 function TeamsHero({ teamCount, rosterCount }) {
+  const stats = [
+    { icon: Shield, label: "Teams", value: teamCount },
+    { icon: Users, label: "Roster spots", value: rosterCount },
+    { icon: Search, label: "Search ready", value: "Live" },
+  ];
+
   return (
     <m.section
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className="overflow-hidden rounded-[34px] border border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(251,146,60,0.14),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,243,235,0.96))] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top_left,rgba(251,146,60,0.16),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.94),rgba(17,24,39,0.98))]"
+      className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5"
     >
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
             BMPS 2026
           </p>
-          <h1 className="mt-2 text-3xl font-heading font-semibold tracking-[-0.04em] text-foreground md:text-4xl">
+          <h1 className="mt-1 text-2xl font-heading font-semibold text-foreground md:text-3xl">
             TEAMS
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-            The complete BMPS 2026 lineup in one directory, with live team
-            names, updated logos, and active roster visibility pulled into the
-            page flow.
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            Complete BMPS 2026 team directory with active roster visibility.
           </p>
         </div>
 
-        <LightPanel className="p-5 sm:p-6">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { icon: Shield, label: "Teams", value: teamCount },
-              { icon: Users, label: "Roster spots", value: rosterCount },
-              { icon: Search, label: "Search ready", value: "Live" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-[22px] border border-border/70 bg-background/75 p-4"
-              >
-                <stat.icon className="size-4 text-primary" />
-                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[440px]">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5"
+            >
+              <stat.icon className="size-4 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                   {stat.label}
                 </p>
-                <p className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-foreground">
+                <p className="text-lg font-black uppercase text-foreground">
                   {stat.value}
                 </p>
               </div>
-            ))}
-          </div>
-        </LightPanel>
+            </div>
+          ))}
+        </div>
       </div>
     </m.section>
   );
@@ -104,24 +104,25 @@ function TeamsHero({ teamCount, rosterCount }) {
 
 function TeamDirectoryHeader({ search, setSearch }) {
   return (
-    <LightPanel className="p-5 md:p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
+    <LightPanel className="p-3 md:p-4">
+      <div className="grid gap-3 md:grid-cols-[1fr_minmax(280px,420px)] md:items-center">
+        <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
             Team directory
           </p>
-          <h2 className="mt-2 text-2xl font-semibold uppercase tracking-[-0.04em] text-foreground">
-            BMPS 2026 cards
+          <h2 className="mt-1 text-xl font-semibold uppercase text-foreground">
+            BMPS 2026 roster list
           </h2>
         </div>
 
-        <div className="relative w-full lg:max-w-md">
+        <div className="relative w-full">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by team, tag, or player"
-            className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+            aria-label="Search teams"
+            className="h-10 w-full rounded-md border border-border bg-background pl-10 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
           />
         </div>
       </div>
@@ -137,24 +138,24 @@ function TeamCard({ card, index, onOpenTeam }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
-      className="overflow-hidden rounded-[24px] border border-border/70 bg-card p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]"
+      className="overflow-hidden rounded-lg border border-border bg-card p-3 shadow-sm transition-colors hover:border-primary/35 md:grid md:grid-cols-[180px_1fr] md:items-center md:gap-3"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         {card.logoUrl ? (
           <LogoBlock
             src={card.logoUrl}
             alt={card.name}
-            sizeClass="size-14"
-            roundedClass="rounded-2xl"
+            sizeClass="size-12"
+            roundedClass="rounded-md"
             paddingClass={logoPresentation.paddingClass}
             imgClassName={logoPresentation.imgClassName}
             surfaceTone={getTeamLogoSurfaceTone(card.name)}
-            className="bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
+            className="bg-background"
           />
         ) : (
           <LogoBlock
-            sizeClass="size-14"
-            roundedClass="rounded-2xl"
+            sizeClass="size-12"
+            roundedClass="rounded-md"
             paddingClass="p-2.5"
             className="bg-primary/10 border-primary/10"
           >
@@ -165,33 +166,35 @@ function TeamCard({ card, index, onOpenTeam }) {
         )}
 
         <div className="min-w-0">
-          <h2 className="line-clamp-2 text-lg font-semibold text-foreground">
+          <h2 className="truncate text-base font-semibold leading-snug text-foreground">
             <button
               type="button"
               onClick={() => onOpenTeam(card.name)}
-              className="text-left transition-colors hover:text-primary"
+              title={card.name}
+              className="block max-w-full truncate text-left transition-colors hover:text-primary"
             >
               {card.name}
             </button>
           </h2>
-          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             {card.tag || "BMPS"} | India
           </p>
         </div>
       </div>
 
-      <div className="mt-5 rounded-[18px] border border-border/70 bg-background/75 p-3">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+      <div className="mt-3 border-t border-border pt-3 md:mt-0 md:flex md:min-w-0 md:items-center md:gap-3 md:border-t-0 md:pt-0">
+        <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
           Active roster
         </p>
-        <div className="mt-3 space-y-2">
+        <div className="mt-2 flex min-w-0 flex-wrap gap-x-4 gap-y-1.5 md:mt-0">
           {card.roster.map((player) => (
             <Link
               key={`${card.key}-${player}`}
               to={`/players/${encodeURIComponent(player)}?team=${encodeURIComponent(card.name)}`}
-              className="block rounded-[14px] border border-border/70 bg-card/80 px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-foreground transition-colors hover:text-primary"
             >
-              {getPlayerDisplayName(player)}
+              <span className="size-1 rounded-full bg-primary/60" />
+              <span className="truncate">{getPlayerDisplayName(player)}</span>
             </Link>
           ))}
         </div>
@@ -212,7 +215,7 @@ function TeamCardGrid({ cards, onOpenTeam }) {
   }
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <section className="grid grid-cols-1 gap-3 xl:grid-cols-2 2xl:grid-cols-3">
       {cards.map((card, index) => (
         <TeamCard
           key={card.key}
@@ -504,7 +507,7 @@ export default function Teams() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="space-y-6">
+      <div className="mx-auto w-full max-w-[1680px] space-y-4">
         <TeamsHero teamCount={teamCards.length} rosterCount={rosterCount} />
         <TeamDirectoryHeader search={search} setSearch={setSearch} />
         <TeamCardGrid cards={filteredCards} onOpenTeam={openTeam} />

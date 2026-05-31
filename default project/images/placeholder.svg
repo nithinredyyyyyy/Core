@@ -1,0 +1,20 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f0f0f0"/>
+
+  <!-- Mountain shapes -->
+  <path d="M 0 200 L 100 100 L 200 200 Z" fill="#d89333" opacity="0.6"/>
+  <path d="M 150 200 L 250 80 L 350 200 Z" fill="#ffc641" opacity="0.7"/>
+  <path d="M 250 200 L 350 130 L 450 200 Z" fill="#d89333" opacity="0.5"/>
+
+  <!-- Sun -->
+  <circle cx="320" cy="80" r="30" fill="#FFD700" opacity="0.8"/>
+
+  <!-- Ground -->
+  <rect y="200" width="400" height="100" fill="#85a300" opacity="0.3"/>
+
+  <!-- Text -->
+  <text x="200" y="260" font-family="Arial, sans-serif" font-size="18" fill="#5C5346" text-anchor="middle" font-weight="600">
+    Click to Replace <!--Don't change. this string is translated to loc, see usage of this file-->
+  </text>
+</svg>

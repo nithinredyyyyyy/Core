@@ -1,52 +1,59 @@
-﻿import React from "react";
+import React from "react";
 import { Crown } from "lucide-react";
 import FansPanel from "./FansPanel";
+import { normalizeBadgeName } from "@/lib/fanBadges";
 
 const EMPTY_PROFILES = [];
 
 export default function FanLeaderboard({ profiles = EMPTY_PROFILES }) {
   return (
     <FansPanel className="overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3.5">
+      <div className="flex items-center gap-2 border-b border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))] p-4">
         <Crown className="size-3.5 text-amber-500" />
-        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+        <p className="type-kicker text-primary">
           Fan leaderboard
         </p>
       </div>
-      <div className="space-y-2 p-3">
-        {profiles.slice(0, 2).map((entry) => (
+      <div className="space-y-3 p-4">
+        {profiles.slice(0, 3).map((entry, index) => (
           <div
             key={`${entry.display_name}-${entry.rank}`}
-            className={`rounded-[16px] border p-3 ${
+            className={`rounded-[18px] border p-4 ${
               entry.isYou
-                ? "border-primary/25 bg-primary/10"
-                : "border-border/70 bg-white/90"
+                ? "border-primary/25 bg-primary/10 shadow-[0_16px_30px_rgba(251,146,60,0.1)]"
+                : "border-border/70 bg-white/90 dark:bg-white/[0.04]"
             }`}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-full bg-amber-100 text-lg font-black text-amber-500">
+                <div className={`flex size-10 items-center justify-center rounded-2xl text-base font-black ${
+                  index === 0
+                    ? "bg-amber-100 text-amber-600"
+                    : index === 1
+                      ? "bg-slate-200 text-slate-700"
+                      : "bg-orange-100 text-orange-600"
+                }`}>
                   {entry.rank}
                 </div>
                 <div>
-                  <p className="text-[15px] font-black tracking-[-0.03em] text-slate-900">
+                  <p className="type-title-md text-slate-900 dark:text-white">
                     {entry.display_name}
                     {entry.isYou ? (
-                      <span className="ml-1.5 text-[11px] uppercase text-primary">
+                      <span className="ml-1.5 text-[11px] uppercase tracking-[0.12em] text-primary">
                         You
                       </span>
                     ) : null}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {entry.badge} • {entry.accuracy_percent}% acc
+                  <p className="type-caption mt-1 text-slate-500 dark:text-slate-400">
+                    {normalizeBadgeName(entry.badge)} | {entry.accuracy_percent}% acc
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-black text-primary">
+                <p className="type-title-lg text-primary">
                   {entry.total_points}
                 </p>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
+                <p className="type-kicker text-slate-500 dark:text-slate-400">
                   pts
                 </p>
               </div>

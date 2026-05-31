@@ -4,6 +4,9 @@ function parseDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+const MATCH_LIVE_LEAD_MS = 30 * 60 * 1000;
+const MATCH_LIVE_TAIL_MS = 6 * 60 * 60 * 1000;
+
 export function buildMatchResultCountMap(matchResults = []) {
   const map = new Map();
   for (const row of matchResults || []) {
@@ -26,13 +29,20 @@ export function deriveMatchStatus(match, options = {}) {
   const scheduled = parseDate(match?.scheduled_time);
 
   if (explicitStatus === "completed" || resultCount > 0) return "completed";
-  if (explicitStatus === "live") return "live";
 
   if (scheduled) {
+    const delta = now.getTime() - scheduled.getTime();
+    const isInsideLiveWindow =
+      delta >= -MATCH_LIVE_LEAD_MS && delta <= MATCH_LIVE_TAIL_MS;
+    if (explicitStatus === "live" || explicitStatus === "ongoing") {
+      if (isInsideLiveWindow) return "live";
+      return delta > MATCH_LIVE_TAIL_MS ? "completed" : "scheduled";
+    }
     if (scheduled.getTime() > now.getTime()) return "scheduled";
-    return "live";
+    return delta <= MATCH_LIVE_TAIL_MS ? "live" : "completed";
   }
 
+  if (explicitStatus === "live") return "live";
   if (explicitStatus === "ongoing") return "live";
   return explicitStatus || "scheduled";
 }

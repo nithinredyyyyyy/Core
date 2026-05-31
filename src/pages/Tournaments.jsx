@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Calendar } from "lucide-react";
+import { Calendar, ChevronRight, Flame, Trophy } from "lucide-react";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import EmptyState from "../components/shared/EmptyState";
 import LogoBlock from "../components/shared/LogoBlock";
@@ -18,6 +18,7 @@ import {
 import { decorateTournamentsWithLiveStatus } from "@/lib/liveCalendar";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 import { getTournamentLogo } from "@/lib/tournamentBranding";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const STATUS_BADGE_CLASSES = {
   upcoming:
@@ -88,13 +89,13 @@ function TournamentsHeader() {
   return (
     <div className="space-y-2">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+        <p className="type-kicker text-primary">
           Event control
         </p>
-        <h1 className="mt-2 text-2xl font-heading font-semibold tracking-wide">
+        <h1 className="type-title-xl mt-2">
           TOURNAMENTS
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="type-body-sm mt-1 text-muted-foreground">
           Current events, completed runs, and the full tournament archive.
         </p>
       </div>
@@ -115,6 +116,7 @@ function TournamentFilters({
         {["all", "upcoming", "ongoing", "completed"].map((status) => (
           <button
             key={status}
+            type="button"
             onClick={() => setFilterStatus(status)}
             className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
               filterStatus === status
@@ -154,7 +156,7 @@ function FeaturedTournamentCard({ tournament, onOpen, searchParams, setSearchPar
       <div className="grid gap-6 p-6 lg:grid-cols-[1.05fr_0.95fr] lg:p-7">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+            <p className="type-kicker text-primary">
               Featured event
             </p>
             <span
@@ -168,16 +170,16 @@ function FeaturedTournamentCard({ tournament, onOpen, searchParams, setSearchPar
           </div>
 
           <div>
-            <h2 className="max-w-4xl text-3xl font-semibold uppercase leading-[0.94] tracking-[-0.05em] text-foreground md:text-[3.1rem]">
+            <h2 className="type-display-section max-w-4xl uppercase text-foreground">
               {tournament.name}
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+            <p className="type-body mt-3 max-w-3xl text-muted-foreground">
               {tournament.description ||
                 "Open the event hub for stages, participants, rankings, and champion details."}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="type-kicker flex flex-wrap gap-3 text-muted-foreground">
             <span className="rounded-full border border-border bg-background/80 px-3 py-1.5">
               {tournament.game || "BGMI"}
             </span>
@@ -210,7 +212,7 @@ function FeaturedTournamentCard({ tournament, onOpen, searchParams, setSearchPar
               <p className="text-[10px] uppercase tracking-[0.18em] text-primary">
                 Archive state
               </p>
-              <p className="mt-2 text-sm leading-7 text-muted-foreground">
+              <p className="type-body mt-2 text-muted-foreground">
                 {tournament.status === "completed"
                   ? "This tournament is complete and ready for standings, champion, and award review."
                   : tournament.status === "ongoing"
@@ -335,7 +337,116 @@ function TournamentArchiveGrid({ tournaments, onOpenTournament }) {
   );
 }
 
+function MobileTournamentFilterBar({ filterStatus, setFilterStatus }) {
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1">
+      {["all", "upcoming", "ongoing", "completed"].map((status) => (
+        <button
+          key={status}
+          type="button"
+          onClick={() => setFilterStatus(status)}
+          className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors ${
+            filterStatus === status
+              ? "bg-[rgba(27,10,21,0.92)] text-white"
+              : "bg-white/18 text-[#5c212c]"
+          }`}
+        >
+          {status}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function MobileTournamentHero({ tournament, onOpen }) {
+  if (!tournament) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(tournament.id)}
+      className="block w-full overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,rgba(175,20,48,0.96),rgba(224,79,92,0.92)_58%,rgba(244,144,123,0.92))] p-5 text-left text-white shadow-[0_24px_44px_rgba(121,30,48,0.2)]"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/72">
+            Top Event
+          </p>
+          <h1 className="mt-3 max-w-[8.5ch] text-[2.2rem] font-medium leading-[0.94] tracking-[-0.05em]">
+            {tournament.name}
+          </h1>
+          <p className="mt-2 text-[12px] text-white/78">
+            {tournament.status}
+          </p>
+        </div>
+        <div className="rounded-full bg-white/18 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+          {tournament.game || "BGMI"}
+        </div>
+      </div>
+
+      <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/14 bg-[rgba(19,10,16,0.58)]">
+        <div className="aspect-[16/9] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%),linear-gradient(180deg,rgba(20,9,16,0.08),rgba(20,9,16,0.55))] p-4">
+          <img
+            src={getTournamentLogo(tournament)}
+            alt={tournament.name}
+            className="h-full w-full object-contain"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/48">
+              Match focus
+            </p>
+            <p className="mt-1 text-sm font-semibold text-white">
+              {formatTournamentCardDates(
+                tournament.start_date,
+                tournament.end_date,
+              )}
+            </p>
+          </div>
+          <div className="rounded-full bg-emerald-400/85 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#11311f]">
+            {tournament.status}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function MobileTournamentCard({ tournament, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(tournament.id)}
+      className="flex w-full items-center gap-3 rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(28,10,20,0.96),rgba(17,8,14,0.98))] p-3.5 text-left text-white shadow-[0_16px_26px_rgba(44,13,22,0.16)]"
+    >
+      <div className="flex size-16 shrink-0 items-center justify-center rounded-[1.1rem] bg-white/[0.06] p-2">
+        <img
+          src={getTournamentLogo(tournament)}
+          alt={tournament.name}
+          className="h-full w-full object-contain"
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">
+            {tournament.status}
+          </p>
+          <ChevronRight className="size-4 text-white/35" />
+        </div>
+        <p className="mt-1 line-clamp-2 text-base font-semibold leading-tight text-white">
+          {tournament.name}
+        </p>
+        <p className="mt-2 text-[11px] leading-5 text-white/58">
+          {formatTournamentWindow(tournament.start_date, tournament.end_date)}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export default function Tournaments() {
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentYear = String(new Date().getFullYear());
   const selectedId = searchParams.get("id") || null;
@@ -347,12 +458,12 @@ export default function Tournaments() {
     queryFn: () => base44.entities.Tournament.list("-created_date", 50),
   });
   const { data: matches = [] } = useQuery({
-    queryKey: ["matches"],
-    queryFn: () => base44.entities.Match.list("scheduled_time", 500),
+    queryKey: ["tournaments-matches"],
+    queryFn: () => base44.entities.Match.list("-scheduled_time", 500),
   });
   const { data: rawResults = [] } = useQuery({
-    queryKey: ["results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
+    queryKey: ["tournaments-results"],
+    queryFn: () => base44.entities.MatchResult.list("-created_date", 1500),
   });
   const results = React.useMemo(
     () => filterPublishedMatchResults(rawResults),
@@ -362,7 +473,7 @@ export default function Tournaments() {
   if (isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
+        <p className="type-kicker text-muted-foreground">
           Loading tournaments
         </p>
       </div>
@@ -423,6 +534,66 @@ export default function Tournaments() {
           setSearchParams(nextParams);
         }}
       />
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <LazyMotion features={domAnimation}>
+        <div className="mx-auto max-w-[420px] space-y-4 pb-4 text-[#2d1419]">
+          <m.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="rounded-[2rem] bg-[linear-gradient(180deg,#ffb39f_0%,#ff9b89_100%)] p-5 shadow-[0_22px_40px_rgba(121,30,48,0.16)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-9 items-center justify-center rounded-full bg-white/50 text-[#2d1419]">
+                    <Flame className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#2d1419]">Event</p>
+                    <p className="text-[11px] text-[#6b3741]">Tournament circuit</p>
+                  </div>
+                </div>
+                <div className="rounded-full bg-[rgba(27,10,21,0.92)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                  {filtered.length} live
+                </div>
+              </div>
+              <h1 className="mt-4 max-w-[8ch] text-[2.3rem] font-medium leading-[0.95] text-[#2d1419]">
+                Catch every tournament
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-[#6b3741]">
+                Featured event, active stages, and the full schedule in one mobile flow.
+              </p>
+              <div className="mt-4">
+                <MobileTournamentFilterBar
+                  filterStatus={filterStatus}
+                  setFilterStatus={setFilterStatus}
+                />
+              </div>
+            </div>
+          </m.section>
+
+          <m.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+            <MobileTournamentHero tournament={featuredTournament} onOpen={openTournament} />
+          </m.section>
+
+          <m.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <div className="space-y-3">
+              {filtered.slice(1).map((tournament) => (
+                <MobileTournamentCard
+                  key={tournament.id}
+                  tournament={tournament}
+                  onOpen={openTournament}
+                />
+              ))}
+              {filtered.length <= 1 ? (
+                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(28,10,20,0.96),rgba(17,8,14,0.98))] p-4 text-sm text-white/58">
+                  More tournament drops will appear here once the archive expands.
+                </div>
+              ) : null}
+            </div>
+          </m.section>
+        </div>
+      </LazyMotion>
     );
   }
 

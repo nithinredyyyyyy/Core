@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Star } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ShieldCheck, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import { format } from "date-fns";
 import { isOrganizationInactive } from "@/lib/organizationIdentity";
@@ -64,6 +65,7 @@ function TeamDetailHero({
   displayLogoSurfaceTone,
   primaryStats,
   secondaryStats,
+  followButton,
 }) {
   return (
     <div className="overflow-hidden rounded-[26px] border border-[#3f311a] bg-[radial-gradient(circle_at_top_left,_rgba(184,140,40,0.24),_rgba(18,15,11,0.98)_50%,_rgba(10,10,12,1)_100%)]">
@@ -83,11 +85,14 @@ function TeamDetailHero({
                 {participant?.placement || "-"}
               </p>
             </div>
-            <span
-              className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${status.className}`}
-            >
-              {status.label}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {followButton}
+              <span
+                className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${status.className}`}
+              >
+                {status.label}
+              </span>
+            </div>
           </div>
 
           <ProfileStatGrid
@@ -280,15 +285,16 @@ function TeamDetailSideColumn({
         >
           <div className="space-y-3 p-5">
             {relatedArticles.map((article) => (
-              <div
+              <Link
                 key={article.id}
+                to={`/news/${article.id}`}
                 className="rounded-xl border border-border bg-secondary/20 p-4"
               >
                 <p className="font-semibold text-foreground">{article.title}</p>
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
                   {article.content}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         </ProfilePanel>
@@ -298,6 +304,9 @@ function TeamDetailSideColumn({
 }
 
 export default function TeamDetail({ team, participant, onBack }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const fanSession = base44.fan.getStoredSession();
   const { data: teams = [] } = useQuery({
     queryKey: ["teams"],
     queryFn: () => base44.entities.Team.list("-total_points", 400),
@@ -343,8 +352,23 @@ export default function TeamDetail({ team, participant, onBack }) {
     queryKey: ["news"],
     queryFn: () => base44.news.listPublished("-created_date", 50),
   });
+  const { data: follows = [] } = useQuery({
+    queryKey: ["team-detail-follows", fanSession.userId],
+    queryFn: () =>
+      base44.entities.FanFollowItem.filter(
+        { user_id: fanSession.userId },
+        "-created_date",
+        80,
+      ),
+    enabled: Boolean(fanSession.userId),
+  });
 
   const displayLogo = getDisplayedTeamLogo(team);
+  const followRecord = follows.find(
+    (entry) =>
+      entry.target_type === "team" &&
+      (entry.target_id === team.id || entry.target_label === team.name),
+  );
   const displayLogoSurfaceTone = getTeamLogoSurfaceTone(team?.name);
   const status = getTeamStatus(team);
   const teamAliasIndex = useMemo(
@@ -372,7 +396,35 @@ export default function TeamDetail({ team, participant, onBack }) {
     team,
     teamAliasIndex,
   );
-  const teamIds = team.representativeIds || [team.id];
+  const teamIds = useMemo(
+    () => team.representativeIds || [team.id],
+    [team.id, team.representativeIds],
+  );
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!fanSession.userId) throw new Error("Open your profile first.");
+      if (followRecord?.id) {
+        return base44.entities.FanFollowItem.delete(followRecord.id);
+      }
+      return base44.entities.FanFollowItem.create({
+        user_id: fanSession.userId,
+        display_name: fanSession.displayName,
+        target_type: "team",
+        target_id: team.id,
+        target_label: team.name,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team-detail-follows", fanSession.userId] });
+      qc.invalidateQueries({ queryKey: ["profile-follows", fanSession.userId] });
+      toast({
+        title: followRecord ? "Team unfollowed" : "Team followed",
+        description: followRecord
+          ? `${team.name} was removed from your followed teams.`
+          : `${team.name} is now part of your followed teams.`,
+      });
+    },
+  });
   const normalizedResultMaps = useMemo(
     () =>
       buildNormalizedTournamentResultMaps({
@@ -443,25 +495,25 @@ export default function TeamDetail({ team, participant, onBack }) {
   }, [
     matches,
     normalizedTeamName,
+    normalizedResultMaps,
     results,
-    siteTournamentNames,
     team,
-    team.name,
     teamAliasIndex,
     teams,
     tournaments,
   ]);
 
   const recentMatches = useMemo(() => {
+    const teamIdSet = new Set(teamIds);
     const teamMatchIds = new Set(
       results.reduce((ids, entry) => {
-        if (teamIds.includes(entry.team_id)) ids.push(entry.match_id);
+        if (teamIdSet.has(entry.team_id)) ids.push(entry.match_id);
         return ids;
       }, []),
     );
     return matches
       .filter((match) => teamMatchIds.has(match.id))
-      .sort(
+      .toSorted(
         (a, b) =>
           new Date(b.scheduled_time || 0) - new Date(a.scheduled_time || 0),
       )
@@ -570,6 +622,17 @@ export default function TeamDetail({ team, participant, onBack }) {
         displayLogoSurfaceTone={displayLogoSurfaceTone}
         primaryStats={primaryStats}
         secondaryStats={secondaryStats}
+        followButton={
+          <button
+            type="button"
+            onClick={() => followMutation.mutate()}
+            disabled={!fanSession.userId || followMutation.isPending}
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ShieldCheck className="size-3.5" />
+            {followRecord ? "Following" : "Follow team"}
+          </button>
+        }
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">

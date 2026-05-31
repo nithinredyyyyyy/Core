@@ -1,37 +1,32 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Newspaper,
   Search,
   Trophy,
   Users,
-  Swords,
-  Newspaper,
   X,
   UserCircle,
+  Waves,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { buildContextualFanHubLink } from "@/lib/fanNavigation";
 
 const RESULT_ICONS = {
   tournament: Trophy,
   team: Users,
   player: UserCircle,
-  match: Swords,
-  news: Newspaper,
+  match: Trophy,
 };
 
 export default function GlobalSearch({ open, onClose }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation();
-  const fansPath = buildContextualFanHubLink(location);
 
   useEffect(() => {
     if (open) {
-      setQuery("");
       const timeoutId = window.setTimeout(() => inputRef.current?.focus(), 50);
       return () => window.clearTimeout(timeoutId);
     }
@@ -47,18 +42,23 @@ export default function GlobalSearch({ open, onClose }) {
 
   const q = query.toLowerCase().trim();
 
-  const { data: results = [] } = useQuery({
+  const { data: rawResults = [] } = useQuery({
     queryKey: ["global-search", q],
     queryFn: () => base44.search.global(q, 10),
     enabled: open && q.length >= 2,
     staleTime: 15_000,
   });
 
+  const results = rawResults.filter(
+    (result) => typeof result?.path === "string",
+  );
+
   const suggestions = [
     { icon: Trophy, label: "Tournaments", path: "/tournaments" },
     { icon: Users, label: "Teams", path: "/teams" },
-    { icon: Swords, label: "Fans", path: fansPath },
+    { icon: Waves, label: "Fans", path: "/fans" },
     { icon: Newspaper, label: "News", path: "/news" },
+    { icon: UserCircle, label: "Profile", path: "/profile" },
   ];
 
   const go = (path) => {
@@ -90,13 +90,16 @@ export default function GlobalSearch({ open, onClose }) {
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search tournaments, teams, players, matches, news?"
+            placeholder="Search tournaments, teams, players, matches?"
+            aria-label="Search StageCore"
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           {query ? (
             <button
+              type="button"
               onClick={() => setQuery("")}
               className="text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
             >
               <X className="size-3.5" />
             </button>
@@ -112,6 +115,7 @@ export default function GlobalSearch({ open, onClose }) {
               const Icon = RESULT_ICONS[result.type] || Search;
               return (
                 <button
+                  type="button"
                   key={`${result.type}-${result.path ?? result.label}-${result.sub ?? ""}`}
                   onClick={() => go(result.path)}
                   className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
@@ -146,6 +150,7 @@ export default function GlobalSearch({ open, onClose }) {
               </p>
               {suggestions.map((suggestion) => (
                 <button
+                  type="button"
                   key={suggestion.path}
                   onClick={() => go(suggestion.path)}
                   className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"

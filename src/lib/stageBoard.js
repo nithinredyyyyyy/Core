@@ -8,7 +8,7 @@ export function normalizeStageBoardValue(value) {
 }
 
 export function sortStageBoardMatches(matches) {
-  return [...matches].sort((a, b) => {
+  return matches.toSorted((a, b) => {
     const dayDelta = (Number(a.day) || 0) - (Number(b.day) || 0);
     if (dayDelta !== 0) return dayDelta;
 
@@ -23,25 +23,79 @@ export function sortStageBoardMatches(matches) {
   });
 }
 
+function isTodayMatch(match, now = Date.now()) {
+  if (!match?.scheduled_time) return false;
+  return new Date(match.scheduled_time).toDateString() === new Date(now).toDateString();
+}
+
 export function getFeaturedTournamentStage(
   featuredTournament,
   tournamentMatches,
   tournamentResults,
 ) {
   const liveStage = tournamentMatches.find(
-    (match) => match.status === "live",
+    (match) => match.status === "live" && isTodayMatch(match),
   )?.stage;
   if (liveStage) return liveStage;
-  const scheduledStage = tournamentMatches.find(
-    (match) => match.status === "scheduled",
-  )?.stage;
-  if (scheduledStage) return scheduledStage;
+
   const declaredStages = Array.isArray(featuredTournament?.stages)
-    ? featuredTournament.stages.map((stage) => stage?.name).filter(Boolean)
+    ? featuredTournament.stages.flatMap((stage) => (stage?.name ? [stage.name] : []))
     : [];
+  const declaredStageOrder = new Map(
+    declaredStages.map((stageName, index) => [stageName, index]),
+  );
+
+  const now = Date.now();
+  const scheduledMatches = tournamentMatches.filter(
+    (match) => match.status === "scheduled" && match.stage,
+  );
+  const todayStage = scheduledMatches
+    .filter((match) => isTodayMatch(match, now))
+    .toSorted((left, right) => {
+      const timeDelta =
+        new Date(left.scheduled_time || 0).getTime() -
+        new Date(right.scheduled_time || 0).getTime();
+      if (timeDelta !== 0) return timeDelta;
+      return (declaredStageOrder.get(left.stage) ?? 999) - (declaredStageOrder.get(right.stage) ?? 999);
+    })[0]?.stage;
+  if (todayStage) return todayStage;
+
+  const upcomingStage = scheduledMatches
+    .filter((match) => {
+      const time = new Date(match.scheduled_time || 0).getTime();
+      return Number.isFinite(time) && time >= now;
+    })
+    .toSorted((left, right) => {
+      const timeDelta =
+        new Date(left.scheduled_time || 0).getTime() -
+        new Date(right.scheduled_time || 0).getTime();
+      if (timeDelta !== 0) return timeDelta;
+      return (declaredStageOrder.get(left.stage) ?? 999) - (declaredStageOrder.get(right.stage) ?? 999);
+    })[0]?.stage;
+  if (upcomingStage) return upcomingStage;
+
+  const resultStage = tournamentResults
+    .filter((result) => result.stage)
+    .toSorted((left, right) => {
+      const leftOrder = declaredStageOrder.get(left.stage) ?? -1;
+      const rightOrder = declaredStageOrder.get(right.stage) ?? -1;
+      return rightOrder - leftOrder;
+    })[0]?.stage;
+  if (resultStage) return resultStage;
+
+  const latestScheduledStage = scheduledMatches
+    .toSorted((left, right) => {
+      const timeDelta =
+        new Date(right.scheduled_time || 0).getTime() -
+        new Date(left.scheduled_time || 0).getTime();
+      if (timeDelta !== 0) return timeDelta;
+      return (declaredStageOrder.get(right.stage) ?? -1) - (declaredStageOrder.get(left.stage) ?? -1);
+    })[0]?.stage;
+  if (latestScheduledStage) return latestScheduledStage;
+
   const availableStageSet = new Set([
-    ...tournamentResults.map((result) => result.stage).filter(Boolean),
-    ...tournamentMatches.map((match) => match.stage).filter(Boolean),
+    ...tournamentResults.flatMap((result) => (result.stage ? [result.stage] : [])),
+    ...tournamentMatches.flatMap((match) => (match.stage ? [match.stage] : [])),
   ]);
 
   for (let index = declaredStages.length - 1; index >= 0; index -= 1) {
@@ -164,14 +218,20 @@ export function getStageBoardData({
     const team = teamMap.get(result.team_id);
     const displayName = team?.name || result.team_name || "Unknown Team";
     const key = result.team_id || normalizeStageBoardValue(displayName);
+    const match = matchById.get(result.match_id);
+    const matchGroup = isGrandFinalsStage
+      ? "-"
+      : extractGroupLabel(match?.group_name);
+    const participantGroup =
+      groupMap.get(normalizeStageBoardValue(displayName)) || "-";
+    const resolvedGroup =
+      matchGroup && matchGroup !== "-" ? matchGroup : participantGroup;
     const row = standingsMap.get(key) || {
       teamId: result.team_id,
       teamName: displayName,
       logoName: displayName,
       logoSrc: team?.logo_url || getTeamLogoByName(displayName) || null,
-      group: isGrandFinalsStage
-        ? "-"
-        : groupMap.get(normalizeStageBoardValue(displayName)) || "-",
+      group: isGrandFinalsStage ? "-" : resolvedGroup,
       matches: 0,
       wwcd: 0,
       placementPoints: 0,
@@ -187,7 +247,6 @@ export function getStageBoardData({
         : result.placement === 1
           ? 1
           : 0;
-    const match = matchById.get(result.match_id);
     row.matches += result.matches_count || 1;
     row.wwcd += wins;
     row.placementPoints += result.placement_points || 0;
@@ -201,6 +260,10 @@ export function getStageBoardData({
         placement: result.placement || null,
         won: wins > 0,
       };
+    }
+
+    if (!isGrandFinalsStage && row.group === "-" && matchGroup !== "-") {
+      row.group = matchGroup;
     }
 
     if (isGrandFinalsStage) {

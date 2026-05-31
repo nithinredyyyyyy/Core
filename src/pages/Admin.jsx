@@ -8,6 +8,8 @@ import {
   Newspaper,
   ArrowRightLeft,
   Database,
+  Image,
+  Radio,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -18,6 +20,8 @@ import AdminResults from "../components/admin/ADMINRESULTS";
 import AdminNews from "../components/admin/AdminNews";
 import AdminTransfers from "../components/admin/AdminTransfers";
 import AdminInspector from "../components/admin/AdminInspector";
+import AdminStagePosters from "../components/admin/AdminStagePosters";
+import AdminStreamFetch from "../components/admin/AdminStreamFetch";
 
 const tabs = [
   { id: "tournaments", label: "Tournaments", icon: Trophy },
@@ -26,6 +30,8 @@ const tabs = [
   { id: "results", label: "Results", icon: FileText },
   { id: "transfers", label: "Transfers", icon: ArrowRightLeft },
   { id: "news", label: "News", icon: Newspaper },
+  { id: "stream", label: "Stream Fetch", icon: Radio },
+  { id: "posters", label: "Posters", icon: Image },
   { id: "inspector", label: "Inspector", icon: Database },
 ];
 
@@ -41,6 +47,10 @@ const TAB_DESCRIPTIONS = {
   transfers:
     "Track roster windows, IN / OUT moves, and active lineup adjustments.",
   news: "Publish announcements, tournament stories, and update notes for the frontend feed.",
+  stream:
+    "Queue stream/VOD OCR captures, run match-data fetch jobs, and review draft player stats.",
+  posters:
+    "Generate stage-group poster previews from live tournament stages and results data.",
   inspector:
     "Inspect live backend tournament payloads, match wiring, and result coverage without guessing from frontend views.",
 };
@@ -188,6 +198,7 @@ export default function Admin() {
           <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-secondary/50 p-1">
             {tabs.map((tab) => (
               <button
+                type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
@@ -210,6 +221,8 @@ export default function Admin() {
       {activeTab === "results" && <AdminResults />}
       {activeTab === "transfers" && <AdminTransfers />}
       {activeTab === "news" && <AdminNews />}
+      {activeTab === "stream" && <AdminStreamFetch />}
+      {activeTab === "posters" && <AdminStagePosters />}
       {activeTab === "inspector" && <AdminInspector />}
     </div>
   );

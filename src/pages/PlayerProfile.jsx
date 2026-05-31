@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Shield, Swords, Trophy, UserCircle2 } from "lucide-react";
+import { ArrowLeft, Shield, ShieldCheck, Swords, Trophy, UserCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import EmptyState from "@/components/shared/EmptyState";
@@ -33,6 +33,7 @@ import {
 import { getPlayerPhotoByIgn } from "@/lib/playerPhotos";
 import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 import { getFeaturedTournamentStage } from "@/lib/stageBoard";
+import { useToast } from "@/components/ui/use-toast";
 
 function decodeIgn(value) {
   try {
@@ -449,6 +450,7 @@ function usePlayerProfileData() {
     articles,
     decodedIgn,
     matches,
+    normalizedResultMaps,
     playerAliasIndex,
     playerHistoryMap,
     players,
@@ -647,6 +649,9 @@ function usePlayerProfileData() {
 }
 
 export default function PlayerProfile() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const fanSession = base44.fan.getStoredSession();
   const {
     currentTournament,
     currentTournamentStageFocus,
@@ -663,6 +668,51 @@ export default function PlayerProfile() {
     teamTag,
     playerPhoto,
   } = usePlayerProfileData();
+  const { data: follows = [] } = useQuery({
+    queryKey: ["player-detail-follows", fanSession.userId],
+    queryFn: () =>
+      base44.entities.FanFollowItem.filter(
+        { user_id: fanSession.userId },
+        "-created_date",
+        80,
+      ),
+    enabled: Boolean(fanSession.userId),
+  });
+
+  const playerFollowRecord = follows.find(
+    (entry) =>
+      entry.target_type === "player" &&
+      (entry.target_id === resolved.playerRow?.id ||
+        entry.target_label === displayIgn),
+  );
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!fanSession.userId) throw new Error("Open your profile first.");
+      if (playerFollowRecord?.id) {
+        return base44.entities.FanFollowItem.delete(playerFollowRecord.id);
+      }
+      return base44.entities.FanFollowItem.create({
+        user_id: fanSession.userId,
+        display_name: fanSession.displayName,
+        target_type: "player",
+        target_id: resolved.playerRow?.id || "",
+        target_label: displayIgn,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["player-detail-follows", fanSession.userId],
+      });
+      qc.invalidateQueries({ queryKey: ["profile-follows", fanSession.userId] });
+      toast({
+        title: playerFollowRecord ? "Player unfollowed" : "Player followed",
+        description: playerFollowRecord
+          ? `${displayIgn} was removed from your followed players.`
+          : `${displayIgn} is now pinned to your followed players.`,
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -713,6 +763,17 @@ export default function PlayerProfile() {
                   ? ` • Active in ${currentTournament.name}`
                   : ""}
               </p>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => followMutation.mutate()}
+                  disabled={!fanSession.userId || followMutation.isPending}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <ShieldCheck className="size-3.5" />
+                  {playerFollowRecord ? "Following player" : "Follow player"}
+                </button>
+              </div>
             </div>
 
             <ProfileStatGrid

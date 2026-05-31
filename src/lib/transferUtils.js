@@ -1,8 +1,8 @@
 function normalizePlayers(players = []) {
-  return [...players]
-    .map((player) => String(player || "").trim())
-    .filter(Boolean)
-    .sort();
+  return players.flatMap((player) => {
+    const normalized = String(player || "").trim();
+    return normalized ? [normalized] : [];
+  }).toSorted();
 }
 
 function buildTransferKey(entry) {
@@ -33,7 +33,7 @@ export function mergeTransferEntries(staticEntries = [], dbEntries = []) {
     merged.set(buildTransferKey(entry), { ...entry });
   }
 
-  return [...merged.values()].sort((a, b) => {
+  return Array.from(merged.values()).toSorted((a, b) => {
     const dateDiff = new Date(b.date || 0) - new Date(a.date || 0);
     if (dateDiff !== 0) return dateDiff;
     return String(a.window || "").localeCompare(String(b.window || ""));

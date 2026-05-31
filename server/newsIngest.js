@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { db, entityConfigs, normalizeRecord, serializePayload } from "./db.js";
 import { NEWS_SOURCE_TYPES, getEnabledNewsSources } from "./newsSources.js";
+import { decodeNewsText, enrichImportedNewsArticle } from "./newsModel.js";
 
 const SOURCE_BRAND_LABELS = new Map([
   ["ign india", "IGN India"],
@@ -11,13 +12,12 @@ const SOURCE_BRAND_LABELS = new Map([
 ]);
 
 function decodeHtmlEntities(value) {
-  return String(value || "")
+  return decodeNewsText(String(value || ""))
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&nbsp;/g, " ")
     .replace(/&#39;/g, "'");
 }
 
@@ -226,7 +226,7 @@ function normalizeImportedArticle(rawItem, source) {
       ? publishedAt.toISOString()
       : new Date().toISOString();
 
-  return {
+  return enrichImportedNewsArticle({
     title,
     summary: buildSummary(content),
     content,
@@ -244,7 +244,7 @@ function normalizeImportedArticle(rawItem, source) {
     priority: source.priority || "routine",
     is_auto_ingested: 1,
     import_hash: buildImportHash({ title, source_url: sourceUrl }),
-  };
+  });
 }
 
 function deriveNormalizedDraftPatch(article) {
@@ -270,10 +270,18 @@ function deriveNormalizedDraftPatch(article) {
     title,
     source_url: normalizeWhitespace(article.source_url),
   });
-
-  return {
+  const enriched = enrichImportedNewsArticle({
+    ...article,
     title,
     summary,
+    source_name: sourceLabel,
+    import_hash: importHash,
+  });
+
+  return {
+    title: enriched.title,
+    summary: enriched.summary,
+    content: enriched.content,
     source_name: sourceLabel,
     import_hash: importHash,
   };
@@ -355,13 +363,27 @@ export async function importNewsFromSources(options = {}) {
   const imported = [];
   const skipped = [];
   const failed = [];
+  const sourceResults = await Promise.all(
+    allSources.map(async (source) => {
+      try {
+        const items = await fetchSourceItems(source);
+        return { source, items, error: null };
+      } catch (error) {
+        return { source, items: [], error };
+      }
+    }),
+  );
 
-  for (const source of allSources) {
+  for (const { source, items, error } of sourceResults) {
     try {
-      const items = await fetchSourceItems(source);
+      if (error) {
+        throw error;
+      }
       const normalizedItems = items
-        .map((item) => normalizeImportedArticle(item, source))
-        .filter(Boolean)
+        .flatMap((item) => {
+          const normalizedItem = normalizeImportedArticle(item, source);
+          return normalizedItem ? [normalizedItem] : [];
+        })
         .slice(
           0,
           Number.isFinite(Number(options.limitPerSource))
@@ -436,6 +458,7 @@ export function backfillImportedNewsMetadata() {
     UPDATE news_articles
     SET title = ?,
         summary = ?,
+        content = ?,
         source_name = ?,
         import_hash = ?
     WHERE id = ?
@@ -447,6 +470,7 @@ export function backfillImportedNewsMetadata() {
       const changed =
         next.title !== row.title ||
         next.summary !== (row.summary || "") ||
+        next.content !== (row.content || "") ||
         next.source_name !== (row.source_name || "") ||
         next.import_hash !== (row.import_hash || "");
 
@@ -454,6 +478,7 @@ export function backfillImportedNewsMetadata() {
       updateStmt.run(
         next.title,
         next.summary,
+        next.content,
         next.source_name,
         next.import_hash,
         row.id,

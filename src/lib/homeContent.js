@@ -56,8 +56,8 @@ export function getTournamentChampionFromStages(tournament) {
         Array.isArray(stage?.standings) &&
         stage.standings.length > 0,
     ) ||
-    [...stages]
-      .reverse()
+    stages
+      .toReversed()
       .find(
         (stage) =>
           Array.isArray(stage?.standings) && stage.standings.length > 0,
@@ -66,7 +66,7 @@ export function getTournamentChampionFromStages(tournament) {
   if (!finalsStage) return null;
 
   const championEntry =
-    [...finalsStage.standings].sort(
+    finalsStage.standings.toSorted(
       (a, b) => (a?.placement ?? 999) - (b?.placement ?? 999),
     )[0] || null;
 

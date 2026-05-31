@@ -7,27 +7,30 @@ import { ThemeProvider } from "@/lib/ThemeContext";
 import { SearchProvider } from "@/lib/SearchContext";
 
 import AppLayout from "./components/layout/AppLayout";
+import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
+import Fans from "./pages/Fans";
+import News from "./pages/News";
+import NewsArticle from "./pages/NewsArticle";
 import Tournaments from "./pages/Tournaments";
 import Teams from "./pages/TEAMS";
 import PlayerProfile from "./pages/PlayerProfile";
 import Leaderboard from "./pages/LEADERBOARD";
-import News from "./pages/News";
-import NewsArticle from "./pages/NewsArticle";
-import Fans from "./pages/Fans";
+import Profile from "./pages/Profile";
+import SignIn from "./pages/SignIn";
 import Admin from "./pages/Admin";
 import { ShieldAlert } from "lucide-react";
 import { useAdminAccess } from "@/lib/adminAccess";
 
 function AdminAccessGate() {
-  const { authUser, isLocalAdmin, isLoading } = useAdminAccess();
+  const { hasAdminAccess, isLoading } = useAdminAccess();
 
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-6">
         <div className="max-w-lg rounded-[24px] border border-border bg-card p-8 text-center shadow-sm">
           <h1 className="text-2xl font-heading font-semibold tracking-wide">
-            Checking admin access…
+            Checking admin access...
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Validating your control-room session.
@@ -37,7 +40,7 @@ function AdminAccessGate() {
     );
   }
 
-  if (!isLocalAdmin && authUser?.role !== "admin") {
+  if (!hasAdminAccess) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-6">
         <div className="max-w-lg rounded-[24px] border border-border bg-card p-8 text-center shadow-sm">
@@ -48,8 +51,8 @@ function AdminAccessGate() {
             ADMIN LOCKED
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Set a valid admin key in this browser to unlock the control room on
-            the deployed site.
+            Sign in with an authorized Google admin account to unlock the
+            control room.
           </p>
         </div>
       </div>
@@ -62,12 +65,15 @@ function AdminAccessGate() {
 const RoutedApp = () => {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/signin" element={<SignIn />} />
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/app" element={<Home />} />
         <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/players/:playerIgn" element={<PlayerProfile />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/fans" element={<Fans />} />
         <Route path="/news" element={<News />} />
         <Route path="/news/:articleId" element={<NewsArticle />} />
@@ -83,7 +89,12 @@ function App() {
     <ThemeProvider>
       <SearchProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <Router>
+          <Router
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <RoutedApp />
           </Router>
           <Toaster />

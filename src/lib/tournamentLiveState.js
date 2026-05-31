@@ -34,14 +34,22 @@ export function getFeaturedTournamentFromCalendar(
   );
   if (ongoing) return ongoing;
 
-  const upcoming = [...calendarTournaments]
-    .filter((tournament) => tournament.status === "upcoming")
-    .sort((a, b) => getTournamentSortDate(a) - getTournamentSortDate(b))[0];
+  const upcoming = calendarTournaments.reduce((best, tournament) => {
+    if (tournament.status !== "upcoming") return best;
+    if (!best) return tournament;
+    return getTournamentSortDate(tournament) < getTournamentSortDate(best)
+      ? tournament
+      : best;
+  }, null);
   if (upcoming) return upcoming;
 
-  const completed = [...calendarTournaments]
-    .filter((tournament) => tournament.status === "completed")
-    .sort((a, b) => getTournamentSortDate(b) - getTournamentSortDate(a))[0];
+  const completed = calendarTournaments.reduce((best, tournament) => {
+    if (tournament.status !== "completed") return best;
+    if (!best) return tournament;
+    return getTournamentSortDate(tournament) > getTournamentSortDate(best)
+      ? tournament
+      : best;
+  }, null);
   if (completed) return completed;
 
   return calendarTournaments[0] || null;

@@ -16,7 +16,7 @@ const tournament = {
   description:
     "Battlegrounds Mobile India Series 2024 was the third edition of BGIS, organized by KRAFTON with a total prize pool of ₹2,00,00,000 INR. The event ran from May 2 to June 30, 2024 and concluded with TeamXSpark winning the Hyderabad Grand Finals.",
   format_overview:
-    "BGIS 2024 began with 1024 teams from in-game qualifiers and progressed through Round 1, Round 2, Round 3, Round 4, Wildcard Entry, Semi Finals Week 1, Semi Finals Week 2, and an 18-match Grand Finals in Hyderabad.",
+    "BGIS 2024 began with 1024 teams from in-game qualifiers and progressed through Round 1, Round 2, Round 3, Round 4, Wildcard Entry, Semi Finals 1, Semi Finals 2, and an 18-match Grand Finals in Hyderabad.",
   rules:
     "Match scoring: 1st 10, 2nd 6, 3rd 5, 4th 4, 5th 3, 6th 2, 7th-8th 1, 9th-16th 0. Each elimination gives 1 point. Tiebreakers: total WWCDs, then placement points, then elimination points, then the best placement in the most recent match.",
   calendar: [
@@ -25,8 +25,8 @@ const tournament = {
     { week: "May 16 - May 19", label: "Round 3" },
     { week: "May 23 - May 26", label: "Round 4" },
     { week: "May 30 - Jun 2", label: "Wildcard Entry" },
-    { week: "Jun 6 - Jun 9", label: "Semi Finals Week 1" },
-    { week: "Jun 13 - Jun 16", label: "Semi Finals Week 2" },
+    { week: "Jun 6 - Jun 9", label: "Semi Finals 1" },
+    { week: "Jun 13 - Jun 16", label: "Semi Finals 2" },
     { week: "Jun 28 - Jun 30", label: "Grand Finals" },
   ],
   prize_breakdown: [
@@ -277,7 +277,7 @@ const tournament = {
       status: "completed",
       teamCount: 64,
       summary:
-        "May 23rd - 26th, 2024. 48 teams from Round 3 plus 16 teams from The Grind were divided into 4 groups. The top 16 teams advanced to Semi Finals Week 1 and the remaining 48 moved to Wildcard Entry.",
+        "May 23rd - 26th, 2024. 48 teams from Round 3 plus 16 teams from The Grind were divided into 4 groups. The top 16 teams advanced to Semi Finals 1 and the remaining 48 moved to Wildcard Entry.",
     },
     {
       name: "Wildcard Entry",
@@ -285,18 +285,18 @@ const tournament = {
       status: "completed",
       teamCount: 64,
       summary:
-        "May 30th - June 2nd, 2024. 64 teams played four matchdays with group reshuffles after the first two days. The top 16 cumulative teams advanced to Semi Finals Week 1.",
+        "May 30th - June 2nd, 2024. 64 teams played four matchdays with group reshuffles after the first two days. The top 16 cumulative teams advanced to Semi Finals 1.",
     },
     {
-      name: "Semi Finals Week 1",
+      name: "Semi Finals 1",
       order: 6,
       status: "completed",
       teamCount: 32,
       summary:
-        "June 6th - 9th, 2024. 32 teams played a round-robin format across 4 groups of 8. The top 8 teams advanced directly to the Grand Finals and the remaining 24 moved to Semi Finals Week 2.",
+        "June 6th - 9th, 2024. 32 teams played a round-robin format across 4 groups of 8. The top 8 teams advanced directly to the Grand Finals and the remaining 24 moved to Semi Finals 2.",
     },
     {
-      name: "Semi Finals Week 2",
+      name: "Semi Finals 2",
       order: 7,
       status: "completed",
       teamCount: 24,

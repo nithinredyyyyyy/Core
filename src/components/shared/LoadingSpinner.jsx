@@ -40,7 +40,6 @@ export default function LoadingSpinner({ isExiting = false }) {
 
   useEffect(() => {
     if (!isExiting) {
-      setTargetRect(null);
       return undefined;
     }
 
@@ -60,13 +59,15 @@ export default function LoadingSpinner({ isExiting = false }) {
     };
   }, [isExiting]);
 
+  const activeTargetRect = isExiting ? targetRect : null;
+
   const logoShellStyle =
-    isExiting && targetRect
+    activeTargetRect
       ? {
-          left: `${targetRect.centerX}px`,
-          top: `${targetRect.centerY}px`,
-          width: `${targetRect.width}px`,
-          height: `${targetRect.height}px`,
+          left: `${activeTargetRect.centerX}px`,
+          top: `${activeTargetRect.centerY}px`,
+          width: `${activeTargetRect.width}px`,
+          height: `${activeTargetRect.height}px`,
         }
       : {
           left: "50%",
