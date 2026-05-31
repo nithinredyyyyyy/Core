@@ -19,7 +19,6 @@ import {
   importNewsFromSources,
 } from "./newsIngest.js";
 import { NEWS_SOURCES } from "./newsSources.js";
-import { registerStreamExtractionRoutes } from "./streamExtraction.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -1303,11 +1302,6 @@ function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     .slice(0, limit)
     .map(({ score, ...result }) => result);
 }
-
-registerStreamExtractionRoutes({
-  app,
-  requireAdmin: requireAdminAccess,
-});
 
 function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
   if (!stages.length) return [];

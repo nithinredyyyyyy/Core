@@ -466,51 +466,6 @@ export const base44 = {
       return request(`/api/tournaments/${id}/normalized`);
     },
   },
-  streamExtraction: {
-    health() {
-      return request("/api/stream-extraction/health");
-    },
-    listSessions(status) {
-      return request(
-        `/api/stream-extraction/sessions${toQueryString({ status })}`,
-      );
-    },
-    createSession(payload) {
-      return request("/api/stream-extraction/sessions", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-    },
-    updateSession(id, payload) {
-      return request(`/api/stream-extraction/sessions/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-    },
-    runWorkerOnce() {
-      return request("/api/stream-extraction/worker/run-once", {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-    },
-    listFrameJobs(sessionId) {
-      return request(`/api/stream-extraction/sessions/${sessionId}/frame-jobs`);
-    },
-    listOcrResults(sessionId) {
-      return request(`/api/stream-extraction/sessions/${sessionId}/results`);
-    },
-    listMatchStats(sessionId, matchKey) {
-      return request(
-        `/api/stream-extraction/sessions/${sessionId}/match-stats${toQueryString({ match_key: matchKey })}`,
-      );
-    },
-    aggregateMatchStats(payload) {
-      return request("/api/stream-extraction/match-stats/aggregate", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-    },
-  },
   auth: {
     getStoredSession() {
       return getStoredAuthSession();

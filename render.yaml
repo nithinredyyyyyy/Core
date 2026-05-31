@@ -11,7 +11,5 @@ services:
         value: production
       - key: PORT
         value: 4000
-      - key: STREAM_ENABLE_LOCAL_WORKER_RUN
-        value: "0"
       - key: CORE_ADMIN_KEY
         sync: false
