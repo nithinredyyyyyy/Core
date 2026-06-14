@@ -1,7 +1,7 @@
 {
-  "name": "StageCore",
-  "short_name": "StageCore",
-  "description": "Esports tournament platform for standings, schedules, fan engagement, and live circuit coverage.",
+  "name": "Core",
+  "short_name": "Core",
+  "description": "BGMI esports hub for standings, schedules, fan engagement, fantasy, and live circuit coverage.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

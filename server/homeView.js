@@ -128,6 +128,11 @@ export function buildHomeViewModel(summary, options = {}) {
     );
   const upcomingMatches = calendarMatches
     .filter((match) => match.status === "scheduled")
+    .toSorted(
+      (left, right) =>
+        new Date(left.scheduled_time || 0).getTime() -
+        new Date(right.scheduled_time || 0).getTime(),
+    )
     .slice(0, 4)
     .map((match) => ({
       ...match,

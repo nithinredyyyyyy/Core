@@ -21,6 +21,7 @@ import {
   resolveTeamByAlias,
 } from "@/lib/normalizedIdentity";
 import { getPlayerDisplayName } from "@/lib/playerDisplayName";
+import { getOfficialParticipantEntries } from "@/lib/tournamentParticipants";
 
 function LightPanel({ className = "", children }) {
   return (
@@ -33,6 +34,7 @@ function LightPanel({ className = "", children }) {
 }
 
 const BMPS_TOURNAMENT_NAME = "Battlegrounds Mobile India Pro Series 2026";
+const EMPTY_TEAMS_PAGE_ARRAY = [];
 
 function getTeamCardLogo(name, fallbackLogo) {
   return getTeamLogoByName(name) || fallbackLogo || null;
@@ -232,36 +234,17 @@ export default function Teams() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
 
-  const { data: teams = [], isLoading: teamsLoading } = useQuery({
-    queryKey: ["teams"],
-    queryFn: () => base44.entities.Team.list("-total_points", 400),
+  const { data: teamsPage = {}, isLoading } = useQuery({
+    queryKey: ["teams-page"],
+    queryFn: () => base44.pages.teams(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
-
-  const { data: players = [], isLoading: playersLoading } = useQuery({
-    queryKey: ["players"],
-    queryFn: () => base44.entities.Player.list("-created_date", 500),
-  });
-
-  const { data: transferWindows = [], isLoading: transfersLoading } = useQuery({
-    queryKey: ["transfer-windows"],
-    queryFn: () => base44.entities.TransferWindow.list("-date", 500),
-  });
-
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
-    queryKey: ["tournaments"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 100),
-  });
-  const { data: teamAliases = [], isLoading: teamAliasesLoading } = useQuery({
-    queryKey: ["team-aliases"],
-    queryFn: () => base44.entities.TeamAlias.list("-created_date", 2000),
-  });
-
-  const isLoading =
-    teamsLoading ||
-    playersLoading ||
-    transfersLoading ||
-    tournamentsLoading ||
-    teamAliasesLoading;
+  const teams = teamsPage.teams || EMPTY_TEAMS_PAGE_ARRAY;
+  const players = teamsPage.players || EMPTY_TEAMS_PAGE_ARRAY;
+  const transferWindows = teamsPage.transferWindows || EMPTY_TEAMS_PAGE_ARRAY;
+  const tournaments = teamsPage.tournaments || EMPTY_TEAMS_PAGE_ARRAY;
+  const teamAliases = teamsPage.teamAliases || EMPTY_TEAMS_PAGE_ARRAY;
 
   const teamAliasIndex = useMemo(
     () => buildTeamAliasIndex(teams, teamAliases),
@@ -286,8 +269,8 @@ export default function Teams() {
   );
 
   const teamCards = useMemo(() => {
-    const participants = Array.isArray(bmpsTournament?.participants)
-      ? bmpsTournament.participants
+    const participants = bmpsTournament
+      ? getOfficialParticipantEntries(bmpsTournament)
       : [];
 
     const mergedTransfers = transferWindows.flatMap((window) =>

@@ -1,4 +1,86 @@
 import { getTeamLogoByName } from "./teamLogos.js";
+import { normalizeOrganizationName } from "./organizationIdentity.js";
+
+const BMPS_2026_SURVIVAL_STAGE_GROUPS = {
+  madkingsesports: "A",
+  madkings: "A",
+  teamaryan: "A",
+  aryan: "A",
+  hadxesports: "A",
+  hadx: "A",
+  nonxesports: "A",
+  nonx: "A",
+  rapidchaosesports: "A",
+  rapidchaos: "A",
+  vxt: "A",
+  teamversatile: "A",
+  versatile: "A",
+  aresesport: "A",
+  ares: "A",
+  likithaesports: "A",
+  likitha: "A",
+
+  jaguaresports: "B",
+  jaguar: "B",
+  k9esports: "B",
+  k9: "B",
+  esportsocial: "B",
+  santaesports: "B",
+  santa: "B",
+  truerippers: "B",
+  quantumsparks: "B",
+  quantumspark: "B",
+  risingesports: "B",
+  rising: "B",
+  teamdoxy: "B",
+  doxy: "B",
+
+  naqshesports: "C",
+  naqsh: "C",
+  learnfrompast: "C",
+  lefp: "C",
+  teamredxross: "C",
+  redxross: "C",
+  thundergodsxtortugagaming: "C",
+  tdr: "C",
+  godsentesports: "C",
+  godsent: "C",
+  teamapexgaming: "C",
+  apexgaming: "C",
+  dcxscr: "C",
+  dcxscresports: "C",
+  genxfmesports: "C",
+  genxfm: "C",
+
+  phoenixesports: "D",
+  phoenix: "D",
+  phoneix: "D",
+  lastadeesports: "D",
+  lastade: "D",
+  teamh4k: "D",
+  h4k: "D",
+  riotnationz: "D",
+  riotnation: "D",
+  riotnations: "D",
+  t7xorionesports: "D",
+  t7: "D",
+  troytamilianesports: "D",
+  troytamilian: "D",
+  auraxesports: "D",
+  aurax: "D",
+  mythofficial: "D",
+  myth: "D",
+};
+
+function getBmps2026SurvivalStageGroup(teamName) {
+  const aliasKey = normalizeOrganizationName(teamName);
+  const compactKey = normalizeStageBoardValue(teamName);
+  return (
+    BMPS_2026_SURVIVAL_STAGE_GROUPS[aliasKey] ||
+    BMPS_2026_SURVIVAL_STAGE_GROUPS[compactKey] ||
+    null
+  );
+}
 
 export function normalizeStageBoardValue(value) {
   return String(value || "")
@@ -118,17 +200,31 @@ function extractGroupLabel(rawValue) {
 export function getStageBoardTeamGroups(
   featuredTournament,
   participantEntries = null,
+  requestedStage = "",
 ) {
   const map = new Map();
   const sourceEntries = Array.isArray(participantEntries)
     ? participantEntries
     : featuredTournament?.participants || [];
-  for (const participant of sourceEntries) {
-    const key = normalizeStageBoardValue(participant.team);
-    if (!key) continue;
+  const stageKey = String(requestedStage || "").trim().toLowerCase();
+  const stageScopedEntries = stageKey
+    ? sourceEntries.filter((participant) =>
+        new RegExp(`^${stageKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*-\\s*group\\s+[a-d]$`, "i").test(
+          String(participant?.phase || "").trim(),
+        ),
+      )
+    : [];
+  const entries = stageScopedEntries.length > 0 ? stageScopedEntries : sourceEntries;
+
+  for (const participant of entries) {
+    const rawKey = normalizeStageBoardValue(participant.team);
+    const organizationKey = normalizeOrganizationName(participant.team);
+    if (!rawKey && !organizationKey) continue;
     const rawGroup =
       participant.group_name || participant.group || participant.phase || "-";
-    map.set(key, extractGroupLabel(rawGroup));
+    const group = extractGroupLabel(rawGroup);
+    if (rawKey) map.set(rawKey, group);
+    if (organizationKey) map.set(organizationKey, group);
   }
   return map;
 }
@@ -191,6 +287,9 @@ export function getStageBoardData({
     String(featuredStage || "")
       .trim()
       .toLowerCase() === "grand finals";
+  const isBmps2026SurvivalStage =
+    featuredTournament?.name === "Battlegrounds Mobile India Pro Series 2026" &&
+    String(featuredStage || "").trim().toLowerCase() === "survival stage";
   const strictStageMatches = sortStageBoardMatches(
     tournamentMatches.filter(
       (match) => !featuredStage || match.stage === featuredStage,
@@ -209,6 +308,7 @@ export function getStageBoardData({
   const groupMap = getStageBoardTeamGroups(
     featuredTournament,
     participantEntries,
+    featuredStage,
   );
   const standingsMap = new Map();
 
@@ -223,9 +323,19 @@ export function getStageBoardData({
       ? "-"
       : extractGroupLabel(match?.group_name);
     const participantGroup =
-      groupMap.get(normalizeStageBoardValue(displayName)) || "-";
+      groupMap.get(normalizeStageBoardValue(displayName)) ||
+      groupMap.get(normalizeOrganizationName(displayName)) ||
+      "-";
+    const bmpsSurvivalGroup = isBmps2026SurvivalStage
+      ? getBmps2026SurvivalStageGroup(displayName)
+      : null;
     const resolvedGroup =
-      matchGroup && matchGroup !== "-" ? matchGroup : participantGroup;
+      bmpsSurvivalGroup ||
+      (participantGroup && participantGroup !== "-"
+        ? participantGroup
+        : isBmps2026SurvivalStage
+          ? "-"
+          : matchGroup);
     const row = standingsMap.get(key) || {
       teamId: result.team_id,
       teamName: displayName,
@@ -262,8 +372,8 @@ export function getStageBoardData({
       };
     }
 
-    if (!isGrandFinalsStage && row.group === "-" && matchGroup !== "-") {
-      row.group = matchGroup;
+    if (!isGrandFinalsStage && row.group === "-") {
+      row.group = resolvedGroup;
     }
 
     if (isGrandFinalsStage) {

@@ -63,47 +63,49 @@ function inferRevives(role, finishes) {
 export function buildFantasyPlayerPool(players = [], teams = []) {
   const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
 
-  return players
-    .map((player) => {
-      const key = normalizeKey(player.ign);
-      const qualifier = qualifierStatsMap.get(key);
-      const mvp = mvpStatsMap.get(key);
-      const igl = iglStatsMap.get(key);
+  const fantasyPlayers = [];
+  for (const player of players) {
+    if (!player.ign) continue;
+    const key = normalizeKey(player.ign);
+    const qualifier = qualifierStatsMap.get(key);
+    const mvp = mvpStatsMap.get(key);
+    const igl = iglStatsMap.get(key);
 
-      const finishes = Number(mvp?.finishes ?? qualifier?.finishes ?? player.total_kills ?? 0);
-      const damage = Number(
-        mvp?.damage ??
-          (Number(player.avg_damage || 0) * Math.max(1, Number(player.matches_played || 1))),
-      );
-      const survival = parseSurvivalToMinutes(mvp?.avgSurvival) || Math.max(10, Number(player.matches_played || 0) * 1.25);
-      const wwcd = Number(igl?.wwcd || 0);
-      const revives = inferRevives(player.role, finishes);
-      const fantasyPoints =
-        finishes * 4 +
-        Math.round(damage / 250) +
-        Math.round(survival / 2) +
-        wwcd * 10 +
-        revives * 2;
+    const finishes = Number(mvp?.finishes ?? qualifier?.finishes ?? player.total_kills ?? 0);
+    const damage = Number(
+      mvp?.damage ??
+        (Number(player.avg_damage || 0) * Math.max(1, Number(player.matches_played || 1))),
+    );
+    const survival = parseSurvivalToMinutes(mvp?.avgSurvival) || Math.max(10, Number(player.matches_played || 0) * 1.25);
+    const wwcd = Number(igl?.wwcd || 0);
+    const revives = inferRevives(player.role, finishes);
+    const fantasyPoints =
+      finishes * 4 +
+      Math.round(damage / 250) +
+      Math.round(survival / 2) +
+      wwcd * 10 +
+      revives * 2;
 
-      return {
-        id: player.id,
-        ign: player.ign,
-        role: player.role || "Fragger",
-        teamId: player.team_id || "",
-        teamName:
-          teamNameById.get(player.team_id) ||
-          mvp?.teamName ||
-          igl?.teamName ||
-          "Open roster",
-        finishes,
-        damage,
-        survival,
-        wwcd,
-        revives,
-        fantasyPoints,
-      };
-    })
-    .filter((player) => player.ign)
+    fantasyPlayers.push({
+      id: player.id,
+      ign: player.ign,
+      role: player.role || "Fragger",
+      teamId: player.team_id || "",
+      teamName:
+        teamNameById.get(player.team_id) ||
+        mvp?.teamName ||
+        igl?.teamName ||
+        "Open roster",
+      finishes,
+      damage,
+      survival,
+      wwcd,
+      revives,
+      fantasyPoints,
+    });
+  }
+
+  return fantasyPlayers
     .toSorted((left, right) => right.fantasyPoints - left.fantasyPoints)
     .slice(0, 40);
 }

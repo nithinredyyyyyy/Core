@@ -20,6 +20,14 @@ const RESULT_ICONS = {
   match: Trophy,
 };
 
+const SEARCH_SUGGESTIONS = [
+  { icon: Trophy, label: "Tournaments", path: "/tournaments" },
+  { icon: Users, label: "Teams", path: "/teams" },
+  { icon: Waves, label: "Fans", path: "/fans" },
+  { icon: Newspaper, label: "News", path: "/news" },
+  { icon: UserCircle, label: "Profile", path: "/profile" },
+];
+
 export default function GlobalSearch({ open, onClose }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
@@ -53,14 +61,6 @@ export default function GlobalSearch({ open, onClose }) {
     (result) => typeof result?.path === "string",
   );
 
-  const suggestions = [
-    { icon: Trophy, label: "Tournaments", path: "/tournaments" },
-    { icon: Users, label: "Teams", path: "/teams" },
-    { icon: Waves, label: "Fans", path: "/fans" },
-    { icon: Newspaper, label: "News", path: "/news" },
-    { icon: UserCircle, label: "Profile", path: "/profile" },
-  ];
-
   const go = (path) => {
     navigate(path);
     onClose();
@@ -91,7 +91,7 @@ export default function GlobalSearch({ open, onClose }) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search tournaments, teams, players, matches?"
-            aria-label="Search StageCore"
+            aria-label="Search Core"
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           {query ? (
@@ -148,7 +148,7 @@ export default function GlobalSearch({ open, onClose }) {
               <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Quick Links
               </p>
-              {suggestions.map((suggestion) => (
+              {SEARCH_SUGGESTIONS.map((suggestion) => (
                 <button
                   type="button"
                   key={suggestion.path}

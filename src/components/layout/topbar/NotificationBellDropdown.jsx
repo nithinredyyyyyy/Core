@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
@@ -25,6 +25,8 @@ const ICONS = {
   chat: Megaphone,
   general: Bell,
 };
+
+let cachedFanSession = null;
 
 function formatRankLabel(rank) {
   if (!rank) return "Unranked";
@@ -133,34 +135,46 @@ function writeSeenAlerts(userId, values) {
   );
 }
 
+function getFanSessionSnapshot() {
+  const nextSession = base44.fan.getStoredSession();
+  if (
+    cachedFanSession &&
+    cachedFanSession.userId === nextSession.userId &&
+    cachedFanSession.displayName === nextSession.displayName &&
+    cachedFanSession.token === nextSession.token
+  ) {
+    return cachedFanSession;
+  }
+  cachedFanSession = nextSession;
+  return cachedFanSession;
+}
+
+function subscribeToFanSession(onStoreChange) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("focus", onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    window.removeEventListener("focus", onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
 export default function NotificationBellDropdown({
   align = "end",
   buttonClassName,
   iconClassName,
 }) {
-  const [session, setSession] = useState(() => base44.fan.getStoredSession());
-  const [seenAlerts, setSeenAlerts] = useState(() =>
-    readSeenAlerts(base44.fan.getStoredSession().userId),
+  const session = useSyncExternalStore(
+    subscribeToFanSession,
+    getFanSessionSnapshot,
+    getFanSessionSnapshot,
+  );
+  const [seenAlertsByUser, setSeenAlertsByUser] = useState({});
+  const seenAlerts = useMemo(
+    () => seenAlertsByUser[session.userId] || readSeenAlerts(session.userId),
+    [seenAlertsByUser, session.userId],
   );
   const isJoined = Boolean(session.userId && session.token);
-
-  useEffect(() => {
-    const syncSession = () => {
-      setSession(base44.fan.getStoredSession());
-    };
-
-    syncSession();
-    window.addEventListener("focus", syncSession);
-    window.addEventListener("storage", syncSession);
-    return () => {
-      window.removeEventListener("focus", syncSession);
-      window.removeEventListener("storage", syncSession);
-    };
-  }, []);
-
-  useEffect(() => {
-    setSeenAlerts(readSeenAlerts(session.userId));
-  }, [session.userId]);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["topbar-fan-profile", session.userId],
@@ -266,7 +280,10 @@ export default function NotificationBellDropdown({
       ...seenAlerts,
       ...allNotifications.map(getAlertSeenKey),
     ]);
-    setSeenAlerts(nextSeenAlerts);
+    setSeenAlertsByUser((current) => ({
+      ...current,
+      [session.userId]: nextSeenAlerts,
+    }));
     writeSeenAlerts(session.userId, nextSeenAlerts);
   };
 

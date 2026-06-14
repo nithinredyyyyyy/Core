@@ -252,6 +252,13 @@ const tableDefinitions = [
     updated_date TEXT NOT NULL,
     created_by TEXT
   )`,
+  `CREATE TABLE IF NOT EXISTS site_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT
+  )`,
 ];
 
 for (const definition of tableDefinitions) {
@@ -310,6 +317,7 @@ ensureColumn("tournaments", "tier", "TEXT");
 ensureColumn("matches", "group_name", "TEXT");
 ensureColumn("match_results", "matches_count", "INTEGER DEFAULT 1");
 ensureColumn("match_results", "wins_count", "INTEGER DEFAULT 0");
+ensureColumn("match_results", "publication_status", "TEXT DEFAULT 'published'");
 ensureColumn("fan_profiles", "favorite_team", "TEXT");
 ensureColumn("fan_profiles", "xp_points", "INTEGER DEFAULT 0");
 ensureColumn("fan_profiles", "login_streak", "INTEGER DEFAULT 0");
@@ -1201,6 +1209,7 @@ export const entityConfigs = {
       "matches_count",
       "wins_count",
       "stage",
+      "publication_status",
       "created_by",
     ],
     jsonFields: [],
@@ -1497,13 +1506,19 @@ export function recomputeTeamStats() {
     `
     UPDATE teams
     SET total_kills = COALESCE((
-          SELECT SUM(mr.kill_points) FROM match_results mr WHERE mr.team_id = teams.id
+          SELECT SUM(mr.kill_points) FROM match_results mr
+          WHERE mr.team_id = teams.id
+            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
         ), 0),
         total_points = COALESCE((
-          SELECT SUM(mr.total_points) FROM match_results mr WHERE mr.team_id = teams.id
+          SELECT SUM(mr.total_points) FROM match_results mr
+          WHERE mr.team_id = teams.id
+            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
         ), 0),
         matches_played = COALESCE((
-          SELECT SUM(COALESCE(mr.matches_count, 1)) FROM match_results mr WHERE mr.team_id = teams.id
+          SELECT SUM(COALESCE(mr.matches_count, 1)) FROM match_results mr
+          WHERE mr.team_id = teams.id
+            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
         ), 0),
         wins = COALESCE((
           SELECT SUM(
@@ -1512,7 +1527,9 @@ export function recomputeTeamStats() {
               WHEN mr.placement = 1 THEN 1
               ELSE 0
             END
-          ) FROM match_results mr WHERE mr.team_id = teams.id
+          ) FROM match_results mr
+          WHERE mr.team_id = teams.id
+            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
         ), 0),
         updated_date = ?
   `,

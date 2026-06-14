@@ -33,6 +33,7 @@ import {
 import { getPlayerPhotoByIgn } from "@/lib/playerPhotos";
 import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 import { getFeaturedTournamentStage } from "@/lib/stageBoard";
+import { getOfficialParticipantEntries } from "@/lib/tournamentParticipants";
 import { useToast } from "@/components/ui/use-toast";
 
 function decodeIgn(value) {
@@ -74,9 +75,7 @@ function formatProfileDate(value, pattern, fallback) {
 function findParticipantTeamForPlayer(tournaments, ign) {
   const target = normalizeIgn(ign);
   for (const tournament of tournaments) {
-    const participants = Array.isArray(tournament?.participants)
-      ? tournament.participants
-      : [];
+    const participants = getOfficialParticipantEntries(tournament);
     for (const participant of participants) {
       const players = Array.isArray(participant?.players)
         ? participant.players
@@ -111,9 +110,7 @@ function resolveTournamentParticipantForPlayer({
   teamAliasIndex,
 }) {
   const target = normalizeIgn(ign);
-  const participants = Array.isArray(tournament?.participants)
-    ? tournament.participants
-    : [];
+  const participants = getOfficialParticipantEntries(tournament);
 
   let bestParticipant = null;
   let bestScore = Number.NEGATIVE_INFINITY;
@@ -648,7 +645,7 @@ function usePlayerProfileData() {
   };
 }
 
-export default function PlayerProfile() {
+function usePlayerProfileModel() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const fanSession = base44.fan.getStoredSession();
@@ -713,6 +710,45 @@ export default function PlayerProfile() {
       });
     },
   });
+
+  return {
+    currentTournament,
+    currentTournamentStageFocus,
+    displayIgn,
+    fanSession,
+    followMutation,
+    isLoading,
+    playerFollowRecord,
+    playerPhoto,
+    primaryStats,
+    resolved,
+    resultYears,
+    secondaryStats,
+    teamLogo,
+    teamLogoSurfaceTone,
+    teamName,
+    teamTag,
+  };
+}
+
+export default function PlayerProfile() {
+  const {
+    currentTournament,
+    displayIgn,
+    fanSession,
+    followMutation,
+    isLoading,
+    playerFollowRecord,
+    playerPhoto,
+    primaryStats,
+    resolved,
+    resultYears,
+    secondaryStats,
+    teamLogo,
+    teamLogoSurfaceTone,
+    teamName,
+    teamTag,
+  } = usePlayerProfileModel();
 
   if (isLoading) {
     return (

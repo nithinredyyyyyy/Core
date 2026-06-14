@@ -428,9 +428,15 @@ export default function AdminTeams() {
     adminTeamsReducer,
     ADMIN_TEAMS_INITIAL_STATE,
   );
-  const initialFormSnapshotRef = useRef(createFormSnapshot({}));
+  const initialFormSnapshotRef = useRef(null);
+  if (initialFormSnapshotRef.current === null) {
+    initialFormSnapshotRef.current = createFormSnapshot({});
+  }
   const [search, setSearch] = useState("");
-  const initialPlayerFormSnapshotRef = useRef(createFormSnapshot({}));
+  const initialPlayerFormSnapshotRef = useRef(null);
+  if (initialPlayerFormSnapshotRef.current === null) {
+    initialPlayerFormSnapshotRef.current = createFormSnapshot({});
+  }
   const { toast } = useToast();
   const qc = useQueryClient();
   const { showForm, editing, form, showPlayerForm, editingPlayer, playerForm } =

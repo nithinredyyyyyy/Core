@@ -51,16 +51,10 @@ function SoftCard({ className = "", children }) {
 }
 
 function MiniPreview({ step, title, body, accent = "mint" }) {
-  const accentMap = {
-    mint: "bg-[#dcfbf5] text-[#18b7a0]",
-    peach: "bg-[#fff0e6] text-[#ff8e58]",
-    ink: "bg-[#f3f4f6] text-[#111111]",
-  };
-
   return (
     <div className="rounded-[26px] border border-[#efefef] bg-[#fcfcfc] p-4">
       <div
-        className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${accentMap[accent] || accentMap.mint}`}
+        className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${MINI_PREVIEW_ACCENT_CLASSES[accent] || MINI_PREVIEW_ACCENT_CLASSES.mint}`}
       >
         {step}
       </div>
@@ -71,6 +65,33 @@ function MiniPreview({ step, title, body, accent = "mint" }) {
     </div>
   );
 }
+
+const MINI_PREVIEW_ACCENT_CLASSES = {
+  mint: "bg-[#dcfbf5] text-[#18b7a0]",
+  peach: "bg-[#fff0e6] text-[#ff8e58]",
+  ink: "bg-[#f3f4f6] text-[#111111]",
+};
+
+const LANDING_FEATURE_CARDS = [
+  {
+    icon: Trophy,
+    title: "Tournament control",
+    body:
+      "Stages, boards, participants, prize flow, and schedule windows in one clean operational layer.",
+  },
+  {
+    icon: Megaphone,
+    title: "Community energy",
+    body:
+      "Retention-ready engagement features can live inside the product without turning the public site into a cluttered hub.",
+  },
+  {
+    icon: UserCircle2,
+    title: "Profile access",
+    body:
+      "Account access, saved team preference, and a cleaner local profile flow inside the product.",
+  },
+];
 
 // eslint-disable-next-line
 export default function LandingPage() {
@@ -86,27 +107,6 @@ export default function LandingPage() {
   const latestNews = homeView?.latestNews || [];
   const boardLeaders = (homeView?.homeBoard || []).slice(0, 3);
   const upcomingMatches = homeView?.upcomingMatches || [];
-
-  const featureCards = [
-    {
-      icon: Trophy,
-      title: "Tournament control",
-      body:
-        "Stages, boards, participants, prize flow, and schedule windows in one clean operational layer.",
-    },
-    {
-      icon: Megaphone,
-      title: "Community energy",
-      body:
-        "Retention-ready engagement features can live inside the product without turning the public site into a cluttered hub.",
-    },
-    {
-      icon: UserCircle2,
-      title: "Profile access",
-      body:
-        "Account access, saved team preference, and a cleaner local profile flow inside the product.",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-[#f7f7f5] text-[#111111]">
@@ -133,14 +133,14 @@ export default function LandingPage() {
                 Core
               </p>
               <p className="type-kicker text-[#7a7a7a]">
-                StageCore
+                Core
               </p>
             </div>
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex">
             {[
-              ["Why StageCore", "#why"],
+              ["Why Core", "#why"],
               ["Platform", "#platform"],
               ["Circuit", "#circuit"],
               ["Profile", "#profile"],
@@ -212,7 +212,7 @@ export default function LandingPage() {
                 </h1>
 
                 <p className="type-body mt-5 max-w-2xl text-[#636363]">
-                  StageCore helps you follow the live Indian esports season with
+                  Core helps you follow the live Indian esports season with
                   one cleaner layer for tournaments, standings, fan momentum,
                   team tracking, and editorial updates.
                 </p>
@@ -341,12 +341,12 @@ export default function LandingPage() {
         <div className="mt-20 space-y-20">
           <Shell
             id="why"
-            eyebrow="Why StageCore"
+            eyebrow="Why Core"
             title="Three product surfaces. One system behind them."
             body="The landing page tells the story, the desktop app handles depth, and the mobile app carries the fast matchday layer."
           >
             <div className="grid gap-4 lg:grid-cols-3">
-              {featureCards.map((card) => (
+              {LANDING_FEATURE_CARDS.map((card) => (
                 <SoftCard key={card.title} className="p-5 sm:p-6">
                   <div className="flex size-12 items-center justify-center rounded-2xl bg-[#dcfbf5] text-[#18b7a0]">
                     <card.icon className="size-5" />
@@ -600,7 +600,7 @@ export default function LandingPage() {
                     Final call
                   </p>
                   <h2 className="mt-4 text-[2.1rem] font-semibold leading-[0.94] tracking-[-0.06em] text-[#111111] sm:text-[3rem]">
-                    Enter StageCore with the right surface for the job.
+                    Enter Core with the right surface for the job.
                   </h2>
                   <p className="mt-4 text-sm leading-7 text-[#636363] sm:text-[15px]">
                     Use the landing page to discover the brand, the desktop app

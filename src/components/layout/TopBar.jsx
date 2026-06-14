@@ -14,7 +14,7 @@ export default function TopBar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
-  const isHome = location.pathname === "/app";
+  const isHome = location.pathname === "/" || location.pathname === "/app";
   const { isInstallable, isInstalled, promptInstall } = useInstallPrompt();
   return (
     <>

@@ -356,9 +356,9 @@ function createEntityClient(entityName) {
   const basePath = `/api/entities/${entityName}`;
 
   return {
-    list(sortBy, limit, skip) {
+    list(sortBy, limit, skip, extraQuery = {}) {
       return request(
-        `${basePath}${toQueryString({ sort_by: sortBy, limit, skip })}`,
+        `${basePath}${toQueryString({ sort_by: sortBy, limit, skip, ...extraQuery })}`,
       ).then((payload) => normalizeEntityResponse(entityName, payload));
     },
     filter(query = {}, sortBy, limit, skip) {
@@ -416,6 +416,25 @@ export const base44 = {
       return request(`/api/home/view${toQueryString({ mode })}`);
     },
   },
+  pages: {
+    fans() {
+      return request("/api/pages/fans");
+    },
+    tournament(id) {
+      return request(`/api/pages/tournament/${encodeURIComponent(id)}`);
+    },
+    teams() {
+      return request("/api/pages/teams");
+    },
+    teamDetail() {
+      return request("/api/pages/team-detail");
+    },
+    leaderboard(tournamentId = "") {
+      return request(
+        `/api/pages/leaderboard${toQueryString({ tournament: tournamentId })}`,
+      );
+    },
+  },
   news: {
     listPublished(sortBy = "-created_date", limit = 50, skip) {
       return request(
@@ -461,12 +480,28 @@ export const base44 = {
       return request(`/api/search${toQueryString({ q: query, limit })}`);
     },
   },
+  site: {
+    bmps2026PlayerStats() {
+      return request("/api/site/bmps-2026-player-stats");
+    },
+  },
+  admin: {
+    saveBmps2026PlayerStats(payload) {
+      return request("/api/admin/bmps-2026-player-stats", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+  },
   tournaments: {
     normalized(id) {
       return request(`/api/tournaments/${id}/normalized`);
     },
   },
   auth: {
+    config() {
+      return request("/api/auth/config");
+    },
     getStoredSession() {
       return getStoredAuthSession();
     },

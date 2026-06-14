@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useReducer, useState } from "react";
-import { ArrowLeft, Calendar, Users, Award, ChevronDown, Trophy } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Users,
+  Award,
+  ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Trophy,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -21,12 +30,22 @@ import {
 import {
   BMPS_2026_IGL_STATS,
   BMPS_2026_MVP_STATS,
+  BMPS_2026_OVERALL_PLAYER_STATS,
   BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES,
   BMPS_2026_PLAYER_TEAM_OVERRIDES,
   BMPS_2026_QUALIFIER_PLAYER_STATS,
+  BMPS_2026_SEMI_FINALS_PLAYER_STATS,
+  BMPS_2026_SURVIVAL_PLAYER_STATS,
+  buildBmps2026OverallPlayerStats,
+  parseBmps2026EliminatorStats,
 } from "@/lib/bmps2026PlayerStats";
 import { decorateMatchesWithLiveStatus } from "@/lib/liveCalendar";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
+import {
+  getOfficialParticipantEntries,
+  getOfficialParticipantCount,
+  isBmps2026Tournament,
+} from "@/lib/tournamentParticipants";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 function getTournamentLogo(tournament) {
@@ -205,14 +224,23 @@ function createStageBoardUiState(defaultStageName) {
     selectedStage: defaultStageName,
     selectedGroup: "overall",
     selectedStatisticsCategory: "eliminator",
-    selectedStatisticsSubStage: "qualifier stage",
+    selectedStatisticsSubStage: "overall",
     openMobileMenu: null,
+    tableSort: null,
   };
 }
 
 function stageBoardUiReducer(state, action) {
   switch (action.type) {
     case "selectStage":
+      if (typeof action.payload === "object" && action.payload !== null) {
+        return {
+          ...state,
+          selectedStage: action.payload.stageName,
+          selectedGroup: action.payload.selectedGroup || "overall",
+          openMobileMenu: null,
+        };
+      }
       return {
         ...state,
         selectedStage: action.payload,
@@ -240,16 +268,105 @@ function stageBoardUiReducer(state, action) {
         ...state,
         selectedStatisticsCategory: action.payload,
         selectedStatisticsSubStage:
-          action.payload === "eliminator" ? "qualifier stage" : state.selectedStatisticsSubStage,
+          action.payload === "eliminator" ? "overall" : state.selectedStatisticsSubStage,
       };
     case "selectStatisticsSubStage":
       return {
         ...state,
         selectedStatisticsSubStage: action.payload,
       };
+    case "toggleTableSort": {
+      const tableKey = action.payload?.tableKey;
+      const field = action.payload?.field;
+      if (!tableKey || !field) return state;
+      const isSameField =
+        state.tableSort?.tableKey === tableKey && state.tableSort?.field === field;
+      return {
+        ...state,
+        tableSort: {
+          tableKey,
+          field,
+          direction: isSameField && state.tableSort?.direction === "desc" ? "asc" : "desc",
+        },
+      };
+    }
     default:
       return state;
   }
+}
+
+function getSortableNumber(value) {
+  if (value === null || value === undefined || value === "-") return null;
+  const numeric = Number(String(value).replace("%", "").trim());
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function compareSortableValues(left, right, direction = "desc") {
+  const leftNumber = getSortableNumber(left);
+  const rightNumber = getSortableNumber(right);
+
+  if (leftNumber !== null && rightNumber !== null) {
+    return direction === "asc" ? leftNumber - rightNumber : rightNumber - leftNumber;
+  }
+
+  const result = String(left ?? "").localeCompare(String(right ?? ""), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+  return direction === "asc" ? result : -result;
+}
+
+function sortTableRows(rows, tableSort, tableKey, getValue) {
+  if (!tableSort || tableSort.tableKey !== tableKey || !tableSort.field) return rows;
+
+  return rows
+    .map((row, index) => ({ row, index }))
+    .toSorted((left, right) => {
+      const result = compareSortableValues(
+        getValue(left.row, tableSort.field, left.index),
+        getValue(right.row, tableSort.field, right.index),
+        tableSort.direction,
+      );
+      return result || left.index - right.index;
+    })
+    .map(({ row }) => row);
+}
+
+function SortableColumnHeader({
+  label,
+  field,
+  tableKey,
+  tableSort,
+  dispatch,
+  align = "left",
+}) {
+  const isActive = tableSort?.tableKey === tableKey && tableSort?.field === field;
+  const SortIcon = isActive
+    ? tableSort.direction === "asc"
+      ? ChevronUp
+      : ChevronDown
+    : ChevronsUpDown;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        dispatch({ type: "toggleTableSort", payload: { tableKey, field } });
+      }}
+      className={`inline-flex w-full items-center gap-1 rounded-md text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground ${
+        align === "center" ? "justify-center" : "justify-start"
+      }`}
+      aria-label={`Sort by ${label}`}
+    >
+      <span>{label}</span>
+      <SortIcon
+        className={`size-3.5 shrink-0 stroke-[2.8] ${
+          isActive ? "text-primary" : "text-muted-foreground/70"
+        }`}
+        aria-hidden="true"
+      />
+    </button>
+  );
 }
 
 function buildTeamLink(teamName) {
@@ -372,7 +489,7 @@ function getGroupMovementRule(stageName, group, position, totalTeams) {
           tone: "border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300",
         }
       : {
-          label: "Eliminated",
+          label: "Eliminated from BMPS 2026",
           tone: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300",
         };
   }
@@ -391,7 +508,7 @@ function getGroupMovementRule(stageName, group, position, totalTeams) {
       };
     }
     return {
-      label: "Eliminated",
+      label: "Eliminated from BMPS 2026",
       tone: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300",
     };
   }
@@ -686,6 +803,296 @@ function getParticipantStageGroup(entry, stageName) {
   return null;
 }
 
+function getStrictParticipantStageGroup(entry, stageName) {
+  const phase = String(entry?.phase || "");
+  const stageKey = String(stageName || "").trim().toLowerCase();
+  const match = phase.match(/^(.+?)\s*-\s*Group\s+([A-D])$/i);
+  if (match && match[1].trim().toLowerCase() === stageKey) {
+    return match[2].toUpperCase();
+  }
+  return null;
+}
+
+function getPreferredParticipantEntry(left, right) {
+  if (!left) return right;
+  if (!right) return left;
+
+  const leftDisplayName = getDisplayTeamName(left.team);
+  const rightDisplayName = getDisplayTeamName(right.team);
+  if (right.team === rightDisplayName && left.team !== leftDisplayName) return right;
+  if (left.team === leftDisplayName && right.team !== rightDisplayName) return left;
+
+  const leftHasRoster = (left.players || []).length + (left.roster || []).length;
+  const rightHasRoster = (right.players || []).length + (right.roster || []).length;
+  if (rightHasRoster > leftHasRoster) return right;
+
+  return left;
+}
+
+function dedupeParticipantEntriesByOrganization(entries) {
+  const byOrganization = new Map();
+  for (const entry of entries || []) {
+    const key = normalizeOrganizationName(entry?.team);
+    if (!key) continue;
+    byOrganization.set(
+      key,
+      getPreferredParticipantEntry(byOrganization.get(key), entry),
+    );
+  }
+  return [...byOrganization.values()];
+}
+
+function isBmps2026KnockoutStage(stageName) {
+  return ["survival stage", "semi finals", "last chance stage"].includes(
+    String(stageName || "").trim().toLowerCase(),
+  );
+}
+
+function isBmps2026SurvivalStage(stageName) {
+  return String(stageName || "").trim().toLowerCase() === "survival stage";
+}
+
+function isBmps2026SemiFinalsStage(stageName) {
+  return String(stageName || "").trim().toLowerCase() === "semi finals";
+}
+
+function shouldOpenBmps2026GroupsByDefault(stageName) {
+  return (
+    isBmps2026PromotionStage(stageName) ||
+    String(stageName || "").trim() === "Round 4" ||
+    isBmps2026SurvivalStage(stageName) ||
+    isBmps2026SemiFinalsStage(stageName)
+  );
+}
+
+const BMPS_2026_SURVIVAL_GROUP_BY_TEAM = {
+  madkingsesports: "A",
+  teamaryan: "A",
+  hadxesports: "A",
+  nonxesports: "A",
+  rapidchaosesports: "A",
+  teamversatile: "A",
+  vxt: "A",
+  aresesport: "A",
+  likithaesports: "A",
+
+  jaguaresports: "B",
+  k9esports: "B",
+  esportsocial: "B",
+  santaesports: "B",
+  truerippers: "B",
+  quantumsparks: "B",
+  risingesports: "B",
+  teamdoxy: "B",
+
+  naqshesports: "C",
+  learnfrompast: "C",
+  teamredxross: "C",
+  thundergodsxtortugagaming: "C",
+  godsentesports: "C",
+  teamapexgaming: "C",
+  dcxscresports: "C",
+  dcxscr: "C",
+  genxfmesports: "C",
+
+  phoenixesports: "D",
+  lastadeesports: "D",
+  teamh4k: "D",
+  riotnationz: "D",
+  t7xorionesports: "D",
+  t7: "D",
+  troytamilianesports: "D",
+  auraxesports: "D",
+  mythofficial: "D",
+};
+
+const BMPS_2026_SEMI_BASE_GROUP_BY_TEAM = {
+  wyldfangs: "A",
+  godsreign: "A",
+  genesisesports: "A",
+  zeroarkofficial: "A",
+  reckoningesports: "A",
+  revenantxspark: "A",
+  weltesports: "A",
+
+  metaninza: "B",
+  "4trofficial": "B",
+  autobotzesports: "B",
+  higgbosonesports: "B",
+  teamtamilas: "B",
+  mysterious4: "B",
+
+  windgodesports: "C",
+  whitewalkers: "C",
+  nebulaesports: "C",
+};
+
+const BMPS_2026_SEMI_SURVIVAL_RANK_GROUP = {
+  1: "C",
+  2: "C",
+  3: "B",
+  4: "C",
+  5: "A",
+  6: "C",
+  7: "B",
+  8: "C",
+};
+
+function getBmps2026FallbackGroupForTeam(teamName, stageName, survivalRankByTeam = new Map()) {
+  const teamKey = normalizeOrganizationName(teamName);
+  if (!teamKey) return null;
+
+  if (isBmps2026SurvivalStage(stageName)) {
+    return BMPS_2026_SURVIVAL_GROUP_BY_TEAM[teamKey] || null;
+  }
+
+  if (isBmps2026SemiFinalsStage(stageName)) {
+    const survivalRank = survivalRankByTeam.get(teamKey);
+    if (survivalRank) {
+      return BMPS_2026_SEMI_SURVIVAL_RANK_GROUP[survivalRank] || null;
+    }
+    return BMPS_2026_SEMI_BASE_GROUP_BY_TEAM[teamKey] || null;
+  }
+
+  return null;
+}
+
+function BmpsSemiFinalsPendingPanel({ stageParticipants, matches, tournamentId }) {
+  const semiFinalMatches = useMemo(
+    () =>
+      (matches || [])
+        .filter(
+          (match) =>
+            match.tournament_id === tournamentId &&
+            String(match.stage || "").trim().toLowerCase() === "semi finals",
+        )
+        .toSorted(
+          (left, right) =>
+            (Number(left.day) || 999) - (Number(right.day) || 999) ||
+            (Number(left.match_number) || 999) - (Number(right.match_number) || 999) ||
+            new Date(left.scheduled_time || 0).getTime() -
+              new Date(right.scheduled_time || 0).getTime(),
+        ),
+    [matches, tournamentId],
+  );
+  const dayOneMatches = semiFinalMatches.filter((match) => Number(match.day) === 1);
+  const nextMatch = semiFinalMatches.find((match) => String(match.status || "").toLowerCase() === "scheduled") || semiFinalMatches[0] || null;
+  const maps = [...new Set(dayOneMatches.map((match) => match.map).filter(Boolean))];
+  const groups = [...new Set(dayOneMatches.map((match) => match.group_name).filter(Boolean))];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+              Semi Finals pre-match board
+            </p>
+            <h3 className="mt-2 text-xl font-semibold text-foreground">
+              Overall standings unlock after results are published.
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Until the first lobby is scored, this view keeps the projected 24-team field and opening matchday schedule visible beside the Groups draw.
+            </p>
+          </div>
+          <div className="grid min-w-[260px] grid-cols-3 gap-2 text-center">
+            <div className="rounded-lg border border-border bg-background/80 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Teams</p>
+              <p className="mt-1 text-lg font-semibold text-foreground">{stageParticipants.length || 24}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/80 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Matches</p>
+              <p className="mt-1 text-lg font-semibold text-foreground">{semiFinalMatches.length || 24}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background/80 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Move</p>
+              <p className="mt-1 text-lg font-semibold text-foreground">6/16/2</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                Opening slate
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {nextMatch?.scheduled_time
+                  ? `Starts ${format(new Date(nextMatch.scheduled_time), "MMM d, h:mm a")}`
+                  : "Schedule time will appear here once confirmed."}
+              </p>
+            </div>
+            <div className="rounded-full border border-border bg-secondary/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              Day 1
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2">
+            {dayOneMatches.slice(0, 6).map((match) => (
+              <div
+                key={match.id}
+                className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border border-border bg-secondary/20 px-3 py-2.5"
+              >
+                <span className="inline-flex size-7 items-center justify-center rounded-full bg-background text-xs font-bold text-foreground">
+                  {match.match_number}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {match.map || "Map TBA"} · {match.group_name || "Group TBA"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {match.scheduled_time ? format(new Date(match.scheduled_time), "h:mm a") : "Time TBA"}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                  Scheduled
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">
+            Maps: {maps.join(" / ") || "TBA"}{groups.length ? ` · Groups: ${groups.join(", ")}` : ""}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                Projected teams
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Top 6 to Grand Finals, ranks 7-22 to Last Chance, bottom 2 eliminated.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid max-h-[420px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
+            {stageParticipants.map((entry, index) => (
+              <Link
+                key={`semi-pending-${entry.team}`}
+                to={buildTeamLink(entry.team)}
+                className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-secondary/20 px-3 py-2.5 transition hover:border-primary/40 hover:bg-primary/5"
+              >
+                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-background text-xs font-bold text-foreground">
+                  {index + 1}
+                </span>
+                <TeamIdentity
+                  name={getDisplayTeamName(entry.team)}
+                  className="min-w-0 truncate text-sm font-semibold text-foreground"
+                  contained
+                  surfaceToneOverride="light"
+                />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // eslint-disable-next-line
 function StageStandingsBoard({
   stages,
@@ -700,9 +1107,51 @@ function StageStandingsBoard({
   rankings = EMPTY_STAGE_RANKINGS,
 }) {
   const isMobile = useIsMobile();
+  const isBmps2026Detail =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026";
+  const { data: bmps2026PlayerStatsOverride = {} } = useQuery({
+    queryKey: ["bmps-2026-player-stats"],
+    queryFn: () => base44.site.bmps2026PlayerStats(),
+    enabled: isBmps2026Detail,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+  const bmps2026PlayerStats = useMemo(() => {
+    const parseOverride = (raw, fallback) => {
+      const trimmed = String(raw || "").trim();
+      if (!trimmed) return fallback;
+      return parseBmps2026EliminatorStats(trimmed);
+    };
+    const qualifier = parseOverride(
+      bmps2026PlayerStatsOverride?.qualifierRaw,
+      BMPS_2026_QUALIFIER_PLAYER_STATS,
+    );
+    const survival = parseOverride(
+      bmps2026PlayerStatsOverride?.survivalRaw,
+      BMPS_2026_SURVIVAL_PLAYER_STATS,
+    );
+    const semiFinals = parseOverride(
+      bmps2026PlayerStatsOverride?.semiFinalsRaw,
+      BMPS_2026_SEMI_FINALS_PLAYER_STATS,
+    );
+    const overall =
+      qualifier === BMPS_2026_QUALIFIER_PLAYER_STATS &&
+      survival === BMPS_2026_SURVIVAL_PLAYER_STATS &&
+      semiFinals === BMPS_2026_SEMI_FINALS_PLAYER_STATS
+        ? BMPS_2026_OVERALL_PLAYER_STATS
+        : buildBmps2026OverallPlayerStats([qualifier, survival, semiFinals]);
+
+    return { qualifier, survival, semiFinals, overall };
+  }, [bmps2026PlayerStatsOverride]);
   const hasBmps2026Statistics =
-    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
-    BMPS_2026_QUALIFIER_PLAYER_STATS.length > 0;
+    isBmps2026Detail &&
+    (bmps2026PlayerStats.qualifier.length > 0 ||
+      bmps2026PlayerStats.survival.length > 0 ||
+      bmps2026PlayerStats.semiFinals.length > 0);
+  const bmps2026StatisticsRowCount =
+    bmps2026PlayerStats.qualifier.length +
+    bmps2026PlayerStats.survival.length +
+    bmps2026PlayerStats.semiFinals.length;
   const resolvedParticipantEntries = useMemo(() => {
     if (tournamentName !== "Battlegrounds Mobile India Pro Series 2026") {
       return participantEntries;
@@ -711,9 +1160,9 @@ function StageStandingsBoard({
       getRows: (stage) => stage?.standings || [],
       getGroup: (row) => row?.grp,
       getTeamName: (row) => row?.fullTeam || row?.team,
-      buildDerivedEntry: ({ sourceEntry, row, teamName, destinationGroup, nextStageName }) => ({
+      buildDerivedEntry: ({ sourceEntry, row, teamName, destinationGroup, nextStageName, derivedPlacement }) => ({
         ...(sourceEntry || {}),
-        placement: sourceEntry?.placement ?? row?.placement ?? null,
+        placement: derivedPlacement ?? sourceEntry?.placement ?? row?.placement ?? null,
         team: sourceEntry?.team || teamName || "Unknown Team",
         phase: destinationGroup
           ? `${nextStageName} - Group ${destinationGroup}`
@@ -753,8 +1202,8 @@ function StageStandingsBoard({
       if (hasBmps2026Statistics) {
         options.push({
           name: "Statistics",
-          summary: "Player qualifier statistics for BMPS 2026.",
-          teamCount: BMPS_2026_QUALIFIER_PLAYER_STATS.length,
+          summary: "Player statistics for BMPS 2026.",
+          teamCount: bmps2026StatisticsRowCount,
           standings: [],
           isStatistics: true,
           statisticsType: "bmps-players",
@@ -772,7 +1221,7 @@ function StageStandingsBoard({
 
       return options;
     },
-    [hasBmps2026Statistics, rankings.length, resolvedParticipantEntries, stages]
+    [bmps2026StatisticsRowCount, hasBmps2026Statistics, rankings.length, resolvedParticipantEntries, stages]
   );
   const stageOptionsKey = useMemo(
     () => stageOptions.map((stage) => `${stage.name}:${stage.standings?.length || 0}`).join("|"),
@@ -807,10 +1256,15 @@ function StageStandingsBoard({
     selectedStatisticsCategory,
     selectedStatisticsSubStage,
     openMobileMenu,
+    tableSort,
   } = stageBoardUi;
   const statisticsCategories = useMemo(() => {
     const categories = [];
-    if (BMPS_2026_QUALIFIER_PLAYER_STATS.length > 0) {
+    if (
+      bmps2026PlayerStats.qualifier.length > 0 ||
+      bmps2026PlayerStats.survival.length > 0 ||
+      bmps2026PlayerStats.semiFinals.length > 0
+    ) {
       categories.push({ key: "eliminator", label: "Eliminator" });
     }
     if (BMPS_2026_IGL_STATS.length > 0) {
@@ -820,14 +1274,23 @@ function StageStandingsBoard({
       categories.push({ key: "mvp", label: "MVP" });
     }
     return categories;
-  }, []);
+  }, [bmps2026PlayerStats]);
   const eliminatorSubStages = useMemo(() => {
     const subStages = [];
-    if (BMPS_2026_QUALIFIER_PLAYER_STATS.length > 0) {
+    if (bmps2026PlayerStats.overall.length > 0) {
+      subStages.push({ key: "overall", label: "Overall" });
+    }
+    if (bmps2026PlayerStats.qualifier.length > 0) {
       subStages.push({ key: "qualifier stage", label: "Qualifier Stage" });
     }
+    if (bmps2026PlayerStats.survival.length > 0) {
+      subStages.push({ key: "survival stage", label: "Survival Stage" });
+    }
+    if (bmps2026PlayerStats.semiFinals.length > 0) {
+      subStages.push({ key: "semi finals", label: "Semi Finals" });
+    }
     return subStages;
-  }, []);
+  }, [bmps2026PlayerStats]);
   const currentSelectedStage = stageOptions.some((stage) => stage.name === selectedStage)
     ? selectedStage
     : defaultStageName;
@@ -840,7 +1303,7 @@ function StageStandingsBoard({
     currentStatisticsCategory === "eliminator" &&
     eliminatorSubStages.some((subStage) => subStage.key === selectedStatisticsSubStage)
       ? selectedStatisticsSubStage
-      : (eliminatorSubStages[0]?.key ?? "qualifier stage");
+      : (eliminatorSubStages[0]?.key ?? "overall");
   const activeStage = stageOptions.find((stage) => stage.name === currentSelectedStage) || stageOptions[0] || null;
   const isStatisticsStage = Boolean(activeStage?.isStatistics);
   const isRankingsStatisticsStage = activeStage?.statisticsType === "rankings";
@@ -848,36 +1311,91 @@ function StageStandingsBoard({
   const groups = useMemo(() => {
     if (!activeStage) return [];
     if (String(activeStage.name || "").trim().toLowerCase() === "grand finals") return [];
-    const standingsGroups = (activeStage.standings || []).flatMap((entry) =>
-      entry.grp ? [entry.grp] : []
-    );
+    if (
+      tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+      (isBmps2026SurvivalStage(activeStage.name) ||
+        isBmps2026SemiFinalsStage(activeStage.name))
+    ) {
+      const participantGroups = participantEntries.flatMap((entry) => {
+        const group = getStrictParticipantStageGroup(entry, activeStage.name);
+        return group ? [group] : [];
+      });
+      if (participantGroups.length > 0) {
+        return [...new Set(participantGroups)].toSorted();
+      }
+      if (isBmps2026SurvivalStage(activeStage.name)) {
+        return ["A", "B", "C", "D"];
+      }
+      if (isBmps2026SemiFinalsStage(activeStage.name)) {
+        return ["A", "B", "C"];
+      }
+      return [];
+    }
+
     const participantGroups = resolvedParticipantEntries.flatMap((entry) => {
       const group = getParticipantStageGroup(entry, activeStage.name);
       return group ? [group] : [];
     });
+    const standingsGroups = (activeStage.standings || []).flatMap((entry) =>
+      entry.grp ? [entry.grp] : []
+    );
+    if (
+      tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+      standingsGroups.length === 0 &&
+      participantGroups.length === 0
+    ) {
+      if (isBmps2026SurvivalStage(activeStage.name)) {
+        return ["A", "B", "C", "D"];
+      }
+      if (isBmps2026SemiFinalsStage(activeStage.name)) {
+        return ["A", "B", "C"];
+      }
+    }
 
     return [...new Set([...standingsGroups, ...participantGroups])].toSorted();
-  }, [activeStage, resolvedParticipantEntries]);
+  }, [activeStage, participantEntries, resolvedParticipantEntries, tournamentName]);
 
+  const survivalStageHasGroupedLobby =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+    isBmps2026SurvivalStage(activeStage?.name) &&
+    groups.length > 0;
+  const isBmps2026SemiFinalsGroupDraw =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+    String(activeStage?.name || "").trim().toLowerCase() === "semi finals" &&
+    groups.length > 0;
+  const visibleGroupOptions =
+    survivalStageHasGroupedLobby || isBmps2026SemiFinalsGroupDraw ? [] : groups;
+  const hideOverallGroupOption =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+    (isBmps2026PromotionStage(activeStage?.name) ||
+      activeStage?.name === "Round 4") &&
+    groups.length > 0;
+  const fallbackSelectedGroup = hideOverallGroupOption ? "groups" : "overall";
   const currentSelectedGroup =
-    selectedGroup !== "overall" && !groups.includes(selectedGroup) ? "overall" : selectedGroup;
+    selectedGroup === "overall" && hideOverallGroupOption
+      ? fallbackSelectedGroup
+      : selectedGroup !== "overall" && selectedGroup !== "groups" && !visibleGroupOptions.includes(selectedGroup)
+      ? fallbackSelectedGroup
+      : selectedGroup;
 
   const filteredStandings = useMemo(() => {
     if (!activeStage) return [];
     if (currentSelectedGroup === "overall") return activeStage.standings || [];
+    if (currentSelectedGroup === "groups") return [];
     return (activeStage.standings || []).filter((entry) => entry.grp === currentSelectedGroup);
   }, [activeStage, currentSelectedGroup]);
   const groupParticipants = useMemo(() => {
-    if (!activeStage || currentSelectedGroup === "overall") return [];
+    if (!activeStage || currentSelectedGroup === "overall" || currentSelectedGroup === "groups") return [];
     return resolvedParticipantEntries.filter(
       (entry) => getParticipantStageGroup(entry, activeStage.name) === currentSelectedGroup
     );
   }, [activeStage, currentSelectedGroup, resolvedParticipantEntries]);
   const stageParticipants = useMemo(() => {
-    if (!activeStage || groups.length > 0 || currentSelectedGroup !== "overall") return [];
+    if (!activeStage || currentSelectedGroup !== "overall") return [];
     const stageKey = String(activeStage.name || "").trim().toLowerCase();
     return resolvedParticipantEntries
       .filter((entry) =>
+        getParticipantStageGroup(entry, activeStage.name) ||
         getParticipantEntryPhases(entry).some(
           (phase) => String(phase || "").trim().toLowerCase() === stageKey
         )
@@ -885,33 +1403,133 @@ function StageStandingsBoard({
       .toSorted((left, right) =>
         String(left.team || "").localeCompare(String(right.team || ""))
       );
-  }, [activeStage, currentSelectedGroup, groups.length, resolvedParticipantEntries]);
+  }, [activeStage, currentSelectedGroup, resolvedParticipantEntries]);
+  const bmps2026SurvivalQualifiedTeamsByRank = useMemo(() => {
+    const teamsByRank = new Map();
+    if (tournamentName !== "Battlegrounds Mobile India Pro Series 2026") {
+      return teamsByRank;
+    }
+
+    const survivalStage = stageOptions.find((stage) =>
+      isBmps2026SurvivalStage(stage?.name)
+    );
+    const survivalStandings = (survivalStage?.standings || [])
+      .toSorted(compareStageBoardStandings)
+      .slice(0, 8);
+
+    survivalStandings.forEach((row, index) => {
+      const teamName = row?.teamName || row?.fullTeam || row?.team;
+      if (teamName) teamsByRank.set(String(index + 1), teamName);
+    });
+
+    return teamsByRank;
+  }, [stageOptions, tournamentName]);
+  const bmps2026SurvivalRankByTeam = useMemo(() => {
+    const rankByTeam = new Map();
+    for (const [rank, teamName] of bmps2026SurvivalQualifiedTeamsByRank.entries()) {
+      rankByTeam.set(normalizeOrganizationName(teamName), Number(rank));
+    }
+    return rankByTeam;
+  }, [bmps2026SurvivalQualifiedTeamsByRank]);
   const groupedParticipants = useMemo(() => {
     if (!activeStage || groups.length === 0) return [];
-    return groups.map((group) => ({
-      group,
-      entries: resolvedParticipantEntries.filter(
-        (entry) => getParticipantStageGroup(entry, activeStage.name) === group
-      ),
-    }));
-  }, [activeStage, groups, resolvedParticipantEntries]);
+    const useOfficialDrawOnly =
+      tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+      (isBmps2026SurvivalStage(activeStage.name) ||
+        isBmps2026SemiFinalsStage(activeStage.name));
+    const groupSourceEntries = useOfficialDrawOnly
+      ? participantEntries
+      : resolvedParticipantEntries;
+    const resolveSemiFinalPlaceholder = (entry) => {
+      if (
+        tournamentName !== "Battlegrounds Mobile India Pro Series 2026" ||
+        !isBmps2026SemiFinalsStage(activeStage.name)
+      ) {
+        return entry;
+      }
+
+      const placeholderRank = String(entry?.team || "")
+        .trim()
+        .match(/^survival\s*#\s*(\d+)$/i)?.[1];
+      const qualifiedTeam = placeholderRank
+        ? bmps2026SurvivalQualifiedTeamsByRank.get(placeholderRank)
+        : null;
+
+      return qualifiedTeam
+        ? { ...entry, team: qualifiedTeam, sourcePlaceholder: entry.team }
+        : entry;
+    };
+
+    return groups.map((group) => {
+      let entries = groupSourceEntries
+        .filter((entry) => {
+          const entryGroup =
+            useOfficialDrawOnly
+              ? getStrictParticipantStageGroup(entry, activeStage.name)
+              : getParticipantStageGroup(entry, activeStage.name);
+          return entryGroup === group;
+        })
+        .map(resolveSemiFinalPlaceholder);
+
+      if (
+        entries.length === 0 &&
+        tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+        (isBmps2026SurvivalStage(activeStage.name) ||
+          isBmps2026SemiFinalsStage(activeStage.name))
+      ) {
+        const fallbackSourceEntries =
+          isBmps2026SemiFinalsStage(activeStage.name) && stageParticipants.length > 0
+            ? stageParticipants
+            : groupSourceEntries;
+        entries = fallbackSourceEntries.filter(
+          (entry) =>
+            getBmps2026FallbackGroupForTeam(
+              entry.team,
+              activeStage.name,
+              bmps2026SurvivalRankByTeam,
+            ) === group,
+        );
+      }
+
+      return {
+        group,
+        entries: dedupeParticipantEntriesByOrganization(entries),
+      };
+    });
+  }, [
+    activeStage,
+    bmps2026SurvivalQualifiedTeamsByRank,
+    bmps2026SurvivalRankByTeam,
+    groups,
+    participantEntries,
+    resolvedParticipantEntries,
+    stageParticipants,
+    tournamentName,
+  ]);
   const maxGroupRows = useMemo(
     () => Math.max(0, ...groupedParticipants.map((section) => section.entries.length)),
     [groupedParticipants]
   );
   const usesPromotionGroups =
-    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
-    (isBmps2026PromotionStage(activeStage?.name) ||
-      activeStage?.name === "Round 4") &&
-    groups.length > 0;
+    hideOverallGroupOption;
   const usesBmpsKnockoutMovement =
     tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
-    ["survival stage", "semi finals", "last chance stage"].includes(
-      String(activeStage?.name || "").trim().toLowerCase(),
-    ) &&
-    !isStatisticsStage;
+    isBmps2026KnockoutStage(activeStage?.name) &&
+    !isStatisticsStage &&
+    currentSelectedGroup === "overall" &&
+    Boolean(filteredStandings.length || activeStage?.standings?.length);
+  const showGroupParticipantMovement = usesPromotionGroups;
+  const isSurvivalStageLobbyView =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+    isBmps2026SurvivalStage(activeStage?.name) &&
+    currentSelectedGroup !== "overall";
   const showMovementColumn = usesPromotionGroups || usesBmpsKnockoutMovement;
   const isGroupDrawStage = groupedParticipants.length > 0 && !activeStage?.standings?.length;
+  const showsGroupedDrawTab =
+    isGroupDrawStage ||
+    usesPromotionGroups ||
+    survivalStageHasGroupedLobby ||
+    isBmps2026SemiFinalsGroupDraw;
   const completeGroupStandings = useMemo(() => {
     if (!usesPromotionGroups || currentSelectedGroup === "overall") return filteredStandings;
     const selectedGroupMatchIds = new Set();
@@ -1005,8 +1623,30 @@ function StageStandingsBoard({
   const showGroupColumn =
     !isGrandFinalsStage &&
     !usesPromotionGroups &&
+    !isGroupDrawStage &&
     currentSelectedGroup === "overall" &&
     groups.length > 1;
+  const getOverallStandingGroupLabel = (entry) => {
+    if (
+      tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+      (isBmps2026SurvivalStage(activeStage?.name) ||
+        isBmps2026SemiFinalsStage(activeStage?.name))
+    ) {
+      const fallbackGroup = getBmps2026FallbackGroupForTeam(
+        entry?.fullTeam || entry?.team || entry?.teamName,
+        activeStage?.name,
+        bmps2026SurvivalRankByTeam,
+      );
+      if (fallbackGroup) return fallbackGroup;
+    }
+
+    const rawGroup = String(entry?.grp ?? "-").replace(/^Group\s+/i, "").trim();
+    return rawGroup || "-";
+  };
+  const shouldHideProjectedStageTeams =
+    tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+    isBmps2026SemiFinalsStage(activeStage?.name) &&
+    currentSelectedGroup === "overall";
   const useContainedGroupLogos = groups.length > 0;
   const bmpsWaitingStageName =
     tournamentName === "Battlegrounds Mobile India Pro Series 2026" && /^round\s+[234]$/i.test(activeStage?.name || "")
@@ -1030,7 +1670,7 @@ function StageStandingsBoard({
     const seen = new Map();
     for (const entry of activeStage?.standings || []) {
       const tone = getOutcomeTone(entry.outcome);
-      if (activeStage?.name === "Grand Finals" && tone.label === "Stage result") {
+      if (tone.label === "Stage result") {
         continue;
       }
       if (!seen.has(tone.label)) seen.set(tone.label, tone.dot);
@@ -1078,9 +1718,51 @@ function StageStandingsBoard({
   }, [isStatisticsStage, players, resolvedParticipantEntries, teams]);
   const statisticsTableRows = useMemo(() => {
     if (currentStatisticsCategory !== "eliminator") return [];
+    if (currentStatisticsSubStage === "overall") {
+      return bmps2026PlayerStats.overall;
+    }
+    if (currentStatisticsSubStage === "survival stage") {
+      return bmps2026PlayerStats.survival;
+    }
+    if (currentStatisticsSubStage === "semi finals") {
+      return bmps2026PlayerStats.semiFinals;
+    }
     if (currentStatisticsSubStage !== "qualifier stage") return [];
-    return BMPS_2026_QUALIFIER_PLAYER_STATS;
-  }, [currentStatisticsCategory, currentStatisticsSubStage]);
+    return bmps2026PlayerStats.qualifier;
+  }, [bmps2026PlayerStats, currentStatisticsCategory, currentStatisticsSubStage]);
+  const statisticsTableKey = `bmps-2026-statistics:${currentStatisticsCategory}:${currentStatisticsSubStage}`;
+  const sortedStatisticsTableRows = useMemo(
+    () =>
+      sortTableRows(statisticsTableRows, tableSort, statisticsTableKey, (entry, field) => {
+        switch (field) {
+          case "rank":
+            return entry.rank;
+          case "player":
+            return entry.player;
+          case "matches":
+            return entry.matches;
+          case "finishes":
+            return entry.finishes;
+          case "fpm":
+            return entry.fpm;
+          case "contribution":
+            return entry.contribution;
+          case "best":
+            return entry.best;
+          case "fivePlus":
+            return entry.fivePlusFinishes;
+          case "erangel":
+            return entry.erangel;
+          case "miramar":
+            return entry.miramar;
+          case "rondo":
+            return entry.rondo;
+          default:
+            return "";
+        }
+      }),
+    [statisticsTableKey, statisticsTableRows, tableSort],
+  );
   const statisticsPanelTitle = useMemo(() => {
     if (currentStatisticsCategory === "eliminator") return "ELIMINATOR";
     if (currentStatisticsCategory === "igl") return "IGL";
@@ -1125,7 +1807,14 @@ function StageStandingsBoard({
                           onClick={() => {
                             dispatchStageBoardUi({
                               type: "selectStage",
-                              payload: stage.name,
+                              payload: {
+                                stageName: stage.name,
+                                selectedGroup:
+                                  tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+                                  shouldOpenBmps2026GroupsByDefault(stage.name)
+                                    ? "groups"
+                                    : "overall",
+                              },
                             });
                           }}
                           className={"flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold transition " + (isActive ? "bg-primary/14 text-white" : "text-white hover:bg-white/5")}
@@ -1158,26 +1847,44 @@ function StageStandingsBoard({
                   >
                     <span>
                       {currentSelectedGroup === "overall"
-                        ? ((isGroupDrawStage || usesPromotionGroups) ? "Groups" : "Overall")
+                        ? "Overall"
+                        : currentSelectedGroup === "groups"
+                        ? "Groups"
                         : "Group " + currentSelectedGroup}
                     </span>
                     <ChevronDown className={"size-4 text-primary transition-transform " + (openMobileMenu === "group" ? "rotate-180" : "")} />
                   </button>
                   {openMobileMenu === "group" ? (
                     <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-[1.2rem] border border-primary/40 bg-[#111111] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          dispatchStageBoardUi({
-                            type: "selectGroup",
-                            payload: "overall",
-                          });
-                        }}
-                        className={"flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold transition " + (currentSelectedGroup === "overall" ? "bg-primary/14 text-white" : "text-white hover:bg-white/5")}
-                      >
-                        <span>{(isGroupDrawStage || usesPromotionGroups) ? "Groups" : "Overall"}</span>
-                      </button>
-                      {groups.map((group) => {
+                      {showsGroupedDrawTab ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            dispatchStageBoardUi({
+                              type: "selectGroup",
+                              payload: "groups",
+                            });
+                          }}
+                          className={"flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold transition " + (currentSelectedGroup === "groups" ? "bg-primary/14 text-white" : "text-white hover:bg-white/5")}
+                        >
+                          <span>Groups</span>
+                        </button>
+                      ) : null}
+                      {!hideOverallGroupOption ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            dispatchStageBoardUi({
+                              type: "selectGroup",
+                              payload: "overall",
+                            });
+                          }}
+                          className={"flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold transition " + (currentSelectedGroup === "overall" ? "bg-primary/14 text-white" : "text-white hover:bg-white/5")}
+                        >
+                          <span>Overall</span>
+                        </button>
+                      ) : null}
+                      {visibleGroupOptions.map((group) => {
                         const isActive = currentSelectedGroup === group;
                         return (
                           <button
@@ -1211,7 +1918,7 @@ function StageStandingsBoard({
           </div>
         ) : null}
 
-        {!isStatisticsStage && currentSelectedGroup === "overall" && (isGroupDrawStage || usesPromotionGroups) ? (
+        {!isStatisticsStage && currentSelectedGroup === "groups" && showsGroupedDrawTab ? (
           <div className="space-y-3">
             {groupedParticipants.map((section) => (
               <div key={activeStage.name + "-" + section.group} className="overflow-hidden rounded-[1.35rem] border border-border bg-background/95 shadow-sm">
@@ -1236,6 +1943,11 @@ function StageStandingsBoard({
                             surfaceToneOverride="light"
                           />
                         </Link>
+                        {entry.sourcePlaceholder ? (
+                          <span className="shrink-0 rounded-full border border-violet-300 bg-violet-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 dark:border-violet-400/40 dark:text-violet-200">
+                            {entry.sourcePlaceholder}
+                          </span>
+                        ) : null}
                       </div>
                       {usesPromotionGroups ? (
                         <div className="mt-2 pl-7">
@@ -1320,7 +2032,14 @@ function StageStandingsBoard({
                 onClick={() => {
                   dispatchStageBoardUi({
                     type: "selectStage",
-                    payload: stage.name,
+                    payload: {
+                      stageName: stage.name,
+                      selectedGroup:
+                        tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+                        shouldOpenBmps2026GroupsByDefault(stage.name)
+                          ? "groups"
+                          : "overall",
+                    },
                   });
                 }}
                 className={`rounded-full border px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
@@ -1337,17 +2056,17 @@ function StageStandingsBoard({
 
         {groups.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
-            {(isGroupDrawStage || usesPromotionGroups) ? (
+            {showsGroupedDrawTab ? (
               <button
                 type="button"
                 onClick={() =>
                   dispatchStageBoardUi({
                     type: "selectGroup",
-                    payload: "overall",
+                    payload: "groups",
                   })
                 }
                 className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
-                  currentSelectedGroup === "overall"
+                  currentSelectedGroup === "groups"
                     ? "border-foreground bg-foreground text-background"
                     : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
@@ -1355,7 +2074,7 @@ function StageStandingsBoard({
                 Groups
               </button>
             ) : null}
-            {!isGroupDrawStage && !usesPromotionGroups ? (
+            {!hideOverallGroupOption ? (
               <button
                 type="button"
                 onClick={() =>
@@ -1373,7 +2092,7 @@ function StageStandingsBoard({
                 Overall
               </button>
             ) : null}
-            {groups.map((group) => (
+            {visibleGroupOptions.map((group) => (
               <button
                 key={group}
                 type="button"
@@ -1462,26 +2181,48 @@ function StageStandingsBoard({
                 </div>
               </div>
 
-              {currentStatisticsSubStage === "qualifier stage" ? (
-                <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
-                  <table className="w-full min-w-[1280px] border-collapse text-sm">
+              {statisticsTableRows.length > 0 ? (
+                <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                  <table className="w-full min-w-[1280px] border-separate border-spacing-0 text-sm">
                     <thead>
                       <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                        <th className="border-r border-border/60 p-4 text-left">Rank</th>
-                        <th className="border-r border-border/60 p-4 text-left">Player</th>
-                        <th className="border-r border-border/60 p-4 text-center">Finishes</th>
-                        <th className="border-r border-border/60 p-4 text-center">FPM</th>
-                        <th className="border-r border-border/60 p-4 text-center">Contribution</th>
-                        <th className="border-r border-border/60 p-4 text-center">Best</th>
-                        <th className="border-r border-border/60 p-4 text-center">5+</th>
-                        <th className="border-r border-border/60 p-4 text-center">Matches</th>
-                        <th className="border-r border-border/60 p-4 text-center">Erangel</th>
-                        <th className="border-r border-border/60 p-4 text-center">Miramar</th>
-                        <th className="p-4 text-center">Rondo</th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-left">
+                          <SortableColumnHeader label="Rank" field="rank" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-left">
+                          <SortableColumnHeader label="Player" field="player" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Matches" field="matches" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Finishes" field="finishes" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="FPM" field="fpm" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Contribution" field="contribution" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Best" field="best" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="5+" field="fivePlus" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Erangel" field="erangel" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Miramar" field="miramar" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Rondo" field="rondo" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {statisticsTableRows.map((entry, index) => {
+                      {sortedStatisticsTableRows.map((entry, index) => {
                         const rawTeamName =
                           entry.teamName ||
                           BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES[`${entry.rank}:${entry.player}`] ||
@@ -1513,12 +2254,12 @@ function StageStandingsBoard({
                                 <span className="font-semibold text-foreground">{entry.player}</span>
                               )}
                             </td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
                             <td className="border-r border-border/50 p-4 text-center font-semibold text-primary">{entry.finishes}</td>
                             <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.fpm}</td>
                             <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.contribution}</td>
                             <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.best ?? "-"}</td>
                             <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.fivePlusFinishes ?? "-"}</td>
-                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
                             <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.erangel ?? "-"}</td>
                             <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.miramar ?? "-"}</td>
                             <td className="p-4 text-center font-medium text-muted-foreground">{entry.rondo ?? "-"}</td>
@@ -1543,8 +2284,8 @@ function StageStandingsBoard({
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
-                <table className="w-full min-w-[980px] border-collapse text-sm">
+              <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                <table className="w-full min-w-[980px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
                   <thead>
                     <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       <th className="border-r border-border/60 p-4 text-left">Rank</th>
@@ -1599,8 +2340,8 @@ function StageStandingsBoard({
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
-                <table className="w-full min-w-[1320px] border-collapse text-sm">
+              <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                <table className="w-full min-w-[1320px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
                   <thead>
                     <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       <th className="border-r border-border/60 p-4 text-left">Rank</th>
@@ -1673,64 +2414,140 @@ function StageStandingsBoard({
         </div>
       ) : null}
 
-      {!isStatisticsStage && currentSelectedGroup === "overall" && (isGroupDrawStage || usesPromotionGroups) ? (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="bg-[#165ca8] px-5 py-4 text-center">
-            <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
-              {activeStage.name.toUpperCase()} GROUPS
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border bg-[#d7e5f7] text-sm font-black uppercase tracking-[0.06em] text-slate-800 dark:bg-slate-800 dark:text-slate-100">
-                {groupedParticipants.map((section) => (
-                  <th
-                    key={`${activeStage.name}-${section.group}`}
-                    className="border-r border-border/60 px-6 py-4 text-center last:border-r-0"
-                  >
-                    Group {section.group}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: maxGroupRows }).map((_, rowIndex) => (
-                <tr
-                  key={`${activeStage.name}-group-row-${rowIndex}`}
-                  className="border-b border-border bg-background last:border-b-0 dark:bg-slate-950"
+      {!isStatisticsStage &&
+      currentSelectedGroup === "groups" &&
+      showsGroupedDrawTab ? (
+        <>
+          {isBmps2026SurvivalStage(activeStage?.name) ? (
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-5 shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-200">
+                Survival Stage Logic
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                These four groups are match lobbies. After the stage is played, the overall 32-team standings decide movement: top 8 advance to Semi Finals, ranks 9-32 are eliminated from BMPS 2026.
+              </p>
+            </div>
+          ) : null}
+          {isBmps2026SurvivalStage(activeStage?.name) ? (
+            <div className="grid overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:grid-cols-2 xl:grid-cols-4">
+              {groupedParticipants.map((section, index) => (
+                <div
+                  key={`${activeStage.name}-${section.group}`}
+                  className={`min-w-0 ${
+                    index < groupedParticipants.length - 1 ? "border-b" : ""
+                  } ${index % 2 === 0 ? "md:border-r" : ""} ${
+                    index < 2 ? "md:border-b" : "md:border-b-0"
+                  } ${
+                    index < groupedParticipants.length - 1 ? "xl:border-r" : "xl:border-r-0"
+                  } xl:border-b-0 border-border`}
                 >
-                  {groupedParticipants.map((section) => {
-                    const entry = section.entries[rowIndex];
-                    return (
-                      <td
-                        key={`${activeStage.name}-${section.group}-${rowIndex}`}
-                        className="border-r border-border/60 px-5 py-4 align-middle last:border-r-0"
-                      >
-                        {entry ? (
-                          <Link to={buildTeamLink(entry.team)} className="inline-flex items-center gap-3">
-                            <TeamIdentity
-                              name={getDisplayTeamName(entry.team)}
-                              className="font-semibold text-foreground"
-                              contained
-                              surfaceToneOverride="light"
-                            />
-                          </Link>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
+                  <div className="bg-[#165ca8] px-5 py-4 text-center">
+                    <p className="text-sm font-black uppercase tracking-[0.12em] text-white">
+                      Group {section.group}
+                    </p>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {section.entries.length > 0 ? (
+                      section.entries.map((entry, index) => (
+                        <div
+                          key={`${activeStage.name}-${section.group}-${entry.team || index}`}
+                          className="flex items-center gap-3 px-4 py-3"
+                        >
+                          {entry?.team ? (
+                            <Link
+                              to={buildTeamLink(entry.team)}
+                              className="flex min-w-0 flex-1 items-center text-left"
+                            >
+                              <TeamIdentity
+                                name={getDisplayTeamName(entry.team)}
+                                className="min-w-0 flex-1 text-left font-semibold text-foreground"
+                                containerClassName="w-full justify-start text-left"
+                                contained
+                                compact
+                                surfaceToneOverride="light"
+                              />
+                            </Link>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Team pending</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-5 text-sm text-muted-foreground">
+                        Teams pending
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-          </div>
-        </div>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="bg-[#165ca8] px-5 py-4 text-center">
+                <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                  {activeStage.name.toUpperCase()} GROUPS
+                </p>
+              </div>
+              <div className="max-h-[70vh] overflow-auto">
+              <table className="w-full min-w-[920px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-[#d7e5f7] dark:[&_thead_th]:bg-slate-800">
+                <thead>
+                  <tr className="border-b border-border bg-[#d7e5f7] text-sm font-black uppercase tracking-[0.06em] text-slate-800 dark:bg-slate-800 dark:text-slate-100">
+                    {groupedParticipants.map((section) => (
+                      <th
+                        key={`${activeStage.name}-${section.group}`}
+                        className="border-r border-border/60 px-6 py-4 text-center last:border-r-0"
+                      >
+                        Group {section.group}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: maxGroupRows }).map((_, rowIndex) => (
+                    <tr
+                      key={`${activeStage.name}-group-row-${rowIndex}`}
+                      className="border-b border-border bg-background last:border-b-0 dark:bg-slate-950"
+                    >
+                      {groupedParticipants.map((section) => {
+                        const entry = section.entries[rowIndex];
+                        return (
+                          <td
+                            key={`${activeStage.name}-${section.group}-${rowIndex}`}
+                            className="border-r border-border/60 px-5 py-4 align-middle last:border-r-0"
+                          >
+                            {entry ? (
+                              <div className="flex min-w-0 items-center gap-3">
+                                <Link to={buildTeamLink(entry.team)} className="inline-flex min-w-0 items-center gap-3">
+                                  <TeamIdentity
+                                    name={getDisplayTeamName(entry.team)}
+                                    className="font-semibold text-foreground"
+                                    contained
+                                    surfaceToneOverride="light"
+                                  />
+                                </Link>
+                                {entry.sourcePlaceholder ? (
+                                  <span className="shrink-0 rounded-full border border-violet-300 bg-violet-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 dark:border-violet-400/40 dark:text-violet-200">
+                                    {entry.sourcePlaceholder}
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            </div>
+          )}
+        </>
       ) : !isStatisticsStage && activeStage.standings?.length ? (
-      <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
-        <table className="w-full min-w-[820px] border-collapse text-sm">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+        <table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
           <thead>
             <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <th className="border-r border-border/60 p-4 text-left">#</th>
@@ -1783,7 +2600,7 @@ function StageStandingsBoard({
                       />
                     </Link>
                   </td>
-                  {showGroupColumn ? <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.grp ?? "-"}</td> : null}
+                  {showGroupColumn ? <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{getOverallStandingGroupLabel(entry)}</td> : null}
                   <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.matches ?? "-"}</td>
                   <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.wwcd ?? "-"}</td>
                   <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.pos ?? "-"}</td>
@@ -1813,11 +2630,22 @@ function StageStandingsBoard({
               {activeStage.name.toUpperCase()} GROUPS
             </p>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              {activeStage?.name === "Round 4"
+              {isSurvivalStageLobbyView
+                ? "Survival groups are match lobbies only. Qualification is decided by the overall Survival Stage standings: top 8 move to Semi Finals, ranks 9-32 are eliminated from BMPS 2026."
+                : activeStage?.name === "Round 4"
                 ? "Round 4 locks the group outcomes. Each group now advances independently into Grand Finals, Semi Finals, Survival Stage, or elimination."
                 : "Based on weekly group standings, promotions and relegations decide movement for the next week."}
             </p>
-            {activeStage?.name === "Round 4" ? (
+            {isSurvivalStageLobbyView ? (
+              <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/10 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-200">
+                  Overall Survival Standings
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Show advancement only after match results create an overall 32-team ranking.
+                </p>
+              </div>
+            ) : activeStage?.name === "Round 4" ? (
               <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-xl border border-border bg-secondary/20 p-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group A</p>
@@ -1860,19 +2688,21 @@ function StageStandingsBoard({
             )}
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-border bg-background/90 shadow-sm">
-            <table className="w-full min-w-[820px] border-collapse text-sm">
+          <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+            <table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
               <thead>
                 <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   <th className="border-r border-border/60 p-4 text-left">#</th>
-                  <th className="border-r border-border/60 p-4 text-left">Team</th>
-                  <th className="p-4 text-left">Movement</th>
+                  <th className={showGroupParticipantMovement ? "border-r border-border/60 p-4 text-left" : "p-4 text-left"}>Team</th>
+                  {showGroupParticipantMovement ? <th className="p-4 text-left">Movement</th> : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {groupParticipants.map((entry, index) => {
                   const position = index + 1;
-                  const movement = getGroupMovementRule(activeStage?.name, currentSelectedGroup, position, groupParticipants.length);
+                  const movement = showGroupParticipantMovement
+                    ? getGroupMovementRule(activeStage?.name, currentSelectedGroup, position, groupParticipants.length)
+                    : null;
                   return (
                     <tr
                       key={`${activeStage.name}-${currentSelectedGroup}-${entry.team}`}
@@ -1889,15 +2719,17 @@ function StageStandingsBoard({
                           />
                         </Link>
                       </td>
-                      <td className="p-4">
-                        {movement ? (
-                          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${movement.tone}`}>
-                            {movement.label}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Hold current group</span>
-                        )}
-                      </td>
+                      {showGroupParticipantMovement ? (
+                        <td className="p-4">
+                          {movement ? (
+                            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${movement.tone}`}>
+                              {movement.label}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Hold current group</span>
+                          )}
+                        </td>
+                      ) : null}
                     </tr>
                   );
                 })}
@@ -1905,7 +2737,7 @@ function StageStandingsBoard({
             </table>
           </div>
         </div>
-      ) : !isStatisticsStage && stageParticipants.length > 0 ? (
+      ) : !isStatisticsStage && stageParticipants.length > 0 && !shouldHideProjectedStageTeams ? (
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
             <p className="text-lg font-semibold uppercase tracking-[0.08em] text-foreground">
@@ -1937,14 +2769,22 @@ function StageStandingsBoard({
           </div>
         </div>
       ) : !isStatisticsStage ? (
-        <div className="rounded-xl border border-border bg-background/90 px-5 py-6 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Standings pending</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {bmpsWaitingStageName
-              ? `${activeStage.name} groups will appear automatically after ${bmpsWaitingStageName} results are added.`
-              : activeStage.summary || "This stage is part of the tournament flow, but standings data has not been attached yet."}
-          </p>
-        </div>
+        shouldHideProjectedStageTeams ? (
+          <BmpsSemiFinalsPendingPanel
+            stageParticipants={stageParticipants}
+            matches={matches}
+            tournamentId={tournamentId}
+          />
+        ) : (
+          <div className="rounded-xl border border-border bg-background/90 px-5 py-6 shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Standings pending</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {bmpsWaitingStageName
+                ? `${activeStage.name} groups will appear automatically after ${bmpsWaitingStageName} results are added.`
+                : activeStage.summary || "This stage is part of the tournament flow, but standings data has not been attached yet."}
+            </p>
+          </div>
+        )
       ) : null}
     </div>
   );
@@ -1965,8 +2805,8 @@ function RankingTable({ ranking }) {
   );
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-background/90 shadow-sm">
-      <table className={`w-full border-collapse text-sm ${isSimpleFinishesTable ? "min-w-[420px]" : "min-w-[720px]"}`}>
+    <div className="max-h-[70vh] overflow-auto rounded-lg border border-border bg-background/90 shadow-sm">
+      <table className={`w-full border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary ${isSimpleFinishesTable ? "min-w-[420px]" : "min-w-[720px]"}`}>
         <thead>
           <tr className="border-b border-border bg-secondary/40 text-[11px] uppercase tracking-wider text-muted-foreground">
             <th className="border-r border-border/60 p-3 text-left">#</th>
@@ -2318,53 +3158,28 @@ function MatchdayHub({ tournament, matches, matchResults }) {
 
 // eslint-disable-next-line
 export default function TournamentDetail({ tournament, onBack, requestedStage = "" }) {
-  const { data: teams = [] } = useQuery({
-    queryKey: ["tournament-detail-teams"],
-    queryFn: () => base44.entities.Team.list("-total_points", 300),
-  });
-  const { data: matches = [] } = useQuery({
-    queryKey: ["tournament-detail-matches", tournament.id],
-    queryFn: () =>
-      base44.entities.Match.filter(
-        { tournament_id: tournament.id },
-        "-scheduled_time",
-        300,
-      ),
+  const { data: tournamentPage = {} } = useQuery({
+    queryKey: ["tournament-detail-page", tournament.id],
+    queryFn: () => base44.pages.tournament(tournament.id),
     enabled: Boolean(tournament?.id),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
-  const { data: rawMatchResults = [] } = useQuery({
-    queryKey: ["tournament-detail-match-results", tournament.id],
-    queryFn: () =>
-      base44.entities.MatchResult.filter(
-        { tournament_id: tournament.id },
-        "-created_date",
-        5000,
-      ),
-    enabled: Boolean(tournament?.id),
-  });
+  const teams = tournamentPage.teams || EMPTY_STAGE_TEAMS;
+  const matches = tournamentPage.matches || EMPTY_STAGE_MATCHES;
+  const rawMatchResults = tournamentPage.matchResults || EMPTY_STAGE_MATCH_RESULTS;
   const matchResults = useMemo(() => filterPublishedMatchResults(rawMatchResults), [rawMatchResults]);
-
-  const { data: players = [] } = useQuery({
-    queryKey: ["tournament-detail-players"],
-    queryFn: () => base44.entities.Player.list("-total_kills", 500),
-  });
-
-  const { data: dbTransfers = [] } = useQuery({
-    queryKey: ["transfer-windows"],
-    queryFn: () => base44.entities.TransferWindow.list("-date", 500),
-  });
-  const { data: normalizedTournamentData = null } = useQuery({
-    queryKey: ["tournament-normalized", tournament.id],
-    queryFn: () => base44.tournaments.normalized(tournament.id),
-    enabled: Boolean(tournament?.id),
-  });
+  const players = tournamentPage.players || EMPTY_STAGE_PLAYERS;
+  const dbTransfers = tournamentPage.transfers || EMPTY_STAGE_PLAYERS;
+  const normalizedTournamentData = tournamentPage.normalizedTournamentData || null;
 
   const normalizedParticipants =
     normalizedTournamentData?.participants ?? EMPTY_STAGE_PARTICIPANT_ENTRIES;
   const normalizedStages =
     normalizedTournamentData?.stages ?? EMPTY_NORMALIZED_STAGES;
-  const rawParticipantEntries =
-    tournament.participants ?? EMPTY_STAGE_PARTICIPANT_ENTRIES;
+  const rawParticipantEntries = isBmps2026Tournament(tournament)
+    ? getOfficialParticipantEntries(tournament)
+    : tournament.participants ?? EMPTY_STAGE_PARTICIPANT_ENTRIES;
   const rawTournamentStages = tournament.stages ?? EMPTY_NORMALIZED_STAGES;
   const calendarMatches = useMemo(
     () => decorateMatchesWithLiveStatus(matches, matchResults),
@@ -2483,8 +3298,14 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
             rawStandings.length > normalizedStandings.length
               ? rawStandings
               : normalizedStandings;
+          const shouldPreferDerivedStandings =
+            tournament.name === "Battlegrounds Mobile India Pro Series 2026" &&
+            isBmps2026SurvivalStage(stageName) &&
+            derivedStandings.length > 0;
           const finalStandings =
-            derivedStandings.length > preferredStandings.length ? derivedStandings : preferredStandings;
+            shouldPreferDerivedStandings || derivedStandings.length > preferredStandings.length
+              ? derivedStandings
+              : preferredStandings;
 
           return {
             ...stage,
@@ -2535,7 +3356,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         };
       }));
     },
-    [derivedStageBoards, normalizedParticipants, normalizedStages, rawTournamentStages]
+    [derivedStageBoards, normalizedParticipants, normalizedStages, rawTournamentStages, tournament.name]
   );
   const hasStageProgression = stageBoardStages.some(
     (stage) => stage?.name && (stage.summary || stage.standings?.length || stage.teamCount),
@@ -2581,17 +3402,29 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
     championEntry?.team;
   const championDisplayName = getChampionDisplayName(championTeamName);
   const championLogoOverride = getChampionLogoOverride(championEntry?.fullTeam || championTeamName);
+  const displayParticipantEntries = useMemo(() => {
+    if (!isBmps2026Tournament(tournament)) {
+      return participantEntries;
+    }
+
+    return getOfficialParticipantEntries({
+      ...tournament,
+      participants: participantEntries,
+    });
+  }, [participantEntries, tournament]);
   const participantCount = Math.max(
-    participantEntries.length || 0,
-    tournament.max_teams || 0,
-    16
+    getOfficialParticipantCount({
+      ...tournament,
+      participants: displayParticipantEntries,
+    }),
+    16,
   );
   const participantSections = useMemo(() => {
     if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") {
       return [
         {
           phase: "Teams",
-          entries: participantEntries,
+          entries: displayParticipantEntries,
           order: -1,
         },
       ];
@@ -2626,8 +3459,23 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         if (orderDiff !== 0) return orderDiff;
         return a[0].localeCompare(b[0]);
       })
-      .map(([phase, entries]) => ({ phase, entries }));
-  }, [participantEntries, tournament.name]);
+      .map(([phase, entries]) => ({
+        phase,
+        entries: entries.toSorted((left, right) => {
+          const leftPlacement = Number(left?.placement);
+          const rightPlacement = Number(right?.placement);
+          const leftHasPlacement = Number.isFinite(leftPlacement);
+          const rightHasPlacement = Number.isFinite(rightPlacement);
+          if (leftHasPlacement && rightHasPlacement && leftPlacement !== rightPlacement) {
+            return leftPlacement - rightPlacement;
+          }
+          if (leftHasPlacement !== rightHasPlacement) {
+            return leftHasPlacement ? -1 : 1;
+          }
+          return String(left?.team || "").localeCompare(String(right?.team || ""));
+        }),
+      }));
+  }, [displayParticipantEntries, participantEntries, tournament.name]);
   const liveParticipantRosters = useMemo(() => {
     const rosterMap = {};
     const teamIdsByNormalizedName = new Map();

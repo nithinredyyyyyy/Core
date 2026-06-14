@@ -1,9 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import { format } from "date-fns";
-import { ArrowUpRight, ChevronRight, Flame, Trophy } from "lucide-react";
+import { ArrowUpRight, ChevronsUpDown, ChevronDown, ChevronRight, ChevronUp, Flame, Trophy } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import TeamIdentity from "../components/shared/TeamIdentity";
 import StatusBadge from "../components/shared/StatusBadge";
@@ -11,6 +11,8 @@ import { normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 import { resolveTournamentLiveState } from "@/lib/tournamentLiveState";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+const EMPTY_LEADERBOARD_PAGE_ARRAY = [];
 
 function buildBoardLink(tournamentId, stage) {
   const params = new URLSearchParams();
@@ -424,6 +426,50 @@ function MobileStandingCard({ team }) {
 }
 
 function OverallStatsSection({ featuredTournament, teamMapStats, calendarMatches }) {
+  const [sortConfig, setSortConfig] = useState({ field: "rank", direction: "asc" });
+  const handleSort = (field) => {
+    setSortConfig((current) => ({
+      field,
+      direction: current.field === field && current.direction === "desc" ? "asc" : "desc",
+    }));
+  };
+  const sortedTeamMapStats = useMemo(() => {
+    const getValue = (team, field) => {
+      switch (field) {
+        case "rank": return team.rank;
+        case "team": return team.teamName;
+        case "matchesPlayed": return team.matchesPlayed;
+        case "avgPlacePoints": return team.avgPlacePoints;
+        case "avgElims": return team.avgElims;
+        case "avgTotalPoints": return team.avgTotalPoints;
+        case "erangel": return team.avgMapStats.erangel ? team.avgMapStats.erangel.elims * 1000 + team.avgMapStats.erangel.placePoints : null;
+        case "miramar": return team.avgMapStats.miramar ? team.avgMapStats.miramar.elims * 1000 + team.avgMapStats.miramar.placePoints : null;
+        case "rondo": return team.avgMapStats.rondo ? team.avgMapStats.rondo.elims * 1000 + team.avgMapStats.rondo.placePoints : null;
+        case "winPercent": return team.winPercent;
+        case "secondToFivePercent": return team.secondToFivePercent;
+        case "sixToTenPercent": return team.sixToTenPercent;
+        case "elevenPlusPercent": return team.elevenPlusPercent;
+        case "zero": return team.pointsBuckets.zero;
+        case "underFive": return team.pointsBuckets.underFive;
+        case "fivePlus": return team.pointsBuckets.fivePlus;
+        case "tenPlus": return team.pointsBuckets.tenPlus;
+        case "seventeenPlus": return team.pointsBuckets.seventeenPlus;
+        case "twentyFourPlus": return team.pointsBuckets.twentyFourPlus;
+        default: return "";
+      }
+    };
+    return teamMapStats
+      .map((team, index) => ({ team, index }))
+      .toSorted((left, right) => {
+        const result = compareOverallValues(
+          getValue(left.team, sortConfig.field),
+          getValue(right.team, sortConfig.field),
+          sortConfig.direction,
+        );
+        return result || left.index - right.index;
+      })
+      .map(({ team }) => team);
+  }, [sortConfig, teamMapStats]);
   if (!featuredTournament || teamMapStats.length === 0) return null;
 
   return (
@@ -453,53 +499,39 @@ function OverallStatsSection({ featuredTournament, teamMapStats, calendarMatches
       </div>
 
       <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5 md:mx-0 md:px-6">
-        <table className="min-w-[1500px] table-fixed text-sm">
+        <table className="min-w-[1720px] table-fixed text-sm">
           <colgroup>
             <col style={{ width: "64px" }} />
             <col style={{ width: "264px" }} />
-            <col style={{ width: "92px" }} />
-            <col style={{ width: "108px" }} />
-            <col style={{ width: "88px" }} />
-            <col style={{ width: "88px" }} />
-            <col style={{ width: "96px" }} />
-            <col style={{ width: "96px" }} />
-            <col style={{ width: "88px" }} />
-            <col style={{ width: "96px" }} />
-            <col style={{ width: "88px" }} />
-            <col style={{ width: "88px" }} />
-            <col style={{ width: "88px" }} />
-            <col style={{ width: "84px" }} />
-            <col style={{ width: "84px" }} />
-            <col style={{ width: "84px" }} />
+            {Array.from({ length: 17 }).map((_, index) => (
+              <col key={`overall-stat-col-${index}`} style={{ width: index < 7 ? "92px" : "88px" }} />
+            ))}
           </colgroup>
           <thead>
             <tr className="border-b border-border bg-secondary/25 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              <th rowSpan={2} className="border-r border-border p-3 text-center">#</th>
-              <th rowSpan={2} className="border-r border-border px-4 py-3 text-left">Participant</th>
-              <th rowSpan={2} className="border-r border-border p-3 text-center">Total Points</th>
-              <th rowSpan={2} className="border-r border-border p-3 text-center">Matches Played</th>
-              <th colSpan={2} className="border-r border-border p-3 text-center">Points</th>
-              <th colSpan={4} className="border-r border-border p-3 text-center">Averages</th>
-              <th colSpan={3} className="border-r border-border p-3 text-center">Placement Summary</th>
-              <th colSpan={3} className="bg-secondary/10 p-3 text-center">Map Avg Pts</th>
-            </tr>
-            <tr className="border-b border-border bg-secondary/15 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              <th className="border-r border-border p-3 text-center">Place</th>
-              <th className="border-r border-border p-3 text-center">Elims</th>
-              <th className="border-r border-border p-3 text-center">Placement</th>
-              <th className="border-r border-border p-3 text-center">Place Pts.</th>
-              <th className="border-r border-border p-3 text-center">Elims</th>
-              <th className="border-r border-border p-3 text-center">Total Pts.</th>
-              <th className="border-r border-border p-3 text-center">Top 5</th>
-              <th className="border-r border-border p-3 text-center">Top 8</th>
-              <th className="border-r border-border p-3 text-center">&gt; 8th</th>
-              <th className="bg-secondary/10 px-2 py-3 text-center">Rondo</th>
-              <th className="bg-secondary/10 px-2 py-3 text-center">Erangel</th>
-              <th className="bg-secondary/10 px-2 py-3 text-center">Miramar</th>
+              <SortableOverallHeader label="#" field="rank" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Team" field="team" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border px-4 py-3 text-left" />
+              <SortableOverallHeader label="M" field="matchesPlayed" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Avg Place Pts" field="avgPlacePoints" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Avg Elims" field="avgElims" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Avg Total" field="avgTotalPoints" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Erangel E/PP" field="erangel" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Miramar E/PP" field="miramar" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Rondo E/PP" field="rondo" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="Win %" field="winPercent" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="2nd-5th %" field="secondToFivePercent" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="6th-10th %" field="sixToTenPercent" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="11th-16th+ %" field="elevenPlusPercent" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="0 Pts" field="zero" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="< 5 Pts" field="underFive" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="5+ Pts" field="fivePlus" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="10+ Pts" field="tenPlus" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="17+ Pts" field="seventeenPlus" sortConfig={sortConfig} onSort={handleSort} className="border-r border-border p-3 text-center" />
+              <SortableOverallHeader label="24+ Pts" field="twentyFourPlus" sortConfig={sortConfig} onSort={handleSort} className="bg-secondary/10 p-3 text-center" />
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {teamMapStats.map((team, index) => (
+            {sortedTeamMapStats.map((team, index) => (
               <m.tr
                 key={`overall-stats-${team.teamId || team.teamName}`}
                 initial={{ opacity: 0, y: 8 }}
@@ -515,20 +547,23 @@ function OverallStatsSection({ featuredTournament, teamMapStats, calendarMatches
                     <TeamIdentity name={team.logoName} className="font-semibold text-foreground" contained logoClassName="h-7 w-auto object-contain" />
                   </Link>
                 </td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-lg font-black text-primary">{team.totalPoints}</td>
                 <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.matchesPlayed}</td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.totalPlacePoints}</td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.totalElims}</td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{Number.isFinite(team.avgPlacement) ? team.avgPlacement.toFixed(2) : "-"}</td>
                 <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{Number.isFinite(team.avgPlacePoints) ? team.avgPlacePoints.toFixed(2) : "-"}</td>
                 <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{Number.isFinite(team.avgElims) ? team.avgElims.toFixed(2) : "-"}</td>
                 <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{Number.isFinite(team.avgTotalPoints) ? team.avgTotalPoints.toFixed(2) : "-"}</td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.topFiveCount}</td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.topEightCount}</td>
-                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.overEightCount}</td>
-                <td className="bg-secondary/5 px-2 py-4 text-center align-middle font-semibold text-foreground">{Number.isFinite(team.avgPointsByMap.rondo) ? team.avgPointsByMap.rondo.toFixed(2) : "-"}</td>
-                <td className="bg-secondary/5 px-2 py-4 text-center align-middle font-semibold text-foreground">{Number.isFinite(team.avgPointsByMap.erangel) ? team.avgPointsByMap.erangel.toFixed(2) : "-"}</td>
-                <td className="bg-secondary/5 px-2 py-4 text-center align-middle font-semibold text-foreground">{Number.isFinite(team.avgPointsByMap.miramar) ? team.avgPointsByMap.miramar.toFixed(2) : "-"}</td>
+                <td className="border-r border-border px-2 py-4 text-center align-middle font-semibold text-foreground"><MapAverageCell stats={team.avgMapStats.erangel} /></td>
+                <td className="border-r border-border px-2 py-4 text-center align-middle font-semibold text-foreground"><MapAverageCell stats={team.avgMapStats.miramar} /></td>
+                <td className="border-r border-border px-2 py-4 text-center align-middle font-semibold text-foreground"><MapAverageCell stats={team.avgMapStats.rondo} /></td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.winPercent}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.secondToFivePercent}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.sixToTenPercent}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.elevenPlusPercent}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.pointsBuckets.zero}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.pointsBuckets.underFive}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.pointsBuckets.fivePlus}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.pointsBuckets.tenPlus}</td>
+                <td className="border-r border-border px-3 py-4 text-center align-middle text-foreground">{team.pointsBuckets.seventeenPlus}</td>
+                <td className="bg-secondary/5 px-3 py-4 text-center align-middle text-foreground">{team.pointsBuckets.twentyFourPlus}</td>
               </m.tr>
             ))}
           </tbody>
@@ -536,6 +571,51 @@ function OverallStatsSection({ featuredTournament, teamMapStats, calendarMatches
       </div>
     </m.section>
   );
+}
+
+function MapAverageCell({ stats }) {
+  if (!stats || !Number.isFinite(stats.elims) || !Number.isFinite(stats.placePoints)) {
+    return <span>-</span>;
+  }
+
+  return (
+    <span>{stats.elims.toFixed(2)}/{stats.placePoints.toFixed(2)}</span>
+  );
+}
+
+function SortableOverallHeader({ label, field, sortConfig, onSort, className = "" }) {
+  const isActive = sortConfig?.field === field;
+  const SortIcon = isActive
+    ? sortConfig.direction === "asc"
+      ? ChevronUp
+      : ChevronDown
+    : ChevronsUpDown;
+
+  return (
+    <th className={className}>
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className="inline-flex w-full items-center justify-center gap-1 rounded-md text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground"
+      >
+        <span>{label}</span>
+        <SortIcon className={`size-3.5 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+      </button>
+    </th>
+  );
+}
+
+function compareOverallValues(left, right, direction) {
+  const leftNumber = Number(String(left ?? "").replace("%", ""));
+  const rightNumber = Number(String(right ?? "").replace("%", ""));
+  const bothNumeric = Number.isFinite(leftNumber) && Number.isFinite(rightNumber);
+  const result = bothNumeric
+    ? leftNumber - rightNumber
+    : String(left ?? "").localeCompare(String(right ?? ""), undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
+  return direction === "asc" ? result : -result;
 }
 
 function buildTeamMapStats({
@@ -589,13 +669,19 @@ function buildTeamMapStats({
       topFiveCount: 0,
       topEightCount: 0,
       overEightCount: 0,
+      placementBuckets: {
+        wins: 0,
+        secondToFive: 0,
+        sixToTen: 0,
+        elevenPlus: 0,
+      },
       pointsBuckets: {
         zero: 0,
-        oneToFive: 0,
-        sixToTen: 0,
-        elevenToFifteen: 0,
-        sixteenToTwenty: 0,
-        overTwenty: 0,
+        underFive: 0,
+        fivePlus: 0,
+        tenPlus: 0,
+        seventeenPlus: 0,
+        twentyFourPlus: 0,
       },
     };
 
@@ -624,19 +710,32 @@ function buildTeamMapStats({
     if (placement > 8) {
       mapEntry.overEightCount += 1;
     }
+    if (placement === 1) {
+      mapEntry.placementBuckets.wins += 1;
+    } else if (placement >= 2 && placement <= 5) {
+      mapEntry.placementBuckets.secondToFive += 1;
+    } else if (placement >= 6 && placement <= 10) {
+      mapEntry.placementBuckets.sixToTen += 1;
+    } else if (placement >= 11) {
+      mapEntry.placementBuckets.elevenPlus += 1;
+    }
 
     if (totalPoints === 0) {
       mapEntry.pointsBuckets.zero += 1;
-    } else if (totalPoints <= 5) {
-      mapEntry.pointsBuckets.oneToFive += 1;
-    } else if (totalPoints <= 10) {
-      mapEntry.pointsBuckets.sixToTen += 1;
-    } else if (totalPoints <= 15) {
-      mapEntry.pointsBuckets.elevenToFifteen += 1;
-    } else if (totalPoints <= 20) {
-      mapEntry.pointsBuckets.sixteenToTwenty += 1;
-    } else {
-      mapEntry.pointsBuckets.overTwenty += 1;
+    } else if (totalPoints < 5) {
+      mapEntry.pointsBuckets.underFive += 1;
+    }
+    if (totalPoints >= 5) {
+      mapEntry.pointsBuckets.fivePlus += 1;
+    }
+    if (totalPoints >= 10) {
+      mapEntry.pointsBuckets.tenPlus += 1;
+    }
+    if (totalPoints >= 17) {
+      mapEntry.pointsBuckets.seventeenPlus += 1;
+    }
+    if (totalPoints >= 24) {
+      mapEntry.pointsBuckets.twentyFourPlus += 1;
     }
 
     teamEntry.maps.set(mapName, mapEntry);
@@ -687,15 +786,21 @@ function buildTeamMapStats({
           accumulator.topFiveCount += mapRow.topFiveCount;
           accumulator.topEightCount += mapRow.topEightCount;
           accumulator.overEightCount += mapRow.overEightCount;
+          accumulator.placementBuckets.wins += mapRow.placementBuckets.wins;
+          accumulator.placementBuckets.secondToFive +=
+            mapRow.placementBuckets.secondToFive;
+          accumulator.placementBuckets.sixToTen +=
+            mapRow.placementBuckets.sixToTen;
+          accumulator.placementBuckets.elevenPlus +=
+            mapRow.placementBuckets.elevenPlus;
           accumulator.pointsBuckets.zero += mapRow.pointsBuckets.zero;
-          accumulator.pointsBuckets.oneToFive += mapRow.pointsBuckets.oneToFive;
-          accumulator.pointsBuckets.sixToTen += mapRow.pointsBuckets.sixToTen;
-          accumulator.pointsBuckets.elevenToFifteen +=
-            mapRow.pointsBuckets.elevenToFifteen;
-          accumulator.pointsBuckets.sixteenToTwenty +=
-            mapRow.pointsBuckets.sixteenToTwenty;
-          accumulator.pointsBuckets.overTwenty +=
-            mapRow.pointsBuckets.overTwenty;
+          accumulator.pointsBuckets.underFive += mapRow.pointsBuckets.underFive;
+          accumulator.pointsBuckets.fivePlus += mapRow.pointsBuckets.fivePlus;
+          accumulator.pointsBuckets.tenPlus += mapRow.pointsBuckets.tenPlus;
+          accumulator.pointsBuckets.seventeenPlus +=
+            mapRow.pointsBuckets.seventeenPlus;
+          accumulator.pointsBuckets.twentyFourPlus +=
+            mapRow.pointsBuckets.twentyFourPlus;
           return accumulator;
         },
         {
@@ -707,16 +812,33 @@ function buildTeamMapStats({
           topFiveCount: 0,
           topEightCount: 0,
           overEightCount: 0,
+          placementBuckets: {
+            wins: 0,
+            secondToFive: 0,
+            sixToTen: 0,
+            elevenPlus: 0,
+          },
           pointsBuckets: {
             zero: 0,
-            oneToFive: 0,
-            sixToTen: 0,
-            elevenToFifteen: 0,
-            sixteenToTwenty: 0,
-            overTwenty: 0,
+            underFive: 0,
+            fivePlus: 0,
+            tenPlus: 0,
+            seventeenPlus: 0,
+            twentyFourPlus: 0,
           },
         },
       );
+
+      const formatPercent = (value) =>
+        totals.matches > 0 ? `${Math.round((value / totals.matches) * 100)}%` : "-";
+      const getMapAverages = (mapName) => {
+        const mapRow = maps.find((entry) => entry.map.toLowerCase() === mapName);
+        if (!mapRow?.matches) return null;
+        return {
+          elims: mapRow.elims / mapRow.matches,
+          placePoints: mapRow.placementPoints / mapRow.matches,
+        };
+      };
 
       return {
         teamId: row.teamId,
@@ -736,29 +858,15 @@ function buildTeamMapStats({
         topFiveCount: totals.topFiveCount,
         topEightCount: totals.topEightCount,
         overEightCount: totals.overEightCount,
+        winPercent: formatPercent(totals.placementBuckets.wins),
+        secondToFivePercent: formatPercent(totals.placementBuckets.secondToFive),
+        sixToTenPercent: formatPercent(totals.placementBuckets.sixToTen),
+        elevenPlusPercent: formatPercent(totals.placementBuckets.elevenPlus),
         pointsBuckets: totals.pointsBuckets,
-        avgPointsByMap: {
-          rondo: maps.find((mapRow) => mapRow.map.toLowerCase() === "rondo")
-            ?.matches
-            ? maps.find((mapRow) => mapRow.map.toLowerCase() === "rondo")
-                .points /
-              maps.find((mapRow) => mapRow.map.toLowerCase() === "rondo")
-                .matches
-            : null,
-          erangel: maps.find((mapRow) => mapRow.map.toLowerCase() === "erangel")
-            ?.matches
-            ? maps.find((mapRow) => mapRow.map.toLowerCase() === "erangel")
-                .points /
-              maps.find((mapRow) => mapRow.map.toLowerCase() === "erangel")
-                .matches
-            : null,
-          miramar: maps.find((mapRow) => mapRow.map.toLowerCase() === "miramar")
-            ?.matches
-            ? maps.find((mapRow) => mapRow.map.toLowerCase() === "miramar")
-                .points /
-              maps.find((mapRow) => mapRow.map.toLowerCase() === "miramar")
-                .matches
-            : null,
+        avgMapStats: {
+          erangel: getMapAverages("erangel"),
+          miramar: getMapAverages("miramar"),
+          rondo: getMapAverages("rondo"),
         },
         maps,
       };
@@ -781,51 +889,21 @@ function useLeaderboardData() {
   const requestedTournamentId = searchParams.get("tournament");
   const requestedStage = searchParams.get("stage");
 
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
-    queryKey: ["leaderboard-tournaments"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 100),
+  const { data: leaderboardPage = {}, isLoading } = useQuery({
+    queryKey: ["leaderboard-page", requestedTournamentId || ""],
+    queryFn: () => base44.pages.leaderboard(requestedTournamentId || ""),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
-  const queryTournament = useMemo(() => {
-    if (requestedTournamentId) {
-      const requested = tournaments.find(
-        (tournament) => tournament.id === requestedTournamentId,
-      );
-      if (requested) return requested;
-    }
-    return (
-      tournaments.find((tournament) => tournament.status === "ongoing") ||
-      tournaments[0] ||
-      null
-    );
-  }, [requestedTournamentId, tournaments]);
-  const { data: matches = [], isLoading: matchesLoading } = useQuery({
-    queryKey: ["leaderboard-matches", queryTournament?.id],
-    queryFn: () =>
-      base44.entities.Match.filter(
-        { tournament_id: queryTournament.id },
-        "-scheduled_time",
-        300,
-      ),
-    enabled: Boolean(queryTournament?.id),
-  });
-  const { data: rawMatchResults = [], isLoading: resultsLoading } = useQuery({
-    queryKey: ["leaderboard-match-results", queryTournament?.id],
-    queryFn: () =>
-      base44.entities.MatchResult.filter(
-        { tournament_id: queryTournament.id },
-        "-created_date",
-        5000,
-      ),
-    enabled: Boolean(queryTournament?.id),
-  });
+  const tournaments = leaderboardPage.tournaments || EMPTY_LEADERBOARD_PAGE_ARRAY;
+  const matches = leaderboardPage.matches || EMPTY_LEADERBOARD_PAGE_ARRAY;
+  const rawMatchResults =
+    leaderboardPage.matchResults || EMPTY_LEADERBOARD_PAGE_ARRAY;
   const matchResults = useMemo(
     () => filterPublishedMatchResults(rawMatchResults),
     [rawMatchResults],
   );
-  const { data: teams = [], isLoading: teamsLoading } = useQuery({
-    queryKey: ["leaderboard-teams"],
-    queryFn: () => base44.entities.Team.list("-created_date", 300),
-  });
+  const teams = leaderboardPage.teams || EMPTY_LEADERBOARD_PAGE_ARRAY;
 
   const liveState = useMemo(
     () =>
@@ -853,8 +931,6 @@ function useLeaderboardData() {
     stageBoard,
   } = liveState;
 
-  const isLoading =
-    tournamentsLoading || matchesLoading || resultsLoading || teamsLoading;
   const tournamentQuery = useMemo(() => {
     if (!featuredTournament) return "";
     const params = new URLSearchParams();

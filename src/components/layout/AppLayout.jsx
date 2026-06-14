@@ -12,7 +12,7 @@ export default function AppLayout() {
       className={
         isMobile
           ? "min-h-screen bg-[#f4a08d] text-foreground"
-          : "min-h-screen bg-[#f6f8fb] text-foreground transition-colors dark:bg-[#07111f]"
+          : "min-h-screen bg-[#f4f7fb] text-foreground transition-colors dark:bg-[#07111f]"
       }
     >
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -20,7 +20,7 @@ export default function AppLayout() {
           className={
             isMobile
               ? "absolute inset-0 bg-[linear-gradient(180deg,#ffb29d_0%,#f49889_38%,#e95363_100%)]"
-              : "absolute inset-0 bg-[#f6f8fb] dark:bg-[#07111f]"
+              : "absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(255,106,26,0.09),transparent_30%),radial-gradient(circle_at_86%_8%,rgba(56,189,248,0.12),transparent_28%),linear-gradient(180deg,#f8fbff_0%,#f3f6fa_44%,#eef3f8_100%)] dark:bg-[radial-gradient(circle_at_12%_0%,rgba(255,106,26,0.12),transparent_30%),radial-gradient(circle_at_86%_8%,rgba(56,189,248,0.11),transparent_28%),linear-gradient(180deg,#07111f_0%,#0a1422_48%,#07111f_100%)]"
           }
         />
       </div>
@@ -35,8 +35,8 @@ export default function AppLayout() {
         <main
           className={
             isMobile
-              ? "flex-1 px-4 pb-24 pt-2"
-              : "flex-1 px-4 pb-8 pt-4 sm:px-6 md:px-8"
+              ? "flex-1 px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-2"
+              : "flex-1 px-4 pb-10 pt-5 sm:px-6 md:px-8"
           }
         >
           <Outlet />

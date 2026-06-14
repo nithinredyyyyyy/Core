@@ -13,6 +13,10 @@ import {
   getOrganizationMeta,
   normalizeOrganizationName,
 } from "@/lib/organizationIdentity";
+import {
+  getOfficialParticipantCount,
+  getOfficialParticipantEntries,
+} from "@/lib/tournamentParticipants";
 import { getTeamLogoByName } from "@/lib/teamLogos";
 
 function groupBy(items, getKey) {
@@ -42,7 +46,7 @@ function InspectorMetricCards({
             Participants
           </p>
           <p className="mt-2 text-2xl font-black">
-            {selectedTournament.participants?.length || 0}
+            {getOfficialParticipantCount(selectedTournament)}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
@@ -350,7 +354,7 @@ export default function AdminInspector() {
   const tournamentResults = useMemo(() => results, [results]);
 
   const participantPhaseGroups = useMemo(() => {
-    const participants = selectedTournament?.participants || [];
+    const participants = getOfficialParticipantEntries(selectedTournament);
     return [...groupBy(
         participants,
         (entry) => entry.phase || "Unlabeled phase",
@@ -383,7 +387,7 @@ export default function AdminInspector() {
   }, [tournamentMatches, tournamentResults]);
 
   const unresolvedParticipants = useMemo(() => {
-    return (selectedTournament?.participants || []).filter(
+    return getOfficialParticipantEntries(selectedTournament).filter(
       (entry) => !teamKeys.has(normalizeOrganizationName(entry.team)),
     );
   }, [selectedTournament, teamKeys]);
@@ -409,7 +413,7 @@ export default function AdminInspector() {
   }, [teams]);
 
   const missingLogos = useMemo(() => {
-    const participantNames = (selectedTournament?.participants || []).map(
+    const participantNames = getOfficialParticipantEntries(selectedTournament).map(
       (entry) => entry.team,
     );
     const uniqueNames = [...new Set(participantNames)];

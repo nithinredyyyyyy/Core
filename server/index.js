@@ -56,6 +56,141 @@ const AUTH_SESSION_SECRET = String(
 const GOOGLE_CLIENT_ID = String(
   process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "",
 ).trim();
+const BMPS_2026_PLAYER_STATS_SETTINGS_KEY = "bmps-2026-player-stats";
+const PAGE_CACHE_TTL_MS = 30_000;
+const pagePayloadCache = new Map();
+
+function clearPagePayloadCache() {
+  pagePayloadCache.clear();
+}
+
+function sendCachedPagePayload(res, cacheKey, buildPayload) {
+  const now = Date.now();
+  const cached = pagePayloadCache.get(cacheKey);
+  if (cached && now - cached.timestamp < PAGE_CACHE_TTL_MS) {
+    return res.json(cached.payload);
+  }
+
+  const payload = buildPayload();
+  pagePayloadCache.set(cacheKey, { payload, timestamp: now });
+  return res.json(payload);
+}
+
+function pickRecordFields(record, fields) {
+  if (!record || typeof record !== "object") return record;
+  return Object.fromEntries(
+    fields
+      .filter((field) => record[field] !== undefined)
+      .map((field) => [field, record[field]]),
+  );
+}
+
+function slimTeamRecord(team) {
+  return pickRecordFields(team, [
+    "id",
+    "name",
+    "tag",
+    "logo_url",
+    "game",
+    "region",
+    "total_kills",
+    "total_points",
+    "matches_played",
+    "wins",
+  ]);
+}
+
+function slimPlayerRecord(player) {
+  return pickRecordFields(player, [
+    "id",
+    "ign",
+    "real_name",
+    "team_id",
+    "role",
+    "photo_url",
+    "total_kills",
+    "matches_played",
+    "avg_damage",
+  ]);
+}
+
+function slimMatchRecord(match) {
+  return pickRecordFields(match, [
+    "id",
+    "tournament_id",
+    "stage",
+    "group_name",
+    "match_number",
+    "map",
+    "status",
+    "scheduled_time",
+    "stream_url",
+    "day",
+  ]);
+}
+
+function slimMatchResultRecord(result) {
+  return pickRecordFields(result, [
+    "id",
+    "match_id",
+    "tournament_id",
+    "team_id",
+    "placement",
+    "kill_points",
+    "placement_points",
+    "total_points",
+    "matches_count",
+    "wins_count",
+    "stage",
+    "publication_status",
+  ]);
+}
+
+function stripPageAuditFields(value) {
+  if (Array.isArray(value)) return value.map(stripPageAuditFields);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => key !== "created_by" && key !== "updated_date")
+      .map(([key, entryValue]) => [key, stripPageAuditFields(entryValue)]),
+  );
+}
+
+function getSiteSetting(key, fallback = null) {
+  const row = db.prepare("SELECT value FROM site_settings WHERE key = ?").get(key);
+  if (!row?.value) return fallback;
+  try {
+    return JSON.parse(row.value);
+  } catch {
+    return fallback;
+  }
+}
+
+function setSiteSetting(key, value, createdBy = null) {
+  const now = new Date().toISOString();
+  const serialized = JSON.stringify(value ?? {});
+  const existing = db.prepare("SELECT key FROM site_settings WHERE key = ?").get(key);
+  if (existing) {
+    db.prepare(
+      "UPDATE site_settings SET value = ?, updated_date = ?, created_by = ? WHERE key = ?",
+    ).run(serialized, now, createdBy, key);
+  } else {
+    db.prepare(
+      "INSERT INTO site_settings (key, value, created_date, updated_date, created_by) VALUES (?, ?, ?, ?, ?)",
+    ).run(key, serialized, now, now, createdBy);
+  }
+  clearPagePayloadCache();
+  return getSiteSetting(key, {});
+}
+
+function normalizeBmps2026PlayerStatsPayload(payload = {}) {
+  return {
+    qualifierRaw: String(payload.qualifierRaw || "").trim(),
+    survivalRaw: String(payload.survivalRaw || "").trim(),
+    semiFinalsRaw: String(payload.semiFinalsRaw || "").trim(),
+    updatedAt: new Date().toISOString(),
+  };
+}
 function splitTrimmedValues(rawValue) {
   return String(rawValue || "")
     .split(",")
@@ -397,6 +532,7 @@ const createSchemas = {
     matches_count: intField().optional(),
     wins_count: intField().optional(),
     stage: z.string().optional(),
+    publication_status: z.string().optional(),
     created_by: z.string().optional(),
   }),
   NewsArticle: z.object({
@@ -623,6 +759,13 @@ function applyListQuery(entityName, config, query = {}, options = {}) {
   const whereClauses = [];
   const params = [];
   const allowedFilterColumns = getAllowedFilterColumns(config);
+  const allowedSelectColumns = new Set([
+    "id",
+    "created_date",
+    "updated_date",
+    "created_by",
+    ...config.fields,
+  ]);
 
   for (const [key, value] of Object.entries(query)) {
     if (!allowedFilterColumns.has(key)) {
@@ -645,7 +788,19 @@ function applyListQuery(entityName, config, query = {}, options = {}) {
     orderBy = getAllowedSort(entityName, options.sort_by);
   }
 
-  let sql = `SELECT * FROM ${config.table}`;
+  const requestedFields = String(options.fields || "")
+    .split(",")
+    .map((field) => field.trim())
+    .filter(Boolean);
+  const selectColumns =
+    requestedFields.length > 0
+      ? requestedFields.filter((field) => allowedSelectColumns.has(field))
+      : [];
+  if (requestedFields.length > 0 && selectColumns.length === 0) {
+    throw new Error("No supported fields requested");
+  }
+
+  let sql = `SELECT ${selectColumns.length > 0 ? selectColumns.join(", ") : "*"} FROM ${config.table}`;
   if (whereClauses.length > 0) {
     sql += ` WHERE ${whereClauses.join(" AND ")}`;
   }
@@ -711,6 +866,211 @@ function getHomeSummaryPayload() {
     matches,
     results,
     news,
+  };
+}
+
+function listEntity(entityName, query = {}, options = {}) {
+  const config = entityConfigs[entityName];
+  if (!config) {
+    throw new Error(`Unknown entity: ${entityName}`);
+  }
+  return applyListQuery(entityName, config, query, options);
+}
+
+function getFeaturedTournament(tournaments) {
+  return (
+    tournaments.find((entry) => entry.status === "ongoing") ||
+    tournaments[0] ||
+    null
+  );
+}
+
+function getNormalizedTournamentSafe(tournamentId) {
+  if (!tournamentId) return null;
+  try {
+    return getNormalizedTournament(tournamentId);
+  } catch {
+    return null;
+  }
+}
+
+function getTournamentPagePayload(tournamentId) {
+  return {
+    teams: listEntity("Team", {}, { sort_by: "-total_points", limit: 300 }).map(
+      slimTeamRecord,
+    ),
+    matches: listEntity(
+      "Match",
+      { tournament_id: tournamentId },
+      { sort_by: "-scheduled_time", limit: 300 },
+    ).map(slimMatchRecord),
+    matchResults: listEntity(
+      "MatchResult",
+      { tournament_id: tournamentId },
+      { sort_by: "-created_date", limit: 5000 },
+    ).map(slimMatchResultRecord),
+    players: listEntity("Player", {}, { sort_by: "-total_kills", limit: 500 }).map(
+      slimPlayerRecord,
+    ),
+    transfers: listEntity("TransferWindow", {}, { sort_by: "-date", limit: 500 }),
+    normalizedTournamentData: stripPageAuditFields(
+      getNormalizedTournamentSafe(tournamentId),
+    ),
+  };
+}
+
+function getFansPagePayload() {
+  const tournaments = listEntity(
+    "Tournament",
+    {},
+    { sort_by: "-created_date", limit: 30 },
+  );
+  const featuredTournament = getFeaturedTournament(tournaments);
+  const tournamentId = featuredTournament?.id || "";
+
+  return {
+    tournaments,
+    featuredTournament,
+    matches: tournamentId
+      ? listEntity(
+          "Match",
+          { tournament_id: tournamentId },
+          { sort_by: "-scheduled_time", limit: 200 },
+        ).map(slimMatchRecord)
+      : [],
+    matchResults: tournamentId
+      ? listEntity(
+          "MatchResult",
+          { tournament_id: tournamentId },
+          { sort_by: "-updated_date", limit: 1200 },
+        ).map(slimMatchResultRecord)
+      : [],
+    teams: listEntity("Team", {}, { sort_by: "-total_points", limit: 120 }).map(
+      slimTeamRecord,
+    ),
+    players: listEntity("Player", {}, { sort_by: "-total_kills", limit: 500 }).map(
+      slimPlayerRecord,
+    ),
+    profiles: listEntity("FanProfile", {}, { sort_by: "-total_points", limit: 120 }),
+    predictions: listEntity(
+      "FanPrediction",
+      {},
+      { sort_by: "-prediction_date", limit: 80 },
+    ),
+    votes: listEntity("FanPollVote", {}, { sort_by: "-created_date", limit: 200 }),
+    comments: listEntity(
+      "FanChatMessage",
+      {},
+      { sort_by: "-created_date", limit: 200 },
+    ),
+    reactions: listEntity(
+      "FanCommentReaction",
+      {},
+      { sort_by: "-created_date", limit: 500 },
+    ),
+    follows: listEntity("FanFollowItem", {}, { sort_by: "-created_date", limit: 300 }),
+    savedMatches: listEntity("SavedMatch", {}, { sort_by: "-created_date", limit: 150 }),
+    fantasySquads: listEntity(
+      "FantasySquad",
+      {},
+      { sort_by: "-total_points", limit: 200 },
+    ),
+    normalizedTournamentData: stripPageAuditFields(
+      getNormalizedTournamentSafe(tournamentId),
+    ),
+  };
+}
+
+function getTeamsPagePayload() {
+  return {
+    teams: listEntity("Team", {}, { sort_by: "-total_points", limit: 400 }).map(
+      slimTeamRecord,
+    ),
+    players: listEntity("Player", {}, { sort_by: "-created_date", limit: 500 }).map(
+      slimPlayerRecord,
+    ),
+    transferWindows: listEntity(
+      "TransferWindow",
+      {},
+      { sort_by: "-date", limit: 500 },
+    ),
+    tournaments: listEntity(
+      "Tournament",
+      {},
+      { sort_by: "-created_date", limit: 100 },
+    ),
+    teamAliases: listEntity("TeamAlias", {}, { sort_by: "-created_date", limit: 2000 }),
+  };
+}
+
+function getLeaderboardPagePayload(requestedTournamentId = "") {
+  const tournaments = listEntity(
+    "Tournament",
+    {},
+    { sort_by: "-created_date", limit: 100 },
+  );
+  const selectedTournament =
+    tournaments.find((tournament) => tournament.id === requestedTournamentId) ||
+    getFeaturedTournament(tournaments);
+  const tournamentId = selectedTournament?.id || "";
+
+  return {
+    tournaments,
+    selectedTournament,
+    matches: tournamentId
+      ? listEntity(
+          "Match",
+          { tournament_id: tournamentId },
+          { sort_by: "-scheduled_time", limit: 300 },
+        ).map(slimMatchRecord)
+      : [],
+    matchResults: tournamentId
+      ? listEntity(
+          "MatchResult",
+          { tournament_id: tournamentId },
+          { sort_by: "-created_date", limit: 5000 },
+        ).map(slimMatchResultRecord)
+      : [],
+    teams: listEntity("Team", {}, { sort_by: "-created_date", limit: 300 }).map(
+      slimTeamRecord,
+    ),
+  };
+}
+
+function getTeamDetailPagePayload(userId = "") {
+  return {
+    teams: listEntity("Team", {}, { sort_by: "-total_points", limit: 400 }),
+    tournaments: listEntity(
+      "Tournament",
+      {},
+      { sort_by: "-created_date", limit: 50 },
+    ),
+    teamAliases: listEntity("TeamAlias", {}, { sort_by: "-created_date", limit: 2000 }),
+    results: listEntity("MatchResult", {}, { sort_by: "-created_date", limit: 5000 }),
+    matches: listEntity("Match", {}, { sort_by: "-scheduled_time", limit: 200 }),
+    normalizedStages: listEntity(
+      "TournamentStage",
+      {},
+      { sort_by: "stage_order", limit: 1000 },
+    ),
+    normalizedParticipants: listEntity(
+      "TournamentParticipant",
+      {},
+      { sort_by: "-created_date", limit: 2000 },
+    ),
+    normalizedStandings: listEntity(
+      "StageStanding",
+      {},
+      { sort_by: "rank", limit: 5000 },
+    ),
+    articles: getPublishedNewsArticles({ sort_by: "-created_date", limit: 50 }),
+    follows: userId
+      ? listEntity(
+          "FanFollowItem",
+          { user_id: userId },
+          { sort_by: "-created_date", limit: 80 },
+        )
+      : [],
   };
 }
 
@@ -1326,6 +1686,7 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
       LEFT JOIN matches m ON m.id = mr.match_id
       JOIN teams tm ON tm.id = mr.team_id
       WHERE mr.tournament_id = ?
+        AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
     `,
     )
     .all(tournamentId);
@@ -1680,6 +2041,20 @@ function getBmps2026StageDestination({ stageName, group, placement }) {
     if (normalizedGroup === "D") return placement <= 8 ? "Survival Stage" : null;
   }
 
+  if (normalizedStage === "survival stage") {
+    return placement <= 8 ? "Semi Finals" : null;
+  }
+
+  if (normalizedStage === "semi finals") {
+    if (placement <= 6) return "Grand Finals";
+    if (placement <= 22) return "Last Chance Stage";
+    return null;
+  }
+
+  if (normalizedStage === "last chance stage") {
+    return placement <= 2 ? "Grand Finals" : null;
+  }
+
   return null;
 }
 
@@ -1709,6 +2084,138 @@ function getBmps2026MovementGroup(group, placement, totalTeams) {
     return "D";
   }
   return label || "A";
+}
+
+const BMPS_2026_SURVIVAL_STAGE_GROUPS = {
+  madkingsesports: "A",
+  madkings: "A",
+  teamaryan: "A",
+  aryan: "A",
+  hadxesports: "A",
+  hadx: "A",
+  nonxesports: "A",
+  nonx: "A",
+  rapidchaosesports: "A",
+  rapidchaos: "A",
+  vxt: "A",
+  aresesport: "A",
+  ares: "A",
+  likithaesports: "A",
+  likitha: "A",
+
+  jaguaresports: "B",
+  jaguar: "B",
+  k9esports: "B",
+  k9: "B",
+  esportsocial: "B",
+  santaesports: "B",
+  santa: "B",
+  truerippers: "B",
+  quantumsparks: "B",
+  quantumspark: "B",
+  qunatumspark: "B",
+  risingesports: "B",
+  rising: "B",
+  teamdoxy: "B",
+  doxy: "B",
+
+  naqshesports: "C",
+  naqsh: "C",
+  learnfrompast: "C",
+  lefp: "C",
+  teamredxross: "C",
+  redxross: "C",
+  thundergodsxtortugagaming: "C",
+  tdr: "C",
+  godsentesports: "C",
+  godsent: "C",
+  teamapexgaming: "C",
+  apexgaming: "C",
+  dcxscr: "C",
+  dcxscresports: "C",
+  dcxscoresports: "C",
+  genxfmesports: "C",
+  genxfm: "C",
+
+  phoenixesports: "D",
+  phoenix: "D",
+  phoneix: "D",
+  lastadeesports: "D",
+  lastade: "D",
+  teamh4k: "D",
+  h4k: "D",
+  riotnationz: "D",
+  riotnations: "D",
+  t7xorionesports: "D",
+  t7: "D",
+  troytamilianesports: "D",
+  troytamilian: "D",
+  auraxesports: "D",
+  aurax: "D",
+  mythofficial: "D",
+  myth: "D",
+};
+
+function getBmps2026SurvivalStageGroup(teamName, index) {
+  const mappedGroup =
+    BMPS_2026_SURVIVAL_STAGE_GROUPS[normalizeOrganizationName(teamName)] ||
+    BMPS_2026_SURVIVAL_STAGE_GROUPS[
+      String(teamName || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+    ];
+  if (mappedGroup) return mappedGroup;
+
+  const groupIndex = Math.floor((Number(index) || 0) / 8);
+  return ["A", "B", "C", "D"][groupIndex] || "D";
+}
+
+const BMPS_2026_SEMI_FINALS_TEAM_GROUPS = {
+  wyldfangs: "A",
+  godsreign: "A",
+  genesisesports: "A",
+  zeroarkofficial: "A",
+  reckoningesports: "A",
+  revenantxspark: "A",
+  weltesports: "A",
+
+  metaninza: "B",
+  "4trofficial": "B",
+  autobotzesports: "B",
+  higgbosonesports: "B",
+  teamtamilas: "B",
+  mysterious4: "B",
+
+  windgodesports: "C",
+  whitewalkers: "C",
+  nebulaesports: "C",
+};
+
+const BMPS_2026_SEMI_FINALS_SURVIVAL_GROUPS = {
+  1: "C",
+  2: "C",
+  3: "B",
+  4: "C",
+  5: "A",
+  6: "C",
+  7: "B",
+  8: "C",
+};
+
+function getBmps2026SemiFinalsGroup(teamName, sourceStageName, index) {
+  if (String(sourceStageName || "").trim().toLowerCase() === "survival stage") {
+    return BMPS_2026_SEMI_FINALS_SURVIVAL_GROUPS[(Number(index) || 0) + 1] || null;
+  }
+
+  return (
+    BMPS_2026_SEMI_FINALS_TEAM_GROUPS[normalizeOrganizationName(teamName)] ||
+    BMPS_2026_SEMI_FINALS_TEAM_GROUPS[
+      String(teamName || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+    ] ||
+    null
+  );
 }
 
 function deriveBmps2026OverviewEntries(normalizedTournament) {
@@ -1743,11 +2250,75 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
         .replace(/^Group\s+/i, "")
         .trim()
         .toUpperCase();
-      const filteredRows = (rows || []).filter((row) => row?.team?.name);
+      const filteredRows = [];
+      for (const row of rows || []) {
+        const team = row?.team;
+        const teamName = team?.name;
+        if (teamName) filteredRows.push(row);
+      }
       if (groupLabel && filteredRows.length > 0) {
         rowsByGroup.set(groupLabel, filteredRows);
       }
     });
+
+    const sortRound4Rows = (rows) =>
+      rows.toSorted((left, right) => {
+        if ((right.total_points || 0) !== (left.total_points || 0)) {
+          return (right.total_points || 0) - (left.total_points || 0);
+        }
+        if ((right.wins || 0) !== (left.wins || 0)) {
+          return (right.wins || 0) - (left.wins || 0);
+        }
+        if ((right.place_points || 0) !== (left.place_points || 0)) {
+          return (right.place_points || 0) - (left.place_points || 0);
+        }
+        return String(left.team?.name || "").localeCompare(
+          String(right.team?.name || ""),
+        );
+      });
+
+    if (isRound4) {
+      const rowsByDestination = new Map();
+      for (const [group, rows] of rowsByGroup.entries()) {
+        sortRound4Rows(rows).forEach((row, index) => {
+          const destinationStage = getBmps2026StageDestination({
+            stageName: stage?.name,
+            group,
+            placement: index + 1,
+          });
+          if (!destinationStage) return;
+          const current = rowsByDestination.get(destinationStage) || [];
+          current.push(row);
+          rowsByDestination.set(destinationStage, current);
+        });
+      }
+
+      for (const [destinationStage, destinationRows] of rowsByDestination.entries()) {
+        sortRound4Rows(destinationRows).forEach((row, index) => {
+          const teamName = row?.team?.name || "Unknown Team";
+          const destinationGroup =
+            String(destinationStage || "").trim().toLowerCase() ===
+            "survival stage"
+              ? getBmps2026SurvivalStageGroup(teamName, index)
+              : String(destinationStage || "").trim().toLowerCase() ===
+                "semi finals"
+                ? getBmps2026SemiFinalsGroup(teamName, stage?.name, index)
+              : null;
+          const phase = destinationGroup
+            ? `${destinationStage} - Group ${destinationGroup}`
+            : destinationStage;
+          const phaseKey = `${normalizeOrganizationName(teamName)}::${phase.toLowerCase()}`;
+          if (knownPhaseKeys.has(phaseKey)) return;
+          knownPhaseKeys.add(phaseKey);
+          derivedEntries.push({
+            team: teamName,
+            phase,
+            placement: index + 1,
+          });
+        });
+      }
+      continue;
+    }
 
     for (const [group, rows] of rowsByGroup.entries()) {
       const orderedRows = rows.toSorted((left, right) => {
@@ -1767,17 +2338,9 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
 
       orderedRows.forEach((row, index) => {
         const teamName = row?.team?.name || "Unknown Team";
-        const destinationStage = isRound4
-          ? getBmps2026StageDestination({
-              stageName: stage?.name,
-              group,
-              placement: index + 1,
-            })
-          : nextStageName;
+        const destinationStage = nextStageName;
         if (!destinationStage) return;
-        const destinationGroup = isRound4
-          ? null
-          : getBmps2026MovementGroup(group, index + 1, orderedRows.length);
+        const destinationGroup = getBmps2026MovementGroup(group, index + 1, orderedRows.length);
         const phase = destinationGroup
           ? `${destinationStage} - Group ${destinationGroup}`
           : destinationStage;
@@ -1792,7 +2355,7 @@ function deriveBmps2026OverviewEntries(normalizedTournament) {
   return derivedEntries;
 }
 
-function insertRecord(entityName, payload) {
+function insertRecord(entityName, payload, options = {}) {
   const config = entityConfigs[entityName];
   const now = new Date().toISOString();
   const record = {
@@ -1807,11 +2370,26 @@ function insertRecord(entityName, payload) {
   const sql = `INSERT INTO ${config.table} (${columns.join(", ")}) VALUES (${placeholders})`;
   db.prepare(sql).run(...columns.map((column) => record[column]));
 
-  if (entityName === "MatchResult") {
+  if (entityName === "MatchResult" && options.recompute !== false) {
     recomputeTeamStats();
   }
 
   return getRecord(entityName, record.id);
+}
+
+function insertRecords(entityName, payloads) {
+  if (!Array.isArray(payloads) || payloads.length === 0) return [];
+
+  const insertMany = db.transaction((items) =>
+    items.map((item) => insertRecord(entityName, item, { recompute: false })),
+  );
+  const created = insertMany(payloads);
+
+  if (entityName === "MatchResult") {
+    recomputeTeamStats();
+  }
+
+  return created;
 }
 
 function getRecord(entityName, id) {
@@ -1978,6 +2556,13 @@ app.get("/api/auth/me", (req, res) => {
   return res.json(auth.user);
 });
 
+app.get("/api/auth/config", (_req, res) => {
+  return res.json({
+    googleClientId: GOOGLE_CLIENT_ID || null,
+    googleEnabled: Boolean(GOOGLE_CLIENT_ID),
+  });
+});
+
 app.post("/api/auth/google", async (req, res) => {
   const payloadSchema = z.object({
     credential: z.string().min(1),
@@ -2062,6 +2647,10 @@ app.get("/api/search", (req, res) => {
   return res.json(getGlobalSearchResults(req.query.q, req.query.limit));
 });
 
+app.get("/api/site/bmps-2026-player-stats", (_req, res) => {
+  return res.json(getSiteSetting(BMPS_2026_PLAYER_STATS_SETTINGS_KEY, {}));
+});
+
 app.get("/api/home/summary", (_req, res) => {
   try {
     return res.json(getHomeSummaryPayload());
@@ -2074,9 +2663,11 @@ app.get("/api/home/summary", (_req, res) => {
 
 app.get("/api/home/view", (_req, res) => {
   try {
-    const summary = getHomeSummaryPayload();
     const mode = _req.query.mode === "mobile" ? "mobile" : "desktop";
-    return res.json(buildHomeViewModel(summary, { mode }));
+    return sendCachedPagePayload(res, `home:${mode}`, () => {
+      const summary = getHomeSummaryPayload();
+      return buildHomeViewModel(summary, { mode });
+    });
   } catch (error) {
     return res
       .status(500)
@@ -2165,12 +2756,56 @@ app.post("/api/admin/news/backfill", (req, res) => {
   }
 });
 
+app.put("/api/admin/bmps-2026-player-stats", (req, res) => {
+  if (!requireAdminAccess(req, res)) {
+    return;
+  }
+
+  const payload = normalizeBmps2026PlayerStatsPayload(req.body || {});
+  const saved = setSiteSetting(
+    BMPS_2026_PLAYER_STATS_SETTINGS_KEY,
+    payload,
+    req.coreAuth?.user?.email || req.coreAuth?.user?.id || null,
+  );
+  return res.json(saved);
+});
+
 app.get("/api/tournaments/:id/normalized", (req, res) => {
   const normalized = getNormalizedTournament(req.params.id);
   if (!normalized) {
     return res.status(404).json({ error: "Tournament not found" });
   }
   return res.json(normalized);
+});
+
+app.get("/api/pages/fans", (_req, res) => {
+  return sendCachedPagePayload(res, "fans", getFansPagePayload);
+});
+
+app.get("/api/pages/tournament/:id", (req, res) => {
+  const tournamentId = String(req.params.id || "").trim();
+  if (!tournamentId) {
+    return res.status(400).json({ error: "Tournament id is required" });
+  }
+  return sendCachedPagePayload(res, `tournament:${tournamentId}`, () =>
+    getTournamentPagePayload(tournamentId),
+  );
+});
+
+app.get("/api/pages/teams", (_req, res) => {
+  return sendCachedPagePayload(res, "teams", getTeamsPagePayload);
+});
+
+app.get("/api/pages/leaderboard", (req, res) => {
+  const tournamentId = String(req.query.tournament || "").trim();
+  return sendCachedPagePayload(res, `leaderboard:${tournamentId}`, () =>
+    getLeaderboardPagePayload(tournamentId),
+  );
+});
+
+app.get("/api/pages/team-detail", (req, res) => {
+  const fanSession = resolveFanSession(req);
+  return res.json(getTeamDetailPagePayload(fanSession?.userId || ""));
 });
 
 app.get("/api/entities/:entity", (req, res) => {
@@ -2213,6 +2848,7 @@ app.post("/api/entities/:entity", (req, res) => {
       req.fanSession,
     );
     const created = insertRecord(entityName, payload);
+    clearPagePayloadCache();
     if (
       entityName === "FanProfile" ||
       entityName === "FanPrediction" ||
@@ -2246,9 +2882,8 @@ app.post("/api/entities/:entity/bulk", (req, res) => {
     const validatedPayload = payload.map((item) =>
       validateEntityPayload(entityName, item, "create"),
     );
-    const created = validatedPayload.map((item) =>
-      insertRecord(entityName, item),
-    );
+    const created = insertRecords(entityName, validatedPayload);
+    clearPagePayloadCache();
     return res.status(201).json(created);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -2292,6 +2927,7 @@ app.put("/api/entities/:entity/:id", (req, res) => {
       req.fanSession,
     );
     const updated = updateRecord(entityName, req.params.id, payload);
+    clearPagePayloadCache();
     return res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -2324,6 +2960,7 @@ app.delete("/api/entities/:entity/:id", (req, res) => {
     }
   }
   const ok = deleteRecord(req.params.entity, req.params.id);
+  clearPagePayloadCache();
   return res.json({ ok });
 });
 

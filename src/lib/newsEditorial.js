@@ -1,3 +1,5 @@
+import { getOfficialParticipantCount } from "./tournamentParticipants.js";
+
 function normalizeWhitespace(value) {
   return String(value || "")
     .replace(/\s+/g, " ")
@@ -99,10 +101,7 @@ function buildScheduleBlocks(tournament) {
 }
 
 function buildFieldBlock(tournament) {
-  const participants = Array.isArray(tournament?.participants)
-    ? tournament.participants.length
-    : 0;
-  const fieldCount = participants || Number(tournament?.max_teams || 0);
+  const fieldCount = getOfficialParticipantCount(tournament);
   if (!fieldCount) return null;
   return {
     type: "paragraph",
