@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { GOOGLE_CLIENT_ID, base44 } from "@/api/base44Client";
@@ -28,7 +28,16 @@ export default function SignIn() {
   const storedFan = useMemo(() => base44.fan.getStoredSession(), []);
   const [displayName, setDisplayName] = useState(storedFan.displayName || "");
   const [googleReady, setGoogleReady] = useState(false);
-  const googleEnabled = Boolean(GOOGLE_CLIENT_ID);
+  const authConfigQuery = useQuery({
+    queryKey: ["auth-config"],
+    queryFn: () => base44.auth.config(),
+    staleTime: 10 * 60 * 1000,
+  });
+  const runtimeGoogleClientId = String(
+    authConfigQuery.data?.googleClientId || "",
+  ).trim();
+  const activeGoogleClientId = GOOGLE_CLIENT_ID || runtimeGoogleClientId;
+  const googleEnabled = Boolean(activeGoogleClientId);
 
   const syncFanProfile = async ({ authUser = null, fallbackName = "" } = {}) => {
     const nextDisplayName =
@@ -36,7 +45,7 @@ export default function SignIn() {
       authUser?.full_name ||
       authUser?.email?.split("@")[0] ||
       storedFan.displayName ||
-      "StageCore Fan";
+      "Core Fan";
     const preferredUserId = authUser?.id || "";
     const fanSession = await base44.fan.createSession(
       nextDisplayName,
@@ -73,7 +82,7 @@ export default function SignIn() {
       ]);
       toast({
         title: "Profile ready",
-        description: "Your local StageCore fan profile is active.",
+        description: "Your local Core fan profile is active.",
       });
       navigate("/profile");
     },
@@ -101,7 +110,7 @@ export default function SignIn() {
       toast({
         title: "Google sign-in complete",
         description:
-          "Your StageCore profile is connected to your Google account.",
+          "Your Core profile is connected to your Google account.",
       });
       navigate("/profile");
     },
@@ -120,7 +129,7 @@ export default function SignIn() {
     const initializeGoogle = () => {
       if (!window.google?.accounts?.id) return;
       window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: activeGoogleClientId,
         callback: (response) => {
           if (response?.credential) {
             googleMutation.mutate(response.credential);
@@ -162,7 +171,7 @@ export default function SignIn() {
     return () => {
       script.onload = null;
     };
-  }, [googleEnabled, googleMutation]);
+  }, [activeGoogleClientId, googleEnabled, googleMutation]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8f5ef_0%,#f3eee6_100%)] px-4 py-8 text-[#11131a] sm:px-6">
@@ -189,10 +198,10 @@ export default function SignIn() {
 
           <div className="mt-4 text-center">
             <p className="type-kicker text-[#9c8368]">
-              StageCore profile access
+              Core profile access
             </p>
             <h1 className="type-title-xl mt-3 text-[#11131a]">
-              Welcome back to StageCore
+              Welcome back to Core
             </h1>
             <p className="type-body-sm mt-3 text-[#6d7278]">
               Use Google for your full account, or continue with a local fan
@@ -206,17 +215,17 @@ export default function SignIn() {
                 <div id="stagecore-google-button" className="min-h-[44px]" />
                 {!googleReady ? (
                   <p className="mt-2 text-center text-xs text-[#8f949c]">
-                    Loading Google sign-in...
+                    Loading Google sign-in…
                   </p>
                 ) : null}
               </>
             ) : (
               <div className="space-y-2 px-2">
                 <p className="type-body-sm text-[#6d7278]">
-                  Google sign-in is not available in this preview yet.
+                  Google sign-in is not configured yet.
                 </p>
                 <p className="text-xs text-[#8f949c]">
-                  You can still continue with a local profile below.
+                  Add GOOGLE_CLIENT_ID in the backend environment, then redeploy.
                 </p>
               </div>
             )}

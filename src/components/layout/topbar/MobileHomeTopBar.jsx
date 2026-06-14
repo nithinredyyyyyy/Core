@@ -33,7 +33,7 @@ export default function MobileHomeTopBar({
             Esports
           </p>
           <p className="truncate text-sm font-semibold text-[#29141a]">
-            StageCore
+            Core
           </p>
         </div>
       </div>

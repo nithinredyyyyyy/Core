@@ -22,13 +22,11 @@ export default function PageNotFound({}) {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-md">
         <div className="space-y-6 text-center">
-          {/* 404 Error Code */}
           <div className="space-y-2">
             <h1 className="text-7xl font-light text-slate-300">404</h1>
             <div className="mx-auto h-0.5 w-16 bg-slate-200"></div>
           </div>
 
-          {/* Main Message */}
           <div className="space-y-3">
             <h2 className="text-2xl font-medium text-slate-800">
               Page Not Found
@@ -40,7 +38,6 @@ export default function PageNotFound({}) {
             </p>
           </div>
 
-          {/* Admin Note */}
           {isFetched &&
             authData.isAuthenticated &&
             authData.user?.role === "admin" && (
@@ -54,15 +51,14 @@ export default function PageNotFound({}) {
                       Admin Note
                     </p>
                     <p className="text-sm leading-relaxed text-slate-600">
-                      This could mean that the AI hasn't implemented this page
-                      yet. Ask it to implement it in the chat.
+                      Check the route or use the main navigation to return to a
+                      live page.
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-          {/* Action Button */}
           <div className="pt-6">
             <button
               type="button"

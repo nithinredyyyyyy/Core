@@ -1,4 +1,5 @@
 import { db, entityConfigs, normalizeRecord } from "./db.js";
+import { getOfficialParticipantCount } from "../src/lib/tournamentParticipants.js";
 
 function normalizeWhitespace(value) {
   return String(value || "")
@@ -94,10 +95,7 @@ function isStructureStory(article) {
 }
 
 function buildFieldText(tournament) {
-  const participants = Array.isArray(tournament?.participants)
-    ? tournament.participants.length
-    : 0;
-  const fieldCount = participants || Number(tournament?.max_teams || 0);
+  const fieldCount = getOfficialParticipantCount(tournament);
   if (!fieldCount) return "";
   return `${decodeNewsText(tournament?.name)} features a field of ${fieldCount} teams, giving the event a full national-scale bracket from opening stages to finals.`;
 }

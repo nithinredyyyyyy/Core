@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { decorateTournamentsWithLiveStatus } from "@/lib/liveCalendar";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
+import { getOfficialParticipantCount } from "@/lib/tournamentParticipants";
 import { getTournamentLogo } from "@/lib/tournamentBranding";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -184,7 +185,7 @@ function FeaturedTournamentCard({ tournament, onOpen, searchParams, setSearchPar
               {tournament.game || "BGMI"}
             </span>
             <span className="rounded-full border border-border bg-background/80 px-3 py-1.5">
-              {tournament.max_teams || 16} teams
+              {getOfficialParticipantCount(tournament) || 16} teams
             </span>
             <span className="rounded-full border border-border bg-background/80 px-3 py-1.5">
               {tournament.prize_pool || "Prize TBA"}
@@ -456,14 +457,20 @@ export default function Tournaments() {
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 50),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const { data: matches = [] } = useQuery({
     queryKey: ["tournaments-matches"],
     queryFn: () => base44.entities.Match.list("-scheduled_time", 500),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const { data: rawResults = [] } = useQuery({
     queryKey: ["tournaments-results"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 1500),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const results = React.useMemo(
     () => filterPublishedMatchResults(rawResults),

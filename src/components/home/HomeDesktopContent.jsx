@@ -56,14 +56,108 @@ function HeroHighlights({ featuredTournament, featuredSpotlightStage }) {
   );
 }
 
+function LatestTournamentHud({
+  championTeam,
+  lastTournament,
+}) {
+  const latestTournamentLogo = "/images/bgis-logo.png";
+
+  return (
+    <Link
+      to={lastTournament ? `/tournaments?id=${lastTournament.id}` : "/tournaments"}
+      className="group relative z-10 block overflow-hidden rounded-[24px] border border-white/65 bg-[linear-gradient(135deg,rgba(8,18,32,0.94),rgba(12,26,46,0.86)_52%,rgba(255,106,26,0.24)_100%)] p-4 text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)] ring-1 ring-cyan-200/25 transition-transform hover:-translate-y-0.5"
+    >
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#ff6a1a,#38bdf8,#ffffff)]" />
+      <div className="absolute -right-16 -top-20 size-44 rounded-full bg-cyan-300/18 blur-3xl" />
+      <div className="absolute -bottom-20 left-14 size-40 rounded-full bg-orange-400/18 blur-3xl" />
+
+      <div className="relative flex items-start gap-4">
+        <LogoBlock
+          src={latestTournamentLogo}
+          alt={`${lastTournament?.name || "BGIS 2026"} logo`}
+          sizeClass="size-20"
+          roundedClass="rounded-[20px]"
+          paddingClass="p-3"
+          surfaceTone="light"
+          imgClassName="h-full w-full"
+          className="shrink-0 border-white/15 bg-[#07111f] shadow-[0_14px_34px_rgba(0,0,0,0.24)]"
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="size-2 rounded-full bg-[#20e6a8] shadow-[0_0_18px_rgba(32,230,168,0.9)]" />
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-100/80">
+              Latest tournament
+            </p>
+          </div>
+          <h2 className="mt-2 line-clamp-2 text-[1.38rem] font-black leading-[0.96] tracking-[-0.04em] text-white transition-colors group-hover:text-orange-100">
+            {lastTournament?.name || "Latest completed tournament"}
+          </h2>
+          <p className="mt-2 truncate text-sm font-semibold text-white/72">
+            {championTeam?.teamName ? `${championTeam.teamName} lifted the title` : "Champion details updating"}
+          </p>
+        </div>
+      </div>
+
+      <div className="relative mt-4 grid grid-cols-3 gap-2">
+        {[
+          ["Champion", championTeam?.teamName || "TBD"],
+          ["Points", championTeam?.totalPoints || 0],
+          ["WWCD", championTeam?.wins || 0],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="min-w-0 rounded-[16px] border border-white/10 bg-white/[0.075] px-3 py-2"
+          >
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">{label}</p>
+            <p className="mt-1 truncate text-sm font-black text-white">{value}</p>
+          </div>
+        ))}
+      </div>
+    </Link>
+  );
+}
+
+function TournamentVisualPanel({ featuredTournament, featuredTournamentVisual }) {
+  return (
+    <div className="relative min-h-[360px] overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(135deg,rgba(7,17,31,0.96),rgba(13,30,50,0.94)_48%,rgba(255,106,26,0.18)_100%)] p-7 text-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/10">
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#ff6a1a,#38bdf8,#ffffff)]" />
+      <div className="absolute -right-24 -top-28 size-80 rounded-full bg-cyan-300/20 blur-3xl" />
+      <div className="absolute -bottom-32 left-0 size-80 rounded-full bg-orange-400/22 blur-3xl" />
+      <div className="absolute bottom-0 left-0 right-0 h-28 bg-[linear-gradient(0deg,rgba(2,8,23,0.86),transparent)]" />
+      <div className="absolute inset-x-8 bottom-20 h-px bg-white/10" />
+      <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between gap-5">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-200/80">
+            Featured event
+          </p>
+          <p className="mt-2 max-w-[18rem] text-xl font-black leading-[0.96] tracking-[-0.04em] text-white">
+            {featuredTournament?.name || "Battlegrounds Mobile India Pro Series 2026"}
+          </p>
+        </div>
+        <div className="hidden rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/70 xl:block">
+          Live circuit
+        </div>
+      </div>
+      <div className="relative flex min-h-[250px] items-center justify-center pb-16">
+        <div className="absolute size-56 rounded-full bg-white/8 blur-2xl" />
+        <img
+          src={featuredTournamentVisual || "/images/bmps-2026.png"}
+          alt={`${featuredTournament?.name || "Featured tournament"} visual`}
+          className="relative size-64 object-contain drop-shadow-[0_28px_44px_rgba(0,0,0,0.52)]"
+        />
+      </div>
+    </div>
+  );
+}
+
 function HomeDesktopHero(props) {
   const {
     boardLink,
-    championLogo,
-    championLogoSurfaceTone,
     championTeam,
     featuredSpotlightStage,
     featuredTournament,
+    featuredTournamentVisual,
     heroMeta,
     lastTournament,
   } = props;
@@ -72,7 +166,7 @@ function HomeDesktopHero(props) {
     <m.section {...fadeUp(0)}>
       <div className="relative overflow-hidden rounded-[28px] border border-[#dfe6ee] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(247,250,253,0.98)_58%,rgba(237,244,251,0.96)_100%)] shadow-[0_28px_70px_rgba(15,23,42,0.08)] transition-colors dark:border-white/10 dark:bg-[linear-gradient(135deg,rgba(11,23,41,0.96),rgba(8,18,32,0.98)_58%,rgba(5,13,24,0.96)_100%)] dark:shadow-[0_30px_80px_rgba(2,8,23,0.34)] md:rounded-[36px]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,184,122,0.32),transparent_28%),radial-gradient(circle_at_82%_14%,rgba(144,198,255,0.22),transparent_20%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(251,146,60,0.16),transparent_28%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.14),transparent_20%)]" />
-        <div className="relative grid gap-5 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-start lg:px-10 lg:py-10">
+        <div className="relative grid min-h-[560px] gap-5 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-10 lg:py-10">
           <div className="space-y-6">
             <div className="type-kicker flex flex-wrap items-center gap-3 text-[#5d6775] dark:text-slate-400">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#dfe6ee] bg-white px-3 py-1 shadow-sm dark:border-white/8 dark:bg-[#111b2c] dark:text-slate-200">
@@ -132,55 +226,15 @@ function HomeDesktopHero(props) {
               featuredSpotlightStage={featuredSpotlightStage}
             />
           </div>
-
-          <div className="relative self-start rounded-[30px] border border-[#dfe6ee] bg-[linear-gradient(135deg,rgba(15,23,42,0.84),rgba(10,19,34,0.94)_54%,rgba(7,17,31,0.98)_100%)] p-5 text-white shadow-[0_26px_70px_rgba(2,8,23,0.34)]">
-            <div className="relative flex flex-col gap-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="max-w-[26rem]">
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-white/50">
-                    Latest BGMI champion
-                  </p>
-                  <Link
-                    to={lastTournament ? `/tournaments?id=${lastTournament.id}` : "/tournaments"}
-                    className="mt-3 block max-w-[14ch] text-[1.45rem] font-black leading-[0.96] tracking-[-0.05em] transition-opacity hover:opacity-80 md:text-[1.7rem]"
-                  >
-                    {lastTournament?.name || "Latest completed tournament"}
-                  </Link>
-                  <p className="mt-3 max-w-[32ch] text-sm leading-6 text-white/68">
-                    {championTeam?.teamName
-                      ? `${championTeam.teamName} won the latest completed BGMI tournament.`
-                      : "The latest completed BGMI tournament summary will appear here."}
-                  </p>
-                </div>
-                {championTeam?.teamName && championLogo ? (
-                  <div className="shrink-0 self-start md:ml-4">
-                    <LogoBlock
-                      src={championLogo}
-                      alt={`${championTeam.teamName} logo`}
-                      sizeClass="size-28 md:size-32"
-                      roundedClass="rounded-[1.6rem]"
-                      paddingClass="p-4"
-                      surfaceTone={championLogoSurfaceTone}
-                      className="border-slate-200 bg-white"
-                    />
-                  </div>
-                ) : null}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[22px] border border-white/10 bg-white/6 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Champion</p>
-                  <p className="mt-2 text-sm font-bold text-white">{championTeam?.teamName || "TBD"}</p>
-                </div>
-                <div className="rounded-[22px] border border-white/10 bg-white/6 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Total points</p>
-                  <p className="mt-2 text-sm font-bold text-white">{championTeam?.totalPoints || 0}</p>
-                </div>
-                <div className="rounded-[22px] border border-white/10 bg-white/6 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">WWCD</p>
-                  <p className="mt-2 text-sm font-bold text-white">{championTeam?.wins || 0}</p>
-                </div>
-              </div>
-            </div>
+          <div className="relative hidden min-h-[500px] flex-col justify-center gap-5 lg:flex">
+            <LatestTournamentHud
+              championTeam={championTeam}
+              lastTournament={lastTournament}
+            />
+            <TournamentVisualPanel
+              featuredTournament={featuredTournament}
+              featuredTournamentVisual={featuredTournamentVisual}
+            />
           </div>
         </div>
       </div>

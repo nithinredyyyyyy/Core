@@ -1,5 +1,6 @@
 import { compareStageBoardStandings, getStageBoardData } from "./stageBoard.js";
 import { normalizeOrganizationName } from "./organizationIdentity.js";
+import { getOfficialParticipantEntries } from "./tournamentParticipants.js";
 
 export function buildStageOptions(tournament, matches, matchResults) {
   if (!tournament) return [];
@@ -35,7 +36,12 @@ export function buildStageOptions(tournament, matches, matchResults) {
 }
 
 export function buildParticipantEntries(tournament) {
-  return (tournament?.participants || []).map((entry) => ({
+  const entries =
+    tournament?.name === "Battlegrounds Mobile India Pro Series 2026"
+      ? getOfficialParticipantEntries(tournament)
+      : tournament?.participants || [];
+
+  return entries.map((entry) => ({
     team: entry.team,
     phase: entry.phase || "Participants",
     players: entry.players || [],
@@ -139,6 +145,138 @@ export function getBmps2026MovementGroup(group, placement, totalTeams) {
   return label || "A";
 }
 
+const BMPS_2026_SURVIVAL_STAGE_GROUPS = {
+  madkingsesports: "A",
+  madkings: "A",
+  teamaryan: "A",
+  aryan: "A",
+  hadxesports: "A",
+  hadx: "A",
+  nonxesports: "A",
+  nonx: "A",
+  rapidchaosesports: "A",
+  rapidchaos: "A",
+  vxt: "A",
+  aresesport: "A",
+  ares: "A",
+  likithaesports: "A",
+  likitha: "A",
+
+  jaguaresports: "B",
+  jaguar: "B",
+  k9esports: "B",
+  k9: "B",
+  esportsocial: "B",
+  santaesports: "B",
+  santa: "B",
+  truerippers: "B",
+  quantumsparks: "B",
+  quantumspark: "B",
+  qunatumspark: "B",
+  risingesports: "B",
+  rising: "B",
+  teamdoxy: "B",
+  doxy: "B",
+
+  naqshesports: "C",
+  naqsh: "C",
+  learnfrompast: "C",
+  lefp: "C",
+  teamredxross: "C",
+  redxross: "C",
+  thundergodsxtortugagaming: "C",
+  tdr: "C",
+  godsentesports: "C",
+  godsent: "C",
+  teamapexgaming: "C",
+  apexgaming: "C",
+  dcxscr: "C",
+  dcxscresports: "C",
+  dcxscoresports: "C",
+  genxfmesports: "C",
+  genxfm: "C",
+
+  phoenixesports: "D",
+  phoenix: "D",
+  phoneix: "D",
+  lastadeesports: "D",
+  lastade: "D",
+  teamh4k: "D",
+  h4k: "D",
+  riotnationz: "D",
+  riotnations: "D",
+  t7xorionesports: "D",
+  t7: "D",
+  troytamilianesports: "D",
+  troytamilian: "D",
+  auraxesports: "D",
+  aurax: "D",
+  mythofficial: "D",
+  myth: "D",
+};
+
+function getBmps2026SurvivalStageGroup(teamName, index) {
+  const mappedGroup =
+    BMPS_2026_SURVIVAL_STAGE_GROUPS[normalizeOrganizationName(teamName)] ||
+    BMPS_2026_SURVIVAL_STAGE_GROUPS[
+      String(teamName || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+    ];
+  if (mappedGroup) return mappedGroup;
+
+  const groupIndex = Math.floor((Number(index) || 0) / 8);
+  return ["A", "B", "C", "D"][groupIndex] || "D";
+}
+
+const BMPS_2026_SEMI_FINALS_TEAM_GROUPS = {
+  wyldfangs: "A",
+  godsreign: "A",
+  genesisesports: "A",
+  zeroarkofficial: "A",
+  reckoningesports: "A",
+  revenantxspark: "A",
+  weltesports: "A",
+
+  metaninza: "B",
+  "4trofficial": "B",
+  autobotzesports: "B",
+  higgbosonesports: "B",
+  teamtamilas: "B",
+  mysterious4: "B",
+
+  windgodesports: "C",
+  whitewalkers: "C",
+  nebulaesports: "C",
+};
+
+const BMPS_2026_SEMI_FINALS_SURVIVAL_GROUPS = {
+  1: "C",
+  2: "C",
+  3: "B",
+  4: "C",
+  5: "A",
+  6: "C",
+  7: "B",
+  8: "C",
+};
+
+function getBmps2026SemiFinalsGroup(teamName, sourceStageName, index) {
+  if (normalizeStageName(sourceStageName) === "survival stage") {
+    return BMPS_2026_SEMI_FINALS_SURVIVAL_GROUPS[(Number(index) || 0) + 1] || null;
+  }
+
+  return (
+    BMPS_2026_SEMI_FINALS_TEAM_GROUPS[normalizeOrganizationName(teamName)] ||
+    BMPS_2026_SEMI_FINALS_TEAM_GROUPS[
+      String(teamName || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+    ] ||
+    null
+  );
+}
+
 export function deriveBmps2026ParticipantEntries(
   participantEntries,
   stageBoards,
@@ -158,16 +296,21 @@ export function deriveBmps2026ParticipantEntries(
   const teamEntryMap = new Map(
     baseEntries.map((entry) => [normalizeOrganizationName(entry.team), entry]),
   );
-  const hasStageEntry = (teamName, stageName) => {
+  const hasStageEntry = (teamName, stageName, destinationGroup = null) => {
     const teamKey = normalizeOrganizationName(teamName);
     const stageKey = normalizeStageName(stageName);
+    const groupKey = destinationGroup
+      ? String(destinationGroup).trim().toLowerCase()
+      : "";
     return derivedEntries.some((entry) => {
       const entryTeamKey = normalizeOrganizationName(entry.team);
       const entryPhase = normalizeStageName(entry.phase);
+      if (entryTeamKey !== teamKey) return false;
+      if (groupKey) {
+        return entryPhase === `${stageKey} - group ${groupKey}`;
+      }
       return (
-        entryTeamKey === teamKey &&
-        (entryPhase === stageKey ||
-          entryPhase.startsWith(`${stageKey} - group `))
+        entryPhase === stageKey || entryPhase.startsWith(`${stageKey} - group `)
       );
     });
   };
@@ -177,8 +320,14 @@ export function deriveBmps2026ParticipantEntries(
     teamName,
     destinationGroup,
     nextStageName,
+    derivedPlacement,
   }) => {
-    if (!nextStageName || hasStageEntry(teamName, nextStageName)) return;
+    if (
+      !nextStageName ||
+      hasStageEntry(teamName, nextStageName, destinationGroup)
+    ) {
+      return;
+    }
 
     derivedEntries.push(
       buildDerivedEntry
@@ -188,9 +337,11 @@ export function deriveBmps2026ParticipantEntries(
             teamName,
             destinationGroup,
             nextStageName,
+            derivedPlacement,
           })
         : {
             ...(sourceEntry || {}),
+            placement: derivedPlacement ?? sourceEntry?.placement ?? null,
             team: sourceEntry?.team || teamName,
             phase: destinationGroup
               ? `${nextStageName} - Group ${destinationGroup}`
@@ -229,25 +380,50 @@ export function deriveBmps2026ParticipantEntries(
         rowsByGroup.set(group, current);
       }
 
+      const rowsByDestination = new Map();
       for (const [group, rows] of rowsByGroup.entries()) {
         const orderedRows = rows.toSorted(compareStageBoardStandings);
         orderedRows.forEach((row, index) => {
-          const teamName = getTeamName(row) || "Unknown Team";
-          const sourceEntry = teamEntryMap.get(
-            normalizeOrganizationName(teamName),
-          );
           const destinationStage = getBmps2026StageDestination({
             stageName,
             group,
             placement: index + 1,
           });
+          if (!destinationStage) return;
+          const current = rowsByDestination.get(destinationStage) || [];
+          current.push({
+            row,
+            group,
+            sourceGroupPlacement: index + 1,
+          });
+          rowsByDestination.set(destinationStage, current);
+        });
+      }
+
+      for (const [destinationStage, rows] of rowsByDestination.entries()) {
+        const orderedRows = rows
+          .map((entry) => entry.row)
+          .toSorted(compareStageBoardStandings);
+
+        orderedRows.forEach((row, index) => {
+          const teamName = getTeamName(row) || "Unknown Team";
+          const sourceEntry = teamEntryMap.get(
+            normalizeOrganizationName(teamName),
+          );
+          const destinationGroup =
+            normalizeStageName(destinationStage) === "survival stage"
+              ? getBmps2026SurvivalStageGroup(teamName, index)
+              : normalizeStageName(destinationStage) === "semi finals"
+                ? getBmps2026SemiFinalsGroup(teamName, stageName, index)
+              : null;
 
           pushDerivedEntry({
             sourceEntry,
             row,
             teamName,
-            destinationGroup: null,
+            destinationGroup,
             nextStageName: destinationStage,
+            derivedPlacement: index + 1,
           });
         });
       }
@@ -271,8 +447,12 @@ export function deriveBmps2026ParticipantEntries(
           sourceEntry,
           row,
           teamName,
-          destinationGroup: null,
+          destinationGroup:
+            normalizeStageName(destinationStage) === "semi finals"
+              ? getBmps2026SemiFinalsGroup(teamName, stageName, index)
+              : null,
           nextStageName: destinationStage,
+          derivedPlacement: index + 1,
         });
       });
       continue;
@@ -363,7 +543,7 @@ export function resolveTournamentParticipantState({
 
   const progressionOptions = {
     getRows: (stage) => stage?.standings || [],
-    getGroup: (row) => row?.group,
+    getGroup: (row) => row?.grp || row?.group,
     getTeamName: (row) => row?.teamName || row?.fullTeam || row?.team,
   };
 

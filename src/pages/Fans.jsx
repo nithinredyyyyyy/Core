@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useReducer } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -31,6 +31,67 @@ import {
 import { resolveTournamentParticipantState } from "@/lib/bmps2026Progression";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { getFeaturedTournamentStage } from "@/lib/stageBoard";
+import { getOfficialParticipantEntries } from "@/lib/tournamentParticipants";
+
+const FANS_DRAFT_INITIAL_STATE = {
+  predictionWinner: "",
+  predictionTopFragger: "",
+  predictionTopThree: [],
+  selectedPlayers: [],
+  captainId: "",
+  commentDraft: "",
+  commentTopic: "Who will win today?",
+};
+const EMPTY_FANS_PAGE_ARRAY = [];
+
+function fansDraftReducer(state, action) {
+  switch (action.type) {
+    case "setField":
+      return { ...state, [action.field]: action.value };
+    case "resetPrediction":
+      return {
+        ...state,
+        predictionWinner: "",
+        predictionTopFragger: "",
+        predictionTopThree: [],
+      };
+    case "resetComment":
+      return { ...state, commentDraft: "" };
+    case "resetFantasy":
+      return { ...state, selectedPlayers: [], captainId: "" };
+    case "toggleTopThree": {
+      const teamName = action.teamName;
+      if (state.predictionTopThree.includes(teamName)) {
+        return {
+          ...state,
+          predictionTopThree: state.predictionTopThree.filter((entry) => entry !== teamName),
+        };
+      }
+      if (state.predictionTopThree.length >= 3) return state;
+      return {
+        ...state,
+        predictionTopThree: [...state.predictionTopThree, teamName],
+      };
+    }
+    case "toggleFantasyPlayer": {
+      const playerId = action.playerId;
+      if (state.selectedPlayers.includes(playerId)) {
+        return {
+          ...state,
+          selectedPlayers: state.selectedPlayers.filter((entry) => entry !== playerId),
+          captainId: state.captainId === playerId ? "" : state.captainId,
+        };
+      }
+      if (state.selectedPlayers.length >= 4) return state;
+      return {
+        ...state,
+        selectedPlayers: [...state.selectedPlayers, playerId],
+      };
+    }
+    default:
+      return state;
+  }
+}
 
 function SectionFrame({ eyebrow, title, body, children, aside }) {
   return (
@@ -212,44 +273,46 @@ function FantasyBuilder({
             const active = selectedPlayers.includes(player.id);
             const isCaptain = captainId === player.id;
             return (
-              <button
+              <div
                 key={player.id}
-                type="button"
-                onClick={() => onTogglePlayer(player.id)}
-                className={`rounded-[22px] border p-4 text-left transition ${
+                className={`rounded-[22px] border p-4 transition ${
                   active
                     ? "border-primary/30 bg-primary/10 shadow-[0_16px_34px_rgba(251,146,60,0.1)]"
                     : "border-[#eadfce] bg-white hover:border-[#d9c7b3]"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a7866]">
-                      {player.teamName}
-                    </p>
-                    <p className="mt-2 text-base font-semibold text-[#11131a]">
-                      {player.ign}
-                    </p>
-                    <p className="mt-1 text-[12px] text-[#5c6472]">{player.role}</p>
+                <button
+                  type="button"
+                  aria-label={`${active ? "Remove" : "Select"} ${player.ign} for fantasy`}
+                  onClick={() => onTogglePlayer(player.id)}
+                  className="block w-full text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a7866]">
+                        {player.teamName}
+                      </p>
+                      <p className="mt-2 text-base font-semibold text-[#11131a]">
+                        {player.ign}
+                      </p>
+                      <p className="mt-1 text-[12px] text-[#5c6472]">{player.role}</p>
+                    </div>
+                    <div className="rounded-full bg-[#f8f2ec] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a7866]">
+                      {player.fantasyPoints} pts
+                    </div>
                   </div>
-                  <div className="rounded-full bg-[#f8f2ec] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a7866]">
-                    {player.fantasyPoints} pts
-                  </div>
-                </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2 text-[11px] text-[#5c6472]">
-                  <div>Finishes {player.finishes}</div>
-                  <div>Damage {player.damage}</div>
-                  <div>Revives {player.revives}</div>
-                </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-[11px] text-[#5c6472]">
+                    <div>Finishes {player.finishes}</div>
+                    <div>Damage {player.damage}</div>
+                    <div>Revives {player.revives}</div>
+                  </div>
+                </button>
 
                 {active ? (
                   <button
                     type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onSetCaptain(player.id);
-                    }}
+                    onClick={() => onSetCaptain(player.id)}
                     className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] ${
                       isCaptain
                         ? "bg-[#11131a] text-white"
@@ -260,7 +323,7 @@ function FantasyBuilder({
                     {isCaptain ? "Captain x1.5" : "Make captain"}
                   </button>
                 ) : null}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -322,7 +385,12 @@ function FantasyBuilder({
 
 function FanClubSection({ clubs, follows, session, onToggleFollow, isMutating }) {
   const followed = new Set(
-    follows.filter((entry) => entry.user_id === session.userId && entry.target_type === "team").map((entry) => entry.target_label),
+    follows.reduce((labels, entry) => {
+      if (entry.user_id === session.userId && entry.target_type === "team") {
+        labels.push(entry.target_label);
+      }
+      return labels;
+    }, []),
   );
 
   return (
@@ -391,6 +459,7 @@ function CommentWall({
             <select
               value={topic}
               onChange={(event) => setTopic(event.target.value)}
+              aria-label="Select fan wall topic"
               className="h-10 rounded-full border border-[#d9c7b3] bg-[#fffdfa] px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#5c6472]"
             >
               <option>Who will win today?</option>
@@ -403,6 +472,7 @@ function CommentWall({
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             maxLength={220}
+            aria-label="Drop your fan take"
             placeholder="Drop your take here…"
             className="mt-4 min-h-[140px] w-full rounded-[20px] border border-[#eadfce] bg-[#fffdfa] px-4 py-3 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
           />
@@ -481,97 +551,64 @@ function CommentWall({
   );
 }
 
-export default function Fans() {
+function useFansPageModel() {
   const qc = useQueryClient();
   const session = base44.fan.getStoredSession();
-  const [predictionWinner, setPredictionWinner] = useState("");
-  const [predictionTopFragger, setPredictionTopFragger] = useState("");
-  const [predictionTopThree, setPredictionTopThree] = useState([]);
-  const [selectedPlayers, setSelectedPlayers] = useState([]);
-  const [captainId, setCaptainId] = useState("");
-  const [commentDraft, setCommentDraft] = useState("");
-  const [commentTopic, setCommentTopic] = useState("Who will win today?");
+  const [fanDraft, dispatchFanDraft] = useReducer(
+    fansDraftReducer,
+    FANS_DRAFT_INITIAL_STATE,
+  );
+  const {
+    predictionWinner,
+    predictionTopFragger,
+    predictionTopThree,
+    selectedPlayers,
+    captainId,
+    commentDraft,
+    commentTopic,
+  } = fanDraft;
+  const setPredictionWinner = (value) =>
+    dispatchFanDraft({ type: "setField", field: "predictionWinner", value });
+  const setPredictionTopFragger = (value) =>
+    dispatchFanDraft({ type: "setField", field: "predictionTopFragger", value });
+  const setCaptainId = (value) =>
+    dispatchFanDraft({ type: "setField", field: "captainId", value });
+  const setCommentDraft = (value) =>
+    dispatchFanDraft({ type: "setField", field: "commentDraft", value });
+  const setCommentTopic = (value) =>
+    dispatchFanDraft({ type: "setField", field: "commentTopic", value });
 
-  const { data: tournaments = [] } = useQuery({
-    queryKey: ["fans-tournaments"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 30),
+  const { data: fansPage = {}, isLoading: isFansPageLoading } = useQuery({
+    queryKey: ["fans-page"],
+    queryFn: () => base44.pages.fans(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
+  const tournaments = fansPage.tournaments || EMPTY_FANS_PAGE_ARRAY;
   const featuredTournament = useMemo(() => {
+    if (fansPage.featuredTournament) return fansPage.featuredTournament;
     const ongoing = tournaments.find((entry) => entry.status === "ongoing");
     return ongoing || tournaments[0] || null;
-  }, [tournaments]);
-  const { data: matches = [] } = useQuery({
-    queryKey: ["fans-matches", featuredTournament?.id],
-    queryFn: () =>
-      base44.entities.Match.filter(
-        { tournament_id: featuredTournament.id },
-        "-scheduled_time",
-        200,
-      ),
-    enabled: Boolean(featuredTournament?.id),
-  });
-  const { data: teams = [] } = useQuery({
-    queryKey: ["fans-teams"],
-    queryFn: () => base44.entities.Team.list("-total_points", 120),
-  });
-  const { data: players = [] } = useQuery({
-    queryKey: ["fans-players"],
-    queryFn: () => base44.entities.Player.list("-total_kills", 500),
-  });
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["fans-profiles"],
-    queryFn: () => base44.entities.FanProfile.list("-total_points", 120),
-  });
-  const { data: predictions = [] } = useQuery({
-    queryKey: ["fans-predictions"],
-    queryFn: () => base44.entities.FanPrediction.list("-prediction_date", 80),
-  });
-  const { data: votes = [] } = useQuery({
-    queryKey: ["fans-votes"],
-    queryFn: () => base44.entities.FanPollVote.list("-created_date", 200),
-  });
-  const { data: comments = [] } = useQuery({
-    queryKey: ["fans-comments"],
-    queryFn: () => base44.entities.FanChatMessage.list("-created_date", 200),
-  });
-  const { data: reactions = [] } = useQuery({
-    queryKey: ["fans-reactions"],
-    queryFn: () => base44.entities.FanCommentReaction.list("-created_date", 500),
-  });
-  const { data: follows = [] } = useQuery({
-    queryKey: ["fans-follows"],
-    queryFn: () => base44.entities.FanFollowItem.list("-created_date", 300),
-  });
-  const { data: savedMatches = [] } = useQuery({
-    queryKey: ["fans-saved-matches"],
-    queryFn: () => base44.entities.SavedMatch.list("-created_date", 150),
-  });
-  const { data: fantasySquads = [] } = useQuery({
-    queryKey: ["fans-fantasy-squads"],
-    queryFn: () => base44.entities.FantasySquad.list("-total_points", 200),
-  });
+  }, [fansPage.featuredTournament, tournaments]);
+  const matches = fansPage.matches || EMPTY_FANS_PAGE_ARRAY;
+  const teams = fansPage.teams || EMPTY_FANS_PAGE_ARRAY;
+  const players = fansPage.players || EMPTY_FANS_PAGE_ARRAY;
+  const profiles = fansPage.profiles || EMPTY_FANS_PAGE_ARRAY;
+  const predictions = fansPage.predictions || EMPTY_FANS_PAGE_ARRAY;
+  const votes = fansPage.votes || EMPTY_FANS_PAGE_ARRAY;
+  const comments = fansPage.comments || EMPTY_FANS_PAGE_ARRAY;
+  const reactions = fansPage.reactions || EMPTY_FANS_PAGE_ARRAY;
+  const follows = fansPage.follows || EMPTY_FANS_PAGE_ARRAY;
+  const savedMatches = fansPage.savedMatches || EMPTY_FANS_PAGE_ARRAY;
+  const fantasySquads = fansPage.fantasySquads || EMPTY_FANS_PAGE_ARRAY;
 
   const currentProfile = useMemo(
     () => profiles.find((entry) => entry.user_id === session.userId) || null,
     [profiles, session.userId],
   );
 
-  const { data: normalizedTournamentData = null } = useQuery({
-    queryKey: ["fans-normalized-tournament", featuredTournament?.id],
-    queryFn: () => base44.tournaments.normalized(featuredTournament.id),
-    enabled: Boolean(featuredTournament?.id),
-  });
-
-  const { data: matchResults = [] } = useQuery({
-    queryKey: ["fans-match-results", featuredTournament?.id],
-    queryFn: () =>
-      base44.entities.MatchResult.filter(
-        { tournament_id: featuredTournament.id },
-        "-updated_date",
-        1200,
-      ),
-    enabled: Boolean(featuredTournament?.id),
-  });
+  const normalizedTournamentData = fansPage.normalizedTournamentData || null;
+  const matchResults = fansPage.matchResults || EMPTY_FANS_PAGE_ARRAY;
 
   const tournamentMatches = useMemo(
     () =>
@@ -671,6 +708,11 @@ export default function Fans() {
   const currentStageTeamNames = useMemo(() => {
     const stageKey = normalizeFanValue(currentStageName);
     const groupKeys = new Set(activeMatchGroups.map((group) => normalizeFanValue(`group ${group}`)));
+    const stageTeamCount = Number(
+      (featuredTournament?.stages || []).find(
+        (stage) => normalizeFanValue(stage?.name) === stageKey,
+      )?.teamCount || 0,
+    );
     const entries = (resolvedFanParticipantState.participantEntries || []).filter((entry) => {
       const phase = String(entry.phase || "");
       const phaseKey = normalizeFanValue(phase);
@@ -683,14 +725,26 @@ export default function Fans() {
       : (resolvedFanParticipantState.participantEntries || []).filter((entry) =>
           normalizeFanValue(entry.phase || "").includes(stageKey),
         );
-    return [
-      ...new Set(
-        sourceEntries
-          .map((entry) => entry.team || entry.name)
-          .filter(Boolean),
-      ),
-    ];
-  }, [activeMatchGroups, currentStageName, resolvedFanParticipantState.participantEntries]);
+    const teamNames = new Set();
+    for (const entry of sourceEntries) {
+      const name = entry.team || entry.name;
+      if (name) teamNames.add(name);
+    }
+    if (teamNames.size > 0) return [...teamNames];
+
+    if (stageTeamCount > 0) {
+      return getOfficialParticipantEntries(featuredTournament)
+        .slice(0, stageTeamCount)
+        .flatMap((entry) => (entry.team || entry.name ? [entry.team || entry.name] : []));
+    }
+
+    return [];
+  }, [
+    activeMatchGroups,
+    currentStageName,
+    featuredTournament,
+    resolvedFanParticipantState.participantEntries,
+  ]);
   const currentStageTeamSet = useMemo(
     () => new Set(currentStageTeamNames.map((name) => normalizeFanValue(name))),
     [currentStageTeamNames],
@@ -700,8 +754,9 @@ export default function Fans() {
       id: name || `${index}`,
       name,
     }));
-    const participantTeams = Array.isArray(featuredTournament?.participants)
-      ? featuredTournament.participants.map((participant, index) => ({
+    const officialParticipants = getOfficialParticipantEntries(featuredTournament);
+    const participantTeams = officialParticipants.length
+      ? officialParticipants.map((participant, index) => ({
           id: participant.team_id || participant.team || `${index}`,
           name: participant.team || participant.name,
         }))
@@ -754,17 +809,19 @@ export default function Fans() {
   );
   const currentStagePlayers = useMemo(() => {
     if (currentStageTeamSet.size === 0) return players;
-    const teamIds = new Set(
-      teams
-        .filter((team) => currentStageTeamSet.has(normalizeFanValue(team.name)))
-        .map((team) => team.id),
-    );
-    const stageRosterNames = new Set(
-      (resolvedFanParticipantState.participantEntries || [])
-        .filter((entry) => currentStageTeamSet.has(normalizeFanValue(entry.team)))
-        .flatMap((entry) => entry.players || [])
-        .map((name) => normalizeFanValue(name)),
-    );
+    const teamIds = new Set();
+    for (const team of teams) {
+      if (currentStageTeamSet.has(normalizeFanValue(team.name))) {
+        teamIds.add(team.id);
+      }
+    }
+    const stageRosterNames = new Set();
+    for (const entry of resolvedFanParticipantState.participantEntries || []) {
+      if (!currentStageTeamSet.has(normalizeFanValue(entry.team))) continue;
+      for (const name of entry.players || []) {
+        stageRosterNames.add(normalizeFanValue(name));
+      }
+    }
     const filtered = players.filter(
       (player) =>
         teamIds.has(player.team_id) ||
@@ -808,6 +865,7 @@ export default function Fans() {
       return base44.entities.FanProfile.create(payload);
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-profiles"] });
       qc.invalidateQueries({ queryKey: ["profile-fan-profile"] });
       qc.invalidateQueries({ queryKey: ["profile-leaderboard"] });
@@ -832,9 +890,8 @@ export default function Fans() {
       });
     },
     onSuccess: async () => {
-      setPredictionWinner("");
-      setPredictionTopFragger("");
-      setPredictionTopThree([]);
+      dispatchFanDraft({ type: "resetPrediction" });
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-predictions"] });
       await profileMutation.mutateAsync({ xp: 16, points: 6 });
     },
@@ -847,8 +904,9 @@ export default function Fans() {
         display_name: session.displayName,
         poll_key: pollKey,
         option,
-      }),
+    }),
     onSuccess: async () => {
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-votes"] });
       await profileMutation.mutateAsync({ xp: 8, points: 2 });
     },
@@ -863,9 +921,10 @@ export default function Fans() {
         tournament_name: featuredTournament?.name || "",
         topic: commentTopic,
         body: commentDraft.trim(),
-      }),
+    }),
     onSuccess: async () => {
-      setCommentDraft("");
+      dispatchFanDraft({ type: "resetComment" });
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-comments"] });
       await profileMutation.mutateAsync({ xp: 10, points: 3 });
     },
@@ -879,8 +938,9 @@ export default function Fans() {
         comment_id: commentId,
         reaction,
         vote_value: voteValue,
-      }),
+    }),
     onSuccess: async () => {
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-reactions"] });
       await profileMutation.mutateAsync({ xp: 2 });
     },
@@ -906,6 +966,7 @@ export default function Fans() {
       });
     },
     onSuccess: async () => {
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-follows"] });
       await profileMutation.mutateAsync({ xp: 6 });
     },
@@ -918,8 +979,9 @@ export default function Fans() {
         display_name: session.displayName,
         match_id: match.id,
         note: `${match.stage || "Featured"} ${match.map || ""}`.trim(),
-      }),
+    }),
     onSuccess: async () => {
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-saved-matches"] });
       await profileMutation.mutateAsync({ xp: 5 });
     },
@@ -947,39 +1009,106 @@ export default function Fans() {
       });
     },
     onSuccess: async () => {
-      setSelectedPlayers([]);
-      setCaptainId("");
+      dispatchFanDraft({ type: "resetFantasy" });
+      qc.invalidateQueries({ queryKey: ["fans-page"] });
       qc.invalidateQueries({ queryKey: ["fans-fantasy-squads"] });
       await profileMutation.mutateAsync({ xp: 22, points: 12 });
     },
   });
 
   const toggleTopThree = (teamName) => {
-    setPredictionTopThree((current) => {
-      if (current.includes(teamName)) {
-        return current.filter((entry) => entry !== teamName);
-      }
-      if (current.length >= 3) return current;
-      return [...current, teamName];
-    });
+    dispatchFanDraft({ type: "toggleTopThree", teamName });
   };
 
   const toggleFantasyPlayer = (playerId) => {
-    setSelectedPlayers((current) => {
-      if (current.includes(playerId)) {
-        if (captainId === playerId) setCaptainId("");
-        return current.filter((entry) => entry !== playerId);
-      }
-      if (current.length >= 4) return current;
-      return [...current, playerId];
-    });
+    dispatchFanDraft({ type: "toggleFantasyPlayer", playerId });
   };
+
+  return {
+    captainId,
+    commentDraft,
+    commentMutation,
+    commentTopic,
+    enrichedComments,
+    fanDraft,
+    fantasyLeaderboard,
+    fantasyMutation,
+    isFansPageLoading,
+    featuredMatches,
+    featuredTournament,
+    followMutation,
+    follows,
+    leaderboardRows,
+    mySavedMatches,
+    playerPool,
+    pollSections,
+    predictionContext,
+    predictionMutation,
+    predictionOptions,
+    predictionTopFragger,
+    predictionTopThree,
+    predictionWinner,
+    reactionMutation,
+    savedMatchMutation,
+    selectedPlayers,
+    session,
+    setCaptainId,
+    setCommentDraft,
+    setCommentTopic,
+    setPredictionTopFragger,
+    setPredictionWinner,
+    teamClubs,
+    toggleFantasyPlayer,
+    toggleTopThree,
+    voteMutation,
+  };
+}
+
+export default function Fans() {
+  const {
+    captainId,
+    commentDraft,
+    commentMutation,
+    commentTopic,
+    enrichedComments,
+    fantasyLeaderboard,
+    fantasyMutation,
+    isFansPageLoading,
+    featuredMatches,
+    featuredTournament,
+    followMutation,
+    follows,
+    leaderboardRows,
+    mySavedMatches,
+    playerPool,
+    pollSections,
+    predictionContext,
+    predictionMutation,
+    predictionOptions,
+    predictionTopFragger,
+    predictionTopThree,
+    predictionWinner,
+    reactionMutation,
+    savedMatchMutation,
+    selectedPlayers,
+    session,
+    setCaptainId,
+    setCommentDraft,
+    setCommentTopic,
+    setPredictionTopFragger,
+    setPredictionWinner,
+    teamClubs,
+    toggleFantasyPlayer,
+    toggleTopThree,
+    voteMutation,
+  } = useFansPageModel();
 
   return (
     <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <DailyPrediction
           isPredictionLocked={false}
+          isLoadingOptions={isFansPageLoading}
           featuredTournament={featuredTournament}
           predictionContext={predictionContext}
           predictionOptions={predictionOptions}

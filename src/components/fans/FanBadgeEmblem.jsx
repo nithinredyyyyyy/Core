@@ -27,7 +27,7 @@ export default function FanBadgeEmblem({
             meta.auraClassName,
           )}
         />
-        <div className="absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36),transparent_52%)]" />
+        <div className="absolute left-1/2 top-1/2 size-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36),transparent_52%)]" />
         <div className="absolute left-1/2 top-[18%] h-[30%] w-[78%] -translate-x-1/2 rounded-[999px] bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0.06))]" />
         <div
           className={cn(

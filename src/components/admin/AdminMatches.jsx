@@ -213,6 +213,7 @@ function buildAutoSchedulePreview(autoForm, tournament, stageConfig) {
       const rowGroupValue = String(row?.[`day${day}`] || "")
         .trim()
         .toUpperCase();
+      const rowMap = day === 4 && row.day4Map ? row.day4Map : row.map;
       return { ...base,
         group_name: rowGroupValue
           ? `Group ${rowGroupValue}`
@@ -221,7 +222,7 @@ function buildAutoSchedulePreview(autoForm, tournament, stageConfig) {
           Number.isFinite(startMatch) && startMatch > 0
             ? startMatch + index
             : Number(row.match) || index + 1,
-        map: row.map || "Other",
+        map: rowMap || "Other",
         scheduled_time: scheduledTime,
       };
     });
@@ -693,7 +694,10 @@ function useAdminMatchesState() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
-  const initialFormSnapshotRef = useRef(createFormSnapshot({}));
+  const initialFormSnapshotRef = useRef(null);
+  if (initialFormSnapshotRef.current === null) {
+    initialFormSnapshotRef.current = createFormSnapshot({});
+  }
   const [autoForm, setAutoForm] = useState({
     tournament_id: "",
     stage: "",
@@ -720,7 +724,8 @@ function useAdminMatchesState() {
   });
   const { data: allMatchResults = [] } = useQuery({
     queryKey: ["match-results-all"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
+    queryFn: () => base44.entities.MatchResult.list("-created_date", 2000),
+    staleTime: 60_000,
   });
   const availableTournaments = tournaments.filter(
     (tournament) => tournament.status !== "completed",

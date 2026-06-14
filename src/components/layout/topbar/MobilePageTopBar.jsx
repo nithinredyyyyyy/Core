@@ -18,7 +18,7 @@ export default function MobilePageTopBar({ setSearchOpen, theme, toggle }) {
         className="flex min-w-0 flex-1 items-center gap-2 rounded-[1.05rem] border border-white/18 bg-[rgba(24,10,18,0.18)] px-3.5 py-3 text-left text-sm font-medium text-[#2d1419] backdrop-blur"
       >
         <Search className="size-3.5 shrink-0 text-[#2d1419]/65" />
-        <span className="truncate">Search teams, matches, stories...</span>
+        <span className="truncate">Search teams, matches, stories…</span>
       </button>
       <NotificationBellDropdown
         buttonClassName="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-[rgba(24,10,18,0.18)] text-[#2d1419] shadow-[0_8px_18px_rgba(79,26,32,0.14)]"

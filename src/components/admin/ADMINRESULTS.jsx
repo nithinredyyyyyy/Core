@@ -28,6 +28,20 @@ function extractGroupToken(value) {
   return text.toLowerCase();
 }
 
+function extractGroupTokens(value) {
+  const token = extractGroupToken(value);
+  if (!token) return [];
+  if (/^[a-d]{1,4}$/i.test(token)) return [...new Set(token.toLowerCase().split(""))];
+  return [token];
+}
+
+function groupTokensOverlap(left, right) {
+  const leftTokens = extractGroupTokens(left);
+  const rightTokens = extractGroupTokens(right);
+  if (leftTokens.length === 0 || rightTokens.length === 0) return false;
+  return leftTokens.some((token) => rightTokens.includes(token));
+}
+
 function parsePlacementValue(value) {
   if (value === "" || value === null || typeof value === "undefined") return 0;
   const parsed = Number.parseInt(value, 10);
@@ -125,20 +139,17 @@ export default function AdminResults() {
 
     const normalizedStage = normalizeOrganizationName(match.stage || "");
     const normalizedStageLabel = String(match.stage || "").trim().toLowerCase();
-    const matchGroupToken = extractGroupToken(match.group_name);
 
     const scopedParticipants = participants.filter((participant) => {
       const phase = String(participant.phase || "").trim();
       if (!phase) return false;
       const normalizedPhaseLabel = phase.toLowerCase();
-      const participantGroupToken = extractGroupToken(
-        participant.group_name || participant.group || participant.phase || ""
-      );
+      const participantGroupSource = participant.group_name || participant.group || participant.phase || "";
 
       if (
-        matchGroupToken &&
+        match.group_name &&
         normalizeOrganizationName(phase).startsWith(normalizedStage) &&
-        participantGroupToken === matchGroupToken
+        groupTokensOverlap(match.group_name, participantGroupSource)
       ) {
         return true;
       }
@@ -438,7 +449,6 @@ export default function AdminResults() {
   const baselineStandingsByTeamId = useMemo(() => {
     if (!selectedMatchData) return new Map();
 
-    const selectedGroupToken = extractGroupToken(selectedMatchData.group_name);
     const selectedMatchTime = new Date(selectedMatchData.scheduled_time || 0).getTime();
     const standingsMap = new Map();
 
@@ -450,8 +460,6 @@ export default function AdminResults() {
 
       const resultMatch = matchMap[result.match_id];
       if (!resultMatch) continue;
-      const resultGroupToken = extractGroupToken(resultMatch.group_name);
-      if (selectedGroupToken && resultGroupToken && resultGroupToken !== selectedGroupToken) continue;
 
       const resultMatchTime = new Date(resultMatch.scheduled_time || 0).getTime();
       const resultDay = Number(resultMatch.day || 0);

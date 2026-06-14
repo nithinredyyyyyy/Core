@@ -173,17 +173,10 @@ function profileUiReducer(state, action) {
 }
 
 function ProfileStatCard({ label, value, hint, accent = "orange" }) {
-  const accentClasses = {
-    orange: "from-[#ff8f6d]/18 via-[#ff8f6d]/10 to-transparent text-[#c85f35]",
-    blue: "from-[#7ec8ff]/20 via-[#7ec8ff]/10 to-transparent text-[#3b82c4]",
-    gold: "from-[#ffd98d]/22 via-[#ffd98d]/10 to-transparent text-[#b98516]",
-    rose: "from-[#ff8a98]/20 via-[#ff8a98]/10 to-transparent text-[#d04b62]",
-  };
-
   return (
     <div className="rounded-[24px] border border-[#eadfce] bg-white p-4 shadow-[0_14px_32px_rgba(15,23,42,0.04)]">
       <div
-        className={`type-kicker inline-flex rounded-full bg-gradient-to-r px-2.5 py-1 ${accentClasses[accent] || accentClasses.orange}`}
+        className={`type-kicker inline-flex rounded-full bg-gradient-to-r px-2.5 py-1 ${PROFILE_STAT_ACCENT_CLASSES[accent] || PROFILE_STAT_ACCENT_CLASSES.orange}`}
       >
         {label}
       </div>
@@ -194,6 +187,13 @@ function ProfileStatCard({ label, value, hint, accent = "orange" }) {
     </div>
   );
 }
+
+const PROFILE_STAT_ACCENT_CLASSES = {
+  orange: "from-[#ff8f6d]/18 via-[#ff8f6d]/10 to-transparent text-[#c85f35]",
+  blue: "from-[#7ec8ff]/20 via-[#7ec8ff]/10 to-transparent text-[#3b82c4]",
+  gold: "from-[#ffd98d]/22 via-[#ffd98d]/10 to-transparent text-[#b98516]",
+  rose: "from-[#ff8a98]/20 via-[#ff8a98]/10 to-transparent text-[#d04b62]",
+};
 
 function SectionShell({ eyebrow, title, children, aside }) {
   return (
@@ -817,6 +817,7 @@ export default function Profile() {
                           ref={profileImageInputRef}
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
+                          aria-label="Upload profile image"
                           className="sr-only"
                           onChange={handleProfileImageChange}
                         />

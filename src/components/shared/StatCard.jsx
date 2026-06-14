@@ -1,6 +1,13 @@
 import React from "react";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 
+const STAT_COLOR_CLASSES = {
+  primary: "text-primary bg-primary/10 border-primary/20",
+  green: "text-green-400 bg-green-400/10 border-green-400/20",
+  orange: "text-orange-400 bg-orange-400/10 border-orange-400/20",
+  purple: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+};
+
 export default function StatCard({
   icon: Icon,
   label,
@@ -8,13 +15,6 @@ export default function StatCard({
   trend,
   color = "primary",
 }) {
-  const colorMap = {
-    primary: "text-primary bg-primary/10 border-primary/20",
-    green: "text-green-400 bg-green-400/10 border-green-400/20",
-    orange: "text-orange-400 bg-orange-400/10 border-orange-400/20",
-    purple: "text-purple-400 bg-purple-400/10 border-purple-400/20",
-  };
-
   return (
     <LazyMotion features={domAnimation}>
       <m.div
@@ -32,7 +32,7 @@ export default function StatCard({
             </p>
             {trend && <p className="text-xs text-green-400 mt-1">{trend}</p>}
           </div>
-          <div className={`p-2.5 rounded-lg border ${colorMap[color]}`}>
+          <div className={`p-2.5 rounded-lg border ${STAT_COLOR_CLASSES[color]}`}>
             <Icon className="size-5" />
           </div>
         </div>

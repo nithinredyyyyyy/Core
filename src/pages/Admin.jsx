@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import {
   Shield,
+  LayoutDashboard,
   Trophy,
   Users,
   Swords,
   FileText,
+  BarChart3,
   Newspaper,
   ArrowRightLeft,
   Database,
@@ -20,12 +22,16 @@ import AdminNews from "../components/admin/AdminNews";
 import AdminTransfers from "../components/admin/AdminTransfers";
 import AdminInspector from "../components/admin/AdminInspector";
 import AdminStagePosters from "../components/admin/AdminStagePosters";
+import AdminPlayerStats from "../components/admin/AdminPlayerStats";
+import AdminOperations from "../components/admin/AdminOperations";
 
 const tabs = [
+  { id: "operations", label: "Operations", icon: LayoutDashboard },
   { id: "tournaments", label: "Tournaments", icon: Trophy },
   { id: "teams", label: "Teams", icon: Users },
   { id: "matches", label: "Matches", icon: Swords },
   { id: "results", label: "Results", icon: FileText },
+  { id: "stats", label: "Stats", icon: BarChart3 },
   { id: "transfers", label: "Transfers", icon: ArrowRightLeft },
   { id: "news", label: "News", icon: Newspaper },
   { id: "posters", label: "Posters", icon: Image },
@@ -33,6 +39,8 @@ const tabs = [
 ];
 
 const TAB_DESCRIPTIONS = {
+  operations:
+    "Your no-code control map for daily site operations and matchday updates.",
   tournaments:
     "Create tournament shells, stage structures, prize pools, and event metadata.",
   teams:
@@ -41,6 +49,8 @@ const TAB_DESCRIPTIONS = {
     "Control scheduled lobbies, maps, groups, and stage-by-stage match setup.",
   results:
     "Enter and revise match outcomes so standings and team stats stay accurate.",
+  stats:
+    "Manually publish BMPS player statistics for qualifier, survival, semi finals, and overall views.",
   transfers:
     "Track roster windows, IN / OUT moves, and active lineup adjustments.",
   news: "Publish announcements, tournament stories, and update notes for the frontend feed.",
@@ -51,8 +61,8 @@ const TAB_DESCRIPTIONS = {
 };
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("tournaments");
-  const { data: overview = null } = useQuery({
+  const [activeTab, setActiveTab] = useState("operations");
+  const { data: overview = null, isError: overviewError } = useQuery({
     queryKey: ["admin-overview"],
     queryFn: async () => {
       const response = await fetch("/api/admin/overview");
@@ -61,6 +71,8 @@ export default function Admin() {
       }
       return response.json();
     },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const activeTournaments = overview?.counts?.activeTournaments || 0;
@@ -174,6 +186,11 @@ export default function Admin() {
             </p>
           </div>
         </div>
+        {overviewError ? (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Admin overview is temporarily unavailable. The editing tabs still work, but run Inspector before publishing major tournament changes.
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-[24px] border border-border bg-card p-5 shadow-sm">
@@ -210,10 +227,12 @@ export default function Admin() {
         </div>
       </div>
 
+      {activeTab === "operations" && <AdminOperations onSelectTab={setActiveTab} />}
       {activeTab === "tournaments" && <AdminTournaments />}
       {activeTab === "teams" && <AdminTeams />}
       {activeTab === "matches" && <AdminMatches />}
       {activeTab === "results" && <AdminResults />}
+      {activeTab === "stats" && <AdminPlayerStats />}
       {activeTab === "transfers" && <AdminTransfers />}
       {activeTab === "news" && <AdminNews />}
       {activeTab === "posters" && <AdminStagePosters />}

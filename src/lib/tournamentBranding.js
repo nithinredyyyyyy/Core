@@ -6,6 +6,8 @@ const TOURNAMENT_LOGOS = {
   "India - Korea Invitational": "/images/in-kr.png",
   "Battlegrounds Mobile India Showdown 2025": "/images/bmsd-2025.png",
   "Battlegrounds Mobile India International Cup 2025": "/images/bmic-2025.png",
+  "PUBG Mobile World Cup 2024": "/images/pubg-mobile-world-cup-2024.png",
+  "PUBG Mobile World Cup 2025": "/images/pubg-mobile-world-cup-2024.png",
   "Battlegrounds Mobile India Pro Series 2023": "/images/bmps-2023.png",
   "Battlegrounds Mobile India Pro Series 2024": "/images/bmps-2024.png",
   "Battlegrounds Mobile India Pro Series 2025": "/images/bmps-2025.png",

@@ -14,7 +14,7 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
   const [authSession, setAuthSession] = useState(() => base44.auth.getStoredSession());
   const isDark = theme === "dark";
   const navItems = [
-    { label: "Home", path: "/app" },
+    { label: "Home", path: "/" },
     { label: "Tournaments", path: "/tournaments" },
     { label: "Teams", path: "/teams" },
     { label: "Standings", path: "/leaderboard" },
@@ -69,9 +69,9 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
   }, [routerLocation.pathname]);
 
   return (
-    <div className="mx-auto flex min-h-[5.4rem] w-full max-w-[1400px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10">
+    <div className="mx-auto flex min-h-[5.05rem] w-full max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10">
       <Link
-        to="/app"
+        to="/"
         className={`flex shrink-0 items-center gap-3 pr-2 transition-opacity hover:opacity-90 ${
           isDark ? "text-white" : "text-[#11131a]"
         }`}
@@ -103,7 +103,7 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
             <Link
               key={item.path}
               to={item.path}
-              className={`type-nav relative mx-1.5 inline-flex items-center gap-2 rounded-full px-4 py-2.5 transition-all duration-200 ${
+              className={`type-nav relative mx-1 inline-flex items-center gap-2 rounded-full px-4 py-2.5 transition-all duration-200 ${
                 isActive
                   ? isDark
                     ? "bg-white text-[#08111e] shadow-[0_16px_30px_rgba(2,8,23,0.3)]"
@@ -124,10 +124,10 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
       </nav>
 
       <div
-        className={`flex items-center gap-3 rounded-full border px-2.5 py-2 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur transition-colors ${
+        className={`flex items-center gap-2.5 rounded-full border px-2.5 py-2 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur transition-colors ${
           isDark
-            ? "border-white/8 bg-[#0d1727]/88 shadow-[0_18px_38px_rgba(2,8,23,0.36)]"
-            : "border-[#dde5ee] bg-white/85"
+              ? "border-white/8 bg-[#0d1727]/90 shadow-[0_18px_38px_rgba(2,8,23,0.36)]"
+              : "border-[#dde5ee] bg-white/90"
         }`}
       >
         <button
@@ -136,7 +136,7 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
           className={`inline-flex size-11 items-center justify-center rounded-full border transition-colors ${
             isDark
               ? "border-white/8 bg-[#121f33] text-white hover:bg-[#16263d]"
-              : "border-[#e3e8ef] bg-[#f8fbff] text-[#11131a] hover:bg-white"
+              : "border-[#dfe7f0] bg-[#f8fbff] text-[#11131a] hover:border-[#cfd9e4] hover:bg-white"
           }`}
           aria-label="Open search"
         >
@@ -150,7 +150,7 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
           buttonClassName={`inline-flex size-11 items-center justify-center rounded-full border transition-colors ${
             isDark
               ? "border-white/8 bg-[#121f33] text-white hover:bg-[#16263d]"
-              : "border-[#e3e8ef] bg-[#f8fbff] text-[#11131a] hover:bg-white"
+              : "border-[#dfe7f0] bg-[#f8fbff] text-[#11131a] hover:border-[#cfd9e4] hover:bg-white"
           }`}
           iconClassName={`size-4 ${isDark ? "text-white" : "text-[#11131a]"}`}
         />
@@ -161,7 +161,7 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
           className={`inline-flex size-11 items-center justify-center rounded-full border transition-colors ${
             isDark
               ? "border-white/8 bg-[#121f33] text-white hover:bg-[#16263d]"
-              : "border-[#e3e8ef] bg-[#f8fbff] text-[#11131a] hover:bg-white"
+              : "border-[#dfe7f0] bg-[#f8fbff] text-[#11131a] hover:border-[#cfd9e4] hover:bg-white"
           }`}
           aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
           title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}

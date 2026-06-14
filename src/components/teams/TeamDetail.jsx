@@ -23,6 +23,9 @@ import {
 } from "@/lib/tournamentResults";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 import { getPlayerDisplayName } from "@/lib/playerDisplayName";
+import { getOfficialParticipantEntries } from "@/lib/tournamentParticipants";
+
+const EMPTY_TEAM_DETAIL_PAGE_ARRAY = [];
 
 function getDisplayedTeamLogo(team) {
   return getTeamLogoByName(team?.name) || team?.logo_url || null;
@@ -303,65 +306,31 @@ function TeamDetailSideColumn({
   );
 }
 
-export default function TeamDetail({ team, participant, onBack }) {
+function useTeamDetailModel({ team, participant }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const fanSession = base44.fan.getStoredSession();
-  const { data: teams = [] } = useQuery({
-    queryKey: ["teams"],
-    queryFn: () => base44.entities.Team.list("-total_points", 400),
+  const { data: teamDetailPage = {} } = useQuery({
+    queryKey: ["team-detail-page", fanSession.userId || "guest"],
+    queryFn: () => base44.pages.teamDetail(),
   });
-
-  const { data: tournaments = [] } = useQuery({
-    queryKey: ["tournaments"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 50),
-  });
-  const { data: teamAliases = [] } = useQuery({
-    queryKey: ["team-aliases"],
-    queryFn: () => base44.entities.TeamAlias.list("-created_date", 2000),
-  });
-
-  const { data: rawResults = [] } = useQuery({
-    queryKey: ["results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
-  });
+  const teams = teamDetailPage.teams || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const tournaments = teamDetailPage.tournaments || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const teamAliases = teamDetailPage.teamAliases || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const rawResults = teamDetailPage.results || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
   const results = useMemo(
     () => filterPublishedMatchResults(rawResults),
     [rawResults],
   );
-
-  const { data: matches = [] } = useQuery({
-    queryKey: ["matches"],
-    queryFn: () => base44.entities.Match.list("-scheduled_time", 200),
-  });
-  const { data: normalizedStages = [] } = useQuery({
-    queryKey: ["normalized-tournament-stages"],
-    queryFn: () => base44.entities.TournamentStage.list("stage_order", 1000),
-  });
-  const { data: normalizedParticipants = [] } = useQuery({
-    queryKey: ["normalized-tournament-participants"],
-    queryFn: () =>
-      base44.entities.TournamentParticipant.list("-created_date", 2000),
-  });
-  const { data: normalizedStandings = [] } = useQuery({
-    queryKey: ["normalized-stage-standings"],
-    queryFn: () => base44.entities.StageStanding.list("rank", 5000),
-  });
-
-  const { data: articles = [] } = useQuery({
-    queryKey: ["news"],
-    queryFn: () => base44.news.listPublished("-created_date", 50),
-  });
-  const { data: follows = [] } = useQuery({
-    queryKey: ["team-detail-follows", fanSession.userId],
-    queryFn: () =>
-      base44.entities.FanFollowItem.filter(
-        { user_id: fanSession.userId },
-        "-created_date",
-        80,
-      ),
-    enabled: Boolean(fanSession.userId),
-  });
+  const matches = teamDetailPage.matches || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const normalizedStages =
+    teamDetailPage.normalizedStages || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const normalizedParticipants =
+    teamDetailPage.normalizedParticipants || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const normalizedStandings =
+    teamDetailPage.normalizedStandings || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const articles = teamDetailPage.articles || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
+  const follows = teamDetailPage.follows || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
 
   const displayLogo = getDisplayedTeamLogo(team);
   const followRecord = follows.find(
@@ -415,6 +384,7 @@ export default function TeamDetail({ team, participant, onBack }) {
       });
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team-detail-page", fanSession.userId || "guest"] });
       qc.invalidateQueries({ queryKey: ["team-detail-follows", fanSession.userId] });
       qc.invalidateQueries({ queryKey: ["profile-follows", fanSession.userId] });
       toast({
@@ -449,7 +419,7 @@ export default function TeamDetail({ team, participant, onBack }) {
   const achievementHistory = useMemo(() => {
     return tournaments
       .reduce((items, tournament) => {
-        const participantEntry = tournament.participants?.find(
+        const participantEntry = getOfficialParticipantEntries(tournament).find(
           (entry) =>
             normalizeOrganizationKeyWithAliases(entry.team, teamAliasIndex) ===
             normalizedTeamName,
@@ -603,6 +573,42 @@ export default function TeamDetail({ team, participant, onBack }) {
     ],
     [bestFinish, participant?.badges, totalPodiums],
   );
+
+  return {
+    achievementHistory,
+    achievementYears,
+    activeYearsLabel,
+    displayLogo,
+    displayLogoSurfaceTone,
+    fanSession,
+    followMutation,
+    followRecord,
+    organizationAliases,
+    primaryStats,
+    recentMatches,
+    relatedArticles,
+    secondaryStats,
+    status,
+  };
+}
+
+export default function TeamDetail({ team, participant, onBack }) {
+  const {
+    achievementHistory,
+    achievementYears,
+    activeYearsLabel,
+    displayLogo,
+    displayLogoSurfaceTone,
+    fanSession,
+    followMutation,
+    followRecord,
+    organizationAliases,
+    primaryStats,
+    recentMatches,
+    relatedArticles,
+    secondaryStats,
+    status,
+  } = useTeamDetailModel({ team, participant });
 
   return (
     <div className="space-y-6">

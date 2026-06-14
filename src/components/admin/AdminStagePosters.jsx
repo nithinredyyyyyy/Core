@@ -782,10 +782,11 @@ export default function AdminStagePosters() {
           <div className="mt-5 grid gap-5 xl:grid-cols-[18rem_1fr]">
             <div className="space-y-4">
               <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
-                <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                <label htmlFor="admin-stage-poster-option" className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                   Stage group
                 </label>
                 <select
+                  id="admin-stage-poster-option"
                   value={activeOption?.key || ""}
                   onChange={(event) => setSelectedOptionKey(event.target.value)}
                   className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary/40"

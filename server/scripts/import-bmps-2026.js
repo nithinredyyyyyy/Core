@@ -27,6 +27,82 @@ const ROUND_ONE_GROUP_B_TEAMS = new Set(
   ].map((name) => normalizeTeam(name)),
 );
 
+const BMPS_2026_SEMI_FINALS_GROUPS = {
+  A: [
+    "Wyld Fangs",
+    "Gods Reign",
+    "Genesis Esports",
+    "Zero Ark Official",
+    "iQOO Reckoning Esports",
+    "iQOO Revenant XSpark",
+    "Welt Esports",
+    "Survival #5",
+  ],
+  B: [
+    "Meta Ninza",
+    "4TR Official",
+    "Autobotz Esports",
+    "Survival #7",
+    "Higgboson Esports",
+    "Survival #3",
+    "iQOO Team Tamillas",
+    "Mysterious4",
+  ],
+  C: [
+    "Survival #1",
+    "WindGod Esports",
+    "Survival #8",
+    "Survival #2",
+    "Survival #6",
+    "White Walkers",
+    "Survival #4",
+    "Nebula Esports",
+  ],
+};
+
+const BMPS_2026_SURVIVAL_STAGE_GROUPS = {
+  A: [
+    "Madkings Esports",
+    "Team Aryan",
+    "HADX Esports",
+    "NONX Esports",
+    "Rapid Chaos Esports",
+    "VXT",
+    "Ares Esport",
+    "Likitha Esports",
+  ],
+  B: [
+    "Jaguar Esports",
+    "K9 Esports",
+    "Esport Social",
+    "Santa Esports",
+    "True Rippers",
+    "Quantum Spark",
+    "Rising Esports",
+    "Team Doxy",
+  ],
+  C: [
+    "Naqsh Esports",
+    "Learn From Past",
+    "Team RedXross",
+    "TDR",
+    "GodSent Esports",
+    "Team Apex Gaming",
+    "DCxSCR",
+    "GENxFM Esports",
+  ],
+  D: [
+    "Phoenix Esports",
+    "Lastade Esports",
+    "Team H4K",
+    "Riot Nationz",
+    "T7",
+    "Troy Tamilian Esports",
+    "Aurax Esports",
+    "Myth Official",
+  ],
+};
+
 function normalizeTeam(value) {
   return String(value || "")
     .toLowerCase()
@@ -38,7 +114,7 @@ const tournament = {
   game: "BGMI",
   tier: "A-Tier",
   status: "upcoming",
-  prize_pool: "2,00,00,000+",
+  prize_pool: "₹4,00,00,000",
   start_date: "2026-05-06",
   end_date: "2026-06-21",
   max_teams: 64,
@@ -605,6 +681,14 @@ const tournament = {
       order: 5,
       status: "upcoming",
       teamCount: 32,
+      mapRotation: [
+        { match: 1, map: "Rondo", day1: "AB", day2: "CD", day3: "AC", day4: "BD" },
+        { match: 2, map: "Erangel", day1: "BC", day2: "AD", day3: "BD", day4: "AC" },
+        { match: 3, map: "Erangel", day1: "CD", day2: "AC", day3: "AB", day4: "CD" },
+        { match: 4, map: "Erangel", day1: "AD", day2: "BD", day3: "BC", day4: "AB" },
+        { match: 5, map: "Miramar", day1: "AC", day2: "AB", day3: "CD", day4: "BC" },
+        { match: 6, map: "Miramar", day1: "BD", day2: "BC", day3: "AD", day4: "AD" },
+      ],
       summary:
         "June 2nd - 5th, 2026. 32 teams compete across 4 matchdays: the bottom 8 teams from Round 4 Group B, all 16 teams from Round 4 Group C, and the top 8 teams from Round 4 Group D. Teams are divided into 4 groups of 8, play a round-robin format for 12 matches each, and the top 8 overall advance forward.",
     },
@@ -613,8 +697,16 @@ const tournament = {
       order: 6,
       status: "upcoming",
       teamCount: 24,
+      mapRotation: [
+        { match: 1, map: "Erangel", day1: "AB", day2: "AC", day3: "BC", day4Map: "Miramar", day4: "AB" },
+        { match: 2, map: "Miramar", day1: "AB", day2: "AC", day3: "BC", day4Map: "Erangel", day4: "AB" },
+        { match: 3, map: "Rondo", day1: "AB", day2: "AC", day3: "BC", day4Map: "Miramar", day4: "BC" },
+        { match: 4, map: "Rondo", day1: "BC", day2: "AB", day3: "AC", day4Map: "Erangel", day4: "BC" },
+        { match: 5, map: "Miramar", day1: "BC", day2: "AB", day3: "AC", day4Map: "Miramar", day4: "AC" },
+        { match: 6, map: "Erangel", day1: "BC", day2: "AB", day3: "AC", day4Map: "Erangel", day4: "AC" },
+      ],
       summary:
-        "June 9th - 12th, 2026. 24 teams play across 4 matchdays: the bottom 8 teams from Round 4 Group A, the top 8 teams from Round 4 Group B, and the 8 teams advancing from Survival Stage. Teams are divided into 3 groups of 8, use a double round-robin format, and play 16 matches each. The top 6 reach Grand Finals, teams placed 7th-22nd move to Last Chance, and the bottom 2 are eliminated.",
+        "June 9th - 12th, 2026. 24 teams play across 4 matchdays: the bottom 8 teams from Round 4 Group A, the top 8 teams from Round 4 Group B, and the 8 teams advancing from Survival Stage. Teams are divided into 3 groups of 8, use a double round-robin format, and play 16 matches each. The top 6 qualify for Grand Finals, teams placed 7th-22nd move to Last Chance Stage, and the bottom 2 are eliminated from BMPS 2026.",
     },
     {
       name: "Last Chance Stage",
@@ -650,6 +742,32 @@ tournament.participants = tournament.participants.map((entry) => {
     players: rosterOverride || entry.players || [],
   };
 });
+
+for (const [group, teams] of Object.entries(BMPS_2026_SURVIVAL_STAGE_GROUPS)) {
+  teams.forEach((team, index) => {
+    tournament.participants.push({
+      placement: index + 1,
+      team,
+      phase: `Survival Stage - Group ${group}`,
+      players:
+        BMPS_2026_ROSTERS[normalizeOrganizationName(team)] ||
+        [],
+    });
+  });
+}
+
+for (const [group, teams] of Object.entries(BMPS_2026_SEMI_FINALS_GROUPS)) {
+  teams.forEach((team, index) => {
+    tournament.participants.push({
+      placement: index + 1,
+      team,
+      phase: `Semi Finals - Group ${group}`,
+      players:
+        BMPS_2026_ROSTERS[normalizeOrganizationName(team)] ||
+        [],
+    });
+  });
+}
 
 const articles = [
   {

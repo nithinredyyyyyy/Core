@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Link, Navigate, Route, Routes } from "react-router-dom";
 import PageNotFound from "./lib/PageNotFound";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { SearchProvider } from "@/lib/SearchContext";
@@ -54,6 +54,12 @@ function AdminAccessGate() {
             Sign in with an authorized Google admin account to unlock the
             control room.
           </p>
+          <Link
+            to="/signin"
+            className="mt-5 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+          >
+            Sign in
+          </Link>
         </div>
       </div>
     );
@@ -65,10 +71,11 @@ function AdminAccessGate() {
 const RoutedApp = () => {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/signin" element={<SignIn />} />
       <Route element={<AppLayout />}>
-        <Route path="/app" element={<Home />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/app" element={<Navigate to="/" replace />} />
         <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/players/:playerIgn" element={<PlayerProfile />} />
@@ -105,3 +112,4 @@ function App() {
 }
 
 export default App;
+

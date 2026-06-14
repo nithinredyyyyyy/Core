@@ -768,7 +768,10 @@ export default function AdminNews() {
     ADMIN_NEWS_INITIAL_STATE,
   );
   const [filter, setFilter] = useState("all");
-  const initialFormSnapshotRef = useRef(createFormSnapshot(EMPTY_FORM));
+  const initialFormSnapshotRef = useRef(null);
+  if (initialFormSnapshotRef.current === null) {
+    initialFormSnapshotRef.current = createFormSnapshot(EMPTY_FORM);
+  }
   const { toast } = useToast();
   const qc = useQueryClient();
   const { showForm, editing, manualImport, form } = uiState;

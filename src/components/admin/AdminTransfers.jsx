@@ -229,7 +229,10 @@ export default function AdminTransfers() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
-  const initialFormSnapshotRef = useRef(createFormSnapshot(EMPTY_FORM));
+  const initialFormSnapshotRef = useRef(null);
+  if (initialFormSnapshotRef.current === null) {
+    initialFormSnapshotRef.current = createFormSnapshot(EMPTY_FORM);
+  }
   const { toast } = useToast();
   const qc = useQueryClient();
 

@@ -109,6 +109,326 @@ function NewsCard({ article, tournaments, commentCount }) {
   );
 }
 
+function LeadStoryPanel({
+  comments,
+  leadStory,
+  onSelectTag,
+  selectedTag,
+  tournaments,
+  trendingArticles,
+}) {
+  return (
+    <Shell
+      eyebrow="Lead story"
+      title={leadStory ? decodeNewsText(leadStory.title) : "Latest story loading"}
+      body={leadStory ? getEditorialNewsSummary(leadStory, tournaments) : "The latest article will appear here."}
+      actions={
+        leadStory ? (
+          <Link
+            to={`/news/${leadStory.id}`}
+            className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Open story <ArrowRight className="size-4" />
+          </Link>
+        ) : null
+      }
+    >
+      {leadStory ? (
+        <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#fff2e6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ff7b57]">
+                {getNewsCategoryLabel(leadStory.category)}
+              </span>
+              {leadStory.ai_summary ? (
+                <span className="rounded-full bg-[#11131a] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+                  AI summary
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-5 text-sm leading-7 text-[#5c6472]">
+              {leadStory.ai_summary
+                ? decodeNewsText(leadStory.ai_summary)
+                : getEditorialNewsSummary(leadStory, tournaments)}
+            </p>
+            {Array.isArray(leadStory.tags) && leadStory.tags.length > 0 ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {leadStory.tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => onSelectTag(tag)}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                      selectedTag === tag
+                        ? "border-[#11131a] bg-[#11131a] text-white"
+                        : "border-[#eadfce] bg-[#fffdfa] text-[#8a7866]"
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
+            <p className="type-kicker text-[#8a7866]">Coverage snapshot</p>
+            <div className="mt-4 space-y-3 text-sm text-[#5c6472]">
+              {[
+                ["Published", formatDate(leadStory.created_date)],
+                ["Game", leadStory.game || "BGMI"],
+                [
+                  "Trending score",
+                  trendingArticles.find((entry) => entry.id === leadStory.id)?.trendScore || 0,
+                ],
+                ["Comments", countArticleComments(comments, leadStory.id)],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-3 rounded-[18px] bg-[#f8f2ec] px-4 py-3"
+                >
+                  <span>{label}</span>
+                  <span className="font-semibold text-[#11131a]">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </Shell>
+  );
+}
+
+function TransferWatchPanel({ transfers }) {
+  const visibleTransfers = transfers.slice(0, 6);
+
+  return (
+    <Shell
+      eyebrow="Transfer watch"
+      title="Roster moves and season announcements"
+      body="Transfers, roster adjustments, and lineup drama stay visible beside the main coverage feed."
+    >
+      <div className="space-y-3">
+        {visibleTransfers.map((entry) => {
+          const players = Array.isArray(entry.players)
+            ? entry.players.filter(Boolean)
+            : [];
+          const oldTeam = String(entry.oldTeam || "").trim();
+          const newTeam = String(entry.newTeam || "").trim();
+          const hasOldTeam = Boolean(oldTeam);
+          const hasNewTeam = Boolean(newTeam);
+
+          return (
+          <div key={entry.id} className="rounded-[22px] border border-[#eadfce] bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                  {entry.window || "Transfer"}
+                </p>
+                {hasOldTeam && hasNewTeam ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-base font-semibold text-[#11131a]">
+                    <span className="truncate">{oldTeam}</span>
+                    <span className="text-[#b56b48]">→</span>
+                    <span className="truncate">{newTeam}</span>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-base font-semibold text-[#11131a]">
+                    {hasNewTeam
+                      ? `${newTeam} roster update`
+                      : hasOldTeam
+                        ? `${oldTeam} roster update`
+                        : "Roster update"}
+                  </p>
+                )}
+                {players.length > 0 ? (
+                  <p className="mt-2 text-[12px] leading-6 text-[#5c6472]">
+                    {players.join(", ")}
+                  </p>
+                ) : (
+                  <span className="mt-3 inline-flex rounded-full border border-[#eadfce] bg-[#fbf7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8a7866]">
+                    Roster watch
+                  </span>
+                )}
+              </div>
+              <span className="shrink-0 text-[11px] text-[#8a7866]">{formatDate(entry.date)}</span>
+            </div>
+          </div>
+          );
+        })}
+        {visibleTransfers.length === 0 ? (
+          <div className="rounded-[22px] border border-dashed border-[#eadfce] bg-white/70 p-5 text-sm text-[#5c6472]">
+            Transfer watch will update when roster moves are published.
+          </div>
+        ) : null}
+      </div>
+    </Shell>
+  );
+}
+
+function CoverageFeedPanel({
+  comments,
+  followupStories,
+  onSearch,
+  onToggleTag,
+  search,
+  selectedTag,
+  tagOptions,
+  tournaments,
+}) {
+  return (
+    <Shell
+      eyebrow="Coverage filters"
+      title="Filter by category, tags, or keywords"
+      body="Scan tournament announcements, patch updates, roster news, and daily stories from one organized feed."
+      actions={
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#8a7866]" />
+          <input
+            value={search}
+            onChange={(event) => onSearch(event.target.value)}
+            placeholder="Search news coverage"
+            aria-label="Search news coverage"
+            className="h-11 rounded-full border border-[#d9c7b3] bg-white pl-10 pr-4 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+          />
+        </div>
+      }
+    >
+      <div className="mb-4 flex flex-wrap gap-2">
+        {tagOptions.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => onToggleTag(tag)}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
+              selectedTag === tag
+                ? "border-[#11131a] bg-[#11131a] text-white"
+                : "border-[#eadfce] bg-white text-[#8a7866]"
+            }`}
+          >
+            <Tag className="size-3.5" />
+            {tag}
+          </button>
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {followupStories.map((article) => (
+          <NewsCard
+            key={article.id}
+            article={article}
+            tournaments={tournaments}
+            commentCount={countArticleComments(comments, article.id)}
+          />
+        ))}
+        {followupStories.length === 0 ? (
+          <div className="rounded-[24px] border border-[#eadfce] bg-white p-5 text-sm text-[#5c6472]">
+            No stories match the current filters. Try another category or clear the tag search.
+          </div>
+        ) : null}
+      </div>
+    </Shell>
+  );
+}
+
+function TrendingArticlesPanel({ trendingArticles }) {
+  return (
+    <Shell
+      eyebrow="Trending articles"
+      title="What fans are reading now"
+      body="Freshness, feature weight, and fan discussion shape the trending rail."
+    >
+      <div className="space-y-3">
+        {trendingArticles.slice(0, 5).map((article, index) => (
+          <Link
+            key={article.id}
+            to={`/news/${article.id}`}
+            className="flex items-center gap-4 rounded-[22px] border border-[#eadfce] bg-white p-4 transition hover:border-[#d7c5b1]"
+          >
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-[16px] bg-[#fff2e6] text-sm font-black text-[#ff7b57]">
+              {index + 1}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[#11131a]">
+                {decodeNewsText(article.title)}
+              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
+                {article.trendScore} trend score
+              </p>
+            </div>
+            <TrendingUp className="size-4 text-primary" />
+          </Link>
+        ))}
+      </div>
+    </Shell>
+  );
+}
+
+function ReaderFloorPanel({ fanSession, newsDeskComments, reactionMutation }) {
+  return (
+    <Shell
+      eyebrow="Reader floor"
+      title="Latest article discussion"
+      body="Comments, upvotes, downvotes, and quick emoji reactions stay tied directly to each story."
+    >
+      <div className="space-y-3">
+        {newsDeskComments.length > 0 ? (
+          newsDeskComments.map((comment) => (
+            <div key={comment.id} className="rounded-[22px] border border-[#eadfce] bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#11131a]">{comment.display_name}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
+                    {comment.topic?.replace("news:", "Article ")}
+                  </p>
+                </div>
+                <MessageSquare className="size-4 text-primary" />
+              </div>
+              <p className="mt-3 text-sm leading-7 text-[#5c6472]">{comment.body}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {[
+                  ["up", 1, `+ ${comment.reactionSummary.upvotes}`],
+                  ["down", -1, `- ${comment.reactionSummary.downvotes}`],
+                ].map(([key, voteValue, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={!fanSession.userId}
+                    onClick={() =>
+                      reactionMutation.mutate({ commentId: comment.id, reaction: "", voteValue })
+                    }
+                    className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
+                  >
+                    {label}
+                  </button>
+                ))}
+                {FAN_REACTION_OPTIONS.map((reaction) => (
+                  <button
+                    key={reaction.key}
+                    type="button"
+                    disabled={!fanSession.userId}
+                    onClick={() =>
+                      reactionMutation.mutate({
+                        commentId: comment.id,
+                        reaction: reaction.key,
+                        voteValue: 0,
+                      })
+                    }
+                    className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
+                  >
+                    {reaction.emoji} {comment.reactionSummary.emojis?.[reaction.key] || 0}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-[22px] border border-[#eadfce] bg-white p-4 text-sm text-[#5c6472]">
+            The article discussion floor is waiting for the first reaction.
+          </div>
+        )}
+      </div>
+    </Shell>
+  );
+}
+
 export default function News() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -120,22 +440,32 @@ export default function News() {
   const { data: articles = [] } = useQuery({
     queryKey: ["news-published"],
     queryFn: () => base44.news.listPublished("-created_date", 120),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const { data: tournaments = [] } = useQuery({
     queryKey: ["news-tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 60),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const { data: transfers = [] } = useQuery({
     queryKey: ["news-transfers"],
     queryFn: () => base44.entities.TransferWindow.list("-date", 40),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const { data: comments = [] } = useQuery({
     queryKey: ["news-comments"],
     queryFn: () => base44.entities.FanChatMessage.list("-created_date", 300),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const { data: reactions = [] } = useQuery({
     queryKey: ["news-reactions"],
     queryFn: () => base44.entities.FanCommentReaction.list("-created_date", 600),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const discussion = useMemo(
@@ -217,261 +547,36 @@ export default function News() {
   return (
     <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Shell
-          eyebrow="Lead story"
-          title={leadStory ? decodeNewsText(leadStory.title) : "Latest story loading"}
-          body={leadStory ? getEditorialNewsSummary(leadStory, tournaments) : "The latest article will appear here."}
-          actions={
-            leadStory ? (
-              <Link
-                to={`/news/${leadStory.id}`}
-                className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-5 py-2.5 text-sm font-semibold text-white"
-              >
-                Open story <ArrowRight className="size-4" />
-              </Link>
-            ) : null
-          }
-        >
-          {leadStory ? (
-            <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-              <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#fff2e6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ff7b57]">
-                    {getNewsCategoryLabel(leadStory.category)}
-                  </span>
-                  {leadStory.ai_summary ? (
-                    <span className="rounded-full bg-[#11131a] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
-                      AI summary
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-5 text-sm leading-7 text-[#5c6472]">
-                  {leadStory.ai_summary
-                    ? decodeNewsText(leadStory.ai_summary)
-                    : getEditorialNewsSummary(leadStory, tournaments)}
-                </p>
-                {Array.isArray(leadStory.tags) && leadStory.tags.length > 0 ? (
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {leadStory.tags.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => setSelectedTag(tag)}
-                        className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                          selectedTag === tag
-                            ? "border-[#11131a] bg-[#11131a] text-white"
-                            : "border-[#eadfce] bg-[#fffdfa] text-[#8a7866]"
-                        }`}
-                      >
-                        #{tag}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-                <p className="type-kicker text-[#8a7866]">Coverage snapshot</p>
-                <div className="mt-4 space-y-3 text-sm text-[#5c6472]">
-                  <div className="flex items-center justify-between gap-3 rounded-[18px] bg-[#f8f2ec] px-4 py-3">
-                    <span>Published</span>
-                    <span className="font-semibold text-[#11131a]">{formatDate(leadStory.created_date)}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-[18px] bg-[#f8f2ec] px-4 py-3">
-                    <span>Game</span>
-                    <span className="font-semibold text-[#11131a]">{leadStory.game || "BGMI"}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-[18px] bg-[#f8f2ec] px-4 py-3">
-                    <span>Trending score</span>
-                    <span className="font-semibold text-[#11131a]">
-                      {trendingArticles.find((entry) => entry.id === leadStory.id)?.trendScore || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-[18px] bg-[#f8f2ec] px-4 py-3">
-                    <span>Comments</span>
-                    <span className="font-semibold text-[#11131a]">{countArticleComments(comments, leadStory.id)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </Shell>
-
-        <Shell
-          eyebrow="Transfer watch"
-          title="Roster moves and season announcements"
-          body="Transfers, roster adjustments, and lineup drama stay visible beside the main coverage feed."
-        >
-          <div className="space-y-3">
-            {transfers.slice(0, 6).map((entry) => (
-              <div key={entry.id} className="rounded-[22px] border border-[#eadfce] bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-                      {entry.window || "Transfer"}
-                    </p>
-                    <p className="mt-2 text-base font-semibold text-[#11131a]">
-                      {entry.oldTeam || "Previous team"} → {entry.newTeam || "New team"}
-                    </p>
-                    <p className="mt-2 text-[12px] leading-6 text-[#5c6472]">
-                      {(Array.isArray(entry.players) ? entry.players : []).join(", ") || "Roster move details incoming."}
-                    </p>
-                  </div>
-                  <span className="text-[11px] text-[#8a7866]">{formatDate(entry.date)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Shell>
+        <LeadStoryPanel
+          comments={comments}
+          leadStory={leadStory}
+          onSelectTag={setSelectedTag}
+          selectedTag={selectedTag}
+          tournaments={tournaments}
+          trendingArticles={trendingArticles}
+        />
+        <TransferWatchPanel transfers={transfers} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <Shell
-          eyebrow="Coverage filters"
-          title="Filter by category, tags, or keywords"
-          body="Scan tournament announcements, patch updates, roster news, and daily stories from one organized feed."
-          actions={
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#8a7866]" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search news coverage"
-                className="h-11 rounded-full border border-[#d9c7b3] bg-white pl-10 pr-4 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-              />
-            </div>
-          }
-        >
-          <div className="mb-4 flex flex-wrap gap-2">
-            {tagOptions.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => setSelectedTag((current) => (current === tag ? "" : tag))}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
-                  selectedTag === tag
-                    ? "border-[#11131a] bg-[#11131a] text-white"
-                    : "border-[#eadfce] bg-white text-[#8a7866]"
-                }`}
-              >
-                <Tag className="size-3.5" />
-                {tag}
-              </button>
-            ))}
-          </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            {followupStories.map((article) => (
-              <NewsCard
-                key={article.id}
-                article={article}
-                tournaments={tournaments}
-                commentCount={countArticleComments(comments, article.id)}
-              />
-            ))}
-            {followupStories.length === 0 ? (
-              <div className="rounded-[24px] border border-[#eadfce] bg-white p-5 text-sm text-[#5c6472]">
-                No stories match the current filters. Try another category or clear the tag search.
-              </div>
-            ) : null}
-          </div>
-        </Shell>
+        <CoverageFeedPanel
+          comments={comments}
+          followupStories={followupStories}
+          onSearch={setSearch}
+          onToggleTag={(tag) => setSelectedTag((current) => (current === tag ? "" : tag))}
+          search={search}
+          selectedTag={selectedTag}
+          tagOptions={tagOptions}
+          tournaments={tournaments}
+        />
 
         <div className="grid gap-6">
-          <Shell
-            eyebrow="Trending articles"
-            title="What fans are reading now"
-            body="Freshness, feature weight, and fan discussion shape the trending rail."
-          >
-            <div className="space-y-3">
-              {trendingArticles.slice(0, 5).map((article, index) => (
-                <Link
-                  key={article.id}
-                  to={`/news/${article.id}`}
-                  className="flex items-center gap-4 rounded-[22px] border border-[#eadfce] bg-white p-4 transition hover:border-[#d7c5b1]"
-                >
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-[16px] bg-[#fff2e6] text-sm font-black text-[#ff7b57]">
-                    {index + 1}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-[#11131a]">
-                      {decodeNewsText(article.title)}
-                    </p>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
-                      {article.trendScore} trend score
-                    </p>
-                  </div>
-                  <TrendingUp className="size-4 text-primary" />
-                </Link>
-              ))}
-            </div>
-          </Shell>
-
-          <Shell
-            eyebrow="Reader floor"
-            title="Latest article discussion"
-            body="Comments, upvotes, downvotes, and quick emoji reactions stay tied directly to each story."
-          >
-            <div className="space-y-3">
-              {newsDeskComments.length > 0 ? (
-                newsDeskComments.map((comment) => (
-                  <div key={comment.id} className="rounded-[22px] border border-[#eadfce] bg-white p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-[#11131a]">{comment.display_name}</p>
-                        <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
-                          {comment.topic?.replace("news:", "Article ")}
-                        </p>
-                      </div>
-                      <MessageSquare className="size-4 text-primary" />
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-[#5c6472]">{comment.body}</p>
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={!fanSession.userId}
-                        onClick={() =>
-                          reactionMutation.mutate({ commentId: comment.id, reaction: "", voteValue: 1 })
-                        }
-                        className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                      >
-                        ↑ {comment.reactionSummary.upvotes}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!fanSession.userId}
-                        onClick={() =>
-                          reactionMutation.mutate({ commentId: comment.id, reaction: "", voteValue: -1 })
-                        }
-                        className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                      >
-                        ↓ {comment.reactionSummary.downvotes}
-                      </button>
-                      {FAN_REACTION_OPTIONS.map((reaction) => (
-                        <button
-                          key={reaction.key}
-                          type="button"
-                          disabled={!fanSession.userId}
-                          onClick={() =>
-                            reactionMutation.mutate({
-                              commentId: comment.id,
-                              reaction: reaction.key,
-                              voteValue: 0,
-                            })
-                          }
-                          className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                        >
-                          {reaction.emoji} {comment.reactionSummary.emojis?.[reaction.key] || 0}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-[#eadfce] bg-white p-4 text-sm text-[#5c6472]">
-                  The article discussion floor is waiting for the first reaction.
-                </div>
-              )}
-            </div>
-          </Shell>
+          <TrendingArticlesPanel trendingArticles={trendingArticles} />
+          <ReaderFloorPanel
+            fanSession={fanSession}
+            newsDeskComments={newsDeskComments}
+            reactionMutation={reactionMutation}
+          />
         </div>
       </section>
 
@@ -512,7 +617,8 @@ function LeadStoryCommentComposer({ article, onSubmit, isPending }) {
         value={value}
         onChange={(event) => setValue(event.target.value)}
         maxLength={240}
-        placeholder="Drop your take on the lead story..."
+        placeholder="Drop your take on the lead story…"
+        aria-label="Drop your take on the lead story"
         className="mt-4 min-h-[140px] w-full rounded-[20px] border border-[#eadfce] bg-[#fffdfa] px-4 py-3 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
       />
       <div className="mt-4 flex items-center justify-between gap-3">

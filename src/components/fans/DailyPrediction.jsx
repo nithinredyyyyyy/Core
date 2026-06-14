@@ -8,6 +8,7 @@ const EMPTY_TOP_THREE = [];
 
 export default function DailyPrediction({
   isPredictionLocked,
+  isLoadingOptions = false,
   featuredTournament,
   predictionContext,
   predictionOptions = EMPTY_PREDICTION_OPTIONS,
@@ -102,7 +103,9 @@ export default function DailyPrediction({
         <div className="rounded-[18px] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.18))] px-4 py-3 dark:bg-white/[0.05]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-              {predictionOptions.length} teams in pool
+              {isLoadingOptions && predictionOptions.length === 0
+                ? "Loading teams"
+                : `${predictionOptions.length} teams in pool`}
             </span>
             <span
               className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${predictionTopThree.length === 3 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
