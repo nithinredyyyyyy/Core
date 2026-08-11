@@ -209,7 +209,7 @@ function TransferWindowList({ groupedWindows, isMutating, openEdit, deleteMut })
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => deleteMut.mutate(entry.id)}
+                      onClick={() => { if (window.confirm("Delete this transfer entry?")) deleteMut.mutate(entry.id); }}
                       disabled={isMutating}
                     >
                       <Trash2 className="size-4 text-destructive" />
@@ -274,6 +274,13 @@ export default function AdminTransfers() {
       resetForm();
       toast({ title: "Transfer entry created" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to create transfer entry",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateMut = useMutation({
@@ -283,6 +290,13 @@ export default function AdminTransfers() {
       resetForm();
       toast({ title: "Transfer entry updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update transfer entry",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteMut = useMutation({
@@ -290,6 +304,13 @@ export default function AdminTransfers() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["transfer-windows"] });
       toast({ title: "Transfer entry deleted" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete transfer entry",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

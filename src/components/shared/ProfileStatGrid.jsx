@@ -24,11 +24,11 @@ const VARIANTS = {
     primaryGrid: "grid gap-3 sm:grid-cols-2 xl:grid-cols-4",
     secondaryGrid: "grid gap-3 md:grid-cols-3",
     card: "rounded-2xl border border-white/10 bg-white/5 p-4",
-    label: "text-[10px] uppercase tracking-wider text-[#d0ad63]",
+    label: "text-[10px] uppercase tracking-wider text-brand-gold",
     valueStrong: "mt-2 text-2xl font-heading font-bold text-white",
     value: "mt-2 text-lg font-semibold text-white",
-    accentLabel: "text-[10px] uppercase tracking-wider text-[#d0ad63]",
-    icon: "size-4 text-[#d0ad63]",
+    accentLabel: "text-[10px] uppercase tracking-wider text-brand-gold",
+    icon: "size-4 text-brand-gold",
   },
 };
 

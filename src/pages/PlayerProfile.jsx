@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Shield, ShieldCheck, Swords, Trophy, UserCircle2 } from "lucide-react";
+import { ArrowLeft, Shield, Swords, Trophy, UserCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import EmptyState from "@/components/shared/EmptyState";
@@ -34,7 +34,6 @@ import { getPlayerPhotoByIgn } from "@/lib/playerPhotos";
 import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 import { getFeaturedTournamentStage } from "@/lib/stageBoard";
 import { getOfficialParticipantEntries } from "@/lib/tournamentParticipants";
-import { useToast } from "@/components/ui/use-toast";
 
 function decodeIgn(value) {
   try {
@@ -69,7 +68,9 @@ function getHistoryYear(value) {
 
 function formatProfileDate(value, pattern, fallback) {
   if (!value) return fallback;
-  return format(new Date(value), pattern);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return format(date, pattern);
 }
 
 function findParticipantTeamForPlayer(tournaments, ign) {
@@ -223,6 +224,9 @@ function usePlayerProfileData() {
     tournamentsLoading ||
     resultsLoading ||
     matchesLoading ||
+    normalizedStagesLoading ||
+    normalizedParticipantsLoading ||
+    normalizedStandingsLoading ||
     articlesLoading;
   const teamAliasIndex = useMemo(
     () => buildTeamAliasIndex(teams, teamAliases),
@@ -646,10 +650,8 @@ function usePlayerProfileData() {
 }
 
 function usePlayerProfileModel() {
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  const fanSession = base44.fan.getStoredSession();
   const {
+    careerTeams,
     currentTournament,
     currentTournamentStageFocus,
     displayIgn,
@@ -665,60 +667,13 @@ function usePlayerProfileModel() {
     teamTag,
     playerPhoto,
   } = usePlayerProfileData();
-  const { data: follows = [] } = useQuery({
-    queryKey: ["player-detail-follows", fanSession.userId],
-    queryFn: () =>
-      base44.entities.FanFollowItem.filter(
-        { user_id: fanSession.userId },
-        "-created_date",
-        80,
-      ),
-    enabled: Boolean(fanSession.userId),
-  });
-
-  const playerFollowRecord = follows.find(
-    (entry) =>
-      entry.target_type === "player" &&
-      (entry.target_id === resolved.playerRow?.id ||
-        entry.target_label === displayIgn),
-  );
-
-  const followMutation = useMutation({
-    mutationFn: async () => {
-      if (!fanSession.userId) throw new Error("Open your profile first.");
-      if (playerFollowRecord?.id) {
-        return base44.entities.FanFollowItem.delete(playerFollowRecord.id);
-      }
-      return base44.entities.FanFollowItem.create({
-        user_id: fanSession.userId,
-        display_name: fanSession.displayName,
-        target_type: "player",
-        target_id: resolved.playerRow?.id || "",
-        target_label: displayIgn,
-      });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: ["player-detail-follows", fanSession.userId],
-      });
-      qc.invalidateQueries({ queryKey: ["profile-follows", fanSession.userId] });
-      toast({
-        title: playerFollowRecord ? "Player unfollowed" : "Player followed",
-        description: playerFollowRecord
-          ? `${displayIgn} was removed from your followed players.`
-          : `${displayIgn} is now pinned to your followed players.`,
-      });
-    },
-  });
 
   return {
+    careerTeams,
     currentTournament,
     currentTournamentStageFocus,
     displayIgn,
-    fanSession,
-    followMutation,
     isLoading,
-    playerFollowRecord,
     playerPhoto,
     primaryStats,
     resolved,
@@ -731,14 +686,285 @@ function usePlayerProfileModel() {
   };
 }
 
+function LoadingPlayerState() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
+        Loading player
+      </p>
+    </div>
+  );
+}
+
+function PlayerNotFound() {
+  return (
+    <EmptyState
+      icon={UserCircle2}
+      title="Player not found"
+      description="This player profile is not available in the current tournament and roster data."
+    />
+  );
+}
+
+function BackToTeamsLink({ teamName }) {
+  return (
+    <Link
+      to={teamName ? `/teams?team=${encodeURIComponent(teamName)}` : "/teams"}
+      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
+    >
+      <ArrowLeft className="size-3.5" />
+      Back to teams
+    </Link>
+  );
+}
+
+function PlayerProfileHero({
+  displayIgn,
+  teamName,
+  currentTournament,
+  primaryStats,
+  secondaryStats,
+  playerPhoto,
+  teamLogo,
+  teamLogoSurfaceTone,
+  teamTag,
+}) {
+  return (
+    <div className="overflow-hidden rounded-[30px] border border-border/70 bg-card shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
+        <div className="space-y-5">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+              Player profile
+            </p>
+            <h1 className="mt-2 text-4xl font-semibold uppercase tracking-[-0.05em] text-foreground">
+              {displayIgn}
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              Current team:{" "}
+              <span className="font-semibold text-foreground">
+                {teamName}
+              </span>
+              {currentTournament
+                ? ` • Active in ${currentTournament.name}`
+                : ""}
+            </p>
+          </div>
+
+          <ProfileStatGrid
+            primary={primaryStats}
+            secondary={secondaryStats}
+            variant="light"
+          />
+        </div>
+
+        <div className="flex items-center justify-center">
+          {playerPhoto ? (
+            <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_52%,rgba(248,243,235,0.98)_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_58%,rgba(17,24,39,1)_100%)]">
+              <img
+                src={playerPhoto}
+                alt={displayIgn}
+                className="size-full object-contain object-bottom"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            </div>
+          ) : (
+            <LogoBlock
+              src={teamLogo}
+              alt={teamName}
+              sizeClass="size-56"
+              roundedClass="rounded-[30px]"
+              paddingClass="p-7"
+              surfaceTone={teamLogoSurfaceTone}
+              className="border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.12),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
+            >
+              {!teamLogo ? (
+                <span className="text-5xl font-black uppercase text-primary">
+                  {teamTag.slice(0, 2)}
+                </span>
+              ) : null}
+            </LogoBlock>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TournamentAppearancesPanel({ tournaments }) {
+  return (
+    <ProfilePanel title="Tournament appearances">
+      {tournaments.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No tournament appearances have been mapped for this player yet.
+        </p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {tournaments.map((entry) => (
+            <Link
+              key={`${entry.id}-${entry.phase}`}
+              to={`/tournaments?id=${entry.id}`}
+              className="block rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {entry.name}
+                  </p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    {entry.phase}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">
+                    {entry.placement ? `#${entry.placement}` : "—"}
+                  </p>
+                  <p
+                    className="mt-1 text-xs text-muted-foreground"
+                    suppressHydrationWarning
+                  >
+                    {formatProfileDate(
+                      entry.date,
+                      "MMM d, yyyy",
+                      "Date pending",
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </ProfilePanel>
+  );
+}
+
+function CurrentTeamPanel({ teamName, teamTag, teamLogo, teamLogoSurfaceTone }) {
+  return (
+    <ProfilePanel title="Current team">
+      <Link
+        to={`/teams?team=${encodeURIComponent(teamName)}`}
+        className="mt-4 flex items-center gap-3 rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
+      >
+        <LogoBlock
+          src={teamLogo}
+          alt={teamName}
+          sizeClass="size-14"
+          roundedClass="rounded-2xl"
+          paddingClass="p-2.5"
+          surfaceTone={teamLogoSurfaceTone}
+          className="bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
+        />
+        <div>
+          <p className="font-semibold text-foreground">{teamName}</p>
+          <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            {teamTag}
+          </p>
+        </div>
+      </Link>
+    </ProfilePanel>
+  );
+}
+
+function CareerPathPanel({ teams }) {
+  return (
+    <ProfilePanel title="Career path">
+      {teams.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No mapped team history is available for this player yet.
+        </p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {teams.map((entry) => (
+            <div
+              key={entry.id}
+              className="rounded-[18px] border border-border bg-background/75 p-4"
+            >
+              <p className="font-semibold text-foreground">
+                {entry.team}
+              </p>
+              <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                {entry.role || "Player"}
+              </p>
+              <p
+                className="mt-2 text-xs text-muted-foreground"
+                suppressHydrationWarning
+              >
+                {formatProfileDate(
+                  entry.joined,
+                  "MMM yyyy",
+                  "Start unknown",
+                )}
+                {" · "}
+                {formatProfileDate(entry.left, "MMM yyyy", "Present")}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </ProfilePanel>
+  );
+}
+
+function RelatedStoriesPanel({ articles }) {
+  return (
+    <ProfilePanel title="Related stories">
+      {articles.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No linked stories have been found for this player yet.
+        </p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {articles.map((article) => (
+            <Link
+              key={article.id}
+              to={`/news/${article.id}`}
+              className="block rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
+            >
+              <p className="text-sm font-semibold text-foreground">
+                {article.title}
+              </p>
+              <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                {article.category?.replace(/_/g, " ") || "Story"}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
+    </ProfilePanel>
+  );
+}
+
+function IndividualResultsPanel({ resultYears, playerResults }) {
+  return (
+    <ProfilePanel title="Individual results">
+      {playerResults.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No S/A/B-Tier result rows have been mapped for this player yet.
+        </p>
+      ) : (
+        <ResultsByYearTable
+          buckets={resultYears}
+          title="Results by Year"
+          wrapperClassName="mt-6 space-y-5 border-t border-border pt-5"
+          headingClassName="text-[11px] font-bold uppercase tracking-[0.24em] text-primary"
+          yearClassName="text-[11px] font-bold uppercase tracking-[0.18em] text-primary"
+          tableClassName="w-full min-w-[760px] text-sm"
+          headerRowClassName="border-b border-border text-left text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+          cellClassName="p-3"
+          bodyRowClassName="border-b border-border/70 last:border-b-0"
+        />
+      )}
+    </ProfilePanel>
+  );
+}
+
 export default function PlayerProfile() {
   const {
+    careerTeams,
     currentTournament,
     displayIgn,
-    fanSession,
-    followMutation,
     isLoading,
-    playerFollowRecord,
     playerPhoto,
     primaryStats,
     resolved,
@@ -751,255 +977,50 @@ export default function PlayerProfile() {
   } = usePlayerProfileModel();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
-          Loading player
-        </p>
-      </div>
-    );
+    return <LoadingPlayerState />;
   }
 
   if (!resolved.playerRow && !resolved.snapshotTeam) {
-    return (
-      <EmptyState
-        icon={UserCircle2}
-        title="Player not found"
-        description="This player profile is not available in the current tournament and roster data."
-      />
-    );
+    return <PlayerNotFound />;
   }
 
   return (
     <div className="space-y-6">
-      <Link
-        to={teamName ? `/teams?team=${encodeURIComponent(teamName)}` : "/teams"}
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        Back to teams
-      </Link>
+      <BackToTeamsLink teamName={teamName} />
 
-      <div className="overflow-hidden rounded-[30px] border border-border/70 bg-card shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
-          <div className="space-y-5">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
-                Player profile
-              </p>
-              <h1 className="mt-2 text-4xl font-semibold uppercase tracking-[-0.05em] text-foreground">
-                {displayIgn}
-              </h1>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                Current team:{" "}
-                <span className="font-semibold text-foreground">
-                  {teamName}
-                </span>
-                {currentTournament
-                  ? ` • Active in ${currentTournament.name}`
-                  : ""}
-              </p>
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => followMutation.mutate()}
-                  disabled={!fanSession.userId || followMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-primary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ShieldCheck className="size-3.5" />
-                  {playerFollowRecord ? "Following player" : "Follow player"}
-                </button>
-              </div>
-            </div>
-
-            <ProfileStatGrid
-              primary={primaryStats}
-              secondary={secondaryStats}
-              variant="light"
-            />
-          </div>
-
-          <div className="flex items-center justify-center">
-            {playerPhoto ? (
-              <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_52%,rgba(248,243,235,0.98)_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_58%,rgba(17,24,39,1)_100%)]">
-                <img
-                  src={playerPhoto}
-                  alt={displayIgn}
-                  className="size-full object-contain object-bottom"
-                />
-              </div>
-            ) : (
-              <LogoBlock
-                src={teamLogo}
-                alt={teamName}
-                sizeClass="size-56"
-                roundedClass="rounded-[30px]"
-                paddingClass="p-7"
-                surfaceTone={teamLogoSurfaceTone}
-                className="border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.12),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
-              >
-                {!teamLogo ? (
-                  <span className="text-5xl font-black uppercase text-primary">
-                    {teamTag.slice(0, 2)}
-                  </span>
-                ) : null}
-              </LogoBlock>
-            )}
-          </div>
-        </div>
-      </div>
+      <PlayerProfileHero
+        displayIgn={displayIgn}
+        teamName={teamName}
+        currentTournament={currentTournament}
+        primaryStats={primaryStats}
+        secondaryStats={secondaryStats}
+        playerPhoto={playerPhoto}
+        teamLogo={teamLogo}
+        teamLogoSurfaceTone={teamLogoSurfaceTone}
+        teamTag={teamTag}
+      />
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <ProfilePanel title="Tournament appearances">
-          {resolved.relatedTournaments.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">
-              No tournament appearances have been mapped for this player yet.
-            </p>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {resolved.relatedTournaments.map((entry) => (
-                <Link
-                  key={`${entry.id}-${entry.phase}`}
-                  to={`/tournaments?id=${entry.id}`}
-                  className="block rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {entry.name}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                        {entry.phase}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">
-                        {entry.placement ? `#${entry.placement}` : "—"}
-                      </p>
-                      <p
-                        className="mt-1 text-xs text-muted-foreground"
-                        suppressHydrationWarning
-                      >
-                        {formatProfileDate(
-                          entry.date,
-                          "MMM d, yyyy",
-                          "Date pending",
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </ProfilePanel>
+        <TournamentAppearancesPanel
+          tournaments={resolved.relatedTournaments}
+        />
 
         <div className="space-y-4">
-          <ProfilePanel title="Current team">
-            <Link
-              to={`/teams?team=${encodeURIComponent(teamName)}`}
-              className="mt-4 flex items-center gap-3 rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
-            >
-              <LogoBlock
-                src={teamLogo}
-                alt={teamName}
-                sizeClass="size-14"
-                roundedClass="rounded-2xl"
-                paddingClass="p-2.5"
-                surfaceTone={teamLogoSurfaceTone}
-                className="bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
-              />
-              <div>
-                <p className="font-semibold text-foreground">{teamName}</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  {teamTag}
-                </p>
-              </div>
-            </Link>
-          </ProfilePanel>
-
-          <ProfilePanel title="Career path">
-            {careerTeams.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                No mapped team history is available for this player yet.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {careerTeams.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="rounded-[18px] border border-border bg-background/75 p-4"
-                  >
-                    <p className="font-semibold text-foreground">
-                      {entry.team}
-                    </p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      {entry.role || "Player"}
-                    </p>
-                    <p
-                      className="mt-2 text-xs text-muted-foreground"
-                      suppressHydrationWarning
-                    >
-                      {formatProfileDate(
-                        entry.joined,
-                        "MMM yyyy",
-                        "Start unknown",
-                      )}
-                      {" · "}
-                      {formatProfileDate(entry.left, "MMM yyyy", "Present")}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ProfilePanel>
-
-          <ProfilePanel title="Related stories">
-            {resolved.relatedArticles.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                No linked stories have been found for this player yet.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {resolved.relatedArticles.map((article) => (
-                  <Link
-                    key={article.id}
-                    to={`/news/${article.id}`}
-                    className="block rounded-[18px] border border-border bg-background/75 p-4 transition-colors hover:border-primary/30"
-                  >
-                    <p className="text-sm font-semibold text-foreground">
-                      {article.title}
-                    </p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      {article.category?.replace(/_/g, " ") || "Story"}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </ProfilePanel>
+          <CurrentTeamPanel
+            teamName={teamName}
+            teamTag={teamTag}
+            teamLogo={teamLogo}
+            teamLogoSurfaceTone={teamLogoSurfaceTone}
+          />
+          <CareerPathPanel teams={careerTeams} />
+          <RelatedStoriesPanel articles={resolved.relatedArticles} />
         </div>
       </div>
 
-      <ProfilePanel title="Individual results">
-        {resolved.playerResults.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            No S/A/B-Tier result rows have been mapped for this player yet.
-          </p>
-        ) : (
-          <ResultsByYearTable
-            buckets={resultYears}
-            title="Results by Year"
-            wrapperClassName="mt-6 space-y-5 border-t border-border pt-5"
-            headingClassName="text-[11px] font-bold uppercase tracking-[0.24em] text-primary"
-            yearClassName="text-[11px] font-bold uppercase tracking-[0.18em] text-primary"
-            tableClassName="w-full min-w-[760px] text-sm"
-            headerRowClassName="border-b border-border text-left text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-            cellClassName="p-3"
-            bodyRowClassName="border-b border-border/70 last:border-b-0"
-          />
-        )}
-      </ProfilePanel>
+      <IndividualResultsPanel
+        resultYears={resultYears}
+        playerResults={resolved.playerResults}
+      />
     </div>
   );
 }

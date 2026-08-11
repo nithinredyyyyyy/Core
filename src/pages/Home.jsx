@@ -1,13 +1,11 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import HomeMobile from "@/components/home/HomeMobile";
 import HomeDesktop from "@/components/home/HomeDesktop";
 import {
   HOME_STAGE_STATUS_STYLES,
   buildTournamentStageLink,
 } from "@/lib/homeContent";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const STACKED_LINKS = [
   {
@@ -25,10 +23,10 @@ const STACKED_LINKS = [
     desktopPose: "xl:right-[13rem] xl:bottom-2 xl:-rotate-[9deg]",
   },
   {
-    title: "Fans",
-    desc: "Predictions, fantasy squads, polls, fan clubs, and the live community floor.",
-    icon: "Waves",
-    link: "/fans",
+    title: "Rankings",
+    desc: "Global power rankings, regional leaderboards, and team statistics.",
+    icon: "TrendingUp",
+    link: "/rankings",
     desktopPose: "xl:right-[6.5rem] xl:bottom-4 xl:-rotate-[2deg]",
   },
   {
@@ -41,11 +39,9 @@ const STACKED_LINKS = [
 ];
 
 export default function Home() {
-  const isMobile = useIsMobile();
-  const homeMode = isMobile ? "mobile" : "desktop";
   const { data: homeView, isLoading: loadHome } = useQuery({
-    queryKey: ["home-view", homeMode],
-    queryFn: () => base44.home.view(homeMode),
+    queryKey: ["home-view", "desktop"],
+    queryFn: () => base44.home.view("desktop"),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
@@ -64,22 +60,6 @@ export default function Home() {
   const featuredCurrentStageLink = buildTournamentStageLink(
     featuredTournament?.id,
     homeView?.featuredSpotlightStage?.name || null,
-  );
-  const mobileQuickActions = (homeView?.mobileQuickActions || []).map(
-    (action) =>
-      action.tournamentId
-          ? {
-              ...action,
-              title: action.title,
-              icon: action.icon,
-              link: `/tournaments?id=${encodeURIComponent(action.tournamentId)}`,
-            }
-          : {
-              ...action,
-              title: action.title,
-              icon: action.icon,
-              link: action.link || "/tournaments",
-            },
   );
 
   if (loadHome && !homeView) {
@@ -104,25 +84,6 @@ export default function Home() {
     );
   }
 
-  if (isMobile) {
-    return (
-      <HomeMobile
-        featuredTournament={featuredTournament}
-        featuredSpotlightStage={featuredSpotlightStage}
-        featuredTournamentLink={featuredTournamentLink}
-        featuredTournamentVisual={
-          homeView?.featuredTournamentVisual || "/images/core-logo.png"
-        }
-        liveMatches={homeView?.liveMatches || []}
-        boardLink={boardLink}
-        mobilePulseCards={homeView?.mobilePulseCards || []}
-        mobileQuickActions={mobileQuickActions}
-        mobileBoardLeaders={homeView?.mobileBoardLeaders || []}
-        nextMatch={homeView?.nextMatch || null}
-      />
-    );
-  }
-
   return (
     <HomeDesktop
       championLogo={homeView?.championLogo || null}
@@ -134,7 +95,7 @@ export default function Home() {
       featuredStages={homeView?.featuredStages || []}
       featuredTournament={featuredTournament}
       featuredTournamentVisual={
-        homeView?.featuredTournamentVisual || "/images/bmps-2026.png"
+        homeView?.featuredTournamentVisual || "/images/bmps-2026.webp"
       }
       featuredTournamentFacts={homeView?.featuredTournamentFacts || []}
       featuredTournamentLink={featuredTournamentLink}

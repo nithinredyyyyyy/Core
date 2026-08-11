@@ -2,6 +2,11 @@
 .env
 .env.*
 
+# Test/build artifacts
+playwright-report/
+test-results/
+*.db
+
 # Logs
 /logs
 *.log
@@ -43,6 +48,17 @@ auth
 auth-wal
 *.sql
 topbar-tail.txt
+rankings-check*.png
+stats_snippet.txt
+test-*.mjs
+test-*.cjs
+test-crash.mjs
+test-pup.cjs
+build_stats.cjs
+extract_stats.cjs
+find_block.cjs
+FILE-STRUCTURE.md
+MVP-PLAN.md
 
 # Local reference/export project and browser profiles
 default project/

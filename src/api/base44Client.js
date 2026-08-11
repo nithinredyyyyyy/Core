@@ -6,14 +6,6 @@ const ENTITY_NAMES = [
   "MatchResult",
   "NewsArticle",
   "TransferWindow",
-  "FanProfile",
-  "FanPrediction",
-  "FanPollVote",
-  "FanChatMessage",
-  "FanFollowItem",
-  "SavedMatch",
-  "FantasySquad",
-  "FanCommentReaction",
   "TeamAlias",
   "PlayerAlias",
   "PlayerTeamHistory",
@@ -40,9 +32,6 @@ const RAW_API_BASE_URL = String(
 ).trim();
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 const FILE_PROTOCOL_API_BASE_URL = "http://127.0.0.1:4000";
-const FAN_USER_ID_KEY = "stagecore_fan_user_id";
-const FAN_USER_NAME_KEY = "stagecore_fan_user_name";
-const FAN_TOKEN_KEY = "stagecore_fan_token";
 const AUTH_USER_ID_KEY = "stagecore_auth_user_id";
 const AUTH_USER_EMAIL_KEY = "stagecore_auth_user_email";
 const AUTH_USER_NAME_KEY = "stagecore_auth_user_name";
@@ -73,18 +62,6 @@ function normalizeEntityRecord(entityName, record) {
   if (entityName === "TransferWindow") {
     return { ...record, players: parseMaybeJson(record.players) || [] };
   }
-  if (entityName === "FanProfile") {
-    return {
-      ...record,
-      badge_inventory: parseMaybeJson(record.badge_inventory) || [],
-    };
-  }
-  if (entityName === "FanPrediction") {
-    return { ...record, top_three: parseMaybeJson(record.top_three) || [] };
-  }
-  if (entityName === "FantasySquad") {
-    return { ...record, picks: parseMaybeJson(record.picks) || [] };
-  }
   if (entityName === "TournamentStage") {
     return {
       ...record,
@@ -113,22 +90,6 @@ function getStoredAdminKey() {
     return window.localStorage.getItem("core_admin_key") || "";
   } catch {
     return "";
-  }
-}
-
-function getStoredFanSession() {
-  if (typeof window === "undefined") {
-    return { userId: "", displayName: "", token: "" };
-  }
-
-  try {
-    return {
-      userId: window.localStorage.getItem(FAN_USER_ID_KEY) || "",
-      displayName: window.localStorage.getItem(FAN_USER_NAME_KEY) || "",
-      token: window.localStorage.getItem(FAN_TOKEN_KEY) || "",
-    };
-  } catch {
-    return { userId: "", displayName: "", token: "" };
   }
 }
 
@@ -168,25 +129,6 @@ function getStoredAuthSession() {
   }
 }
 
-function clearStoredFanSession() {
-  if (typeof window === "undefined") {
-    return { userId: "", displayName: "", token: "" };
-  }
-
-  try {
-    window.localStorage.removeItem(FAN_USER_ID_KEY);
-    window.localStorage.removeItem(FAN_TOKEN_KEY);
-  } catch {
-    // Ignore localStorage cleanup errors.
-  }
-
-  return {
-    userId: "",
-    displayName: window.localStorage.getItem(FAN_USER_NAME_KEY) || "",
-    token: "",
-  };
-}
-
 function clearStoredAuthSession() {
   if (typeof window === "undefined") {
     return { user: null, token: "" };
@@ -204,20 +146,6 @@ function clearStoredAuthSession() {
   }
 
   return { user: null, token: "" };
-}
-
-function persistFanSession(session) {
-  if (typeof window === "undefined") return session;
-
-  try {
-    window.localStorage.setItem(FAN_USER_ID_KEY, session.userId || "");
-    window.localStorage.setItem(FAN_USER_NAME_KEY, session.displayName || "");
-    window.localStorage.setItem(FAN_TOKEN_KEY, session.token || "");
-  } catch {
-    // Ignore localStorage write errors and still return the in-memory session.
-  }
-
-  return session;
 }
 
 function persistAuthSession(session) {
@@ -258,37 +186,9 @@ function buildApiUrl(path) {
   return normalizedPath;
 }
 
-async function refreshFanSession(displayName, userId) {
-  const adminKey = getStoredAdminKey();
-  const response = await fetch(buildApiUrl("/api/fan/session"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(adminKey ? { "X-Core-Admin-Key": adminKey } : {}),
-    },
-    body: JSON.stringify({
-      ...(displayName ? { display_name: displayName } : {}),
-      ...(userId ? { user_id: userId } : {}),
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Request failed with ${response.status}`);
-  }
-
-  const session = await response.json();
-  return persistFanSession(session);
-}
-
 async function request(path, options = {}) {
-  const {
-    __fanSessionRetry = false,
-    headers: requestHeaders = {},
-    ...fetchOptions
-  } = options;
+  const { headers: requestHeaders = {}, ...fetchOptions } = options;
   const adminKey = getStoredAdminKey();
-  const fanSession = getStoredFanSession();
   const authSession = getStoredAuthSession();
 
   const response = await fetch(buildApiUrl(path), {
@@ -298,9 +198,6 @@ async function request(path, options = {}) {
       ...(authSession.token
         ? { "X-StageCore-Auth-Token": authSession.token }
         : {}),
-      ...(fanSession.token
-        ? { "X-StageCore-Fan-Token": fanSession.token }
-        : {}),
       ...requestHeaders,
     },
     ...fetchOptions,
@@ -308,29 +205,6 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const text = await response.text();
-    let parsedError = null;
-    try {
-      parsedError = JSON.parse(text);
-    } catch {
-      parsedError = null;
-    }
-
-    if (
-      response.status === 401 &&
-      parsedError?.code === "fan_session_required" &&
-      !__fanSessionRetry
-    ) {
-      const previousSession = getStoredFanSession();
-      clearStoredFanSession();
-      if (previousSession.displayName || previousSession.userId) {
-        await refreshFanSession(
-          previousSession.displayName,
-          previousSession.userId,
-        );
-        return request(path, { ...options, __fanSessionRetry: true });
-      }
-    }
-
     throw new Error(text || `Request failed with ${response.status}`);
   }
 
@@ -417,11 +291,14 @@ export const base44 = {
     },
   },
   pages: {
-    fans() {
-      return request("/api/pages/fans");
-    },
     tournament(id) {
       return request(`/api/pages/tournament/${encodeURIComponent(id)}`);
+    },
+    tournamentCore(id) {
+      return request(`/api/pages/tournament/${encodeURIComponent(id)}/core`);
+    },
+    tournamentFull(id) {
+      return request(`/api/pages/tournament/${encodeURIComponent(id)}/full`);
     },
     teams() {
       return request("/api/pages/teams");
@@ -433,6 +310,9 @@ export const base44 = {
       return request(
         `/api/pages/leaderboard${toQueryString({ tournament: tournamentId })}`,
       );
+    },
+    rankings() {
+      return request("/api/pages/rankings");
     },
   },
   news: {
@@ -459,20 +339,6 @@ export const base44 = {
       return request("/api/admin/news/backfill", {
         method: "POST",
       });
-    },
-  },
-  retention: {
-    follow(type, targetId, targetLabel, session) {
-      return request("/api/entities/FanFollowItem", {
-        method: "POST",
-        body: JSON.stringify({
-          user_id: session.userId,
-          display_name: session.displayName,
-          target_type: type,
-          target_id: targetId,
-          target_label: targetLabel,
-        }),
-      }).then((payload) => normalizeEntityResponse("FanFollowItem", payload));
     },
   },
   search: {
@@ -543,37 +409,6 @@ export const base44 = {
       clearStoredAuthSession();
     },
     redirectToLogin() {},
-  },
-  fan: {
-    getStoredSession() {
-      return getStoredFanSession();
-    },
-    clearSession() {
-      return clearStoredFanSession();
-    },
-    async createSession(displayName, preferredUserId) {
-      const existing = getStoredFanSession();
-      const payload = {
-        ...(displayName ? { display_name: displayName } : {}),
-        ...(preferredUserId
-          ? { user_id: preferredUserId }
-          : existing.userId
-            ? { user_id: existing.userId }
-            : {}),
-      };
-      const session = await request("/api/fan/session", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      return persistFanSession(session);
-    },
-    async ensureSession(displayName) {
-      const existing = getStoredFanSession();
-      if (existing.userId && existing.displayName && existing.token) {
-        return existing;
-      }
-      return this.createSession(displayName || existing.displayName);
-    },
   },
 };
 

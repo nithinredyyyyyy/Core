@@ -163,7 +163,7 @@ const tournament = {
   start_date: "2025-07-25",
   end_date: "2025-08-03",
   max_teams: 24,
-  banner_url: "/images/pubg-mobile-world-cup-2024.png",
+  banner_url: "/images/pubg-mobile-world-cup-2024.webp",
   description:
     "PUBG Mobile World Cup 2025 was the mid-season international event of the 2025 PUBG Mobile competitive season, held offline at Qiddiya Esports Arena in Riyadh, Saudi Arabia.",
   format_overview:

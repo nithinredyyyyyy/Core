@@ -52,7 +52,7 @@ export function getTournamentChampionFromStages(tournament) {
   const finalsStage =
     stages.find(
       (stage) =>
-        stage?.name === "Grand Finals" &&
+        (stage?.name === "Grand Finals" || stage?.name === "grand finals") &&
         Array.isArray(stage?.standings) &&
         stage.standings.length > 0,
     ) ||

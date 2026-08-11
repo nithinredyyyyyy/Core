@@ -1,0 +1,26 @@
+.tablist {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem; /* space for underline */
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tab:hover {
+  color: var(--foreground-primary);
+}
+
+.tab.active {
+  color: var(--foreground-primary);
+  border-bottom: 2px solid var(--primary);
+}

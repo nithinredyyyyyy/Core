@@ -26,6 +26,21 @@ if (!isRemoteLibsql) {
   db.pragma("journal_mode = WAL");
 }
 
+/**
+ * Runs `fn` inside a SQL transaction on local SQLite. Remote libsql (Hrana)
+ * does not support BEGIN/COMMIT/ROLLBACK across statements, so statements run
+ * directly there (each autocommits). Keeps atomicity locally, reliability on
+ * remote.
+ */
+export const runInTransaction = (fn) => {
+  if (isRemoteLibsql) {
+    fn();
+    return;
+  }
+  const transaction = db.transaction(fn);
+  transaction();
+};
+
 const tableDefinitions = [
   `CREATE TABLE IF NOT EXISTS tournaments (
     id TEXT PRIMARY KEY,
@@ -146,112 +161,6 @@ const tableDefinitions = [
     updated_date TEXT NOT NULL,
     created_by TEXT
   )`,
-  `CREATE TABLE IF NOT EXISTS fan_profiles (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    favorite_team TEXT,
-    total_points INTEGER DEFAULT 0,
-    xp_points INTEGER DEFAULT 0,
-    login_streak INTEGER DEFAULT 0,
-    accuracy_percent REAL DEFAULT 0,
-    badge TEXT DEFAULT 'Bronze',
-    rank_badge TEXT DEFAULT 'Bronze',
-    badge_inventory TEXT,
-    profile_image TEXT,
-    predictions_count INTEGER DEFAULT 0,
-    correct_predictions INTEGER DEFAULT 0,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS fan_predictions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    tournament_id TEXT,
-    tournament_name TEXT,
-    prediction_date TEXT,
-    lock_time TEXT,
-    winner_team TEXT,
-    top_fragger TEXT,
-    top_three TEXT,
-    status TEXT DEFAULT 'pending',
-    awarded_points INTEGER DEFAULT 0,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS fan_poll_votes (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    poll_key TEXT NOT NULL,
-    option TEXT NOT NULL,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS fan_chat_messages (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    tournament_id TEXT,
-    tournament_name TEXT,
-    topic TEXT,
-    body TEXT NOT NULL,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS fan_follow_items (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    target_type TEXT NOT NULL,
-    target_id TEXT,
-    target_label TEXT NOT NULL,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS saved_matches (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    match_id TEXT NOT NULL,
-    note TEXT,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS fantasy_squads (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    tournament_id TEXT,
-    tournament_name TEXT,
-    week_label TEXT,
-    picks TEXT,
-    captain_player_id TEXT,
-    captain_name TEXT,
-    total_points INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'active',
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS fan_comment_reactions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    comment_id TEXT NOT NULL,
-    reaction TEXT,
-    vote_value INTEGER DEFAULT 0,
-    created_date TEXT NOT NULL,
-    updated_date TEXT NOT NULL,
-    created_by TEXT
-  )`,
   `CREATE TABLE IF NOT EXISTS site_settings (
     key TEXT PRIMARY KEY,
     value TEXT,
@@ -287,23 +196,29 @@ function applySqlMigrations() {
     const sql = fs.readFileSync(path.join(migrationDir, file), "utf8").trim();
     if (!sql) continue;
 
-    const transaction = db.transaction(() => {
+    runInTransaction(() => {
       db.exec(sql);
       db.prepare(
         "INSERT INTO schema_migrations (id, applied_date) VALUES (?, ?)",
       ).run(file, new Date().toISOString());
     });
-
-    transaction();
   }
 }
 
-applySqlMigrations();
+try {
+  applySqlMigrations();
+} catch (migrationError) {
+  console.error("Migration warning (non-fatal):", migrationError?.message || migrationError);
+}
 
 const ensureColumn = (table, column, definition) => {
-  const existing = db.prepare(`PRAGMA table_info(${table})`).all();
-  if (!existing.some((entry) => entry.name === column)) {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  try {
+    const existing = db.prepare(`PRAGMA table_info(${table})`).all();
+    if (!existing.some((entry) => entry.name === column)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
+  } catch (e) {
+    console.error(`ensureColumn warning (${table}.${column}):`, e?.message);
   }
 };
 
@@ -318,18 +233,6 @@ ensureColumn("matches", "group_name", "TEXT");
 ensureColumn("match_results", "matches_count", "INTEGER DEFAULT 1");
 ensureColumn("match_results", "wins_count", "INTEGER DEFAULT 0");
 ensureColumn("match_results", "publication_status", "TEXT DEFAULT 'published'");
-ensureColumn("fan_profiles", "favorite_team", "TEXT");
-ensureColumn("fan_profiles", "xp_points", "INTEGER DEFAULT 0");
-ensureColumn("fan_profiles", "login_streak", "INTEGER DEFAULT 0");
-ensureColumn("fan_profiles", "badge", "TEXT DEFAULT 'Bronze'");
-ensureColumn("fan_profiles", "rank_badge", "TEXT DEFAULT 'Bronze'");
-ensureColumn("fan_profiles", "badge_inventory", "TEXT");
-ensureColumn("fan_profiles", "profile_image", "TEXT");
-ensureColumn("fan_profiles", "predictions_count", "INTEGER DEFAULT 0");
-ensureColumn("fan_profiles", "correct_predictions", "INTEGER DEFAULT 0");
-ensureColumn("fan_predictions", "top_three", "TEXT");
-ensureColumn("fan_predictions", "status", "TEXT DEFAULT 'pending'");
-ensureColumn("fan_predictions", "awarded_points", "INTEGER DEFAULT 0");
 ensureColumn("news_articles", "source_name", "TEXT");
 ensureColumn("news_articles", "summary", "TEXT");
 ensureColumn("news_articles", "ai_summary", "TEXT");
@@ -341,27 +244,25 @@ ensureColumn("news_articles", "publication_status", "TEXT DEFAULT 'published'");
 ensureColumn("news_articles", "priority", "TEXT DEFAULT 'routine'");
 ensureColumn("news_articles", "is_auto_ingested", "INTEGER DEFAULT 0");
 ensureColumn("news_articles", "import_hash", "TEXT");
-db.exec(`
-  UPDATE news_articles
-  SET source_type = COALESCE(NULLIF(source_type, ''), 'manual'),
-      verification_status = COALESCE(NULLIF(verification_status, ''), 'verified'),
-      publication_status = COALESCE(NULLIF(publication_status, ''), 'published'),
-      priority = COALESCE(NULLIF(priority, ''), 'routine'),
-      is_auto_ingested = COALESCE(is_auto_ingested, 0)
-`);
-db.exec(`
-  UPDATE fan_profiles
-  SET badge_inventory = COALESCE(badge_inventory, '[]'),
-      rank_badge = COALESCE(NULLIF(rank_badge, ''), badge, 'Bronze'),
-      xp_points = COALESCE(xp_points, total_points, 0),
-      login_streak = COALESCE(login_streak, 0)
-`);
+try {
+  db.exec(`
+    UPDATE news_articles
+    SET source_type = COALESCE(NULLIF(source_type, ''), 'manual'),
+        verification_status = COALESCE(NULLIF(verification_status, ''), 'verified'),
+        publication_status = COALESCE(NULLIF(publication_status, ''), 'published'),
+        priority = COALESCE(NULLIF(priority, ''), 'routine'),
+        is_auto_ingested = COALESCE(is_auto_ingested, 0)
+  `);
+} catch (e) {
+  console.error("news_articles update warning (non-fatal):", e?.message);
+}
 
 const parseJsonField = (value, fallback = []) => {
   if (!value) return fallback;
   try {
     return JSON.parse(value);
-  } catch {
+  } catch (error) {
+    console.error(`[db] Failed to parse JSON field:`, error.message);
     return fallback;
   }
 };
@@ -556,8 +457,11 @@ const getPhaseStageName = (phase) =>
     .split(/\s+-\s+Group\s+/i)[0]
     ?.trim() || null;
 const getPhaseGroupName = (phase) => {
-  const match = String(phase || "").match(/group\s+([a-z0-9]+)/i);
-  return match ? `Group ${String(match[1]).toUpperCase()}` : null;
+  let last = null;
+  for (const match of String(phase || "").matchAll(/group\s+([a-z0-9]+)/gi)) {
+    last = match[1];
+  }
+  return last ? `Group ${String(last).toUpperCase()}` : null;
 };
 
 const inferStageType = (stageName) => {
@@ -628,6 +532,69 @@ const resolvePlayerRecord = (playerLookup, rawName, teamId) => {
   return playerLookup.anyTeamMap.get(normalized) || null;
 };
 
+const PLACEHOLDER_TEAM_NAME = /^(tbd|tba|winner|champions?|pending|by\s*e?e|to\s*be\s*decided|team\s*[0-9]+|group\s*[a-z0-9]+|participants?)$/i;
+const PLACEHOLDER_TEAM_NAME_NORMALIZED =
+  /^(survival|round|semi|final|grand|qualifier|knockout|open|closed|winner|champion|pending|team|group|stage|participant|tbd|tba|bye|slot|seed)[0-9]*$/i;
+
+function isPlaceholderTeamName(name) {
+  const trimmed = String(name || "").trim();
+  if (trimmed.length < 2) return true;
+  const normalized = normalizeLookupValue(trimmed);
+  if (normalized.length < 2) return true;
+  if (PLACEHOLDER_TEAM_NAME.test(trimmed)) return true;
+  return PLACEHOLDER_TEAM_NAME_NORMALIZED.test(normalized);
+}
+
+/**
+ * Ensures every tournament participant has a matching teams row so JSON data
+ * and relational data can never drift. Idempotent and placeholder-safe.
+ */
+function ensureParticipantTeams() {
+  const tournaments = db.prepare("SELECT id, name, game, participants FROM tournaments").all();
+  const teamLookup = buildTeamLookup();
+  const createdNames = new Set();
+  const now = new Date().toISOString();
+
+  const insertTeam = db.prepare(`
+    INSERT INTO teams (
+      id, name, tag, logo_url, game, region, total_kills, total_points, matches_played, wins, created_date, updated_date, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const tournament of tournaments) {
+    const participants = parseJsonField(tournament.participants);
+    for (const participant of participants) {
+      const name = String(participant?.team || "").trim();
+      if (!name) continue;
+      const normalized = normalizeLookupValue(name);
+      if (createdNames.has(normalized)) continue;
+      if (isPlaceholderTeamName(name)) continue;
+      if (resolveTeamRecord(teamLookup, name)) continue;
+
+      insertTeam.run(
+        randomUUID(),
+        name,
+        name.replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase() || "TBD",
+        null,
+        tournament.game || "PUBG Mobile",
+        null,
+        0,
+        0,
+        0,
+        0,
+        now,
+        now,
+        "system:participant-sync",
+      );
+      createdNames.add(normalized);
+    }
+  }
+
+  if (createdNames.size > 0) {
+    console.log(`[participant-sync] created ${createdNames.size} missing team(s): ${[...createdNames].join(", ")}`);
+  }
+}
+
 function backfillNormalizedData() {
   const tournaments = db
     .prepare(
@@ -688,7 +655,7 @@ function backfillNormalizedData() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const transaction = db.transaction(() => {
+  runInTransaction(() => {
     const seenTeamAliases = new Set();
     const seenPlayerAliases = new Set();
     const seenPlayerTeamHistory = new Set();
@@ -1108,11 +1075,10 @@ function backfillNormalizedData() {
       });
     }
   });
-
-  transaction();
 }
 
 if (process.env.CORE_BACKFILL_NORMALIZED_ON_STARTUP === "1") {
+  ensureParticipantTeams();
   backfillNormalizedData();
 }
 
@@ -1252,108 +1218,6 @@ export const entityConfigs = {
     ],
     jsonFields: ["players"],
   },
-  FanProfile: {
-    table: "fan_profiles",
-    fields: [
-      "user_id",
-      "display_name",
-      "favorite_team",
-      "total_points",
-      "xp_points",
-      "login_streak",
-      "accuracy_percent",
-      "badge",
-      "rank_badge",
-      "badge_inventory",
-      "profile_image",
-      "predictions_count",
-      "correct_predictions",
-      "created_by",
-    ],
-    jsonFields: ["badge_inventory"],
-  },
-  FanPrediction: {
-    table: "fan_predictions",
-    fields: [
-      "user_id",
-      "display_name",
-      "tournament_id",
-      "tournament_name",
-      "prediction_date",
-      "lock_time",
-      "winner_team",
-      "top_fragger",
-      "top_three",
-      "status",
-      "awarded_points",
-      "created_by",
-    ],
-    jsonFields: ["top_three"],
-  },
-  FanPollVote: {
-    table: "fan_poll_votes",
-    fields: ["user_id", "display_name", "poll_key", "option", "created_by"],
-    jsonFields: [],
-  },
-  FanChatMessage: {
-    table: "fan_chat_messages",
-    fields: [
-      "user_id",
-      "display_name",
-      "tournament_id",
-      "tournament_name",
-      "topic",
-      "body",
-      "created_by",
-    ],
-    jsonFields: [],
-  },
-  FanFollowItem: {
-    table: "fan_follow_items",
-    fields: [
-      "user_id",
-      "display_name",
-      "target_type",
-      "target_id",
-      "target_label",
-      "created_by",
-    ],
-    jsonFields: [],
-  },
-  SavedMatch: {
-    table: "saved_matches",
-    fields: ["user_id", "display_name", "match_id", "note", "created_by"],
-    jsonFields: [],
-  },
-  FantasySquad: {
-    table: "fantasy_squads",
-    fields: [
-      "user_id",
-      "display_name",
-      "tournament_id",
-      "tournament_name",
-      "week_label",
-      "picks",
-      "captain_player_id",
-      "captain_name",
-      "total_points",
-      "status",
-      "created_by",
-    ],
-    jsonFields: ["picks"],
-  },
-  FanCommentReaction: {
-    table: "fan_comment_reactions",
-    fields: [
-      "user_id",
-      "display_name",
-      "comment_id",
-      "reaction",
-      "vote_value",
-      "created_by",
-    ],
-    jsonFields: [],
-  },
   TeamAlias: {
     table: "team_aliases",
     fields: ["team_id", "alias", "normalized_alias", "alias_type"],
@@ -1491,47 +1355,49 @@ export function serializePayload(config, payload) {
 }
 
 export function recomputeTeamStats() {
-  db.prepare(
-    `
-    UPDATE teams
-    SET total_kills = 0,
-        total_points = 0,
-        matches_played = 0,
-        wins = 0,
-        updated_date = ?
-  `,
-  ).run(new Date().toISOString());
+  runInTransaction(() => {
+    db.prepare(
+      `
+      UPDATE teams
+      SET total_kills = 0,
+          total_points = 0,
+          matches_played = 0,
+          wins = 0,
+          updated_date = ?
+    `,
+    ).run(new Date().toISOString());
 
-  db.prepare(
-    `
-    UPDATE teams
-    SET total_kills = COALESCE((
-          SELECT SUM(mr.kill_points) FROM match_results mr
-          WHERE mr.team_id = teams.id
-            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
-        ), 0),
-        total_points = COALESCE((
-          SELECT SUM(mr.total_points) FROM match_results mr
-          WHERE mr.team_id = teams.id
-            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
-        ), 0),
-        matches_played = COALESCE((
-          SELECT SUM(COALESCE(mr.matches_count, 1)) FROM match_results mr
-          WHERE mr.team_id = teams.id
-            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
-        ), 0),
-        wins = COALESCE((
-          SELECT SUM(
-            CASE
-              WHEN mr.wins_count IS NOT NULL AND mr.wins_count > 0 THEN mr.wins_count
-              WHEN mr.placement = 1 THEN 1
-              ELSE 0
-            END
-          ) FROM match_results mr
-          WHERE mr.team_id = teams.id
-            AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
-        ), 0),
-        updated_date = ?
-  `,
-  ).run(new Date().toISOString());
+    db.prepare(
+      `
+      UPDATE teams
+      SET total_kills = COALESCE((
+            SELECT SUM(mr.kill_points) FROM match_results mr
+            WHERE mr.team_id = teams.id
+              AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+          ), 0),
+          total_points = COALESCE((
+            SELECT SUM(mr.total_points) FROM match_results mr
+            WHERE mr.team_id = teams.id
+              AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+          ), 0),
+          matches_played = COALESCE((
+            SELECT SUM(COALESCE(mr.matches_count, 1)) FROM match_results mr
+            WHERE mr.team_id = teams.id
+              AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+          ), 0),
+          wins = COALESCE((
+            SELECT SUM(
+              CASE
+                WHEN mr.wins_count IS NOT NULL AND mr.wins_count > 0 THEN mr.wins_count
+                WHEN mr.placement = 1 THEN 1
+                ELSE 0
+              END
+            ) FROM match_results mr
+            WHERE mr.team_id = teams.id
+              AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+          ), 0),
+          updated_date = ?
+    `,
+    ).run(new Date().toISOString());
+  });
 }

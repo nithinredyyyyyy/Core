@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2025-09-18",
   end_date: "2025-10-12",
   max_teams: 48,
-  banner_url: "/images/bmsd-2025.png",
+  banner_url: "/images/bmsd-2025.webp",
   description:
     "Battlegrounds Mobile India Showdown 2025 was the second edition of BMSD, organized by KRAFTON with a ₹1,00,00,000 prize pool. The event ran from September 18 to October 12, 2025 and concluded with Orangutan winning the Grand Finals.",
   format_overview:

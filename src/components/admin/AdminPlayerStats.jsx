@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import {
   BMPS_2026_QUALIFIER_PLAYER_STATS,
+  BMPS_2026_GRAND_FINALS_PLAYER_STATS,
+  BMPS_2026_LCQ_PLAYER_STATS,
   BMPS_2026_SEMI_FINALS_PLAYER_STATS,
   BMPS_2026_SURVIVAL_PLAYER_STATS,
   buildBmps2026OverallPlayerStats,
@@ -18,6 +20,8 @@ const EMPTY_FORM = {
   qualifierRaw: "",
   survivalRaw: "",
   semiFinalsRaw: "",
+  lcqRaw: "",
+  grandFinalsRaw: "",
 };
 
 function countRows(raw, fallbackRows) {
@@ -93,18 +97,28 @@ export default function AdminPlayerStats() {
   });
 
   useEffect(() => {
-    setForm({
-      qualifierRaw: savedStats.qualifierRaw || "",
-      survivalRaw: savedStats.survivalRaw || "",
-      semiFinalsRaw: savedStats.semiFinalsRaw || "",
-    });
-  }, [savedStats]);
+    if (!isLoading && savedStats && Object.keys(savedStats).length > 0) {
+      setForm((prev) => {
+        const hasUserEdits = Object.values(prev).some((v) => v !== "");
+        if (hasUserEdits) return prev;
+        return {
+          qualifierRaw: savedStats.qualifierRaw || "",
+          survivalRaw: savedStats.survivalRaw || "",
+          semiFinalsRaw: savedStats.semiFinalsRaw || "",
+          lcqRaw: savedStats.lcqRaw || "",
+          grandFinalsRaw: savedStats.grandFinalsRaw || "",
+        };
+      });
+    }
+  }, [savedStats, isLoading]);
 
   const previews = useMemo(
     () => ({
       qualifier: countRows(form.qualifierRaw, BMPS_2026_QUALIFIER_PLAYER_STATS),
       survival: countRows(form.survivalRaw, BMPS_2026_SURVIVAL_PLAYER_STATS),
       semiFinals: countRows(form.semiFinalsRaw, BMPS_2026_SEMI_FINALS_PLAYER_STATS),
+      lcq: countRows(form.lcqRaw, BMPS_2026_LCQ_PLAYER_STATS),
+      grandFinals: countRows(form.grandFinalsRaw, BMPS_2026_GRAND_FINALS_PLAYER_STATS),
     }),
     [form],
   );
@@ -119,7 +133,13 @@ export default function AdminPlayerStats() {
     const semiFinals = form.semiFinalsRaw.trim()
       ? parseBmps2026EliminatorStats(form.semiFinalsRaw)
       : BMPS_2026_SEMI_FINALS_PLAYER_STATS;
-    return buildBmps2026OverallPlayerStats([qualifier, survival, semiFinals]).length;
+    const lcq = form.lcqRaw.trim()
+      ? parseBmps2026EliminatorStats(form.lcqRaw)
+      : BMPS_2026_LCQ_PLAYER_STATS;
+    const grandFinals = form.grandFinalsRaw.trim()
+      ? parseBmps2026EliminatorStats(form.grandFinalsRaw)
+      : BMPS_2026_GRAND_FINALS_PLAYER_STATS;
+    return buildBmps2026OverallPlayerStats([qualifier, survival, semiFinals, lcq, grandFinals]).length;
   }, [form]);
 
   const saveMutation = useMutation({
@@ -153,6 +173,12 @@ export default function AdminPlayerStats() {
       semiFinalsRaw:
         extractTemplateBlock(fullFilePaste, "BMPS_2026_SEMI_FINALS_PLAYER_STATS_RAW") ||
         form.semiFinalsRaw,
+      lcqRaw:
+        extractTemplateBlock(fullFilePaste, "BMPS_2026_LCQ_PLAYER_STATS_RAW") ||
+        form.lcqRaw,
+      grandFinalsRaw:
+        extractTemplateBlock(fullFilePaste, "BMPS_2026_GRAND_FINALS_PLAYER_STATS_RAW") ||
+        form.grandFinalsRaw,
     };
     setForm(nextForm);
     toast({ title: "Stats blocks extracted" });
@@ -240,6 +266,22 @@ export default function AdminPlayerStats() {
         onChange={(value) => setForm((current) => ({ ...current, semiFinalsRaw: value }))}
         rows={10}
         preview={previews.semiFinals}
+      />
+      <StatTextarea
+        id="bmps-lcq-stats"
+        label="Last Chance (LCQ)"
+        value={form.lcqRaw}
+        onChange={(value) => setForm((current) => ({ ...current, lcqRaw: value }))}
+        rows={10}
+        preview={previews.lcq}
+      />
+      <StatTextarea
+        id="bmps-grand-finals-stats"
+        label="Grand Finals"
+        value={form.grandFinalsRaw}
+        onChange={(value) => setForm((current) => ({ ...current, grandFinalsRaw: value }))}
+        rows={10}
+        preview={previews.grandFinals}
       />
 
       <div className="sticky bottom-4 z-20 rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur">

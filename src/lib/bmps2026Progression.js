@@ -68,6 +68,8 @@ function normalizeStageName(stageName) {
     .toLowerCase();
 }
 
+
+
 function getBmps2026StageDestination({ stageName, group, placement }) {
   const normalizedStage = normalizeStageName(stageName);
   const normalizedGroup = String(group || "")
@@ -498,7 +500,7 @@ export function deriveBmps2026ParticipantEntries(
   return derivedEntries;
 }
 
-export function resolveTournamentParticipantState({
+export function resolveBmps2026ParticipantState({
   tournament,
   teams = [],
   matches = [],

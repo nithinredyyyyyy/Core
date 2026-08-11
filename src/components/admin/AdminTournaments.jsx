@@ -350,17 +350,24 @@ function parseRows(text, fields = [], lastFieldParser) {
     }, []);
 }
 
+function splitParticipantPhase(phase = "") {
+  const match = String(phase).match(/^(.+?)\s+-\s+(Group\s+.*)$/i);
+  return match
+    ? { stage: match[1].trim(), group: match[2].trim() }
+    : { stage: String(phase || "").trim(), group: "" };
+}
+
 function serializeParticipants(items = []) {
-  return (items || []).map((item) => ({
-    placement: item.placement ?? "",
-    team: item.team ?? "",
-    stage:
-      item.group_name && item.stage
-        ? item.stage
-        : item.phase || item.stage || "",
-    group_name: item.group_name || "",
-    playersText: Array.isArray(item.players) ? item.players.join(", ") : "",
-  }));
+  return (items || []).map((item) => {
+    const split = splitParticipantPhase(item.phase);
+    return {
+      placement: item.placement ?? "",
+      team: item.team ?? "",
+      stage: item.stage || split.stage || "",
+      group_name: item.group_name || split.group || "",
+      playersText: Array.isArray(item.players) ? item.players.join(", ") : "",
+    };
+  });
 }
 
 function normalizeParticipantRows(items = []) {
@@ -388,7 +395,8 @@ function normalizeParticipantRows(items = []) {
 function normalizeStages(stages = []) {
   return stages.reduce((items, stage, index) => {
     if (!stage.name?.trim()) return items;
-    items.push({ ...stage,
+    const { mapRotationText, ...rest } = stage;
+    items.push({ ...rest,
       name: stage.name.trim(),
       order: index + 1,
       teamCount: stage.teamCount ? Number(stage.teamCount) : undefined,
@@ -548,7 +556,7 @@ function TournamentBasicsFields({ form, setForm }) {
         </div>
         <div>
           <Label>Max Teams</Label>
-          <Input type="number" value={form.max_teams || 16} onChange={(e) => setForm((prev) => ({ ...prev, max_teams: parseInt(e.target.value) }))} />
+          <Input type="number" value={form.max_teams ?? 16} onChange={(e) => setForm((prev) => ({ ...prev, max_teams: e.target.value === "" ? 16 : (parseInt(e.target.value, 10) || 16) }))} />
         </div>
         <div>
           <Label>Banner URL</Label>
@@ -608,7 +616,7 @@ function TournamentStructuredFields({
           </div>
           <div className="space-y-2">
             {(form.participantsRows || []).map((entry, idx) => (
-              <div key={`${entry.team || "participant"}-${entry.stage || ""}-${entry.group_name || ""}-${entry.playersText || ""}-${entry.placement || ""}`} className="grid gap-2 rounded-lg border border-border bg-card p-3 md:grid-cols-[90px_1.6fr_1fr_0.9fr_1.6fr_auto]">
+              <div key={idx} className="grid gap-2 rounded-lg border border-border bg-card p-3 md:grid-cols-[90px_1.6fr_1fr_0.9fr_1.6fr_auto]">
                 <Input type="number" placeholder="Place" value={entry.placement ?? ""} onChange={(e) => updateParticipant(idx, "placement", e.target.value)} />
                 <Select value={entry.team || ""} onValueChange={(value) => updateParticipant(idx, "team", value)}>
                   <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
@@ -642,7 +650,7 @@ function TournamentStagesEditor({ form, isMutating, addStage, updateStage, remov
       </div>
       <div className="space-y-2">
         {(form.stages || []).map((stage, idx) => (
-          <div key={`${stage.name || "stage"}-${stage.status || ""}-${stage.teamCount || ""}-${stage.summary || ""}`} className="rounded-lg border border-border p-3 space-y-3">
+          <div key={idx} className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex gap-2 items-center">
               <Input placeholder="Stage name" value={stage.name} onChange={(e) => updateStage(idx, "name", e.target.value)} className="flex-1" />
               <Input type="number" placeholder="Teams" value={stage.teamCount ?? ""} onChange={(e) => updateStage(idx, "teamCount", e.target.value)} className="w-24" />
@@ -1273,7 +1281,7 @@ function TournamentList({
             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(t)} disabled={isMutating}>
               <Pencil className="size-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" onClick={() => deleteTournament(t.id)} disabled={isMutating}>
+            <Button type="button" variant="ghost" size="icon" onClick={() => { if (window.confirm("Delete this tournament?")) deleteTournament(t.id); }} disabled={isMutating}>
               <Trash2 className="size-4 text-destructive" />
             </Button>
           </div>
@@ -1304,7 +1312,7 @@ function useAdminTournamentsState() {
     queryFn: () =>
       base44.entities.Tournament.list("-created_date", 50, undefined, {
         fields:
-          "id,name,game,tier,status,prize_pool,start_date,end_date,max_teams,banner_url,created_date,updated_date",
+          "id,name,game,tier,status,prize_pool,start_date,end_date,max_teams,banner_url,created_date,updated_date,description,format_overview,stages",
       }),
     staleTime: 60_000,
   });
@@ -1347,6 +1355,13 @@ function useAdminTournamentsState() {
       resetForm();
       toast({ title: "Tournament created" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to create tournament",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateMut = useMutation({
@@ -1357,6 +1372,13 @@ function useAdminTournamentsState() {
       resetForm();
       toast({ title: "Tournament updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update tournament",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteMut = useMutation({
@@ -1365,6 +1387,13 @@ function useAdminTournamentsState() {
       qc.invalidateQueries({ queryKey: ["admin-tournaments"] });
       qc.invalidateQueries({ queryKey: ["tournaments"] });
       toast({ title: "Tournament deleted" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete tournament",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -1439,6 +1468,7 @@ function useAdminTournamentsState() {
         "team",
         "inr",
         "usd",
+        "stage",
       ]),
       awardsText: serializeRows(fullTournament.awards, [
         "title",
@@ -1479,6 +1509,7 @@ function useAdminTournamentsState() {
         "team",
         "inr",
         "usd",
+        "stage",
       ]),
       awards: parseRows(form.awardsText || "", [
         "title",
@@ -1506,14 +1537,13 @@ function useAdminTournamentsState() {
   };
 
   const addStage = () => {
-    const stages = form.stages || [];
     setForm((prev) => ({
       ...prev,
       stages: [
-        ...stages,
+        ...(prev.stages || []),
         {
           name: "",
-          order: stages.length + 1,
+          order: (prev.stages || []).length + 1,
           status: "upcoming",
           teamCount: "",
           summary: "",
@@ -1524,44 +1554,54 @@ function useAdminTournamentsState() {
   };
 
   const removeStage = (idx) => {
-    const stages = [...(form.stages || [])];
-    stages.splice(idx, 1);
-    setForm((prev) => ({ ...prev, stages }));
+    setForm((prev) => {
+      const stages = [...(prev.stages || [])];
+      stages.splice(idx, 1);
+      return { ...prev, stages };
+    });
   };
 
   const updateStage = (idx, field, value) => {
-    const stages = [...(form.stages || [])];
-    stages[idx] = { ...stages[idx], [field]: value };
-    setForm((prev) => ({ ...prev, stages }));
+    setForm((prev) => {
+      const stages = [...(prev.stages || [])];
+      stages[idx] = { ...stages[idx], [field]: value };
+      return { ...prev, stages };
+    });
   };
 
   const addParticipant = () => {
-    const rows = form.participantsRows || [];
-    setForm((prev) => ({
-      ...prev,
-      participantsRows: [
-        ...rows,
-        {
-          placement: rows.length + 1,
-          team: "",
-          stage: "",
-          group_name: "",
-          playersText: "",
-        },
-      ],
-    }));
+    setForm((prev) => {
+      const rows = prev.participantsRows || [];
+      return {
+        ...prev,
+        participantsRows: [
+          ...rows,
+          {
+            placement: rows.length + 1,
+            team: "",
+            stage: "",
+            group_name: "",
+            playersText: "",
+          },
+        ],
+      };
+    });
   };
 
   const updateParticipant = (idx, field, value) => {
-    const rows = [...(form.participantsRows || [])];
-    rows[idx] = { ...rows[idx], [field]: value };
-    setForm((prev) => ({ ...prev, participantsRows: rows }));
+    setForm((prev) => {
+      const rows = [...(prev.participantsRows || [])];
+      rows[idx] = { ...rows[idx], [field]: value };
+      return { ...prev, participantsRows: rows };
+    });
   };
 
   const removeParticipant = (idx) => {
-    const rows = [...(form.participantsRows || [])];
-    rows.splice(idx, 1);
-    setForm((prev) => ({ ...prev, participantsRows: rows }));
+    setForm((prev) => {
+      const rows = [...(prev.participantsRows || [])];
+      rows.splice(idx, 1);
+      return { ...prev, participantsRows: rows };
+    });
   };
 
 

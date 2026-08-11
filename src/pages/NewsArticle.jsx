@@ -1,17 +1,13 @@
-import React, { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
-  MessageSquare,
   Sparkles,
   Tag,
-  TrendingUp,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useToast } from "@/components/ui/use-toast";
-import { aggregateCommentReactions, buildTrendingArticles, FAN_REACTION_OPTIONS } from "@/lib/fanZone";
 import { getNewsCategoryLabel } from "@/lib/newsCategories";
 import {
   decodeNewsText,
@@ -21,7 +17,7 @@ import {
 
 function DetailShell({ children }) {
   return (
-    <section className="overflow-hidden rounded-[32px] border border-[#e7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,241,235,0.92))] shadow-[0_28px_80px_rgba(15,23,42,0.08)]">
+    <section className="mb-16">
       {children}
     </section>
   );
@@ -38,77 +34,39 @@ function formatDate(value) {
   });
 }
 
-function CommentComposer({ onSubmit, isPending }) {
-  const [value, setValue] = useState("");
-
+function ArticleHeader({ article, tags, tournaments }) {
   return (
-    <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a7866]">
-        Join the discussion
-      </p>
-      <textarea
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        maxLength={280}
-        placeholder="Share your take on this story…"
-        aria-label="Share your take on this story"
-        className="mt-4 min-h-[140px] w-full rounded-[20px] border border-[#eadfce] bg-[#fffdfa] px-4 py-3 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-      />
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-[12px] text-[#8a7866]">
-          Comments, reactions, and votes feed the article heat.
-        </p>
-        <button
-          type="button"
-          disabled={!value.trim() || isPending}
-          onClick={() => {
-            onSubmit(value.trim());
-            setValue("");
-          }}
-          className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <MessageSquare className="size-4" />
-          {isPending ? "Posting..." : "Post comment"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ArticleHeader({ article, articleComments, tags, tournaments, trendScore }) {
-  return (
-    <div className="border-b border-[#eadfce] px-5 py-6 sm:px-6">
+    <div className="border-b border-brand-border px-5 py-6 sm:px-6">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#fff2e6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ff7b57]">
+        <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
           {getNewsCategoryLabel(article.category)}
         </span>
-        <span className="rounded-full border border-[#eadfce] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a7866]">
+        <span className="rounded-full border border-brand-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-taupe">
           {article.game || "BGMI"}
         </span>
         {article.ai_summary ? (
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
             <Sparkles className="size-3.5" />
             AI summary
           </span>
         ) : null}
       </div>
-      <h1 className="mt-5 max-w-[18ch] text-[2.4rem] font-semibold leading-[0.94] tracking-[-0.06em] text-[#11131a] sm:text-[3.5rem]">
+      <h1 className="mt-5 max-w-[18ch] text-[2.4rem] font-semibold leading-[0.94] tracking-[-0.06em] text-brand-ink sm:text-[3.5rem]">
         {decodeNewsText(article.title)}
       </h1>
-      <p className="mt-4 max-w-3xl text-sm leading-7 text-[#5c6472]">
+      <p className="mt-4 max-w-3xl text-sm leading-7 text-brand-slate">
         {getEditorialNewsSummary(article, tournaments)}
       </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {[
           ["Published", formatDate(article.created_date)],
-          ["Comments", articleComments.length],
-          ["Trending", trendScore],
+          ["Game", article.game || "BGMI"],
           ["Tags", tags.length || 0],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-[20px] bg-[#f8f2ec] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a7866]">{label}</p>
-            <p className="mt-2 text-sm font-semibold text-[#11131a]">{value}</p>
+          <div key={label} className="rounded-[20px] bg-brand-cream-milk p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-taupe">{label}</p>
+            <p className="mt-2 text-sm font-semibold text-brand-ink">{value}</p>
           </div>
         ))}
       </div>
@@ -116,135 +74,49 @@ function ArticleHeader({ article, articleComments, tags, tournaments, trendScore
   );
 }
 
-function ArticleBodyColumn({
-  article,
-  articleComments,
-  blocks,
-  commentMutation,
-  fanSession,
-  reactionMutation,
-}) {
+function ArticleBodyColumn({ article, blocks }) {
   return (
     <div className="space-y-6">
       {article.ai_summary ? (
-        <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-          <p className="type-kicker text-[#8a7866]">AI-generated summary</p>
-          <p className="mt-3 text-sm leading-7 text-[#5c6472]">
+        <div className="rounded-[24px] border border-brand-border bg-white p-5">
+          <p className="type-kicker text-brand-taupe">AI-generated summary</p>
+          <p className="mt-3 text-sm leading-7 text-brand-slate">
             {decodeNewsText(article.ai_summary)}
           </p>
         </div>
       ) : null}
 
-      <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
+      <div className="rounded-[24px] border border-brand-border bg-white p-5">
         <div className="space-y-5">
           {blocks.map((block, index) =>
             block.type === "heading" ? (
-              <h2 key={`${block.text}-${index}`} className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[#11131a]">
+              <h2 key={`${block.text}-${index}`} className="text-[1.25rem] font-semibold tracking-[-0.03em] text-brand-ink">
                 {decodeNewsText(block.text)}
               </h2>
             ) : (
-              <p key={`${block.text}-${index}`} className="text-sm leading-8 text-[#414854]">
+              <p key={`${block.text}-${index}`} className="text-sm leading-8 text-brand-slate-ink">
                 {decodeNewsText(block.text)}
               </p>
             ),
           )}
         </div>
       </div>
-
-      {fanSession.userId ? (
-        <CommentComposer
-          onSubmit={(body) => commentMutation.mutate(body)}
-          isPending={commentMutation.isPending}
-        />
-      ) : (
-        <div className="rounded-[24px] border border-[#eadfce] bg-white p-5 text-sm text-[#5c6472]">
-          Sign in to profile before joining the article discussion.
-        </div>
-      )}
-
-      <ArticleComments
-        articleComments={articleComments}
-        fanSession={fanSession}
-        reactionMutation={reactionMutation}
-      />
     </div>
   );
 }
 
-function ArticleComments({ articleComments, fanSession, reactionMutation }) {
-  return (
-    <div className="space-y-3">
-      {articleComments.length > 0 ? (
-        articleComments.map((comment) => (
-          <div key={comment.id} className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-[#11131a]">{comment.display_name}</p>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
-                  {formatDate(comment.created_date)}
-                </p>
-              </div>
-              <MessageSquare className="size-4 text-primary" />
-            </div>
-            <p className="mt-4 text-sm leading-7 text-[#5c6472]">{comment.body}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {[
-                ["up", 1, `↑ ${comment.reactionSummary.upvotes}`],
-                ["down", -1, `↓ ${comment.reactionSummary.downvotes}`],
-              ].map(([key, voteValue, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  disabled={!fanSession.userId}
-                  onClick={() =>
-                    reactionMutation.mutate({ commentId: comment.id, reaction: "", voteValue })
-                  }
-                  className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                >
-                  {label}
-                </button>
-              ))}
-              {FAN_REACTION_OPTIONS.map((reaction) => (
-                <button
-                  key={reaction.key}
-                  type="button"
-                  disabled={!fanSession.userId}
-                  onClick={() =>
-                    reactionMutation.mutate({
-                      commentId: comment.id,
-                      reaction: reaction.key,
-                      voteValue: 0,
-                    })
-                  }
-                  className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                >
-                  {reaction.emoji} {comment.reactionSummary.emojis?.[reaction.key] || 0}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="rounded-[24px] border border-[#eadfce] bg-white p-5 text-sm text-[#5c6472]">
-          No comments on this story yet. Open the article floor with the first take.
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ArticleSideColumn({ relatedArticles, tags, tournaments, trending }) {
+function ArticleSideColumn({ relatedArticles, tags, tournaments }) {
   return (
     <div className="space-y-6">
       {tags.length > 0 ? (
         <DetailShell>
           <div className="px-5 py-5 sm:px-6">
-            <p className="type-kicker text-[#8a7866]">Tags</p>
+            <p className="type-kicker text-brand-taupe">Tags</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8a7866]"
+                  className="inline-flex items-center gap-2 rounded-full border border-brand-border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe"
                 >
                   <Tag className="size-3.5" />
                   {tag}
@@ -257,54 +129,21 @@ function ArticleSideColumn({ relatedArticles, tags, tournaments, trending }) {
 
       <DetailShell>
         <div className="px-5 py-5 sm:px-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="type-kicker text-[#8a7866]">Trending rail</p>
-              <h2 className="type-title-md mt-2 text-[#11131a]">What readers are opening next</h2>
-            </div>
-            <TrendingUp className="size-4 text-primary" />
-          </div>
-          <div className="mt-5 space-y-3">
-            {trending.slice(0, 5).map((entry, index) => (
-              <Link
-                key={entry.id}
-                to={`/news/${entry.id}`}
-                className="flex items-center gap-4 rounded-[22px] border border-[#eadfce] bg-white p-4 transition hover:border-[#d7c5b1]"
-              >
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-[16px] bg-[#fff2e6] text-sm font-black text-[#ff7b57]">
-                  {index + 1}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[#11131a]">
-                    {decodeNewsText(entry.title)}
-                  </p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
-                    {entry.trendScore} trend score
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </DetailShell>
-
-      <DetailShell>
-        <div className="px-5 py-5 sm:px-6">
-          <p className="type-kicker text-[#8a7866]">Related coverage</p>
+          <p className="type-kicker text-brand-taupe">Related coverage</p>
           <div className="mt-5 space-y-3">
             {relatedArticles.map((entry) => (
               <Link
                 key={entry.id}
                 to={`/news/${entry.id}`}
-                className="block rounded-[22px] border border-[#eadfce] bg-white p-4 transition hover:border-[#d7c5b1]"
+                className="block rounded-[22px] border border-brand-border bg-white p-4 transition hover:border-brand-border-lift-2"
               >
-                <p className="text-sm font-semibold text-[#11131a]">
+                <p className="text-sm font-semibold text-brand-ink">
                   {decodeNewsText(entry.title)}
                 </p>
-                <p className="mt-2 text-[12px] leading-6 text-[#5c6472]">
+                <p className="mt-2 text-[12px] leading-6 text-brand-slate">
                   {getEditorialNewsSummary(entry, tournaments)}
                 </p>
-                <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#11131a]">
+                <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-ink">
                   Open coverage <ArrowRight className="size-3.5" />
                 </span>
               </Link>
@@ -318,9 +157,6 @@ function ArticleSideColumn({ relatedArticles, tags, tournaments, trending }) {
 
 export default function NewsArticle() {
   const { articleId } = useParams();
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  const fanSession = base44.fan.getStoredSession();
 
   const { data: article } = useQuery({
     queryKey: ["news-article", articleId],
@@ -335,24 +171,6 @@ export default function NewsArticle() {
     queryKey: ["news-article-tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 60),
   });
-  const { data: comments = [] } = useQuery({
-    queryKey: ["news-article-comments"],
-    queryFn: () => base44.entities.FanChatMessage.list("-created_date", 300),
-  });
-  const { data: reactions = [] } = useQuery({
-    queryKey: ["news-article-reactions"],
-    queryFn: () => base44.entities.FanCommentReaction.list("-created_date", 600),
-  });
-
-  const articleComments = useMemo(() => {
-    const scoped = comments.filter((entry) => entry.topic === `news:${articleId}`);
-    return aggregateCommentReactions(scoped, reactions);
-  }, [articleId, comments, reactions]);
-
-  const trending = useMemo(
-    () => buildTrendingArticles(articles, comments, reactions),
-    [articles, comments, reactions],
-  );
 
   const relatedArticles = useMemo(() => {
     if (!article) return [];
@@ -377,55 +195,21 @@ export default function NewsArticle() {
     [article, tournaments],
   );
 
-  const commentMutation = useMutation({
-    mutationFn: (body) =>
-      base44.entities.FanChatMessage.create({
-        user_id: fanSession.userId,
-        display_name: fanSession.displayName,
-        topic: `news:${articleId}`,
-        body,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["news-article-comments"] });
-      qc.invalidateQueries({ queryKey: ["news-comments"] });
-      toast({
-        title: "Comment posted",
-        description: "Your take is now live under this story.",
-      });
-    },
-  });
-
-  const reactionMutation = useMutation({
-    mutationFn: ({ commentId, reaction, voteValue }) =>
-      base44.entities.FanCommentReaction.create({
-        user_id: fanSession.userId,
-        display_name: fanSession.displayName,
-        comment_id: commentId,
-        reaction,
-        vote_value: voteValue,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["news-article-reactions"] });
-      qc.invalidateQueries({ queryKey: ["news-reactions"] });
-    },
-  });
-
   if (!article) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center rounded-[28px] border border-dashed border-[#d9ccbb] bg-[rgba(255,255,255,0.75)] p-6 text-sm text-[#5c6472]">
+      <div className="flex min-h-[40vh] items-center justify-center rounded-[28px] border border-dashed border-brand-border-faint bg-[rgba(255,255,255,0.75)] p-6 text-sm text-brand-slate">
         Loading article…
       </div>
     );
   }
 
   const tags = Array.isArray(article.tags) ? article.tags : [];
-  const trendScore = trending.find((entry) => entry.id === article.id)?.trendScore || 0;
 
   return (
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6">
       <Link
         to="/news"
-        className="inline-flex items-center gap-2 rounded-full border border-[#e7ddd1] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#5c6472] transition hover:text-[#11131a]"
+        className="inline-flex items-center gap-2 rounded-full border border-brand-border-tan bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-brand-slate transition hover:text-brand-ink"
       >
         <ArrowLeft className="size-3.5" />
         Back to news desk
@@ -434,26 +218,19 @@ export default function NewsArticle() {
       <DetailShell>
         <ArticleHeader
           article={article}
-          articleComments={articleComments}
           tags={tags}
           tournaments={tournaments}
-          trendScore={trendScore}
         />
 
         <div className="grid gap-6 px-5 py-5 sm:px-6 sm:py-6 xl:grid-cols-[1.1fr_0.9fr]">
           <ArticleBodyColumn
             article={article}
-            articleComments={articleComments}
             blocks={blocks}
-            commentMutation={commentMutation}
-            fanSession={fanSession}
-            reactionMutation={reactionMutation}
           />
           <ArticleSideColumn
             relatedArticles={relatedArticles}
             tags={tags}
             tournaments={tournaments}
-            trending={trending}
           />
         </div>
       </DetailShell>

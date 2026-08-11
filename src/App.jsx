@@ -1,29 +1,35 @@
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
-import { BrowserRouter as Router, Link, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import PageNotFound from "./lib/PageNotFound";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { SearchProvider } from "@/lib/SearchContext";
-
 import AppLayout from "./components/layout/AppLayout";
-import LandingPage from "./pages/LandingPage";
-import Home from "./pages/Home";
-import Fans from "./pages/Fans";
-import News from "./pages/News";
-import NewsArticle from "./pages/NewsArticle";
-import Tournaments from "./pages/Tournaments";
-import Teams from "./pages/TEAMS";
-import PlayerProfile from "./pages/PlayerProfile";
-import Leaderboard from "./pages/LEADERBOARD";
-import Profile from "./pages/Profile";
-import SignIn from "./pages/SignIn";
-import Admin from "./pages/Admin";
+import PageLoader from "@/components/shared/PageLoader";
 import { ShieldAlert } from "lucide-react";
 import { useAdminAccess } from "@/lib/adminAccess";
 
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Home = lazy(() => import("./pages/Home"));
+const News = lazy(() => import("./pages/News"));
+const NewsArticle = lazy(() => import("./pages/NewsArticle"));
+const Tournaments = lazy(() => import("./pages/Tournaments"));
+const Teams = lazy(() => import("./pages/Teams"));
+const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Rankings = lazy(() => import("./pages/Rankings"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const Admin = lazy(() => import("./pages/Admin"));
+
+function RouteFallback() {
+  return <PageLoader label="Loading page" className="min-h-[50vh]" />;
+}
+
 function AdminAccessGate() {
   const { hasAdminAccess, isLoading } = useAdminAccess();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -55,7 +61,7 @@ function AdminAccessGate() {
             control room.
           </p>
           <Link
-            to="/signin"
+            to={`/signin?returnTo=${encodeURIComponent(location.pathname)}`}
             className="mt-5 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
           >
             Sign in
@@ -65,29 +71,34 @@ function AdminAccessGate() {
     );
   }
 
-  return <Admin />;
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <Admin />
+    </Suspense>
+  );
 }
 
 const RoutedApp = () => {
   return (
-    <Routes>
-      <Route path="/landing" element={<LandingPage />} />
-      <Route path="/signin" element={<SignIn />} />
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/app" element={<Navigate to="/" replace />} />
-        <Route path="/tournaments" element={<Tournaments />} />
-        <Route path="/teams" element={<Teams />} />
-        <Route path="/players/:playerIgn" element={<PlayerProfile />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/fans" element={<Fans />} />
-        <Route path="/news" element={<News />} />
-        <Route path="/news/:articleId" element={<NewsArticle />} />
-        <Route path="/admin" element={<AdminAccessGate />} />
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/app" element={<Navigate to="/" replace />} />
+          <Route path="/tournaments" element={<Tournaments />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/players/:playerIgn" element={<PlayerProfile />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/rankings" element={<Rankings />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/news/:articleId" element={<NewsArticle />} />
+          <Route path="/admin" element={<AdminAccessGate />} />
+        </Route>
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
@@ -112,4 +123,3 @@ function App() {
 }
 
 export default App;
-

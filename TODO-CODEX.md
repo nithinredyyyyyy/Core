@@ -1,6 +1,5 @@
 ## Next Follow-up
 
-- Fan page edits
 - News page edits
 
 Context:

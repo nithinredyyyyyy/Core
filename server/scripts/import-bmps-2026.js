@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { db } from "../db.js";
 import { normalizeOrganizationName } from "../../SRC/LIB/organizationIdentity.js";
 import { BMPS_2026_ROSTERS } from "./bmps-2026-rosters.js";
+import { BMPS_2026_PRIZE_BREAKDOWN } from "../tournamentOverrides.js";
 
 const now = new Date().toISOString();
 const ROUND_ONE_GROUP_B_TEAMS = new Set(
@@ -113,12 +114,13 @@ const tournament = {
   name: "Battlegrounds Mobile India Pro Series 2026",
   game: "BGMI",
   tier: "A-Tier",
-  status: "upcoming",
-  prize_pool: "₹4,00,00,000",
+  status: "completed",
+  prize_pool: "₹40,000,000 INR (≃ $424,041 USD)",
   start_date: "2026-05-06",
   end_date: "2026-06-21",
   max_teams: 64,
-  banner_url: "/images/bmps-2026.png",
+  banner_url: "/images/bmps-2026.webp",
+  prize_breakdown: BMPS_2026_PRIZE_BREAKDOWN,
   format_overview:
     "BMPS 2026 is the fifth edition of the Battlegrounds Mobile India Pro Series. The tournament begins with a 64-team league phase using a four-group promotion and relegation system through Round 3. Round 4 then locks the groups and advances teams based on individual group standings into Grand Finals, Semi Finals, Survival Stage, or elimination before the Jaipur Grand Finals from June 19 to June 21, 2026.",
   calendar: [
@@ -803,8 +805,8 @@ const tx = db.transaction(() => {
     INSERT INTO tournaments (
       id, name, game, tier, status, prize_pool, start_date, end_date, stages,
       description, banner_url, rules, max_teams, format_overview, calendar,
-      participants, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      prize_breakdown, participants, created_date, updated_date, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
   ).run(
     tournamentId,
@@ -822,6 +824,7 @@ const tx = db.transaction(() => {
     tournament.max_teams,
     tournament.format_overview,
     JSON.stringify(tournament.calendar),
+    JSON.stringify(tournament.prize_breakdown),
     JSON.stringify(tournament.participants),
     now,
     now,

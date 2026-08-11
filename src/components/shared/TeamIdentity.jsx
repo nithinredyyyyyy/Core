@@ -53,7 +53,7 @@ export default function TeamIdentity({
             className={logoBlockClassName}
           />
         ) : glowed ? (
-          <div className="relative flex items-center justify-center rounded-2xl border border-[#3b3022] bg-[radial-gradient(circle_at_top,_rgba(255,201,107,0.22),_rgba(44,30,14,0.96)_58%,_rgba(18,12,8,0.98)_100%)] px-4 py-3 shadow-[0_12px_30px_rgba(255,184,77,0.2)]">
+          <div className="relative flex items-center justify-center rounded-2xl border border-brand-gold-mocha bg-[radial-gradient(circle_at_top,_rgba(255,201,107,0.22),_rgba(44,30,14,0.96)_58%,_rgba(18,12,8,0.98)_100%)] px-4 py-3 shadow-[0_12px_30px_rgba(255,184,77,0.2)]">
             <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle,_rgba(255,220,160,0.16)_0%,_rgba(255,179,71,0.12)_42%,_rgba(255,179,71,0)_76%)] blur-md" />
             <div className="relative z-10">
               <LogoBlock
@@ -71,7 +71,7 @@ export default function TeamIdentity({
         ) : plain ? (
           theme === "dark" ? (
             <span
-              className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize}`}
+              className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize} ${containerClassName}`}
             >
               <img
                 src={teamLogo}
@@ -87,7 +87,7 @@ export default function TeamIdentity({
             </span>
           ) : (
             <span
-              className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize}`}
+              className={`inline-flex shrink-0 items-center justify-center overflow-visible ${plainChipSize} ${containerClassName}`}
             >
               <img
                 src={teamLogo}

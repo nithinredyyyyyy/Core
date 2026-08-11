@@ -321,6 +321,7 @@ export default function AdminInspector() {
 
   const selectedTournament =
     tournaments.find((tournament) => tournament.id === selectedTournamentId) ||
+    visibleTournaments[0] ||
     tournaments[0] ||
     null;
   const { data: matches = [] } = useQuery({
@@ -349,9 +350,9 @@ export default function AdminInspector() {
     [teams],
   );
 
-  const tournamentMatches = useMemo(() => matches, [matches]);
+  const tournamentMatches = matches;
 
-  const tournamentResults = useMemo(() => results, [results]);
+  const tournamentResults = results;
 
   const participantPhaseGroups = useMemo(() => {
     const participants = getOfficialParticipantEntries(selectedTournament);

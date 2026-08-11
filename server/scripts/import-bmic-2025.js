@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2025-10-31",
   end_date: "2025-11-02",
   max_teams: 16,
-  banner_url: "/images/bmic-2025.png",
+  banner_url: "/images/bmic-2025.webp",
   description:
     "Battlegrounds Mobile India International Cup 2025 was the first edition of BMIC, organized by KRAFTON with a ₹1,00,00,000 prize pool. The event brought together teams from India, South Korea, and Japan, and concluded with DRX winning the title and qualifying for PMGC 2025: The Gauntlet.",
   format_overview:

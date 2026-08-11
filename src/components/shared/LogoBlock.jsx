@@ -23,9 +23,10 @@ export default function LogoBlock({
         {src ? (
           <img
             src={src}
-            alt={alt}
+            alt={alt || "Logo"}
             className={`size-full object-contain ${imgClassName}`}
             style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.12))" }}
+            loading="lazy"
           />
         ) : (
           children
@@ -44,6 +45,7 @@ export default function LogoBlock({
           alt={alt}
           className={`size-full object-contain ${imgClassName}`}
           style={{ filter: "drop-shadow(0 1px 1px rgba(11,31,61,0.12))" }}
+          loading="lazy"
         />
       ) : (
         children

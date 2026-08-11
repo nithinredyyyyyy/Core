@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2023-11-22",
   end_date: "2023-12-17",
   max_teams: 96,
-  banner_url: "/images/bmps-2023.png",
+  banner_url: "/images/bmps-2023.webp",
   description:
     "Battlegrounds Mobile India Pro Series 2023 was the flagship BGMI professional tournament series in late 2023. The event ran from November 22 to December 17, 2023 and ended with Blind Esports winning the Grand Finals.",
   format_overview:
