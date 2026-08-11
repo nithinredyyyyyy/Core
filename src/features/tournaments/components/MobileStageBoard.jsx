@@ -66,7 +66,7 @@ export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBo
                   : "border-border bg-card text-muted-foreground active:bg-secondary"
               }`}
             >
-              Group {group}
+              Group {String(group).replace(/^Group\s+/i, "").trim()}
             </button>
           ))}
         </div>
@@ -192,7 +192,7 @@ export function MobileGroupedDraw({ activeStage, groupedParticipants }) {
         <div key={`${activeStage.name}-${section.group}`} className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="bg-brand-navy px-4 py-3 text-center">
             <p className="text-xs font-black uppercase tracking-[0.14em] text-white">
-              Group {section.group}
+              Group {String(section.group).replace(/^Group\s+/i, "").trim()}
             </p>
           </div>
           <div className="divide-y divide-border">
