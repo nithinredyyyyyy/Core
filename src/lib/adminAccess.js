@@ -5,7 +5,7 @@ export function useAdminAccess() {
   const { data: authUser, isLoading } = useQuery({
     queryKey: ["auth-me"],
     queryFn: () => base44.auth.me(),
-    retry: false,
+    retry: 2,
     staleTime: 30_000,
   });
 

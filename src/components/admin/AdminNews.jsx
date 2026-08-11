@@ -49,7 +49,10 @@ const PRIORITIES = ["breaking", "important", "routine"];
 const SOURCE_TYPES = ["rss", "json"];
 
 function formatAdminNewsDate(value) {
-  return format(new Date(value), "MMM d, yyyy");
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return format(date, "MMM d, yyyy");
 }
 
 function categoryLabel(category) {
@@ -734,7 +737,7 @@ function AdminNewsList({
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => deleteArticle.mutate(article.id)}
+              onClick={() => { if (window.confirm("Delete this article?")) deleteArticle.mutate(article.id); }}
               disabled={isMutating}
             >
               <Trash2 className="size-4 text-destructive" />
@@ -793,6 +796,13 @@ export default function AdminNews() {
       resetForm();
       toast({ title: "Article saved" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to save article",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateArticle = useMutation({
@@ -803,6 +813,13 @@ export default function AdminNews() {
       resetForm();
       toast({ title: "Article updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update article",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteArticle = useMutation({
@@ -812,6 +829,13 @@ export default function AdminNews() {
       qc.invalidateQueries({ queryKey: ["news", "admin"] });
       toast({ title: "Article deleted" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete article",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const quickUpdateArticle = useMutation({
@@ -820,6 +844,13 @@ export default function AdminNews() {
       qc.invalidateQueries({ queryKey: ["news"] });
       qc.invalidateQueries({ queryKey: ["news", "admin"] });
       toast({ title: variables?.toastTitle || "Article updated" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to update article",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -854,7 +885,7 @@ export default function AdminNews() {
     onError: (error) => {
       toast({
         title: "Import failed",
-        description: error.message,
+        description: error?.message,
         variant: "destructive",
       });
     },
@@ -873,7 +904,7 @@ export default function AdminNews() {
     onError: (error) => {
       toast({
         title: "Refresh failed",
-        description: error.message,
+        description: error?.message,
         variant: "destructive",
       });
     },

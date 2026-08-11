@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2023-08-31",
   end_date: "2023-10-15",
   max_teams: 2048,
-  banner_url: "/images/bgis-2023.png",
+  banner_url: "/images/bgis-2023.webp",
   description:
     "Battlegrounds Mobile India Series 2023 was the second edition of BGIS, organized by KRAFTON with a total prize pool of ₹2,00,00,000 INR. The event ran from August 31 to October 15, 2023 and concluded with Gladiators Esports winning the Mumbai Grand Finals.",
   format_overview:

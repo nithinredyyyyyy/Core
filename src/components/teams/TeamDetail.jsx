@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ShieldCheck, Star } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
 import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import { format } from "date-fns";
 import { isOrganizationInactive } from "@/lib/organizationIdentity";
@@ -68,28 +67,26 @@ function TeamDetailHero({
   displayLogoSurfaceTone,
   primaryStats,
   secondaryStats,
-  followButton,
 }) {
   return (
-    <div className="overflow-hidden rounded-[26px] border border-[#3f311a] bg-[radial-gradient(circle_at_top_left,_rgba(184,140,40,0.24),_rgba(18,15,11,0.98)_50%,_rgba(10,10,12,1)_100%)]">
+    <div className="overflow-hidden rounded-[26px] border border-brand-gold-olive bg-[radial-gradient(circle_at_top_left,_rgba(184,140,40,0.24),_rgba(18,15,11,0.98)_50%,_rgba(10,10,12,1)_100%)]">
       <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[#d0ad63]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-brand-gold">
                 BGIS 2026 participant
               </p>
               <h1 className="text-3xl font-heading font-semibold text-white">
                 {team.name}
               </h1>
-              <p className="text-sm text-[#c8c1b5]">
+              <p className="text-sm text-brand-border-stone">
                 {participant?.seed || "Qualifier"} |{" "}
                 {participant?.phase || "Participant"} | #
                 {participant?.placement || "-"}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {followButton}
               <span
                 className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${status.className}`}
               >
@@ -114,16 +111,16 @@ function TeamDetailHero({
               roundedClass="rounded-[30px]"
               paddingClass="p-7"
               surfaceTone={displayLogoSurfaceTone}
-              className="border-[#5a441c] bg-[linear-gradient(180deg,_rgba(24,20,15,0.95),_rgba(12,11,10,1))] shadow-[0_18px_60px_rgba(0,0,0,0.35)]"
+              className="border-brand-gold-earth bg-[linear-gradient(180deg,_rgba(24,20,15,0.95),_rgba(12,11,10,1))] shadow-[0_18px_60px_rgba(0,0,0,0.35)]"
             />
           ) : (
             <LogoBlock
               sizeClass="size-56"
               roundedClass="rounded-[30px]"
               paddingClass="p-7"
-              className="border-[#5a441c] bg-[linear-gradient(180deg,_rgba(24,20,15,0.95),_rgba(12,11,10,1))]"
+              className="border-brand-gold-earth bg-[linear-gradient(180deg,_rgba(24,20,15,0.95),_rgba(12,11,10,1))]"
             >
-              <span className="font-heading text-6xl font-bold text-[#d0ad63]">
+              <span className="font-heading text-6xl font-bold text-brand-gold">
                 {team.tag?.slice(0, 3)}
               </span>
             </LogoBlock>
@@ -307,11 +304,8 @@ function TeamDetailSideColumn({
 }
 
 function useTeamDetailModel({ team, participant }) {
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  const fanSession = base44.fan.getStoredSession();
   const { data: teamDetailPage = {} } = useQuery({
-    queryKey: ["team-detail-page", fanSession.userId || "guest"],
+    queryKey: ["team-detail-page", "guest"],
     queryFn: () => base44.pages.teamDetail(),
   });
   const teams = teamDetailPage.teams || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
@@ -330,14 +324,8 @@ function useTeamDetailModel({ team, participant }) {
   const normalizedStandings =
     teamDetailPage.normalizedStandings || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
   const articles = teamDetailPage.articles || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
-  const follows = teamDetailPage.follows || EMPTY_TEAM_DETAIL_PAGE_ARRAY;
 
   const displayLogo = getDisplayedTeamLogo(team);
-  const followRecord = follows.find(
-    (entry) =>
-      entry.target_type === "team" &&
-      (entry.target_id === team.id || entry.target_label === team.name),
-  );
   const displayLogoSurfaceTone = getTeamLogoSurfaceTone(team?.name);
   const status = getTeamStatus(team);
   const teamAliasIndex = useMemo(
@@ -369,32 +357,6 @@ function useTeamDetailModel({ team, participant }) {
     () => team.representativeIds || [team.id],
     [team.id, team.representativeIds],
   );
-  const followMutation = useMutation({
-    mutationFn: async () => {
-      if (!fanSession.userId) throw new Error("Open your profile first.");
-      if (followRecord?.id) {
-        return base44.entities.FanFollowItem.delete(followRecord.id);
-      }
-      return base44.entities.FanFollowItem.create({
-        user_id: fanSession.userId,
-        display_name: fanSession.displayName,
-        target_type: "team",
-        target_id: team.id,
-        target_label: team.name,
-      });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["team-detail-page", fanSession.userId || "guest"] });
-      qc.invalidateQueries({ queryKey: ["team-detail-follows", fanSession.userId] });
-      qc.invalidateQueries({ queryKey: ["profile-follows", fanSession.userId] });
-      toast({
-        title: followRecord ? "Team unfollowed" : "Team followed",
-        description: followRecord
-          ? `${team.name} was removed from your followed teams.`
-          : `${team.name} is now part of your followed teams.`,
-      });
-    },
-  });
   const normalizedResultMaps = useMemo(
     () =>
       buildNormalizedTournamentResultMaps({
@@ -580,9 +542,6 @@ function useTeamDetailModel({ team, participant }) {
     activeYearsLabel,
     displayLogo,
     displayLogoSurfaceTone,
-    fanSession,
-    followMutation,
-    followRecord,
     organizationAliases,
     primaryStats,
     recentMatches,
@@ -599,9 +558,6 @@ export default function TeamDetail({ team, participant, onBack }) {
     activeYearsLabel,
     displayLogo,
     displayLogoSurfaceTone,
-    fanSession,
-    followMutation,
-    followRecord,
     organizationAliases,
     primaryStats,
     recentMatches,
@@ -628,17 +584,6 @@ export default function TeamDetail({ team, participant, onBack }) {
         displayLogoSurfaceTone={displayLogoSurfaceTone}
         primaryStats={primaryStats}
         secondaryStats={secondaryStats}
-        followButton={
-          <button
-            type="button"
-            onClick={() => followMutation.mutate()}
-            disabled={!fanSession.userId || followMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <ShieldCheck className="size-3.5" />
-            {followRecord ? "Following" : "Follow team"}
-          </button>
-        }
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">

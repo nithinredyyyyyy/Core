@@ -23,7 +23,7 @@ const tournament = {
   start_date: "2026-01-26",
   end_date: "2026-03-29",
   max_teams: 1024,
-  banner_url: "/images/bgis2026-banner-1920.png",
+  banner_url: "/images/bgis2026-banner-1920.webp",
   description:
     "Battlegrounds Mobile India Series 2026 is the fifth edition of BGIS, organized by KRAFTON with a total prize pool of ₹4,00,00,000 INR. The event ran from January 26 to March 29, 2026, beginning with a 1024-team League Stage and concluding with the Chennai Grand Finals won by IQOO SouL.",
   rules:

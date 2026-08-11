@@ -6,7 +6,6 @@ import {
   Users,
   X,
   UserCircle,
-  Waves,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -23,9 +22,7 @@ const RESULT_ICONS = {
 const SEARCH_SUGGESTIONS = [
   { icon: Trophy, label: "Tournaments", path: "/tournaments" },
   { icon: Users, label: "Teams", path: "/teams" },
-  { icon: Waves, label: "Fans", path: "/fans" },
   { icon: Newspaper, label: "News", path: "/news" },
-  { icon: UserCircle, label: "Profile", path: "/profile" },
 ];
 
 export default function GlobalSearch({ open, onClose }) {

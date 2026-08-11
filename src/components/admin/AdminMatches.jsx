@@ -42,7 +42,9 @@ const MAPS = [
 
 function formatAdminMatchDateTime(value) {
   if (!value) return "";
-  return new Date(value).toLocaleString();
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString();
 }
 
 function getStageConfig(tournament, stageName) {
@@ -547,9 +549,9 @@ function MatchFormSection({
           <Label>Match #</Label>
           <Input
             type="number"
-            value={form.match_number || ""}
+            value={form.match_number ?? ""}
             onChange={(e) =>
-              setForm((prev) => ({ ...prev, match_number: parseInt(e.target.value) || 0 }))
+              setForm((prev) => ({ ...prev, match_number: e.target.value === "" ? "" : Number(e.target.value) }))
             }
           />
         </div>
@@ -583,8 +585,8 @@ function MatchFormSection({
           <Label>Day #</Label>
           <Input
             type="number"
-            value={form.day || ""}
-            onChange={(e) => setForm((prev) => ({ ...prev, day: parseInt(e.target.value) || 0 }))}
+            value={form.day ?? ""}
+            onChange={(e) => setForm((prev) => ({ ...prev, day: e.target.value === "" ? "" : Number(e.target.value) }))}
           />
         </div>
         <div>
@@ -678,7 +680,7 @@ function MatchListSection({
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => deleteMatch.mutate(match.id)}
+              onClick={() => { if (window.confirm("Delete this match?")) deleteMatch.mutate(match.id); }}
               disabled={isFormMutating || isScheduleMutating}
             >
               <Trash2 className="size-4 text-destructive" />
@@ -743,6 +745,13 @@ function useAdminMatchesState() {
       resetForm();
       toast({ title: "Match created" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to create match",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateMatch = useMutation({
@@ -752,6 +761,13 @@ function useAdminMatchesState() {
       resetForm();
       toast({ title: "Match updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update match",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteMatch = useMutation({
@@ -759,6 +775,13 @@ function useAdminMatchesState() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["matches"] });
       toast({ title: "Match deleted" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete match",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -769,6 +792,13 @@ function useAdminMatchesState() {
       qc.invalidateQueries({ queryKey: ["matches"] });
       toast({ title: "Status updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update status",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const createMatchesBulk = useMutation({
@@ -778,6 +808,13 @@ function useAdminMatchesState() {
       toast({
         title: "Schedule created",
         description: `${records.length} matches added.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to create matches",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
       });
     },
   });

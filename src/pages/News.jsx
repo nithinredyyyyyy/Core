@@ -1,21 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  MessageSquare,
   Search,
-  Sparkles,
   Tag,
-  TrendingUp,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  aggregateCommentReactions,
-  buildTrendingArticles,
-  FAN_REACTION_OPTIONS,
-} from "@/lib/fanZone";
 import { getNewsCategoryLabel } from "@/lib/newsCategories";
 import { decodeNewsText, getEditorialNewsSummary } from "@/lib/newsEditorial";
 
@@ -23,16 +14,16 @@ const FILTERS = ["all", "tournament", "announcement", "patch_update", "roster_ch
 
 function Shell({ eyebrow, title, body, actions, children }) {
   return (
-    <section className="overflow-hidden rounded-[32px] border border-[#e7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,241,235,0.92))] shadow-[0_28px_80px_rgba(15,23,42,0.08)]">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#eadfce] px-5 py-5 sm:px-6">
+    <section className="mb-16">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div className="max-w-3xl">
-          <p className="type-kicker text-[#8c7763]">{eyebrow}</p>
-          <h2 className="type-title-lg mt-2 text-[#11131a]">{title}</h2>
-          {body ? <p className="type-body-sm mt-3 text-[#5c6472]">{body}</p> : null}
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{eyebrow}</p>
+          <h2 className="mt-2 text-4xl font-black tracking-tight text-foreground">{title}</h2>
+          {body ? <p className="mt-3 text-lg text-muted-foreground max-w-2xl">{body}</p> : null}
         </div>
         {actions ? <div>{actions}</div> : null}
       </div>
-      <div className="px-5 py-5 sm:px-6 sm:py-6">{children}</div>
+      <div>{children}</div>
     </section>
   );
 }
@@ -48,37 +39,33 @@ function formatDate(value) {
   });
 }
 
-function countArticleComments(messages, articleId) {
-  return messages.filter((entry) => entry.topic === `news:${articleId}`).length;
-}
-
-function NewsCard({ article, tournaments, commentCount }) {
+function NewsCard({ article, tournaments }) {
   const summary = getEditorialNewsSummary(article, tournaments);
   const tags = Array.isArray(article.tags) ? article.tags.slice(0, 3) : [];
 
   return (
     <Link
       to={`/news/${article.id}`}
-      className="group rounded-[24px] border border-[#eadfce] bg-white p-5 shadow-[0_16px_34px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-[#d7c5b1]"
+      className="group rounded-[24px] border border-brand-border bg-white p-5 shadow-[0_16px_34px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-brand-border-lift-2"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#fff2e6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ff7b57]">
+        <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
           {getNewsCategoryLabel(article.category)}
         </span>
-        <span className="rounded-full border border-[#eadfce] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a7866]">
+        <span className="rounded-full border border-brand-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-taupe">
           {article.game || "BGMI"}
         </span>
         {article.ai_summary ? (
-          <span className="rounded-full bg-[#11131a] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+          <span className="rounded-full bg-brand-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
             AI summary
           </span>
         ) : null}
       </div>
 
-      <h3 className="mt-4 text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.04em] text-[#11131a] transition group-hover:text-primary">
+      <h3 className="mt-4 text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.04em] text-brand-ink transition group-hover:text-primary">
         {decodeNewsText(article.title)}
       </h3>
-      <p className="mt-3 line-clamp-4 text-sm leading-7 text-[#5c6472]">
+      <p className="mt-3 line-clamp-4 text-sm leading-7 text-brand-slate">
         {summary}
       </p>
 
@@ -87,7 +74,7 @@ function NewsCard({ article, tournaments, commentCount }) {
           {tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full border border-[#eadfce] bg-[#fffdfa] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8a7866]"
+              className="rounded-full border border-brand-border bg-brand-cream px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe"
             >
               #{tag}
             </span>
@@ -95,13 +82,11 @@ function NewsCard({ article, tournaments, commentCount }) {
         </div>
       ) : null}
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#f0e7dc] pt-4">
-        <div className="text-[12px] text-[#8a7866]">
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-brand-cream-beige pt-4">
+        <div className="text-[12px] text-brand-taupe">
           <span>{formatDate(article.created_date)}</span>
-          <span className="mx-2">•</span>
-          <span>{commentCount} comments</span>
         </div>
-        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#11131a]">
+        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-ink">
           Open coverage <ArrowRight className="size-3.5" />
         </span>
       </div>
@@ -110,12 +95,10 @@ function NewsCard({ article, tournaments, commentCount }) {
 }
 
 function LeadStoryPanel({
-  comments,
   leadStory,
   onSelectTag,
   selectedTag,
   tournaments,
-  trendingArticles,
 }) {
   return (
     <Shell
@@ -126,7 +109,7 @@ function LeadStoryPanel({
         leadStory ? (
           <Link
             to={`/news/${leadStory.id}`}
-            className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-5 py-2.5 text-sm font-semibold text-white"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-ink px-5 py-2.5 text-sm font-semibold text-white"
           >
             Open story <ArrowRight className="size-4" />
           </Link>
@@ -135,18 +118,18 @@ function LeadStoryPanel({
     >
       {leadStory ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-          <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
+          <div className="rounded-[24px] border border-brand-border bg-white p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#fff2e6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#ff7b57]">
+              <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
                 {getNewsCategoryLabel(leadStory.category)}
               </span>
               {leadStory.ai_summary ? (
-                <span className="rounded-full bg-[#11131a] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+                <span className="rounded-full bg-brand-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
                   AI summary
                 </span>
               ) : null}
             </div>
-            <p className="mt-5 text-sm leading-7 text-[#5c6472]">
+            <p className="mt-5 text-sm leading-7 text-brand-slate">
               {leadStory.ai_summary
                 ? decodeNewsText(leadStory.ai_summary)
                 : getEditorialNewsSummary(leadStory, tournaments)}
@@ -160,8 +143,8 @@ function LeadStoryPanel({
                     onClick={() => onSelectTag(tag)}
                     className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
                       selectedTag === tag
-                        ? "border-[#11131a] bg-[#11131a] text-white"
-                        : "border-[#eadfce] bg-[#fffdfa] text-[#8a7866]"
+                        ? "border-brand-ink bg-brand-ink text-white"
+                        : "border-brand-border bg-brand-cream text-brand-taupe"
                     }`}
                   >
                     #{tag}
@@ -170,24 +153,19 @@ function LeadStoryPanel({
               </div>
             ) : null}
           </div>
-          <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-            <p className="type-kicker text-[#8a7866]">Coverage snapshot</p>
-            <div className="mt-4 space-y-3 text-sm text-[#5c6472]">
+          <div className="rounded-[24px] border border-brand-border bg-white p-5">
+            <p className="type-kicker text-brand-taupe">Coverage snapshot</p>
+            <div className="mt-4 space-y-3 text-sm text-brand-slate">
               {[
                 ["Published", formatDate(leadStory.created_date)],
                 ["Game", leadStory.game || "BGMI"],
-                [
-                  "Trending score",
-                  trendingArticles.find((entry) => entry.id === leadStory.id)?.trendScore || 0,
-                ],
-                ["Comments", countArticleComments(comments, leadStory.id)],
               ].map(([label, value]) => (
                 <div
                   key={label}
-                  className="flex items-center justify-between gap-3 rounded-[18px] bg-[#f8f2ec] px-4 py-3"
+                  className="flex items-center justify-between gap-3 rounded-[18px] bg-brand-cream-milk px-4 py-3"
                 >
                   <span>{label}</span>
-                  <span className="font-semibold text-[#11131a]">{value}</span>
+                  <span className="font-semibold text-brand-ink">{value}</span>
                 </div>
               ))}
             </div>
@@ -218,20 +196,20 @@ function TransferWatchPanel({ transfers }) {
           const hasNewTeam = Boolean(newTeam);
 
           return (
-          <div key={entry.id} className="rounded-[22px] border border-[#eadfce] bg-white p-4">
+          <div key={entry.id} className="rounded-[22px] border border-brand-border bg-white p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
                   {entry.window || "Transfer"}
                 </p>
                 {hasOldTeam && hasNewTeam ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-base font-semibold text-[#11131a]">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-base font-semibold text-brand-ink">
                     <span className="truncate">{oldTeam}</span>
-                    <span className="text-[#b56b48]">→</span>
+                    <span className="text-brand-coral-clay">→</span>
                     <span className="truncate">{newTeam}</span>
                   </div>
                 ) : (
-                  <p className="mt-2 text-base font-semibold text-[#11131a]">
+                  <p className="mt-2 text-base font-semibold text-brand-ink">
                     {hasNewTeam
                       ? `${newTeam} roster update`
                       : hasOldTeam
@@ -240,22 +218,22 @@ function TransferWatchPanel({ transfers }) {
                   </p>
                 )}
                 {players.length > 0 ? (
-                  <p className="mt-2 text-[12px] leading-6 text-[#5c6472]">
+                  <p className="mt-2 text-[12px] leading-6 text-brand-slate">
                     {players.join(", ")}
                   </p>
                 ) : (
-                  <span className="mt-3 inline-flex rounded-full border border-[#eadfce] bg-[#fbf7f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8a7866]">
+                  <span className="mt-3 inline-flex rounded-full border border-brand-border bg-brand-cream-almond px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe">
                     Roster watch
                   </span>
                 )}
               </div>
-              <span className="shrink-0 text-[11px] text-[#8a7866]">{formatDate(entry.date)}</span>
+              <span className="shrink-0 text-[11px] text-brand-taupe">{formatDate(entry.date)}</span>
             </div>
           </div>
           );
         })}
         {visibleTransfers.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-[#eadfce] bg-white/70 p-5 text-sm text-[#5c6472]">
+          <div className="rounded-[22px] border border-dashed border-brand-border bg-white/70 p-5 text-sm text-brand-slate">
             Transfer watch will update when roster moves are published.
           </div>
         ) : null}
@@ -265,10 +243,11 @@ function TransferWatchPanel({ transfers }) {
 }
 
 function CoverageFeedPanel({
-  comments,
   followupStories,
   onSearch,
   onToggleTag,
+  onSetActiveFilter,
+  activeFilter,
   search,
   selectedTag,
   tagOptions,
@@ -281,17 +260,33 @@ function CoverageFeedPanel({
       body="Scan tournament announcements, patch updates, roster news, and daily stories from one organized feed."
       actions={
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#8a7866]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-brand-taupe" />
           <input
             value={search}
             onChange={(event) => onSearch(event.target.value)}
             placeholder="Search news coverage"
             aria-label="Search news coverage"
-            className="h-11 rounded-full border border-[#d9c7b3] bg-white pl-10 pr-4 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+            className="h-11 rounded-full border border-brand-border-lift bg-white pl-10 pr-4 text-sm text-brand-ink outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
           />
         </div>
       }
     >
+      <div className="mb-4 flex flex-wrap gap-2">
+        {FILTERS.map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => onSetActiveFilter(filter)}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
+              activeFilter === filter
+                ? "border-brand-ink bg-brand-ink text-white"
+                : "border-brand-border bg-white text-brand-taupe"
+            }`}
+          >
+            {getNewsCategoryLabel(filter)}
+          </button>
+        ))}
+      </div>
       <div className="mb-4 flex flex-wrap gap-2">
         {tagOptions.map((tag) => (
           <button
@@ -300,8 +295,8 @@ function CoverageFeedPanel({
             onClick={() => onToggleTag(tag)}
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
               selectedTag === tag
-                ? "border-[#11131a] bg-[#11131a] text-white"
-                : "border-[#eadfce] bg-white text-[#8a7866]"
+                ? "border-brand-ink bg-brand-ink text-white"
+                : "border-brand-border bg-white text-brand-taupe"
             }`}
           >
             <Tag className="size-3.5" />
@@ -315,11 +310,10 @@ function CoverageFeedPanel({
             key={article.id}
             article={article}
             tournaments={tournaments}
-            commentCount={countArticleComments(comments, article.id)}
           />
         ))}
         {followupStories.length === 0 ? (
-          <div className="rounded-[24px] border border-[#eadfce] bg-white p-5 text-sm text-[#5c6472]">
+          <div className="rounded-[24px] border border-brand-border bg-white p-5 text-sm text-brand-slate">
             No stories match the current filters. Try another category or clear the tag search.
           </div>
         ) : null}
@@ -328,111 +322,7 @@ function CoverageFeedPanel({
   );
 }
 
-function TrendingArticlesPanel({ trendingArticles }) {
-  return (
-    <Shell
-      eyebrow="Trending articles"
-      title="What fans are reading now"
-      body="Freshness, feature weight, and fan discussion shape the trending rail."
-    >
-      <div className="space-y-3">
-        {trendingArticles.slice(0, 5).map((article, index) => (
-          <Link
-            key={article.id}
-            to={`/news/${article.id}`}
-            className="flex items-center gap-4 rounded-[22px] border border-[#eadfce] bg-white p-4 transition hover:border-[#d7c5b1]"
-          >
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-[16px] bg-[#fff2e6] text-sm font-black text-[#ff7b57]">
-              {index + 1}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-[#11131a]">
-                {decodeNewsText(article.title)}
-              </p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
-                {article.trendScore} trend score
-              </p>
-            </div>
-            <TrendingUp className="size-4 text-primary" />
-          </Link>
-        ))}
-      </div>
-    </Shell>
-  );
-}
-
-function ReaderFloorPanel({ fanSession, newsDeskComments, reactionMutation }) {
-  return (
-    <Shell
-      eyebrow="Reader floor"
-      title="Latest article discussion"
-      body="Comments, upvotes, downvotes, and quick emoji reactions stay tied directly to each story."
-    >
-      <div className="space-y-3">
-        {newsDeskComments.length > 0 ? (
-          newsDeskComments.map((comment) => (
-            <div key={comment.id} className="rounded-[22px] border border-[#eadfce] bg-white p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-[#11131a]">{comment.display_name}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8a7866]">
-                    {comment.topic?.replace("news:", "Article ")}
-                  </p>
-                </div>
-                <MessageSquare className="size-4 text-primary" />
-              </div>
-              <p className="mt-3 text-sm leading-7 text-[#5c6472]">{comment.body}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {[
-                  ["up", 1, `+ ${comment.reactionSummary.upvotes}`],
-                  ["down", -1, `- ${comment.reactionSummary.downvotes}`],
-                ].map(([key, voteValue, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    disabled={!fanSession.userId}
-                    onClick={() =>
-                      reactionMutation.mutate({ commentId: comment.id, reaction: "", voteValue })
-                    }
-                    className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                  >
-                    {label}
-                  </button>
-                ))}
-                {FAN_REACTION_OPTIONS.map((reaction) => (
-                  <button
-                    key={reaction.key}
-                    type="button"
-                    disabled={!fanSession.userId}
-                    onClick={() =>
-                      reactionMutation.mutate({
-                        commentId: comment.id,
-                        reaction: reaction.key,
-                        voteValue: 0,
-                      })
-                    }
-                    className="rounded-full border border-[#d9c7b3] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#11131a]"
-                  >
-                    {reaction.emoji} {comment.reactionSummary.emojis?.[reaction.key] || 0}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="rounded-[22px] border border-[#eadfce] bg-white p-4 text-sm text-[#5c6472]">
-            The article discussion floor is waiting for the first reaction.
-          </div>
-        )}
-      </div>
-    </Shell>
-  );
-}
-
 export default function News() {
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  const fanSession = base44.fan.getStoredSession();
   const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
@@ -455,32 +345,6 @@ export default function News() {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
-  const { data: comments = [] } = useQuery({
-    queryKey: ["news-comments"],
-    queryFn: () => base44.entities.FanChatMessage.list("-created_date", 300),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-  const { data: reactions = [] } = useQuery({
-    queryKey: ["news-reactions"],
-    queryFn: () => base44.entities.FanCommentReaction.list("-created_date", 600),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-
-  const discussion = useMemo(
-    () =>
-      aggregateCommentReactions(
-        comments.filter((entry) => String(entry.topic || "").startsWith("news:")),
-        reactions,
-      ),
-    [comments, reactions],
-  );
-
-  const trendingArticles = useMemo(
-    () => buildTrendingArticles(articles, comments, reactions).slice(0, 5),
-    [articles, comments, reactions],
-  );
 
   const tagOptions = useMemo(() => {
     const tags = new Set();
@@ -506,136 +370,36 @@ export default function News() {
     });
   }, [activeFilter, articles, search, selectedTag]);
 
-  const leadStory = filteredArticles[0] || trendingArticles[0] || null;
+  const leadStory = filteredArticles[0] || null;
   const followupStories = filteredArticles
     .filter((article) => article.id !== leadStory?.id)
     .slice(0, 6);
-
-  const commentMutation = useMutation({
-    mutationFn: ({ articleId, body }) =>
-      base44.entities.FanChatMessage.create({
-        user_id: fanSession.userId,
-        display_name: fanSession.displayName,
-        topic: `news:${articleId}`,
-        body,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["news-comments"] });
-      toast({
-        title: "Comment posted",
-        description: "Your take has been added to the news feed.",
-      });
-    },
-  });
-
-  const reactionMutation = useMutation({
-    mutationFn: ({ commentId, reaction, voteValue }) =>
-      base44.entities.FanCommentReaction.create({
-        user_id: fanSession.userId,
-        display_name: fanSession.displayName,
-        comment_id: commentId,
-        reaction,
-        vote_value: voteValue,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["news-reactions"] });
-    },
-  });
-
-  const newsDeskComments = discussion.slice(0, 4);
 
   return (
     <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <LeadStoryPanel
-          comments={comments}
           leadStory={leadStory}
           onSelectTag={setSelectedTag}
           selectedTag={selectedTag}
           tournaments={tournaments}
-          trendingArticles={trendingArticles}
         />
         <TransferWatchPanel transfers={transfers} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+      <section className="grid gap-6 xl:grid-cols-[1fr]">
         <CoverageFeedPanel
-          comments={comments}
           followupStories={followupStories}
           onSearch={setSearch}
           onToggleTag={(tag) => setSelectedTag((current) => (current === tag ? "" : tag))}
+          onSetActiveFilter={setActiveFilter}
+          activeFilter={activeFilter}
           search={search}
           selectedTag={selectedTag}
           tagOptions={tagOptions}
           tournaments={tournaments}
         />
-
-        <div className="grid gap-6">
-          <TrendingArticlesPanel trendingArticles={trendingArticles} />
-          <ReaderFloorPanel
-            fanSession={fanSession}
-            newsDeskComments={newsDeskComments}
-            reactionMutation={reactionMutation}
-          />
-        </div>
       </section>
-
-      {leadStory && fanSession.userId ? (
-        <Shell
-          eyebrow="Open the floor"
-          title="Comment on the lead story"
-          body="Turn readers into participants by letting them rate the latest announcement or roster move directly from the feed."
-          actions={
-            leadStory.ai_summary ? (
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
-                <Sparkles className="size-3.5" />
-                AI summary active
-              </span>
-            ) : null
-          }
-        >
-          <LeadStoryCommentComposer
-            article={leadStory}
-            onSubmit={(body) => commentMutation.mutate({ articleId: leadStory.id, body })}
-            isPending={commentMutation.isPending}
-          />
-        </Shell>
-      ) : null}
-    </div>
-  );
-}
-
-function LeadStoryCommentComposer({ article, onSubmit, isPending }) {
-  const [value, setValue] = useState("");
-
-  return (
-    <div className="rounded-[24px] border border-[#eadfce] bg-white p-5">
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a7866]">
-        {decodeNewsText(article.title)}
-      </p>
-      <textarea
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        maxLength={240}
-        placeholder="Drop your take on the lead story…"
-        aria-label="Drop your take on the lead story"
-        className="mt-4 min-h-[140px] w-full rounded-[20px] border border-[#eadfce] bg-[#fffdfa] px-4 py-3 text-sm text-[#11131a] outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-      />
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-[12px] text-[#8a7866]">Comments feed the live editorial reaction layer.</p>
-        <button
-          type="button"
-          disabled={!value.trim() || isPending}
-          onClick={() => {
-            onSubmit(value.trim());
-            setValue("");
-          }}
-          className="inline-flex items-center gap-2 rounded-full bg-[#11131a] px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <MessageSquare className="size-4" />
-          {isPending ? "Posting..." : "Post comment"}
-        </button>
-      </div>
     </div>
   );
 }

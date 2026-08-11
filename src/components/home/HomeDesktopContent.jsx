@@ -4,12 +4,12 @@ import { LazyMotion, domAnimation, m } from "framer-motion";
 import {
   ArrowRight,
   Asterisk,
+  Calendar,
   CheckCircle2,
   Radio,
   Swords,
   Target,
   TrendingUp,
-  UserCircle2,
 } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import TeamIdentity from "@/components/shared/TeamIdentity";
@@ -24,7 +24,7 @@ const fadeUp = (delay = 0) => ({
 function LightPanel({ className = "", children }) {
   return (
     <div
-      className={`rounded-[28px] border border-[#dfe6ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,253,0.94))] shadow-[0_22px_64px_rgba(15,23,42,0.06)] transition-colors dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(11,23,41,0.96),rgba(7,17,31,0.94))] dark:shadow-[0_26px_70px_rgba(2,8,23,0.34)] ${className}`}
+      className={`rounded-[28px] border border-brand-sky-soft bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,253,0.94))] shadow-[0_22px_64px_rgba(15,23,42,0.06)] transition-colors dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(11,23,41,0.96),rgba(7,17,31,0.94))] dark:shadow-[0_26px_70px_rgba(2,8,23,0.34)] ${className}`}
     >
       {children}
     </div>
@@ -34,19 +34,19 @@ function LightPanel({ className = "", children }) {
 function HeroHighlights({ featuredTournament, featuredSpotlightStage }) {
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <div className="rounded-[20px] border border-[#dfe6ee] bg-white/80 p-4 dark:border-white/8 dark:bg-[#101a2a]">
+      <div className="rounded-[20px] border border-brand-sky-soft bg-white/80 p-4 dark:border-white/8 dark:bg-brand-navy-night">
         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Title</p>
         <p className="mt-2 text-sm font-semibold tracking-[0.01em] text-foreground">
           {featuredTournament?.game || "BGMI"}
         </p>
       </div>
-      <div className="rounded-[20px] border border-[#dfe6ee] bg-white/80 p-4 dark:border-white/8 dark:bg-[#101a2a]">
+      <div className="rounded-[20px] border border-brand-sky-soft bg-white/80 p-4 dark:border-white/8 dark:bg-brand-navy-night">
         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Current stage</p>
         <p className="mt-2 text-sm font-semibold tracking-[0.01em] text-foreground">
           {featuredSpotlightStage?.name || "Pending"}
         </p>
       </div>
-      <div className="rounded-[20px] border border-[#dfe6ee] bg-white/80 p-4 dark:border-white/8 dark:bg-[#101a2a]">
+      <div className="rounded-[20px] border border-brand-sky-soft bg-white/80 p-4 dark:border-white/8 dark:bg-brand-navy-night">
         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Circuit status</p>
         <p className="mt-2 text-sm font-semibold tracking-[0.01em] text-foreground">
           {featuredTournament?.status === "ongoing" ? "Live" : "Upcoming"}
@@ -60,59 +60,102 @@ function LatestTournamentHud({
   championTeam,
   lastTournament,
 }) {
-  const latestTournamentLogo = "/images/bgis-logo.png";
+  const latestTournamentLogo = lastTournament?.banner_url || "/images/core-logo.svg";
+  const championName = championTeam?.teamName || championTeam?.rawTeamName || null;
 
   return (
     <Link
       to={lastTournament ? `/tournaments?id=${lastTournament.id}` : "/tournaments"}
-      className="group relative z-10 block overflow-hidden rounded-[24px] border border-white/65 bg-[linear-gradient(135deg,rgba(8,18,32,0.94),rgba(12,26,46,0.86)_52%,rgba(255,106,26,0.24)_100%)] p-4 text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)] ring-1 ring-cyan-200/25 transition-transform hover:-translate-y-0.5"
+      className="group relative z-10 block overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(145deg,rgba(5,14,28,0.97),rgba(10,24,44,0.95)_45%,rgba(22,12,4,0.92)_100%)] text-white shadow-[0_28px_72px_rgba(2,8,23,0.44)] transition-all hover:-translate-y-1 hover:shadow-[0_36px_88px_rgba(2,8,23,0.52)]"
     >
-      <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#ff6a1a,#38bdf8,#ffffff)]" />
-      <div className="absolute -right-16 -top-20 size-44 rounded-full bg-cyan-300/18 blur-3xl" />
-      <div className="absolute -bottom-20 left-14 size-40 rounded-full bg-orange-400/18 blur-3xl" />
+      {/* Accent bar */}
+      <div className="absolute inset-x-0 top-0 h-[2.5px] bg-[linear-gradient(90deg,var(--brand-coral-deep)_0%,var(--brand-orange)_22%,var(--brand-sky-clear)_60%,var(--brand-white)_100%)]" />
 
-      <div className="relative flex items-start gap-4">
+      {/* Glow blobs */}
+      <div className="pointer-events-none absolute -right-8 -top-12 size-52 rounded-full bg-sky-400/14 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 left-8 size-48 rounded-full bg-orange-500/16 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-0 size-36 rounded-full bg-amber-400/8 blur-3xl" />
+
+      {/* Header: tournament logo + name */}
+      <div className="relative flex items-start gap-4 p-5 pb-3">
         <LogoBlock
           src={latestTournamentLogo}
-          alt={`${lastTournament?.name || "BGIS 2026"} logo`}
-          sizeClass="size-20"
-          roundedClass="rounded-[20px]"
-          paddingClass="p-3"
+          alt={`${lastTournament?.name || "Latest tournament"} logo`}
+          sizeClass="size-[72px]"
+          roundedClass="rounded-[18px]"
+          paddingClass="p-2.5"
           surfaceTone="light"
-          imgClassName="h-full w-full"
-          className="shrink-0 border-white/15 bg-[#07111f] shadow-[0_14px_34px_rgba(0,0,0,0.24)]"
+          imgClassName="h-full w-full object-contain"
+          className="shrink-0 border-white/10 bg-brand-navy-darkest shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
         />
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pt-0.5">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#20e6a8] shadow-[0_0_18px_rgba(32,230,168,0.9)]" />
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-100/80">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex size-2 rounded-full bg-brand-mint-lime" />
+            </span>
+            <p className="text-[9.5px] font-black uppercase tracking-[0.3em] text-emerald-200/70">
               Latest tournament
             </p>
           </div>
-          <h2 className="mt-2 line-clamp-2 text-[1.38rem] font-black leading-[0.96] tracking-[-0.04em] text-white transition-colors group-hover:text-orange-100">
+          <h2 className="mt-1.5 line-clamp-2 text-[1.28rem] font-black leading-[1.02] tracking-[-0.04em] text-white transition-colors group-hover:text-orange-100">
             {lastTournament?.name || "Latest completed tournament"}
           </h2>
-          <p className="mt-2 truncate text-sm font-semibold text-white/72">
-            {championTeam?.teamName ? `${championTeam.teamName} lifted the title` : "Champion details updating"}
-          </p>
         </div>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-3 gap-2">
+      {/* Champion showcase */}
+      {championName ? (
+        <div className="relative mx-4 mb-3 overflow-hidden rounded-[18px] border border-amber-400/18 bg-[linear-gradient(135deg,rgba(255,170,50,0.12),rgba(255,106,26,0.08)_60%,rgba(10,24,44,0.8)_100%)] px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-[14px] border border-amber-400/20 bg-amber-400/10">
+              <svg className="size-4.5 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.26em] text-amber-300/70">Tournament champion</p>
+              <TeamIdentity
+                name={championName}
+                className="mt-0.5 truncate text-[0.92rem] font-black tracking-[-0.02em] text-white"
+                compact
+                plain
+                logoClassName="size-5 shrink-0 object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="relative mx-4 mb-3 rounded-[18px] border border-white/8 bg-white/[0.04] px-4 py-3">
+          <p className="text-sm font-semibold text-white/50">Champion details updating</p>
+        </div>
+      )}
+
+      {/* Stats grid */}
+      <div className="relative mx-4 mb-4 grid grid-cols-3 gap-2">
         {[
-          ["Champion", championTeam?.teamName || "TBD"],
-          ["Points", championTeam?.totalPoints || 0],
-          ["WWCD", championTeam?.wins || 0],
+          ["Champion", championTeam?.teamName || "—"],
+          ["Points", championTeam?.totalPoints ?? "—"],
+          ["WWCD", championTeam?.wins ?? "—"],
         ].map(([label, value]) => (
           <div
             key={label}
-            className="min-w-0 rounded-[16px] border border-white/10 bg-white/[0.075] px-3 py-2"
+            className="min-w-0 rounded-[14px] border border-white/8 bg-white/[0.06] px-2.5 py-2.5"
           >
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">{label}</p>
-            <p className="mt-1 truncate text-sm font-black text-white">{value}</p>
+            <p className="text-[8.5px] font-bold uppercase tracking-[0.2em] text-white/38">{label}</p>
+            <p className="mt-1 truncate text-sm font-black leading-none text-white">{value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Footer CTA */}
+      <div className="relative flex items-center justify-between border-t border-white/8 px-5 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Full results</p>
+        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80 transition-colors group-hover:text-cyan-200">
+          View details
+          <ArrowRight className="size-3.5" />
+        </div>
       </div>
     </Link>
   );
@@ -121,7 +164,7 @@ function LatestTournamentHud({
 function TournamentVisualPanel({ featuredTournament, featuredTournamentVisual }) {
   return (
     <div className="relative min-h-[360px] overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(135deg,rgba(7,17,31,0.96),rgba(13,30,50,0.94)_48%,rgba(255,106,26,0.18)_100%)] p-7 text-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/10">
-      <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#ff6a1a,#38bdf8,#ffffff)]" />
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,var(--brand-coral-deep),var(--brand-sky-clear),var(--brand-white))]" />
       <div className="absolute -right-24 -top-28 size-80 rounded-full bg-cyan-300/20 blur-3xl" />
       <div className="absolute -bottom-32 left-0 size-80 rounded-full bg-orange-400/22 blur-3xl" />
       <div className="absolute bottom-0 left-0 right-0 h-28 bg-[linear-gradient(0deg,rgba(2,8,23,0.86),transparent)]" />
@@ -142,9 +185,10 @@ function TournamentVisualPanel({ featuredTournament, featuredTournamentVisual })
       <div className="relative flex min-h-[250px] items-center justify-center pb-16">
         <div className="absolute size-56 rounded-full bg-white/8 blur-2xl" />
         <img
-          src={featuredTournamentVisual || "/images/bmps-2026.png"}
-          alt={`${featuredTournament?.name || "Featured tournament"} visual`}
+                  src={featuredTournamentVisual || "/images/bmps-2026.webp"}
+          alt={featuredTournament?.name || "Featured tournament"}
           className="relative size-64 object-contain drop-shadow-[0_28px_44px_rgba(0,0,0,0.52)]"
+          loading="lazy"
         />
       </div>
     </div>
@@ -163,79 +207,127 @@ function HomeDesktopHero(props) {
   } = props;
 
   return (
-    <m.section {...fadeUp(0)}>
-      <div className="relative overflow-hidden rounded-[28px] border border-[#dfe6ee] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(247,250,253,0.98)_58%,rgba(237,244,251,0.96)_100%)] shadow-[0_28px_70px_rgba(15,23,42,0.08)] transition-colors dark:border-white/10 dark:bg-[linear-gradient(135deg,rgba(11,23,41,0.96),rgba(8,18,32,0.98)_58%,rgba(5,13,24,0.96)_100%)] dark:shadow-[0_30px_80px_rgba(2,8,23,0.34)] md:rounded-[36px]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,184,122,0.32),transparent_28%),radial-gradient(circle_at_82%_14%,rgba(144,198,255,0.22),transparent_20%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(251,146,60,0.16),transparent_28%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.14),transparent_20%)]" />
-        <div className="relative grid min-h-[560px] gap-5 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:px-10 lg:py-10">
-          <div className="space-y-6">
-            <div className="type-kicker flex flex-wrap items-center gap-3 text-[#5d6775] dark:text-slate-400">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#dfe6ee] bg-white px-3 py-1 shadow-sm dark:border-white/8 dark:bg-[#111b2c] dark:text-slate-200">
-                <Radio className="size-3.5 text-primary" />
-                BGMI season
-              </span>
-              <span className="inline-flex items-center gap-2 text-primary">
-                <Asterisk className="size-3.5" />
-                Tournament hub
-              </span>
-            </div>
+    <m.section {...fadeUp(0)} className="w-full pt-16 pb-32">
+      <div className="mx-auto flex max-w-5xl flex-col items-center justify-center text-center">
+        {/* Centered Typography Hook */}
+        <div className="type-kicker flex flex-wrap items-center justify-center gap-3 text-muted-foreground mb-6">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 shadow-sm text-foreground">
+            <Radio className="size-4 text-primary" />
+            Mobile esports
+          </span>
+          <span className="inline-flex items-center gap-2 text-primary font-bold">
+            <Asterisk className="size-4" />
+            Tournament hub
+          </span>
+        </div>
 
-            <div className="space-y-4">
-              <p className="type-kicker max-w-28 tracking-[0.34em] text-[#728093] dark:text-slate-500">
-                Home
-              </p>
-              <h1 className="type-display-hero max-w-5xl text-[#11131a] dark:text-white">
-                Follow the active BGMI season in one place.
-              </h1>
-              <p className="type-body max-w-2xl text-[#5c6673] dark:text-slate-300">
-                Track the headline tournament, current stage, upcoming matches,
-                standings pressure, and the latest BGMI stories from one clean
-                desktop view.
-              </p>
-            </div>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[5.5rem] font-black leading-[1.05] tracking-tighter text-foreground">
+          Follow the active <br className="hidden md:block" /> mobile esports season.
+        </h1>
+        
+        <p className="mt-8 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
+          Track the headline tournament, current stage, upcoming matches, standings pressure, and the latest tournament stories from one clean desktop view.
+        </p>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                to="/tournaments"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary p-3 text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-transform hover:-translate-y-0.5 sm:w-auto sm:px-6"
-              >
-                Explore events <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                to={boardLink}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#dfe6ee] bg-white p-3 text-sm font-bold uppercase tracking-[0.14em] text-[#11131a] transition-colors hover:bg-[#f8fbff] dark:border-white/8 dark:bg-[#111b2c] dark:text-slate-100 dark:hover:bg-[#16263c] sm:w-auto sm:px-6"
-              >
-                Open tournament board <TrendingUp className="size-4" />
-              </Link>
-            </div>
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            to="/tournaments"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-foreground px-8 py-4 text-sm font-bold tracking-[0.1em] text-background transition-transform hover:-translate-y-1 shadow-lg"
+          >
+            Explore events <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            to={boardLink}
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-border bg-card px-8 py-4 text-sm font-bold tracking-[0.1em] text-foreground transition-all hover:border-primary hover:bg-primary/5 hover:text-primary shadow-sm"
+          >
+            Open board <TrendingUp className="size-4" />
+          </Link>
+        </div>
 
-            {heroMeta.length > 0 ? (
-              <div className="type-kicker flex flex-wrap items-center gap-3 text-[#4e5865] dark:text-slate-300">
-                {heroMeta.map((item, index) => (
-                  <React.Fragment key={item}>
-                    {index > 0 ? (
-                      <span className="text-[#b2bdcb] dark:text-slate-600">&bull;</span>
-                    ) : null}
-                    <span>{item}</span>
-                  </React.Fragment>
-                ))}
+        {/* Fanned Overlapping Cards */}
+        <div className="relative mt-16 md:mt-24 flex w-full max-w-4xl h-[300px] md:h-[400px] items-center justify-center perspective-[1000px]">
+          {/* Extreme Outer Left Card */}
+          <Link to="/tournaments" className="absolute block left-1/2 -ml-[220px] md:-ml-[400px] top-20 w-[200px] md:w-[300px] transform -translate-x-[5%] md:-translate-x-[10%] -rotate-12 md:-rotate-[24deg] rounded-[24px] md:rounded-[32px] border border-border bg-card p-4 md:p-6 shadow-xl transition-all duration-500 hover:-translate-y-4 hover:-rotate-[20deg] hover:z-30 dark:bg-card">
+            <div className="flex flex-col items-center justify-center text-center gap-3">
+              <div className="flex size-10 md:size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Radio className="size-5 md:size-6" />
               </div>
-            ) : null}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">Season 2026</p>
+                <p className="text-sm md:text-lg font-black text-foreground mt-1">Esports Hub</p>
+              </div>
+            </div>
+          </Link>
 
-            <HeroHighlights
-              featuredTournament={featuredTournament}
-              featuredSpotlightStage={featuredSpotlightStage}
-            />
-          </div>
-          <div className="relative hidden min-h-[500px] flex-col justify-center gap-5 lg:flex">
-            <LatestTournamentHud
-              championTeam={championTeam}
-              lastTournament={lastTournament}
-            />
-            <TournamentVisualPanel
-              featuredTournament={featuredTournament}
-              featuredTournamentVisual={featuredTournamentVisual}
-            />
-          </div>
+          {/* Extreme Outer Right Card */}
+          <Link to="/tournaments" className="absolute block right-1/2 -mr-[220px] md:-mr-[400px] top-20 w-[200px] md:w-[300px] transform translate-x-[5%] md:translate-x-[10%] rotate-12 md:rotate-[24deg] rounded-[24px] md:rounded-[32px] border border-border bg-card p-4 md:p-6 shadow-xl transition-all duration-500 hover:-translate-y-4 hover:rotate-[20deg] hover:z-30 dark:bg-card">
+            <div className="flex flex-col items-center justify-center text-center gap-3">
+              <div className="flex size-10 md:size-12 items-center justify-center rounded-2xl bg-secondary text-foreground">
+                <CheckCircle2 className="size-5 md:size-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">Integrity</p>
+                <p className="text-sm md:text-lg font-black text-foreground mt-1">Official Board</p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Back Card (Left) - Latest Tournament */}
+          <Link to={lastTournament ? `/tournaments?id=${lastTournament.id}` : "/tournaments"} className="absolute block left-1/2 -ml-[140px] md:-ml-[250px] top-10 w-[240px] md:w-[350px] transform -translate-x-[10%] md:-translate-x-[20%] -rotate-6 md:-rotate-12 rounded-[24px] md:rounded-[32px] border border-border bg-card p-4 md:p-6 shadow-xl transition-all duration-500 hover:-translate-y-4 hover:-rotate-3 hover:z-40 dark:bg-card">
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-secondary text-primary">
+                <Target className="size-6" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Latest Event</p>
+                <p className="text-base font-bold text-foreground leading-tight line-clamp-1">{lastTournament?.name || "Tournament"}</p>
+              </div>
+            </div>
+            <div className="mt-6 rounded-2xl bg-secondary/50 p-4 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Champion</p>
+              <p className="text-xl font-black text-foreground mt-1 truncate">{championTeam?.teamName || "TBA"}</p>
+            </div>
+          </Link>
+
+          {/* Back Card (Right) - Stats */}
+          <Link to={boardLink} className="absolute block right-1/2 -mr-[140px] md:-mr-[250px] top-10 w-[240px] md:w-[350px] transform translate-x-[10%] md:translate-x-[20%] rotate-6 md:rotate-12 rounded-[24px] md:rounded-[32px] border border-border bg-brand-lime text-black p-4 md:p-6 shadow-xl transition-all duration-500 hover:-translate-y-4 hover:rotate-3 hover:z-40">
+             <div className="flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-black/10">
+                <TrendingUp className="size-6 text-black" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Live Stats</p>
+                <p className="text-base font-bold text-black leading-tight line-clamp-1">{featuredSpotlightStage?.name || "Pending"}</p>
+              </div>
+            </div>
+            <div className="mt-6 rounded-2xl bg-black/5 p-4 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Teams</p>
+              <p className="text-xl font-black text-black mt-1">{featuredSpotlightStage?.teamCount || "16"} Active</p>
+            </div>
+          </Link>
+
+          {/* Front Card (Center) - Featured Tournament */}
+          <Link to={featuredTournament ? `/tournaments?id=${featuredTournament.id}` : "/tournaments"} className="absolute block z-20 w-[280px] md:w-[400px] transform -translate-y-4 rounded-[28px] md:rounded-[36px] border border-white/20 bg-gradient-to-br from-primary to-[#c43e00] text-white p-6 md:p-8 shadow-2xl transition-all duration-500 hover:-translate-y-8 hover:z-50">
+            <div className="flex items-center justify-between mb-8">
+               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">Featured Event</p>
+               <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                 Live Circuit
+               </span>
+            </div>
+            <div className="flex justify-center mb-8">
+               <img
+          src={featuredTournamentVisual || "/images/bmps-2026.webp"}
+                  alt="Featured tournament visual"
+                  className="h-32 object-contain drop-shadow-2xl"
+                  loading="lazy"
+               />
+            </div>
+            <div className="text-center">
+              <h2 className="text-2xl font-black leading-tight tracking-tight text-white text-center">
+                {featuredTournament?.name || "Battlegrounds Mobile India Pro Series"}
+              </h2>
+            </div>
+          </Link>
         </div>
       </div>
     </m.section>
@@ -287,7 +379,7 @@ function HomeDesktopBoardSection({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Current stage</p>
                     <h3 className="mt-1.5 text-xl font-semibold tracking-[-0.04em] text-foreground sm:text-2xl">
-                      {featuredSpotlightStage?.name || "Stage pending"}
+                      {featuredSpotlightStage?.name || "Opening stage"}
                     </h3>
                   </div>
                   {featuredSpotlightStage?.status ? (
@@ -298,10 +390,10 @@ function HomeDesktopBoardSection({
                 </div>
                 <div className="mt-4 rounded-[18px] border border-primary/10 bg-background/75 p-4 dark:border-primary/15 dark:bg-white/[0.04]">
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                    {featuredSpotlightStage?.week || "Schedule window pending"}
+                    {featuredSpotlightStage?.week || "Schedule to be announced"}
                   </p>
                   <p className="mt-2 text-sm font-black tracking-[0.01em] text-foreground">
-                    {featuredSpotlightStage?.teamCount ? `${featuredSpotlightStage.teamCount} teams in play` : "Field pending"}
+                    {featuredSpotlightStage?.teamCount ? `${featuredSpotlightStage.teamCount} teams in play` : "Field locking"}
                   </p>
                 </div>
               </Link>
@@ -346,7 +438,7 @@ function HomeDesktopBoardSection({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-black leading-tight tracking-[0.01em] text-foreground">{stage.name}</p>
                         <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                          <div>{stage.week || "Schedule window pending"}</div>
+                          <div>{stage.week || "Schedule to be announced"}</div>
                           {stage.teamCount ? <div className="mt-1">{stage.teamCount} teams</div> : null}
                         </div>
                       </div>
@@ -392,6 +484,11 @@ function HomeDesktopBoardSection({
                 </div>
               </div>
             ))}
+            {homeBoard.length === 0 ? (
+              <div className="rounded-[20px] border border-dashed border-border/80 bg-background/70 p-5 text-sm leading-6 text-muted-foreground dark:border-white/10 dark:bg-white/[0.04]">
+                Standings will appear here once official match results are published.
+              </div>
+            ) : null}
             {featuredTournamentBoard.featuredStage ? (
               <div className="mt-5 rounded-[24px] border border-primary/12 bg-[linear-gradient(135deg,rgba(251,146,60,0.08),rgba(255,255,255,0.98))] p-4 dark:border-primary/15 dark:bg-[linear-gradient(135deg,rgba(251,146,60,0.12),rgba(15,23,42,0.88))]">
                 <div className="flex items-start justify-between gap-4">
@@ -432,44 +529,24 @@ function HomeDesktopLowerSection({ featuredTournamentLink, upcomingMatches }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-black uppercase leading-tight tracking-[0.02em] text-foreground">{match.stage}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{match.formattedTime || "TBD"}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{match.formattedTime || "Schedule TBA"}</p>
                 </div>
               </div>
             </div>
           )) : (
-            <p className="rounded-[22px] border border-border/70 bg-background/70 p-4 text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.045] dark:text-slate-300">
-              No upcoming matches right now.
-            </p>
+            <div className="flex flex-col items-center justify-center gap-3 rounded-[22px] border border-border/70 bg-background/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.045]">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-secondary/30">
+                <Calendar className="size-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-semibold text-muted-foreground dark:text-slate-300">
+                No upcoming matches right now.
+              </p>
+            </div>
           )}
         </div>
       </LightPanel>
 
       <div className="grid gap-4">
-        <LightPanel className="p-4 sm:p-5 md:p-7">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Fan profile</h2>
-              <p className="mt-2 text-[1.5rem] font-semibold tracking-[-0.05em] text-foreground">Save your team and return faster.</p>
-            </div>
-            <Link to="/profile" className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              Profile
-            </Link>
-          </div>
-          <div className="mt-5">
-            <div className="rounded-[22px] border border-border/70 bg-background/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                Account
-              </p>
-              <p className="mt-3 text-lg font-semibold leading-tight tracking-[-0.03em] text-foreground">
-                Keep your favorite team, followed players, and profile access ready for the next matchday.
-              </p>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Open your profile when you want your personal BGMI shortcuts in one place.
-              </p>
-            </div>
-          </div>
-        </LightPanel>
-
         <LightPanel className="p-4 sm:p-5 md:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -479,14 +556,11 @@ function HomeDesktopLowerSection({ featuredTournamentLink, upcomingMatches }) {
             <Target className="mt-1 size-5 text-primary" />
           </div>
           <p className="mt-4 text-sm leading-7 text-muted-foreground">
-            Open the current BGMI event board or jump back into your profile without digging through the full navigation.
+            Open the current tournament board without digging through the full navigation.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link to={featuredTournamentLink} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-primary-foreground">
               Open tournament <ArrowRight className="size-3.5" />
-            </Link>
-            <Link to="/profile" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-foreground dark:border-white/10 dark:bg-white/[0.045] dark:text-white">
-              Open profile <UserCircle2 className="size-3.5" />
             </Link>
           </div>
         </LightPanel>

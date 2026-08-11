@@ -90,7 +90,10 @@ function buildDesktopHomeView({
 
 export function buildHomeViewModel(summary, options = {}) {
   const mode = options.mode === "mobile" ? "mobile" : "desktop";
-  const tournaments = summary?.tournaments || [];
+  const tournaments = (summary?.tournaments || []).map(t => ({
+    ...t,
+    stages: typeof t.stages === 'string' ? JSON.parse(t.stages || '[]') : (t.stages || [])
+  }));
   const teams = summary?.teams || [];
   const matches = summary?.matches || [];
   const rawResults = summary?.results || [];
@@ -119,12 +122,10 @@ export function buildHomeViewModel(summary, options = {}) {
     .filter((tournament) => tournament.status === "completed")
     .sort(
       (left, right) =>
-        new Date(
-          right.end_date || right.updated_date || right.created_date,
-        ).getTime() -
-        new Date(
-          left.end_date || left.updated_date || left.created_date,
-        ).getTime(),
+        new Date(right.end_date || "1970-01-01").getTime() -
+        new Date(left.end_date || "1970-01-01").getTime() ||
+        new Date(right.updated_date || right.created_date).getTime() -
+        new Date(left.updated_date || left.created_date).getTime(),
     );
   const upcomingMatches = calendarMatches
     .filter((match) => match.status === "scheduled")
@@ -157,6 +158,12 @@ export function buildHomeViewModel(summary, options = {}) {
       }
     : null;
 
+  const completedTournamentChampions = completedTournaments
+    .map((tournament) => ({
+      tournament,
+      champion: getTournamentChampionFromStages(tournament),
+    }))
+    .filter((entry) => entry.champion);
   const lastTournament = completedTournaments[0] || null;
   const teamsMap = Object.fromEntries(teams.map((team) => [team.id, team]));
   const lastTournamentResults = lastTournament
@@ -169,10 +176,7 @@ export function buildHomeViewModel(summary, options = {}) {
       includeHidden: true,
     },
   );
-  const championTeam =
-    getTournamentChampionFromStages(lastTournament) ||
-    lastTournamentStandings[0] ||
-    null;
+  const championTeam = getTournamentChampionFromStages(lastTournament) || null;
   const championLogo = championTeam?.rawTeamName
     ? getTeamLogoByName(championTeam.rawTeamName)
     : null;
@@ -208,7 +212,9 @@ export function buildHomeViewModel(summary, options = {}) {
       featuredTournamentStandings.length > 0
         ? featuredTournament?.status === "ongoing"
           ? "Live"
-          : "Current"
+          : featuredTournament?.status === "upcoming"
+            ? "Upcoming"
+            : "Current"
         : "Completed",
     wwcd: team.wins,
     points: team.totalPoints || 0,
@@ -218,7 +224,9 @@ export function buildHomeViewModel(summary, options = {}) {
   const boardHeadline = prioritizeCurrentTournamentBoard
     ? featuredTournament?.status === "ongoing"
       ? "Live tournament board."
-      : "Current tournament board."
+      : featuredTournament?.status === "upcoming"
+        ? "Upcoming tournament board."
+        : "Current tournament board."
     : lastTournament
       ? "Latest completed board."
       : "Tournament board pending.";
@@ -307,8 +315,10 @@ export function buildHomeViewModel(summary, options = {}) {
     featuredTournament?.name || "Main event locked",
     `${liveMatches.length} live match${liveMatches.length === 1 ? "" : "es"} on radar`,
     championTeam?.teamName
-      ? `${championTeam.teamName} champions of BGIS 2026`
-      : "BGIS 2026 champion locked",
+      ? `${championTeam.teamName} champions of ${lastTournament?.name || "latest event"}`
+      : lastTournament?.name
+        ? `${lastTournament.name} completed`
+        : "Latest champion locked",
     featuredNews?.title || "News desk ready for drops",
   ];
 
@@ -316,7 +326,7 @@ export function buildHomeViewModel(summary, options = {}) {
     featuredTournament?.banner_url ||
     getTournamentLogo(featuredTournament) ||
     championLogo ||
-    "/images/core-logo.png";
+    "/images/core-logo.webp";
   const mobileBoardLeaders = homeBoard.slice(0, 3);
   const mobileQuickActions = [
     {
@@ -325,13 +335,7 @@ export function buildHomeViewModel(summary, options = {}) {
       icon: "TrendingUp",
       tournamentId: boardTournamentId,
     },
-    { title: "Fan hub", detail: "Polls, predictions, chat", icon: "Swords" },
-    {
-      title: "Events",
-      detail: `${calendarTournaments.length} tournaments tracked`,
-      icon: "Trophy",
-      link: "/tournaments",
-    },
+    { title: "Events", detail: `${calendarTournaments.length} tournaments tracked`, icon: "Trophy", link: "/tournaments" },
     {
       title: "News",
       detail: "Roster and result drops",

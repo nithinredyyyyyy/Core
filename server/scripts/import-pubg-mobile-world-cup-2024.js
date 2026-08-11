@@ -178,7 +178,7 @@ const tournament = {
   start_date: "2024-07-19",
   end_date: "2024-07-28",
   max_teams: 28,
-  banner_url: "/images/pubg-mobile-world-cup-2024.png",
+  banner_url: "/images/pubg-mobile-world-cup-2024.webp",
   description:
     "PUBG Mobile World Cup 2024 was the mid-season international event of the 2024 PUBG Mobile competitive season, held offline at Boulevard Riyadh City in Riyadh, Saudi Arabia.",
   format_overview:

@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2025-02-16",
   end_date: "2025-04-27",
   max_teams: 1024,
-  banner_url: "/images/bgis-2025.png",
+  banner_url: "/images/bgis-2025.webp",
   description:
     "Battlegrounds Mobile India Series 2025 was the fourth edition of BGIS, organized by KRAFTON with the prize pool growing from ₹2,00,00,000 to ₹3,21,00,000 through the in-game BGIS crate. The event ran from February 16 to April 27, 2025 and concluded with Team Versatile winning the Kolkata Grand Finals.",
   format_overview:

@@ -191,8 +191,8 @@ export function getFeaturedTournamentStage(
 
 function extractGroupLabel(rawValue) {
   const value = String(rawValue || "").trim();
-  const match = value.match(/group\s+([a-z0-9]+)/i);
-  if (match) return match[1].toUpperCase();
+  const matches = Array.from(value.matchAll(/group\s+([a-z0-9]+)/gi));
+  if (matches.length > 0) return matches[matches.length - 1][1].toUpperCase();
   if (/^[A-Z0-9]$/i.test(value)) return value.toUpperCase();
   return value || "-";
 }

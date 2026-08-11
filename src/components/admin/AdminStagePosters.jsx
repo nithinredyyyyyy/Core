@@ -7,12 +7,12 @@ import { getTournamentLogo } from "@/lib/tournamentBranding";
 import {
   buildParticipantEntries,
   resolveTournamentParticipantState,
-} from "@/lib/bmps2026Progression";
+} from "@/lib/tournamentProgression";
 import { decorateMatchesWithLiveStatus } from "@/lib/liveCalendar";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 
 const BMPS_2026_NAME = "Battlegrounds Mobile India Pro Series 2026";
-const POSTER_BACKGROUND = "/images/bmps-poster-story.png";
+const POSTER_BACKGROUND = "/images/bmps-poster-story.webp";
 const POSTER_CSS = `
 .bmps-admin-poster-stage {
   width: min(92vw, calc(88vh * 4 / 5));
@@ -113,7 +113,7 @@ const POSTER_CSS = `
   gap: 12px;
 }
 .bmps-admin-hero-title {
-  color: #050505;
+  color: var(--brand-ink-deep);
   font-size: 72px;
   line-height: 0.88;
   font-weight: 900;
@@ -163,13 +163,13 @@ const POSTER_CSS = `
   margin-top: auto;
   padding-bottom: 0;
   text-align: center;
-  color: #ffffff;
+  color: var(--brand-white);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.58em;
 }
 .bmps-admin-krafton {
-  color: #050505;
+  color: var(--brand-ink-deep);
   font-weight: 900;
   line-height: 1;
   text-transform: uppercase;
@@ -181,8 +181,8 @@ const POSTER_CSS = `
 .bmps-admin-krafton .small {
   display: inline-block;
   margin-top: 5px;
-  background: #050505;
-  color: #ffffff;
+  background: var(--brand-ink-deep);
+  color: var(--brand-white);
   padding: 5px 9px;
   font-size: 12px;
   letter-spacing: 0.12em;
@@ -213,7 +213,7 @@ const POSTER_CSS = `
   border-radius: 999px;
   background: rgba(98, 38, 10, 0.28);
   padding: 6px 30px;
-  color: #ffffff;
+  color: var(--brand-white);
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 0.44em;
@@ -224,7 +224,7 @@ const POSTER_CSS = `
   justify-content: center;
   gap: 12px;
   margin-top: 5px;
-  color: #ffffff;
+  color: var(--brand-white);
   font-size: 7px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -242,13 +242,13 @@ const POSTER_CSS = `
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  color: #2f3541;
+  color: var(--brand-ink-steel);
   font-size: 8.8px;
   font-weight: 800;
 }
 .bmps-admin-table thead th {
   padding: 7px 5px 8px;
-  border-bottom: 6px solid #d8e0eb;
+  border-bottom: 6px solid var(--brand-sky-breeze);
   text-align: left;
   font-weight: 900;
 }
@@ -258,7 +258,7 @@ const POSTER_CSS = `
 }
 .bmps-admin-table tbody td {
   padding: 6.3px 5px;
-  border-bottom: 3px solid #d8e0eb;
+  border-bottom: 3px solid var(--brand-sky-breeze);
 }
 .bmps-admin-table tbody tr:last-child td {
   border-bottom: 0;
@@ -285,9 +285,9 @@ const POSTER_CSS = `
   font-size: 10px;
   font-weight: 900;
 }
-.bmps-admin-move.up { color: #10b981; }
-.bmps-admin-move.down { color: #fb7185; }
-.bmps-admin-move.stay { color: #facc15; }
+.bmps-admin-move.up { color: var(--brand-emerald); }
+.bmps-admin-move.down { color: var(--brand-rose-soft); }
+.bmps-admin-move.stay { color: var(--brand-yellow); }
 .bmps-admin-poster.standings .bmps-admin-poster-foot {
   padding-bottom: 0;
   font-size: 8px;
@@ -402,7 +402,7 @@ function PosterHeader({ activeOption, tournamentLogo, ratio, standings = false }
             <span className="big">KRAFTON</span>
             <span className="small">INDIA ESPORTS</span>
           </div>
-          <img className="bmps-admin-core-mark" src="/images/core-logo.png" alt="Core Esports" />
+          <img className="bmps-admin-core-mark" src="/images/core-logo.svg" alt="Core Esports" />
         </div>
         <div className="bmps-admin-standings-hero">
           <img className="bmps-admin-hero-logo" src={tournamentLogo} alt="BMPS 2026" />
@@ -422,7 +422,7 @@ function PosterHeader({ activeOption, tournamentLogo, ratio, standings = false }
     <header>
       <div className="bmps-admin-brand-row">
         <div />
-        <img className="bmps-admin-core-mark" src="/images/core-logo.png" alt="Core Esports" />
+        <img className="bmps-admin-core-mark" src="/images/core-logo.svg" alt="Core Esports" />
       </div>
       <div className="bmps-admin-hero">
         <img className="bmps-admin-hero-logo" src={tournamentLogo} alt="BMPS 2026" />
@@ -608,6 +608,164 @@ function StandingsPosterExact({ activeOption, standingsRows, tournamentLogo }) {
   );
 }
 
+function PosterSourceHeader({ onCopyTeams }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+          Poster source
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold uppercase tracking-[-0.04em] text-foreground">
+          BMPS 2026 poster generator
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+          Uses live BMPS 2026 Stages & Results data. The group-grid poster
+          follows your 4x5 output, and the standings poster follows your
+          portrait table output.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onCopyTeams}
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+        >
+          <Clipboard className="size-3.5" />
+          Copy teams
+        </button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground"
+        >
+          <ImageIcon className="size-3.5" />
+          Print
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PosterControlsSidebar({ activeOption, posterOptions, onSelectOption, posterMode, onPosterModeChange, posterTeams, standingsRows }) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
+        <label htmlFor="admin-stage-poster-option" className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+          Stage group
+        </label>
+        <select
+          id="admin-stage-poster-option"
+          value={activeOption?.key || ""}
+          onChange={(event) => onSelectOption(event.target.value)}
+          className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary/40"
+        >
+          {posterOptions.map((option) => (
+            <option key={option.key} value={option.key}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+          Output
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {[
+            ["grid", "4x5 Grid"],
+            ["standings", "Standings"],
+          ].map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => onPosterModeChange(mode)}
+              className={`rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
+                posterMode === mode
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border bg-background text-muted-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Teams</p>
+          <p className="mt-2 text-2xl font-black text-foreground">{posterTeams.length}</p>
+        </div>
+        <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Rows</p>
+          <p className="mt-2 text-2xl font-black text-foreground">{standingsRows.length}</p>
+        </div>
+      </div>
+
+      <div className="rounded-[20px] border border-border bg-background p-4 text-xs leading-6 text-muted-foreground">
+        <div className="mb-2 flex items-center gap-2 font-bold uppercase tracking-[0.14em] text-foreground">
+          <RefreshCw className="size-3.5 text-primary" />
+          Live source
+        </div>
+        Group teams and table rows are derived from the live stage board,
+        not from the old static default-project HTML.
+      </div>
+    </div>
+  );
+}
+
+function PosterPreview({ posterMode, activeOption, posterTeams, standingsRows, tournamentLogo }) {
+  return (
+    <div className="overflow-x-auto rounded-[28px] border border-brand-border bg-brand-cream-bg p-5">
+      {posterMode === "standings" ? (
+        <StandingsPosterExact
+          activeOption={activeOption}
+          standingsRows={standingsRows}
+          tournamentLogo={tournamentLogo}
+        />
+      ) : (
+        <GroupGridPoster
+          activeOption={activeOption}
+          posterTeams={posterTeams}
+          tournamentLogo={tournamentLogo}
+        />
+      )}
+    </div>
+  );
+}
+
+function PosterWorkspace({ bmpsTournament, activeOption, posterOptions, onSelectOption, posterMode, onPosterModeChange, posterTeams, standingsRows, tournamentLogo }) {
+  return (
+    <>
+      {!bmpsTournament ? (
+        <div className="mt-5 rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+          BMPS 2026 tournament was not found in the backend.
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-5 xl:grid-cols-[18rem_1fr]">
+          <PosterControlsSidebar
+            activeOption={activeOption}
+            posterOptions={posterOptions}
+            onSelectOption={onSelectOption}
+            posterMode={posterMode}
+            onPosterModeChange={onPosterModeChange}
+            posterTeams={posterTeams}
+            standingsRows={standingsRows}
+          />
+
+          <PosterPreview
+            posterMode={posterMode}
+            activeOption={activeOption}
+            posterTeams={posterTeams}
+            standingsRows={standingsRows}
+            tournamentLogo={tournamentLogo}
+          />
+        </div>
+      )}
+    </>
+  );
+}
 export default function AdminStagePosters() {
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [posterMode, setPosterMode] = useState("grid");
@@ -719,13 +877,17 @@ export default function AdminStagePosters() {
       .toSorted((left, right) => (left.rank || 999) - (right.rank || 999));
   }, [activeOption, participantState.stageBoards]);
 
-  const tournamentLogo = getTournamentLogo(bmpsTournament) || "/images/bmps-2026.png";
+  const tournamentLogo = getTournamentLogo(bmpsTournament) || "/images/bmps-2026.webp";
 
   const handleCopyTeams = async () => {
     if (!navigator.clipboard || posterTeams.length === 0) return;
-    await navigator.clipboard.writeText(
-      posterTeams.map((entry, index) => `${index + 1}. ${entry.team}`).join("\n"),
-    );
+    try {
+      await navigator.clipboard.writeText(
+        posterTeams.map((entry, index) => `${index + 1}. ${entry.team}`).join("\n"),
+      );
+    } catch (err) {
+      console.error("Clipboard write failed:", err);
+    }
   };
 
   if (tournamentsLoading) {
@@ -740,128 +902,19 @@ export default function AdminStagePosters() {
     <div className="space-y-5">
       <style>{POSTER_CSS}</style>
       <div className="rounded-[24px] border border-border bg-card p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
-              Poster source
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold uppercase tracking-[-0.04em] text-foreground">
-              BMPS 2026 poster generator
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Uses live BMPS 2026 Stages & Results data. The group-grid poster
-              follows your 4x5 output, and the standings poster follows your
-              portrait table output.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleCopyTeams}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-            >
-              <Clipboard className="size-3.5" />
-              Copy teams
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground"
-            >
-              <ImageIcon className="size-3.5" />
-              Print
-            </button>
-          </div>
-        </div>
+        <PosterSourceHeader onCopyTeams={handleCopyTeams} />
 
-        {!bmpsTournament ? (
-          <div className="mt-5 rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-            BMPS 2026 tournament was not found in the backend.
-          </div>
-        ) : (
-          <div className="mt-5 grid gap-5 xl:grid-cols-[18rem_1fr]">
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
-                <label htmlFor="admin-stage-poster-option" className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                  Stage group
-                </label>
-                <select
-                  id="admin-stage-poster-option"
-                  value={activeOption?.key || ""}
-                  onChange={(event) => setSelectedOptionKey(event.target.value)}
-                  className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary/40"
-                >
-                  {posterOptions.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                  Output
-                </p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {[
-                    ["grid", "4x5 Grid"],
-                    ["standings", "Standings"],
-                  ].map(([mode, label]) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setPosterMode(mode)}
-                      className={`rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
-                        posterMode === mode
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Teams</p>
-                  <p className="mt-2 text-2xl font-black text-foreground">{posterTeams.length}</p>
-                </div>
-                <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Rows</p>
-                  <p className="mt-2 text-2xl font-black text-foreground">{standingsRows.length}</p>
-                </div>
-              </div>
-
-              <div className="rounded-[20px] border border-border bg-background p-4 text-xs leading-6 text-muted-foreground">
-                <div className="mb-2 flex items-center gap-2 font-bold uppercase tracking-[0.14em] text-foreground">
-                  <RefreshCw className="size-3.5 text-primary" />
-                  Live source
-                </div>
-                Group teams and table rows are derived from the live stage board,
-                not from the old static default-project HTML.
-              </div>
-            </div>
-
-            <div className="overflow-x-auto rounded-[28px] border border-[#eadfce] bg-[#f7efe6] p-5">
-              {posterMode === "standings" ? (
-                <StandingsPosterExact
-                  activeOption={activeOption}
-                  standingsRows={standingsRows}
-                  tournamentLogo={tournamentLogo}
-                />
-              ) : (
-                <GroupGridPoster
-                  activeOption={activeOption}
-                  posterTeams={posterTeams}
-                  tournamentLogo={tournamentLogo}
-                />
-              )}
-            </div>
-          </div>
-        )}
+        <PosterWorkspace
+          bmpsTournament={bmpsTournament}
+          activeOption={activeOption}
+          posterOptions={posterOptions}
+          onSelectOption={setSelectedOptionKey}
+          posterMode={posterMode}
+          onPosterModeChange={setPosterMode}
+          posterTeams={posterTeams}
+          standingsRows={standingsRows}
+          tournamentLogo={tournamentLogo}
+        />
       </div>
     </div>
   );

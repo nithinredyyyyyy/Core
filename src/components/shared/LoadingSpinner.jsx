@@ -77,7 +77,7 @@ export default function LoadingSpinner({ isExiting = false }) {
         };
 
   return (
-    <div className="fixed inset-0 z-[999] overflow-hidden bg-[#050505] text-white">
+    <div className="fixed inset-0 z-[999] overflow-hidden bg-brand-ink-deep text-white">
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
           isExiting ? "opacity-0" : "opacity-100"
@@ -105,7 +105,7 @@ export default function LoadingSpinner({ isExiting = false }) {
             className={`absolute inset-[2%] rounded-full border border-white/8 preloader-progress-ring transition-opacity duration-500 ${isExiting ? "opacity-0" : "opacity-100"}`}
           />
           <img
-            src="/images/core-logo.png"
+            src="/images/core-logo.svg"
             alt="Core loading"
             className={`relative z-10 size-full object-contain ${
               isExiting ? "preloader-exit-settle" : "preloader-vortex-spin"

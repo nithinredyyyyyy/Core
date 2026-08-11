@@ -12,8 +12,8 @@ function CoreRing({ className = "" }) {
           x2="100%"
           y2="100%"
         >
-          <stop offset="0%" stopColor="#fb923c" />
-          <stop offset="100%" stopColor="#fcd34d" />
+          <stop offset="0%" stopColor="var(--brand-orange-soft)" />
+          <stop offset="100%" stopColor="var(--brand-amber-soft)" />
         </linearGradient>
       </defs>
       <circle
@@ -27,11 +27,11 @@ function CoreRing({ className = "" }) {
         strokeLinecap="round"
         transform="rotate(-32 32 32)"
       />
-      <circle cx="32" cy="32" r="7" fill="#0f172a" opacity="0.9" />
+      <circle cx="32" cy="32" r="7" fill="var(--brand-ink-slate)" opacity="0.9" />
       <path
         d="M43 20c-3.1-2.8-6.8-4.2-11.1-4.2-8.9 0-16.1 7.2-16.1 16.1S23 48 31.9 48c4.3 0 8-1.4 11.1-4.2"
         fill="none"
-        stroke="#0f172a"
+        stroke="var(--brand-ink-slate)"
         strokeWidth="4.5"
         strokeLinecap="round"
       />
@@ -50,8 +50,8 @@ function CoreGrid({ className = "" }) {
           x2="100%"
           y2="100%"
         >
-          <stop offset="0%" stopColor="#f97316" />
-          <stop offset="100%" stopColor="#fdba74" />
+          <stop offset="0%" stopColor="var(--brand-orange)" />
+          <stop offset="100%" stopColor="var(--brand-orange-soft-2)" />
         </linearGradient>
       </defs>
       <rect
@@ -67,14 +67,14 @@ function CoreGrid({ className = "" }) {
       <path
         d="M42 18H30c-7.7 0-14 6.3-14 14s6.3 14 14 14h12"
         fill="none"
-        stroke="#111827"
+        stroke="var(--brand-ink-slate-2)"
         strokeWidth="5.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M38 24h10M38 40h10"
-        stroke="#111827"
+        stroke="var(--brand-ink-slate-2)"
         strokeWidth="4"
         strokeLinecap="round"
       />
@@ -93,8 +93,8 @@ function CorePulse({ className = "" }) {
           x2="100%"
           y2="100%"
         >
-          <stop offset="0%" stopColor="#fb923c" />
-          <stop offset="100%" stopColor="#facc15" />
+          <stop offset="0%" stopColor="var(--brand-orange-soft)" />
+          <stop offset="100%" stopColor="var(--brand-yellow)" />
         </linearGradient>
       </defs>
       <circle
@@ -109,14 +109,14 @@ function CorePulse({ className = "" }) {
       <path
         d="M44 18c-3.2-2.1-6.8-3.2-10.8-3.2-9.9 0-18 8.1-18 18s8.1 18 18 18c4 0 7.6-1.1 10.8-3.2"
         fill="none"
-        stroke="#111827"
+        stroke="var(--brand-ink-slate-2)"
         strokeWidth="6"
         strokeLinecap="round"
       />
       <path
         d="M24 32h7l3-7 4 14 3-7h7"
         fill="none"
-        stroke="#111827"
+        stroke="var(--brand-ink-slate-2)"
         strokeWidth="4.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -134,7 +134,7 @@ const MARKS = {
 export function BrandMark({ concept = "ring", className = "" }) {
   if (concept === "site") {
     return (
-      <img src="/images/core-logo.png" alt="Core logo" className={className} />
+      <img src="/images/core-logo.svg" alt="Core logo" className={className} />
     );
   }
 

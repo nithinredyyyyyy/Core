@@ -1,7 +1,8 @@
 import {
   buildParticipantEntries,
-  resolveTournamentParticipantState,
+  buildStageOptions,
 } from "./bmps2026Progression.js";
+import { resolveTournamentParticipantState } from "./tournamentProgression.js";
 import {
   decorateMatchesWithLiveStatus,
   decorateTournamentsWithLiveStatus,
@@ -46,9 +47,9 @@ export function getFeaturedTournamentFromCalendar(
   const completed = calendarTournaments.reduce((best, tournament) => {
     if (tournament.status !== "completed") return best;
     if (!best) return tournament;
-    return getTournamentSortDate(tournament) > getTournamentSortDate(best)
-      ? tournament
-      : best;
+    const bestDate = new Date(best.end_date || best.updated_date || best.created_date || 0).getTime();
+    const tournamentDate = new Date(tournament.end_date || tournament.updated_date || tournament.created_date || 0).getTime();
+    return tournamentDate > bestDate ? tournament : best;
   }, null);
   if (completed) return completed;
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Save, Trash2, X } from "lucide-react";
@@ -13,34 +13,11 @@ import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
 import {
   buildParticipantEntries,
   resolveTournamentParticipantState,
-} from "@/lib/bmps2026Progression";
+} from "@/lib/tournamentProgression";
+import { scopeMatchParticipants } from "@/lib/teamScope";
 
 const PLACEMENT_POINTS = { 1: 10, 2: 6, 3: 5, 4: 4, 5: 3, 6: 2, 7: 1, 8: 1 };
 const VALID_PLACEMENTS = Array.from({ length: 16 }, (_, index) => index + 1);
-
-function extractGroupToken(value) {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  const explicit = text.match(/group\s+([a-z0-9]+)/i);
-  if (explicit) return explicit[1].toLowerCase();
-  const simple = text.match(/\b([a-d])\b/i);
-  if (simple) return simple[1].toLowerCase();
-  return text.toLowerCase();
-}
-
-function extractGroupTokens(value) {
-  const token = extractGroupToken(value);
-  if (!token) return [];
-  if (/^[a-d]{1,4}$/i.test(token)) return [...new Set(token.toLowerCase().split(""))];
-  return [token];
-}
-
-function groupTokensOverlap(left, right) {
-  const leftTokens = extractGroupTokens(left);
-  const rightTokens = extractGroupTokens(right);
-  if (leftTokens.length === 0 || rightTokens.length === 0) return false;
-  return leftTokens.some((token) => rightTokens.includes(token));
-}
 
 function parsePlacementValue(value) {
   if (value === "" || value === null || typeof value === "undefined") return 0;
@@ -49,6 +26,257 @@ function parsePlacementValue(value) {
   return Math.min(16, Math.max(0, parsed));
 }
 
+function MatchSelector({ selectedMatch, onSelectMatch, availableMatches, tournamentMap }) {
+  return (
+    <div>
+      <Label>Select Match</Label>
+      <Select value={selectedMatch} onValueChange={onSelectMatch}>
+        <SelectTrigger className="max-w-md"><SelectValue placeholder="Choose a match" /></SelectTrigger>
+        <SelectContent>
+          {availableMatches.map((match) => (
+            <SelectItem key={match.id} value={match.id}>
+              {tournamentMap[match.tournament_id]?.name || "?"} - {match.stage}{match.group_name ? ` (${match.group_name})` : ""} - Match #{match.match_number || "?"} {match.map ? `(${match.map})` : ""}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function ExistingResultsList({ matchResults, teamsMap, onEdit, isMutating, onDelete }) {
+  return (
+    <div className="space-y-1">
+      {matchResults.map((result) => (
+        <div key={result.id} className="flex items-center justify-between bg-secondary/30 rounded-lg px-3 py-2 text-sm">
+          <div className="flex items-center gap-3">
+            <span className="font-bold w-6 text-center">#{result.placement}</span>
+            <span>{teamsMap[result.team_id]?.name || "Unknown"}</span>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
+              getMatchResultPublicationStatus(result) === "published"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-amber-100 text-amber-700"
+            }`}>
+              {getMatchResultPublicationStatus(result)}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-muted-foreground">{result.kill_points} kills</span>
+            <span className="text-xs text-muted-foreground">{result.placement_points} place</span>
+            <span className="font-bold text-primary">{result.total_points} pts</span>
+            <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(result)} disabled={isMutating}><Pencil className="w-3 h-3" /></Button>
+            <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(result.id)} disabled={isMutating}><Trash2 className="w-3 h-3 text-destructive" /></Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EditResultForm({ resultForm, onResultFormChange, onClose, updateResult, onUpdateResult }) {
+  return (
+    <div className="rounded-xl border border-border bg-background/80 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-semibold">Edit Result</h4>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} disabled={updateResult.isPending}><X className="w-4 h-4" /></Button>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-4">
+        <div>
+          <Label>Placement</Label>
+          <Input
+            type="number"
+            min={1}
+            max={16}
+            value={resultForm.placement > 0 ? resultForm.placement : ""}
+            onChange={(e) => onResultFormChange("placement", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Kills</Label>
+          <Input type="number" min={0} value={resultForm.kill_points ?? 0} onChange={(e) => onResultFormChange("kill_points", e.target.value)} />
+        </div>
+        <div>
+          <Label>Place Pts</Label>
+          <Input value={resultForm.placement_points || 0} disabled />
+        </div>
+        <div>
+          <Label>Total</Label>
+          <Input value={resultForm.total_points || 0} disabled />
+        </div>
+      </div>
+      <div className="mt-4 flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={updateResult.isPending}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={() => onUpdateResult("draft")} disabled={updateResult.isPending}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
+        <Button type="button" onClick={() => onUpdateResult("published")} disabled={updateResult.isPending}><Save className="w-4 h-4 mr-2" /> Publish Result</Button>
+      </div>
+    </div>
+  );
+}
+
+function ExistingResultsPanel({ matchResults, teamsMap, isMutating, editingResult, resultForm, onEditResult, onDeleteResult, onResultFormChange, onCloseEdit, updateResult, onUpdateResult }) {
+  return (
+    <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold">Existing Results</h3>
+      </div>
+
+      <ExistingResultsList
+        matchResults={matchResults}
+        teamsMap={teamsMap}
+        onEdit={onEditResult}
+        isMutating={isMutating}
+        onDelete={onDeleteResult}
+      />
+
+      {editingResult ? (
+        <EditResultForm
+          resultForm={resultForm}
+          onResultFormChange={onResultFormChange}
+          onClose={onCloseEdit}
+          updateResult={updateResult}
+          onUpdateResult={onUpdateResult}
+        />
+      ) : null}
+
+      {!editingResult ? (
+        <p className="text-xs text-muted-foreground">
+          Existing results already exist for this match. Use the pencil icons above to revise each team row instead of creating duplicate results.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ScorecardSection({ scorecardTotals, entryScorecard }) {
+  return (
+    <div className="mx-4 mb-4 rounded-xl border border-border bg-secondary/20 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold">Live standings</h4>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Published match points stay in this table, and the next match entry adds on top instantly.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border border-border bg-background px-3 py-1">
+            {scorecardTotals.placedTeams}/16 teams placed
+          </span>
+          <span className="rounded-full border border-border bg-background px-3 py-1">
+            {scorecardTotals.kills} kills
+          </span>
+          <span className="rounded-full border border-border bg-background px-3 py-1">
+            {scorecardTotals.totalPoints} standings pts
+          </span>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        {entryScorecard.map((entry) => (
+          <div
+            key={`scorecard-${entry.team_id}`}
+            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                  {entry.scorecardRank}
+                </span>
+                <p className="truncate font-medium">{entry.team_name}</p>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Published {entry.baseline_total_points || 0} pts â€¢ Current #{entry.placement || "-"} â€¢ {entry.kill_points || 0} kills
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-primary">{entry.total_points_combined || 0}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Standings total</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ResultEntryTable({ entries, onEntryChange }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border text-xs text-muted-foreground bg-secondary/20">
+            <th className="text-left p-3">Team</th>
+            <th className="text-center p-3 w-24">Placement</th>
+            <th className="text-center p-3 w-24">Kills</th>
+            <th className="text-center p-3 w-20">Place Pts</th>
+            <th className="text-center p-3 w-20">Total</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {entries.map((entry, idx) => (
+            <tr key={entry.team_id}>
+              <td className="p-3 font-medium">{entry.team_name}</td>
+              <td className="p-3">
+                <Input
+                  type="number"
+                  min={1}
+                  max={16}
+                  value={entry.placement > 0 ? entry.placement : ""}
+                  onChange={(e) => onEntryChange(idx, "placement", e.target.value)}
+                  className="h-8 text-center"
+                />
+              </td>
+              <td className="p-3"><Input type="number" min={0} value={entry.kill_points ?? 0} onChange={(e) => onEntryChange(idx, "kill_points", e.target.value)} className="h-8 text-center" /></td>
+              <td className="p-3 text-center text-muted-foreground">{entry.placement_points}</td>
+              <td className="p-3 text-center font-bold text-primary">{entry.total_points}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EnterResultsPanel({ selectedMatchData, getMatchTeams, tournamentMap, scorecardTotals, entryScorecard, entries, onEntryChange, onSave, isSaving }) {
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="p-4 border-b border-border flex justify-between items-center gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">Enter Results</h3>
+          <p className="text-[10px] text-muted-foreground mt-1">Kill = 1pt | 1st=10, 2nd=6, 3rd=5, 4th=4, 5th=3, 6th=2, 7th-8th=1</p>
+        </div>
+      </div>
+      <div className="px-4 py-2 text-xs text-muted-foreground">
+        {selectedMatchData ? `Result entry scope: ${getMatchTeams(selectedMatchData).length} teams from ${tournamentMap[selectedMatchData.tournament_id]?.name || "selected tournament"}${selectedMatchData.stage ? ` - ${selectedMatchData.stage}` : ""}${selectedMatchData.group_name ? ` (${selectedMatchData.group_name})` : ""}` : null}
+      </div>
+      <div className="px-4 pb-2 text-[11px] text-muted-foreground">
+        Save drafts while building the scorecard, then publish when the full match sheet is ready for the live standings board.
+      </div>
+      <ScorecardSection
+        scorecardTotals={scorecardTotals}
+        entryScorecard={entryScorecard}
+      />
+      <ResultEntryTable
+        entries={entries}
+        onEntryChange={onEntryChange}
+      />
+      <div className="p-4 border-t border-border flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => onSave("draft")} disabled={isSaving}>
+          <Save className="w-4 h-4 mr-2" /> Save Draft
+        </Button>
+        <Button type="button" onClick={() => onSave("published")} disabled={isSaving}>
+          <Save className="w-4 h-4 mr-2" /> Publish Results
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function EmptyResultsNotice() {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+      This match does not have a resolved team scope yet. Fix the tournament participants or BMPS stage mapping before entering results.
+    </div>
+  );
+}
 export default function AdminResults() {
   const [selectedMatch, setSelectedMatch] = useState("");
   const [entries, setEntries] = useState([]);
@@ -137,44 +365,20 @@ export default function AdminResults() {
       return [];
     }
 
-    const normalizedStage = normalizeOrganizationName(match.stage || "");
-    const normalizedStageLabel = String(match.stage || "").trim().toLowerCase();
+    const { effectiveParticipants, resolvedTeams } = scopeMatchParticipants({
+        participants,
+        teams,
+        stage: match.stage,
+        groupName: match.group_name,
+        allMatchResults,
+        allMatches: matches,
+        tournamentName: tournament?.name,
+        normalize: normalizeOrganizationName,
+      });
 
-    const scopedParticipants = participants.filter((participant) => {
-      const phase = String(participant.phase || "").trim();
-      if (!phase) return false;
-      const normalizedPhaseLabel = phase.toLowerCase();
-      const participantGroupSource = participant.group_name || participant.group || participant.phase || "";
-
-      if (
-        match.group_name &&
-        normalizeOrganizationName(phase).startsWith(normalizedStage) &&
-        groupTokensOverlap(match.group_name, participantGroupSource)
-      ) {
-        return true;
-      }
-
-      return normalizeOrganizationName(phase) === normalizedStage || normalizedPhaseLabel === normalizedStageLabel;
-    });
-
-    const effectiveParticipants =
-      scopedParticipants.length > 0
-        ? scopedParticipants
-        : normalizedStage || normalizedStageLabel
-          ? []
-          : participants;
-    const teamsByKey = new Map(teams.map((team) => [normalizeOrganizationName(team.name), team]));
-
-    const resolvedTeams = Array.from(
-      new Map(
-        effectiveParticipants.map((participant) => [
-          normalizeOrganizationName(participant.team),
-          participant,
-        ])
-      ).values()
-    )
-      .map((participant) => teamsByKey.get(normalizeOrganizationName(participant.team)))
-      .filter(Boolean);
+    if (effectiveParticipants.length === 0) {
+      return [];
+    }
 
     return resolvedTeams;
   };
@@ -194,22 +398,23 @@ export default function AdminResults() {
     await qc.invalidateQueries({ queryKey: ["matches"] });
   };
 
-  const getNextMatchId = (matchId) => {
+  const getNextMatchIdRef = useRef(null);
+  getNextMatchIdRef.current = (matchId) => {
     const currentIndex = availableMatches.findIndex((match) => match.id === matchId);
     if (currentIndex === -1) return "";
     return availableMatches[currentIndex + 1]?.id || "";
   };
+  const getNextMatchId = (matchId) => getNextMatchIdRef.current(matchId);
 
   const createResults = useMutation({
     mutationFn: (data) => base44.entities.MatchResult.bulkCreate(data),
     onSuccess: async (_response, variables) => {
       await invalidateResultQueries();
-      const currentMatchId = variables?.[0]?.match_id || selectedMatch;
-      await markMatchCompletedIfNeeded(currentMatchId);
+      const matchId = variables?.[0]?.match_id || selectedMatch;
+      await markMatchCompletedIfNeeded(matchId);
       const publicationStatus = variables?.[0]?.publication_status || "draft";
       if (publicationStatus === "published") {
-        const currentMatchId = variables?.[0]?.match_id || selectedMatch;
-        const nextMatchId = getNextMatchId(currentMatchId);
+        const nextMatchId = getNextMatchIdRef.current(matchId);
         toast({
           title: nextMatchId ? "Results published" : "Results published",
           description: nextMatchId
@@ -217,7 +422,7 @@ export default function AdminResults() {
             : "This match is stored. No next match is available right now.",
         });
         if (nextMatchId) {
-          handleSelectMatch(nextMatchId);
+          handleSelectMatchRef.current(nextMatchId);
           return;
         }
       } else {
@@ -226,6 +431,13 @@ export default function AdminResults() {
         return;
       }
       setEntries([]);
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to save results",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -237,6 +449,13 @@ export default function AdminResults() {
       resetEditResult();
       toast({ title: "Result updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update result",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteResult = useMutation({
@@ -244,6 +463,13 @@ export default function AdminResults() {
     onSuccess: async () => {
       await invalidateResultQueries();
       toast({ title: "Result deleted" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete result",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -264,7 +490,8 @@ export default function AdminResults() {
     resetEditResult();
   };
 
-  const handleSelectMatch = (matchId) => {
+  const handleSelectMatchRef = useRef(null);
+  handleSelectMatchRef.current = (matchId) => {
     setSelectedMatch(matchId);
     resetEditResult();
     const match = availableMatches.find((item) => item.id === matchId);
@@ -291,6 +518,7 @@ export default function AdminResults() {
       stage: match?.stage || "",
     })));
   };
+  const handleSelectMatch = (matchId) => handleSelectMatchRef.current(matchId);
 
   const updateEntry = (idx, field, value) => {
     const newEntries = [...entries];
@@ -565,204 +793,45 @@ export default function AdminResults() {
     <div className="space-y-4">
       <h2 className="font-semibold">Match Results</h2>
 
-      <div>
-        <Label>Select Match</Label>
-        <Select value={selectedMatch} onValueChange={handleSelectMatch}>
-          <SelectTrigger className="max-w-md"><SelectValue placeholder="Choose a match" /></SelectTrigger>
-          <SelectContent>
-            {availableMatches.map((match) => (
-              <SelectItem key={match.id} value={match.id}>
-                {tournamentMap[match.tournament_id]?.name || "?"} - {match.stage}{match.group_name ? ` (${match.group_name})` : ""} - Match #{match.match_number || "?"} {match.map ? `(${match.map})` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <MatchSelector
+        selectedMatch={selectedMatch}
+        onSelectMatch={handleSelectMatch}
+        availableMatches={availableMatches}
+        tournamentMap={tournamentMap}
+      />
 
       {selectedMatch && matchResults.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold">Existing Results</h3>
-          </div>
-
-          <div className="space-y-1">
-            {matchResults.map((result) => (
-              <div key={result.id} className="flex items-center justify-between bg-secondary/30 rounded-lg px-3 py-2 text-sm">
-                <div className="flex items-center gap-3">
-                  <span className="font-bold w-6 text-center">#{result.placement}</span>
-                  <span>{teamsMap[result.team_id]?.name || "Unknown"}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
-                    getMatchResultPublicationStatus(result) === "published"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
-                  }`}>
-                    {getMatchResultPublicationStatus(result)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-muted-foreground">{result.kill_points} kills</span>
-                  <span className="text-xs text-muted-foreground">{result.placement_points} place</span>
-                  <span className="font-bold text-primary">{result.total_points} pts</span>
-                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditResult(result)} disabled={isExistingResultsMutating}><Pencil className="w-3 h-3" /></Button>
-                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteResult.mutate(result.id)} disabled={isExistingResultsMutating}><Trash2 className="w-3 h-3 text-destructive" /></Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {editingResult ? (
-            <div className="rounded-xl border border-border bg-background/80 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <h4 className="text-sm font-semibold">Edit Result</h4>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={attemptCloseEditResult} disabled={updateResult.isPending}><X className="w-4 h-4" /></Button>
-              </div>
-              <div className="mt-4 grid gap-4 md:grid-cols-4">
-                <div>
-                  <Label>Placement</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={16}
-                    value={resultForm.placement > 0 ? resultForm.placement : ""}
-                    onChange={(e) => updateResultForm("placement", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Kills</Label>
-                  <Input type="number" min={0} value={resultForm.kill_points ?? 0} onChange={(e) => updateResultForm("kill_points", e.target.value)} />
-                </div>
-                <div>
-                  <Label>Place Pts</Label>
-                  <Input value={resultForm.placement_points || 0} disabled />
-                </div>
-                <div>
-                  <Label>Total</Label>
-                  <Input value={resultForm.total_points || 0} disabled />
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={attemptCloseEditResult} disabled={updateResult.isPending}>Cancel</Button>
-                <Button type="button" variant="outline" onClick={() => handleUpdateResult("draft")} disabled={updateResult.isPending}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
-                <Button type="button" onClick={() => handleUpdateResult("published")} disabled={updateResult.isPending}><Save className="w-4 h-4 mr-2" /> Publish Result</Button>
-              </div>
-            </div>
-          ) : null}
-
-          {!editingResult ? (
-            <p className="text-xs text-muted-foreground">
-              Existing results already exist for this match. Use the pencil icons above to revise each team row instead of creating duplicate results.
-            </p>
-          ) : null}
-        </div>
+        <ExistingResultsPanel
+          matchResults={matchResults}
+          teamsMap={teamsMap}
+          isMutating={isExistingResultsMutating}
+          editingResult={editingResult}
+          resultForm={resultForm}
+          onEditResult={openEditResult}
+          onDeleteResult={(resultId) => deleteResult.mutate(resultId)}
+          onResultFormChange={updateResultForm}
+          onCloseEdit={attemptCloseEditResult}
+          updateResult={updateResult}
+          onUpdateResult={handleUpdateResult}
+        />
       )}
 
       {selectedMatch && matchResults.length === 0 && entries.length > 0 && (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-border flex justify-between items-center gap-3">
-            <div>
-              <h3 className="text-sm font-semibold">Enter Results</h3>
-              <p className="text-[10px] text-muted-foreground mt-1">Kill = 1pt | 1st=10, 2nd=6, 3rd=5, 4th=4, 5th=3, 6th=2, 7th-8th=1</p>
-            </div>
-          </div>
-          <div className="px-4 py-2 text-xs text-muted-foreground">
-            {selectedMatchData ? `Result entry scope: ${getMatchTeams(selectedMatchData).length} teams from ${tournamentMap[selectedMatchData.tournament_id]?.name || "selected tournament"}${selectedMatchData.stage ? ` - ${selectedMatchData.stage}` : ""}${selectedMatchData.group_name ? ` (${selectedMatchData.group_name})` : ""}` : null}
-          </div>
-          <div className="px-4 pb-2 text-[11px] text-muted-foreground">
-            Save drafts while building the scorecard, then publish when the full match sheet is ready for the live standings board.
-          </div>
-          <div className="mx-4 mb-4 rounded-xl border border-border bg-secondary/20 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h4 className="text-sm font-semibold">Live standings</h4>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Published match points stay in this table, and the next match entry adds on top instantly.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 text-[11px]">
-                <span className="rounded-full border border-border bg-background px-3 py-1">
-                  {scorecardTotals.placedTeams}/16 teams placed
-                </span>
-                <span className="rounded-full border border-border bg-background px-3 py-1">
-                  {scorecardTotals.kills} kills
-                </span>
-                <span className="rounded-full border border-border bg-background px-3 py-1">
-                  {scorecardTotals.totalPoints} standings pts
-                </span>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-              {entryScorecard.map((entry) => (
-                <div
-                  key={`scorecard-${entry.team_id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
-                        {entry.scorecardRank}
-                      </span>
-                      <p className="truncate font-medium">{entry.team_name}</p>
-                    </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Published {entry.baseline_total_points || 0} pts • Current #{entry.placement || "-"} • {entry.kill_points || 0} kills
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-primary">{entry.total_points_combined || 0}</p>
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Standings total</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-xs text-muted-foreground bg-secondary/20">
-                  <th className="text-left p-3">Team</th>
-                  <th className="text-center p-3 w-24">Placement</th>
-                  <th className="text-center p-3 w-24">Kills</th>
-                  <th className="text-center p-3 w-20">Place Pts</th>
-                  <th className="text-center p-3 w-20">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {entries.map((entry, idx) => (
-                  <tr key={entry.team_id}>
-                    <td className="p-3 font-medium">{entry.team_name}</td>
-                    <td className="p-3">
-                      <Input
-                        type="number"
-                        min={1}
-                        max={16}
-                        value={entry.placement > 0 ? entry.placement : ""}
-                        onChange={(e) => updateEntry(idx, "placement", e.target.value)}
-                        className="h-8 text-center"
-                      />
-                    </td>
-                    <td className="p-3"><Input type="number" min={0} value={entry.kill_points ?? 0} onChange={(e) => updateEntry(idx, "kill_points", e.target.value)} className="h-8 text-center" /></td>
-                    <td className="p-3 text-center text-muted-foreground">{entry.placement_points}</td>
-                    <td className="p-3 text-center font-bold text-primary">{entry.total_points}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="p-4 border-t border-border flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => handleSave("draft")} disabled={createResults.isPending}>
-              <Save className="w-4 h-4 mr-2" /> Save Draft
-            </Button>
-            <Button type="button" onClick={() => handleSave("published")} disabled={createResults.isPending}>
-              <Save className="w-4 h-4 mr-2" /> Publish Results
-            </Button>
-          </div>
-        </div>
+        <EnterResultsPanel
+          selectedMatchData={selectedMatchData}
+          getMatchTeams={getMatchTeams}
+          tournamentMap={tournamentMap}
+          scorecardTotals={scorecardTotals}
+          entryScorecard={entryScorecard}
+          entries={entries}
+          onEntryChange={updateEntry}
+          onSave={handleSave}
+          isSaving={createResults.isPending}
+        />
       )}
 
       {selectedMatch && matchResults.length === 0 && entries.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          This match does not have a resolved team scope yet. Fix the tournament participants or BMPS stage mapping before entering results.
-        </div>
+        <EmptyResultsNotice />
       ) : null}
     </div>
   );

@@ -33,6 +33,8 @@ export default [
     },
     rules: {
       "no-unused-vars": "off",
+      "no-undef": "error",
+      "max-lines": ["warn", { max: 500, skipBlankLines: true, skipComments: true }],
       "react/jsx-uses-vars": "error",
       "react/jsx-uses-react": "error",
       "react/prop-types": "off",

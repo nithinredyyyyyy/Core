@@ -1,14 +1,20 @@
 {
-  "name": "Core",
-  "short_name": "Core",
-  "description": "BGMI esports hub for standings, schedules, fan engagement, fantasy, and live circuit coverage.",
+  "name": "Core Esports — BMPS Live Leaderboards",
+  "short_name": "Core Esports",
+  "description": "Live leaderboards, standings & match results for Battlegrounds Mobile India Pro Series",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#f7f2eb",
-  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "background_color": "#050505",
+  "theme_color": "#e8600a",
   "icons": [
+    {
+      "src": "/images/core-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/images/core-logo.png",
       "sizes": "738x742",

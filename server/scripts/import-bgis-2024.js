@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2024-05-02",
   end_date: "2024-06-30",
   max_teams: 1024,
-  banner_url: "/images/bgis-2024.png",
+  banner_url: "/images/bgis-2024.webp",
   description:
     "Battlegrounds Mobile India Series 2024 was the third edition of BGIS, organized by KRAFTON with a total prize pool of ₹2,00,00,000 INR. The event ran from May 2 to June 30, 2024 and concluded with TeamXSpark winning the Hyderabad Grand Finals.",
   format_overview:

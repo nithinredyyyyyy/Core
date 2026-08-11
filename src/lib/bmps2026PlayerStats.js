@@ -536,6 +536,148 @@ Rank|Team|Player|Finishes|FPM|Contribution|Best|5/+ Finishes|Matches|Erangel|Mir
 105|MYTH OFFICIAL|ARYTON|0|0.00|0%|0|0|1|0|0|0
 `;
 
+const BMPS_2026_LCQ_PLAYER_STATS_RAW = `
+Rank|Team|Player|Finishes|FPM|Contribution|Best|5/+ Finishes|Matches|Erangel|Miramar|Rondo
+1|Team Apex Gaming|JONATHAN|30|2.50|35%|8|3|12|14|8|8
+2|Autobotz Esports|LOBSTER|26|2.17|46%|6|2|12|17|5|4
+3|Team Apex Gaming|HARSH|26|2.17|31%|6|2|12|14|5|7
+4|RAPID CHAOS ESPORTS|FRAGER|21|1.75|31%|5|1|12|10|7|4
+5|Team Apex Gaming|HYDRO|21|1.75|25%|5|1|12|12|8|1
+6|Zero Ark Official|PAINISLIVE|20|1.67|38%|6|1|12|14|3|3
+7|4TR Official|ARTHER|20|1.67|34%|8|1|12|5|4|11
+8|Zero Ark Official|CHANDANOP|18|1.50|34%|5|1|12|8|8|2
+9|4TR Official|VIPERR|18|1.50|31%|6|2|12|3|8|7
+10|WINDGOD ESPORTS|RYZEN|18|1.50|31%|5|1|12|7|8|3
+11|WELT ESPORTS|DRAGONOP|17|1.42|40%|5|1|12|6|2|9
+12|Lastade Esports|EVIL|17|1.42|35%|5|1|12|9|2|6
+13|Lastade Esports|KAALAN|17|1.42|35%|5|1|12|10|2|5
+14|Meta ninza|FIERCE|16|1.33|31%|4|0|12|7|6|3
+15|iQOO Team Tamilas|REAPER|16|1.33|29%|3|0|12|8|5|3
+16|RAPID CHAOS ESPORTS|FLASH|16|1.33|24%|4|0|12|6|8|2
+17|Higgboson Esports|GODX|15|1.25|34%|6|1|12|8|3|4
+18|WINDGOD ESPORTS|INFINITY|15|1.25|25%|4|0|12|6|5|4
+19|RAPID CHAOS ESPORTS|DHRUV|15|1.25|22%|4|0|12|7|5|3
+20|RAPID CHAOS ESPORTS|PSYCHO|15|1.25|22%|3|0|12|6|5|4
+21|True Rippers|ACHUKK|14|1.17|30%|2|0|12|5|6|3
+22|Meta ninza|JAVIN|14|1.17|27%|5|1|12|4|5|5
+23|iQOO Team Tamilas|MRIGL|14|1.17|25%|3|0|12|5|8|1
+24|Wyld Fangs|SPRAYGOD|13|1.08|32%|5|1|12|4|8|1
+25|Wyld Fangs|KAANHA|13|1.08|32%|3|0|12|4|4|5
+26|True Rippers|SHAYAAN|13|1.08|28%|4|0|12|7|2|4
+27|iQOO Team Tamilas|AIMGODD|13|1.08|23%|6|1|12|3|4|6
+28|iQOO Team Tamilas|JUSTY06|13|1.08|23%|3|0|12|6|3|4
+29|Autobotz Esports|RALPHIE|13|1.08|23%|3|0|12|10|3|0
+30|WINDGOD ESPORTS|PROBOT|13|1.08|22%|4|0|12|5|3|5
+31|WINDGOD ESPORTS|KYZER|13|1.08|22%|4|0|12|2|8|3
+32|WELT ESPORTS|RICOOP|12|1.00|28%|4|0|12|10|1|1
+33|True Rippers|TERMI|12|1.00|26%|4|0|12|4|1|7
+34|Meta ninza|SHADOW7|12|1.00|24%|4|0|12|4|2|6
+35|RISING ESPORTS|YUVAOP|11|0.92|38%|5|1|12|5|1|5
+36|Higgboson Esports|WHITETIGER|11|0.92|25%|3|0|12|3|3|5
+37|Higgboson Esports|HERO|11|0.92|25%|3|0|12|3|3|5
+38|4TR Official|ANONYMOUS|11|0.92|19%|3|0|12|2|6|3
+39|MYSTERIOUS 4|GOKU|10|0.91|27%|4|0|11|4|1|5
+40|4TR Official|FLEXJOD|10|0.83|17%|5|1|12|0|5|5
+41|MYSTERIOUS 4|HENRY|9|0.75|24%|6|1|12|2|0|7
+42|MYSTERIOUS 4|NAMAN|9|0.75|24%|4|0|12|1|4|4
+43|MYSTERIOUS 4|NOOB|9|0.75|24%|4|0|12|3|4|2
+44|Meta ninza|APOLLO|9|0.75|18%|4|0|12|1|3|5
+45|Zero Ark Official|MORTY|9|0.75|17%|3|0|12|3|6|0
+46|Autobotz Esports|EGGY|9|0.75|16%|3|0|12|7|1|1
+47|Wyld Fangs|SENSEI|8|0.73|20%|2|0|11|5|3|0
+48|RISING ESPORTS|FOUL619|8|0.67|28%|3|0|12|1|3|4
+49|TEAM AX|DEVOTEE|8|0.67|23%|4|0|12|3|0|5
+50|Lastade Esports|SHADOW|8|0.67|17%|3|0|12|6|0|2
+51|Autobotz Esports|AREEB|8|0.67|14%|2|0|12|5|1|2
+52|Team Apex Gaming|JELLY|7|0.78|8%|2|0|9|5|1|1
+53|TEAM AX|RAIDEN|7|0.70|20%|3|0|10|4|0|3
+54|TEAM AX|ARYAN|7|0.58|20%|3|0|12|4|3|0
+55|TEAM AX|SYRAX|7|0.58|20%|2|0|12|2|4|1
+56|Higgboson Esports|BUNNY|7|0.58|16%|5|1|12|5|2|0
+57|WELT ESPORTS|GOKULWNL|7|0.58|16%|2|0|12|5|1|1
+58|WELT ESPORTS|SHYAM|7|0.58|16%|2|0|12|4|1|2
+59|True Rippers|PUNKK|7|0.58|15%|3|0|12|6|1|0
+60|TEAM AX|PROO|6|3.00|17%|4|0|2|0|6|0
+61|Wyld Fangs|GOTEN|6|0.50|15%|2|0|12|3|1|2
+62|Lastade Esports|SPY|6|0.50|13%|2|0|12|4|1|1
+63|Zero Ark Official|SARWAROG|6|0.50|11%|3|0|12|6|0|0
+64|RISING ESPORTS|FOXOP|5|0.42|17%|2|0|12|1|3|1
+65|RISING ESPORTS|BEARDBABA|5|0.42|17%|1|0|12|2|2|1
+66|Wyld Fangs|SAM99|1|1.00|2%|1|0|1|0|1|0
+67|Team Apex Gaming|KIOLMAO|1|0.33|1%|1|0|3|0|1|0
+68|MYSTERIOUS 4|KRISHAJOD|0|0.00|0%|0|0|1|0|0|0
+`;
+
+const BMPS_2026_GRAND_FINALS_PLAYER_STATS_RAW = `
+Rank|Team|Player|Finishes|FPM|Contribution|Best|5/+ Finishes|Matches|Erangel|Miramar|Rondo
+1|Victores Sumus|MAFIA|31|1.72|39%|8|2|18|12|5|14
+2|Team Apex Gaming|JONATHAN|30|1.67|32%|7|2|18|13|14|3
+3|Godlike Esports|SPOWER|30|1.67|29%|7|2|18|12|8|10
+4|Divine Gaming|SLUG|29|1.61|31%|5|1|18|10|15|4
+5|Godlike Esports|ADMINO|28|1.56|27%|5|1|18|15|9|4
+6|Godlike Esports|SAUMAY|28|1.56|27%|5|1|18|17|7|4
+7|iQOO ORANGUTAN|WIZZGOD|27|1.50|35%|3|0|18|10|9|8
+8|Gods Reign|AQUANOX|27|1.50|29%|5|1|18|7|12|8
+9|Nebula Esports|PHOENIX|26|1.44|36%|7|1|18|22|3|1
+10|iQOO Team Tamilas|REAPER|26|1.44|33%|9|1|18|12|1|13
+11|iQOO ORANGUTAN|AKOP|26|1.44|33%|4|0|18|15|5|6
+12|iQOO Team Tamilas|AIMGODD|26|1.44|33%|4|0|18|7|10|9
+13|Gods Reign|JUSTIN|26|1.44|28%|7|2|18|7|11|8
+14|Divine Gaming|KNIGHT|25|1.39|27%|6|1|18|10|12|3
+15|Gods Reign|NEYO|25|1.39|27%|4|0|18|6|11|8
+16|iQOO SOUL|LEGIT|24|1.33|37%|5|1|18|5|12|7
+17|iQOO REVENANT XSPARK|TRACEGOD|24|1.33|37%|5|1|18|9|12|3
+18|Nebula Esports|KRATOS|24|1.33|33%|5|1|18|15|4|5
+19|Divine Gaming|NINJABOI|24|1.33|26%|5|1|18|11|9|4
+20|IQOO RECKONING ESPORTS|PRO|23|1.28|36%|4|0|18|9|6|8
+21|iQOO8BIT|SKIPZ|23|1.28|32%|5|1|18|9|3|11
+22|Vasista Esports|RONY|23|1.28|31%|6|1|18|4|9|10
+23|Vasista Esports|AIMBOT|23|1.28|31%|5|1|18|13|6|4
+24|Team Apex Gaming|HYDRO|23|1.28|25%|6|1|18|10|9|4
+25|iQOO8BIT|SARANG|22|1.22|31%|4|0|18|7|11|4
+26|Team Apex Gaming|HARSH|22|1.22|24%|6|1|18|9|10|3
+27|7Gods Esports|REXBOY|21|1.17|34%|8|1|18|13|4|4
+28|GENESIS ESPORTS|VIPER|21|1.17|30%|4|0|18|6|9|6
+29|Victores Sumus|SCARYJOD|21|1.17|27%|4|0|18|12|2|7
+30|GENESIS ESPORTS|HUNTERZ|20|1.11|29%|6|1|18|10|5|5
+31|iQOO Team Tamilas|JUSTY06|20|1.11|26%|5|1|18|10|1|9
+32|7Gods Esports|NINJA|19|1.06|31%|4|0|18|10|3|6
+33|IQOO RECKONING ESPORTS|LEVII|19|1.06|30%|7|2|18|4|2|13
+34|MYTH OFFICIAL|HARSHIL|18|1.00|36%|4|0|18|10|5|3
+35|iQOO SOUL|JOKER|18|1.00|28%|5|1|18|6|11|1
+36|iQOO8BIT|SHUBH|18|1.00|25%|4|0|18|9|6|3
+37|Vasista Esports|BEAST|18|1.00|24%|4|0|18|9|2|7
+38|Team Apex Gaming|JELLY|18|1.00|19%|3|0|18|13|5|0
+39|iQOO SOUL|GOBLIN|17|0.94|26%|7|1|18|12|4|1
+40|iQOO REVENANT XSPARK|PAIN|16|0.89|25%|3|0|18|9|4|3
+41|GENESIS ESPORTS|FURY|16|0.89|23%|5|1|18|9|4|3
+42|Godlike Esports|MANYA|16|0.89|16%|4|0|18|9|3|4
+43|Nebula Esports|AADII|15|0.83|21%|5|1|18|10|2|3
+44|Victores Sumus|VENOM|15|0.83|19%|4|0|18|5|3|7
+45|Gods Reign|DELTAPG|15|0.83|16%|5|1|18|2|7|6
+46|Divine Gaming|OMEGAA|15|0.83|16%|4|0|18|9|5|1
+47|IQOO RECKONING ESPORTS|ROMAN|14|0.78|22%|4|0|18|8|4|2
+48|iQOO ORANGUTAN|AARU|14|0.78|18%|3|0|18|7|5|2
+49|7Gods Esports|NINJUU|13|0.72|21%|5|1|18|5|1|7
+50|iQOO REVENANT XSPARK|NINJAJOD|13|0.72|20%|3|0|18|7|2|4
+51|MYTH OFFICIAL|DETROX|12|0.67|24%|3|0|18|4|2|6
+52|GENESIS ESPORTS|GRAVITY|12|0.67|17%|3|0|18|4|6|2
+53|Victores Sumus|OWAIS|12|0.67|15%|3|0|18|7|3|2
+54|Vasista Esports|HECTOR|11|0.61|15%|3|0|18|3|3|5
+55|iQOO ORANGUTAN|ATTANKI|11|0.61|14%|2|0|18|4|4|3
+56|MYTH OFFICIAL|LUCIFER|9|0.60|18%|3|0|15|2|0|7
+57|iQOO REVENANT XSPARK|PROTON|8|0.67|12%|3|0|12|0|3|5
+58|IQOO RECKONING ESPORTS|SAHILAF|8|0.53|13%|3|0|15|3|0|5
+59|MYTH OFFICIAL|DADDY|8|0.44|16%|2|0|18|7|1|0
+60|7Gods Esports|MOKSH|8|0.44|13%|2|0|18|3|1|4
+61|iQOO8BIT|JUICY|8|0.44|11%|2|0|18|3|5|0
+62|Nebula Esports|KNOWME|8|0.44|11%|1|0|18|3|2|3
+63|iQOO SOUL|NAKUL|6|0.33|9%|2|0|18|5|1|0
+64|iQOO Team Tamilas|MRIGL|6|0.33|8%|2|0|18|3|1|2
+65|iQOO REVENANT XSPARK|SUKUNA|4|0.67|6%|2|0|6|2|2|0
+66|MYTH OFFICIAL|ARYTON|3|1.00|6%|1|0|3|1|2|0
+`;
+
 export function parseBmps2026EliminatorStats(rawStats) {
   return rawStats
     .trim()
@@ -592,6 +734,14 @@ export const BMPS_2026_SURVIVAL_PLAYER_STATS = parseBmps2026EliminatorStats(
 
 export const BMPS_2026_SEMI_FINALS_PLAYER_STATS = parseBmps2026EliminatorStats(
   BMPS_2026_SEMI_FINALS_PLAYER_STATS_RAW,
+);
+
+export const BMPS_2026_LCQ_PLAYER_STATS = parseBmps2026EliminatorStats(
+  BMPS_2026_LCQ_PLAYER_STATS_RAW,
+);
+
+export const BMPS_2026_GRAND_FINALS_PLAYER_STATS = parseBmps2026EliminatorStats(
+  BMPS_2026_GRAND_FINALS_PLAYER_STATS_RAW,
 );
 
 export function buildBmps2026OverallPlayerStats(stages) {
@@ -651,63 +801,65 @@ export const BMPS_2026_OVERALL_PLAYER_STATS = buildBmps2026OverallPlayerStats([
   BMPS_2026_QUALIFIER_PLAYER_STATS,
   BMPS_2026_SURVIVAL_PLAYER_STATS,
   BMPS_2026_SEMI_FINALS_PLAYER_STATS,
+  BMPS_2026_LCQ_PLAYER_STATS,
+  BMPS_2026_GRAND_FINALS_PLAYER_STATS,
 ]);
 
 export const BMPS_2026_IGL_STATS = [
   {
     rank: 1,
-    player: "Rexx64",
-    teamName: "Team Versatile",
-    iglRating: "1.33",
-    teamAvgPts: "9.2",
-    wwcd: 4,
-    top5s: 12,
-    teamAvgSurvival: "20:20",
-    matches: 24,
+    player: "Aadi",
+    teamName: "Nebula Esports",
+    iglRating: "1.18",
+    teamAvgPts: "6.98",
+    wwcd: 2,
+    top5s: 22,
+    teamAvgSurvival: "20:26",
+    matches: 18,
   },
   {
     rank: 2,
-    player: "AREEB28",
-    teamName: "Autobotz Esports",
-    iglRating: "1.28",
-    teamAvgPts: "8.7",
-    wwcd: 2,
-    top5s: 10,
-    teamAvgSurvival: "22:05",
-    matches: 24,
+    player: "Manya",
+    teamName: "GodLike Esports",
+    iglRating: "1.13",
+    teamAvgPts: "8.32",
+    wwcd: 4,
+    top5s: 18,
+    teamAvgSurvival: "20:19",
+    matches: 18,
   },
   {
     rank: 3,
-    player: "Punkk",
-    teamName: "True Rippers",
-    iglRating: "1.23",
-    teamAvgPts: "7.6",
-    wwcd: 1,
-    top5s: 12,
-    teamAvgSurvival: "22:39",
-    matches: 24,
+    player: "Neyo",
+    teamName: "Gods Reign",
+    iglRating: "1.12",
+    teamAvgPts: "7.81",
+    wwcd: 5,
+    top5s: 14,
+    teamAvgSurvival: "20:50",
+    matches: 18,
   },
   {
     rank: 4,
-    player: "AADIII",
-    teamName: "Nebula Esports",
-    iglRating: "1.19",
-    teamAvgPts: "8.5",
-    wwcd: 1,
-    top5s: 14,
-    teamAvgSurvival: "21:09",
-    matches: 21,
+    player: "Owais",
+    teamName: "Victores Sumus",
+    iglRating: "1.12",
+    teamAvgPts: "8",
+    wwcd: 5,
+    top5s: 21,
+    teamAvgSurvival: "22:07",
+    matches: 18,
   },
   {
     rank: 5,
-    player: "FraGGy19",
-    teamName: "Godsent Esports",
-    iglRating: "1.11",
-    teamAvgPts: "8.2",
-    wwcd: 4,
-    top5s: 12,
-    teamAvgSurvival: "21:34",
-    matches: 24,
+    player: "Omega",
+    teamName: "Divine Gaming",
+    iglRating: "1.07",
+    teamAvgPts: "7.67",
+    wwcd: 6,
+    top5s: 20,
+    teamAvgSurvival: "20:03",
+    matches: 18,
   },
 ];
 
@@ -720,63 +872,126 @@ export const BMPS_2026_MVP_FORMULA =
 export const BMPS_2026_MVP_STATS = [
   {
     rank: 1,
-    player: "DhruvG",
-    teamName: "Rapid Chaos Esports",
-    mvpRating: "0.74",
-    matches: 24,
-    finishes: 53,
-    fpm: (53 / 24).toFixed(2),
-    damage: 10056,
-    knocks: 45,
-    avgSurvival: "20:28",
+    player: "ScaryJod",
+    teamName: "Victores Sumus",
+    mvpRating: "0.86",
+    matches: 18,
+    finishes: 69,
+    fpm: (69 / 18).toFixed(2),
+    damage: 15566,
+    knocks: 71,
+    avgSurvival: "22:52",
   },
   {
     rank: 2,
-    player: "SarwarOG",
-    teamName: "Zero Ark Official",
-    mvpRating: "0.69",
-    matches: 24,
-    finishes: 44,
-    fpm: (44 / 24).toFixed(2),
-    damage: 10446,
-    knocks: 44,
-    avgSurvival: "21:24",
+    player: "JONATHAN",
+    teamName: "Team Apex Gaming",
+    mvpRating: "0.84",
+    matches: 18,
+    finishes: 78,
+    fpm: (78 / 18).toFixed(2),
+    damage: 13014,
+    knocks: 67,
+    avgSurvival: "19:24",
   },
   {
     rank: 3,
-    player: "AREEB28",
-    teamName: "Autobotz Esports",
-    mvpRating: "0.67",
-    matches: 24,
-    finishes: 45,
-    fpm: (45 / 24).toFixed(2),
-    damage: 9042,
-    knocks: 47,
-    avgSurvival: "22:04",
+    player: "Sarang",
+    teamName: "8Bit",
+    mvpRating: "0.81",
+    matches: 18,
+    finishes: 66,
+    fpm: (66 / 18).toFixed(2),
+    damage: 14669,
+    knocks: 66,
+    avgSurvival: "20:48",
   },
   {
     rank: 4,
-    player: "TaurusOG",
-    teamName: "K9 Esports",
-    mvpRating: "0.67",
-    matches: 24,
-    finishes: 46,
-    fpm: (46 / 24).toFixed(2),
-    damage: 8974,
-    knocks: 43,
-    avgSurvival: "21:24",
+    player: "Jokerr",
+    teamName: "Team SouL",
+    mvpRating: "0.80",
+    matches: 18,
+    finishes: 65,
+    fpm: (65 / 18).toFixed(2),
+    damage: 14900,
+    knocks: 66,
+    avgSurvival: "19:18",
   },
   {
     rank: 5,
-    player: "SmoKeR",
-    teamName: "Team Versatile",
-    mvpRating: "0.66",
-    matches: 24,
-    finishes: 49,
-    fpm: (49 / 24).toFixed(2),
-    damage: 8597,
-    knocks: 36,
-    avgSurvival: "21:05",
+    player: "Spower",
+    teamName: "GodLike Esports",
+    mvpRating: "0.80",
+    matches: 18,
+    finishes: 69,
+    fpm: (69 / 18).toFixed(2),
+    damage: 12859,
+    knocks: 66,
+    avgSurvival: "21:42",
+  },
+];
+
+export const BMPS_2026_FMVP_STATS = [
+  {
+    rank: 1,
+    player: "Slug",
+    teamName: "Divine Gaming",
+    mvpRating: "2.29",
+    matches: 18,
+    finishes: 29,
+    fpm: (29 / 18).toFixed(2),
+    damage: 5978,
+    knocks: 32,
+    avgSurvival: "20:57",
+  },
+  {
+    rank: 2,
+    player: "Spower",
+    teamName: "GodLike Esports",
+    mvpRating: "2.29",
+    matches: 18,
+    finishes: 30,
+    fpm: (30 / 18).toFixed(2),
+    damage: 5950,
+    knocks: 31,
+    avgSurvival: "23:27",
+  },
+  {
+    rank: 3,
+    player: "Saumay",
+    teamName: "GodLike Esports",
+    mvpRating: "2.27",
+    matches: 18,
+    finishes: 28,
+    fpm: (28 / 18).toFixed(2),
+    damage: 6602,
+    knocks: 32,
+    avgSurvival: "21:25",
+  },
+  {
+    rank: 4,
+    player: "ADMINO",
+    teamName: "GodLike Esports",
+    mvpRating: "2.25",
+    matches: 18,
+    finishes: 29,
+    fpm: (29 / 18).toFixed(2),
+    damage: 6252,
+    knocks: 24,
+    avgSurvival: "23:04",
+  },
+  {
+    rank: 5,
+    player: "Phoenix",
+    teamName: "Nebula Esports",
+    mvpRating: "2.19",
+    matches: 18,
+    finishes: 26,
+    fpm: (26 / 18).toFixed(2),
+    damage: 6493,
+    knocks: 31,
+    avgSurvival: "21:39",
   },
 ];
 

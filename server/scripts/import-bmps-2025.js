@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2025-05-22",
   end_date: "2025-07-06",
   max_teams: 96,
-  banner_url: "/images/bmps-2025.png",
+  banner_url: "/images/bmps-2025.webp",
   description:
     "Battlegrounds Mobile India Pro Series 2025 was the fourth edition of BMPS. The prize pool grew from ₹2,00,00,000 to ₹4,00,00,000 through the in-game Discovery Island event, and the season concluded with Aryan x TMG Gaming winning the Delhi Grand Finals.",
   format_overview:

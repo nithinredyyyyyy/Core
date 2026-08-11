@@ -1,5 +1,5 @@
 const CACHE_NAME = "stagecore-shell-v2";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/images/core-logo.png"];
+const APP_SHELL = ["/", "/manifest.webmanifest", "/images/core-logo.webp"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

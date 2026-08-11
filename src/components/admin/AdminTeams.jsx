@@ -274,7 +274,7 @@ function TeamRosterList({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() => deleteTeam.mutate(team.id)}
+                  onClick={() => { if (window.confirm("Delete this team? All players will also be removed.")) deleteTeam.mutate(team.id); }}
                   disabled={isTeamMutating}
                 >
                   <Trash2 className="size-4 text-destructive" />
@@ -316,7 +316,7 @@ function TeamRosterList({
                     </button>
                     <button
                       type="button"
-                      onClick={() => deletePlayer.mutate(player.id)}
+                      onClick={() => { if (window.confirm("Remove this player?")) deletePlayer.mutate(player.id); }}
                       className="text-destructive hover:text-destructive/80"
                       disabled={isPlayerMutating}
                     >
@@ -473,6 +473,13 @@ export default function AdminTeams() {
       resetForm();
       toast({ title: "Team created" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to create team",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateTeam = useMutation({
@@ -482,6 +489,13 @@ export default function AdminTeams() {
       resetForm();
       toast({ title: "Team updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update team",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteTeam = useMutation({
@@ -489,6 +503,13 @@ export default function AdminTeams() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["teams"] });
       toast({ title: "Team deleted" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete team",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -499,6 +520,13 @@ export default function AdminTeams() {
       resetPlayerForm();
       toast({ title: "Player added" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to add player",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updatePlayer = useMutation({
@@ -508,6 +536,13 @@ export default function AdminTeams() {
       resetPlayerForm();
       toast({ title: "Player updated" });
     },
+    onError: (error) => {
+      toast({
+        title: "Failed to update player",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deletePlayer = useMutation({
@@ -515,6 +550,13 @@ export default function AdminTeams() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["players"] });
       toast({ title: "Player removed" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to remove player",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

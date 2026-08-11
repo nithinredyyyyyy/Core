@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2024-08-20",
   end_date: "2024-09-29",
   max_teams: 128,
-  banner_url: "/images/bmps-2024.png",
+  banner_url: "/images/bmps-2024.webp",
   description:
     "Battlegrounds Mobile India Pro Series 2024 was the third edition of BMPS, organized by KRAFTON with a total prize pool of ₹2,00,00,000 INR. The event ran from August 20 to September 29, 2024 and concluded with Team XSpark winning the 18-match Grand Finals in Kochi.",
   format_overview:

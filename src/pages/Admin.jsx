@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import {
   Shield,
   LayoutDashboard,
@@ -14,16 +14,19 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import AdminTournaments from "../components/admin/AdminTournaments";
-import AdminTeams from "../components/admin/AdminTeams";
-import AdminMatches from "../components/admin/AdminMatches";
-import AdminResults from "../components/admin/ADMINRESULTS";
-import AdminNews from "../components/admin/AdminNews";
-import AdminTransfers from "../components/admin/AdminTransfers";
-import AdminInspector from "../components/admin/AdminInspector";
-import AdminStagePosters from "../components/admin/AdminStagePosters";
-import AdminPlayerStats from "../components/admin/AdminPlayerStats";
-import AdminOperations from "../components/admin/AdminOperations";
+import PageLoader from "@/components/shared/PageLoader";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+const AdminTournaments = lazy(() => import("../components/admin/AdminTournaments"));
+const AdminTeams = lazy(() => import("../components/admin/AdminTeams"));
+const AdminMatches = lazy(() => import("../components/admin/AdminMatches"));
+const AdminResults = lazy(() => import("../components/admin/ADMINRESULTS"));
+const AdminNews = lazy(() => import("../components/admin/AdminNews"));
+const AdminTransfers = lazy(() => import("../components/admin/AdminTransfers"));
+const AdminInspector = lazy(() => import("../components/admin/AdminInspector"));
+const AdminStagePosters = lazy(() => import("../components/admin/AdminStagePosters"));
+const AdminPlayerStats = lazy(() => import("../components/admin/AdminPlayerStats"));
+const AdminOperations = lazy(() => import("../components/admin/AdminOperations"));
 
 const tabs = [
   { id: "operations", label: "Operations", icon: LayoutDashboard },
@@ -65,7 +68,17 @@ export default function Admin() {
   const { data: overview = null, isError: overviewError } = useQuery({
     queryKey: ["admin-overview"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/overview");
+      const AUTH_TOKEN_KEY = "stagecore_auth_token";
+      const stored = localStorage.getItem(AUTH_TOKEN_KEY);
+      const authSession = (() => {
+        try { return JSON.parse(stored || "{}"); } catch { return {}; }
+      })();
+      const response = await fetch("/api/admin/overview", {
+        headers: {
+          "Content-Type": "application/json",
+          ...(authSession.token ? { "X-StageCore-Auth-Token": authSession.token } : {}),
+        },
+      });
       if (!response.ok) {
         throw new Error(`Failed to load admin overview: ${response.status}`);
       }
@@ -227,16 +240,20 @@ export default function Admin() {
         </div>
       </div>
 
-      {activeTab === "operations" && <AdminOperations onSelectTab={setActiveTab} />}
-      {activeTab === "tournaments" && <AdminTournaments />}
-      {activeTab === "teams" && <AdminTeams />}
-      {activeTab === "matches" && <AdminMatches />}
-      {activeTab === "results" && <AdminResults />}
-      {activeTab === "stats" && <AdminPlayerStats />}
-      {activeTab === "transfers" && <AdminTransfers />}
-      {activeTab === "news" && <AdminNews />}
-      {activeTab === "posters" && <AdminStagePosters />}
-      {activeTab === "inspector" && <AdminInspector />}
+      <Suspense fallback={<PageLoader label="Loading section" className="min-h-[40vh]" />}>
+        <ErrorBoundary>
+          {activeTab === "operations" && <AdminOperations onSelectTab={setActiveTab} />}
+          {activeTab === "tournaments" && <AdminTournaments />}
+          {activeTab === "teams" && <AdminTeams />}
+          {activeTab === "matches" && <AdminMatches />}
+          {activeTab === "results" && <AdminResults />}
+          {activeTab === "stats" && <AdminPlayerStats />}
+          {activeTab === "transfers" && <AdminTransfers />}
+          {activeTab === "news" && <AdminNews />}
+          {activeTab === "posters" && <AdminStagePosters />}
+          {activeTab === "inspector" && <AdminInspector />}
+        </ErrorBoundary>
+      </Suspense>
     </div>
   );
 }

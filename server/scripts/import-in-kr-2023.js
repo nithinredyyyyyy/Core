@@ -12,7 +12,7 @@ const tournament = {
   start_date: "2023-10-26",
   end_date: "2023-10-28",
   max_teams: 16,
-  banner_url: "/images/in-kr.png",
+  banner_url: "/images/in-kr.webp",
   description:
     "India - Korea Invitational was a BGMI invitational event featuring top teams from India and South Korea. The event ran from October 26 to October 28, 2023 and ended with Dplus KIA winning the 18-match finals.",
   format_overview:

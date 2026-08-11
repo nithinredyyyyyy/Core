@@ -6,15 +6,15 @@ function normalizePlayerPhotoKey(value) {
 }
 
 const PLAYER_PHOTO_OVERRIDES = {
-  admino: "/images/players/admino.png",
-  aaru: "/images/players/aaru.png",
-  ak: "/images/players/akop.png",
-  akop: "/images/players/akop.png",
-  attanki: "/images/players/attanki.png",
-  godz: "/images/players/godz.png",
-  spower: "/images/players/spower.png",
-  manya: "/images/players/manya.png",
-  wizzgod: "/images/players/wizzgod.png",
+  admino: "/images/players/admino.webp",
+  aaru: "/images/players/aaru.webp",
+  ak: "/images/players/akop.webp",
+  akop: "/images/players/akop.webp",
+  attanki: "/images/players/attanki.webp",
+  godz: "/images/players/godz.webp",
+  spower: "/images/players/spower.webp",
+  manya: "/images/players/manya.webp",
+  wizzgod: "/images/players/wizzgod.webp",
 };
 
 export function getPlayerPhotoByIgn(ign) {

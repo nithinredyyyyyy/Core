@@ -8,7 +8,12 @@ function run(command, args, options = {}) {
   });
 }
 
-const viteResult = run("npx", ["vite", "build", "--configLoader", "runner"]);
+const viteResult = run("npx", ["vite", "build", "--configLoader", "runner"], {
+  env:
+    process.platform === "win32"
+      ? { ...process.env, DISABLE_PWA: "1" }
+      : process.env,
+});
 
 if (viteResult.status === 0) {
   process.exit(0);
