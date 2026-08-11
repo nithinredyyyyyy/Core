@@ -1031,3 +1031,15 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
+
+@layer base {
+  .dark .text-brand-ink { color: hsl(var(--foreground)); }
+  .dark .text-brand-slate { color: hsl(var(--muted-foreground)); }
+  .dark .text-brand-taupe { color: hsl(var(--muted-foreground)); }
+  .dark .bg-brand-cream { background-color: hsl(var(--secondary)); }
+  .dark .bg-brand-cream-milk { background-color: hsl(var(--secondary)); }
+  .dark .bg-brand-gold-shell { background-color: rgba(255,210,100,0.15); }
+  .dark .bg-brand-ink { background-color: hsl(var(--foreground)); }
+  .dark .border-brand-cream-beige { border-color: hsl(var(--border)); }
+  .dark .border-brand-border { border-color: hsl(var(--border)); }
+}
