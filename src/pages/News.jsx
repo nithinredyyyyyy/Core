@@ -46,7 +46,7 @@ function NewsCard({ article, tournaments }) {
   return (
     <Link
       to={`/news/${article.id}`}
-      className="group rounded-[24px] border border-brand-border bg-white p-5 shadow-[0_16px_34px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-brand-border-lift-2"
+      className="group rounded-[24px] border border-brand-border bg-white p-5 shadow-[0_16px_34px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-brand-border-lift-2 dark:border-white/10 dark:bg-card dark:shadow-[0_16px_34px_rgba(0,0,0,0.24)]"
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
@@ -62,10 +62,10 @@ function NewsCard({ article, tournaments }) {
         ) : null}
       </div>
 
-      <h3 className="mt-4 text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.04em] text-brand-ink transition group-hover:text-primary">
+      <h3 className="mt-4 text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.04em] text-brand-ink transition group-hover:text-primary dark:text-foreground">
         {decodeNewsText(article.title)}
       </h3>
-      <p className="mt-3 line-clamp-4 text-sm leading-7 text-brand-slate">
+      <p className="mt-3 line-clamp-4 text-sm leading-7 text-brand-slate dark:text-muted-foreground">
         {summary}
       </p>
 
@@ -118,7 +118,7 @@ function LeadStoryPanel({
     >
       {leadStory ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-          <div className="rounded-[24px] border border-brand-border bg-white p-5">
+          <div className="rounded-[24px] border border-brand-border bg-white p-5 dark:border-white/10 dark:bg-card">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
                 {getNewsCategoryLabel(leadStory.category)}
@@ -153,7 +153,7 @@ function LeadStoryPanel({
               </div>
             ) : null}
           </div>
-          <div className="rounded-[24px] border border-brand-border bg-white p-5">
+          <div className="rounded-[24px] border border-brand-border bg-white p-5 dark:border-white/10 dark:bg-card">
             <p className="type-kicker text-brand-taupe">Coverage snapshot</p>
             <div className="mt-4 space-y-3 text-sm text-brand-slate">
               {[

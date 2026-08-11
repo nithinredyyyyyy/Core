@@ -4,13 +4,14 @@ import { LazyMotion, domAnimation, m } from "framer-motion";
 import {
   ArrowRight,
   Asterisk,
-  Calendar,
+  Calendar as CalendarIcon,
   CheckCircle2,
   Radio,
   Swords,
   Target,
   TrendingUp,
 } from "lucide-react";
+import Calendar from "@/components/shared/Calendar";
 import StatusBadge from "@/components/shared/StatusBadge";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import LogoBlock from "@/components/shared/LogoBlock";
@@ -536,7 +537,7 @@ function HomeDesktopLowerSection({ featuredTournamentLink, upcomingMatches }) {
           )) : (
             <div className="flex flex-col items-center justify-center gap-3 rounded-[22px] border border-border/70 bg-background/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.045]">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-secondary/30">
-                <Calendar className="size-5 text-muted-foreground" />
+                <CalendarIcon className="size-5 text-muted-foreground" />
               </div>
               <p className="text-sm font-semibold text-muted-foreground dark:text-slate-300">
                 No upcoming matches right now.
@@ -547,6 +548,7 @@ function HomeDesktopLowerSection({ featuredTournamentLink, upcomingMatches }) {
       </LightPanel>
 
       <div className="grid gap-4">
+        <Calendar className="shadow-[0_16px_40px_rgba(15,23,42,0.05)]" />
         <LightPanel className="p-4 sm:p-5 md:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
