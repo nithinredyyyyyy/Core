@@ -7,3 +7,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: TURSO_DATABASE_URL
+        value: libsql://stagecore-nithinredyyyyyy.aws-ap-south-1.turso.io
+      - key: TURSO_AUTH_TOKEN
+        value: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Nzk0NTUwNjEsImlkIjoiMDE5ZTRmYzYtMTIwMS03ZDZlLWExZjctMzAwMzRlMjcwNDhjIiwicmlkIjoiOGI1OTYwNzMtNmNmYS00YmI5LTg5NmMtYjAwY2VlYzI5ZWZhIn0.Pcz4dCk-Fwr96U_vj3t6Zs92yg1hbV5DDMBk7FwB5rc8Ugt0WKT-kv-DSxh3Scf0AwR774UoKKI7m51n0PVeBg
