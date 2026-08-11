@@ -142,7 +142,7 @@ function DesktopStageSelector({ stageOptions, activeStage, dispatchStageBoardUi,
                   : "border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              Group {group}
+              Group {String(group).replace(/^Group\s+/i, "").trim()}
             </button>
           ))}
         </div>
@@ -192,7 +192,7 @@ function DesktopGroupedDraw({ activeStage, groupedParticipants, maxGroupRows }) 
           >
             <div className="bg-brand-navy px-5 py-4 text-center">
               <p className="text-sm font-black uppercase tracking-[0.12em] text-white">
-                Group {section.group}
+                Group {String(section.group).replace(/^Group\s+/i, "").trim()}
               </p>
             </div>
             <div className="divide-y divide-border">
@@ -246,7 +246,7 @@ function DesktopGroupedDraw({ activeStage, groupedParticipants, maxGroupRows }) 
                   key={`${activeStage.name}-${section.group}`}
                   className="border-r border-border/60 px-6 py-4 text-center last:border-r-0"
                 >
-                  Group {section.group}
+                  Group {String(section.group).replace(/^Group\s+/i, "").trim()}
                 </th>
               ))}
             </tr>
@@ -732,7 +732,7 @@ export default function StageStandingsBoard({
         return group ? [group] : [];
       });
       const standingsGroups = (activeStage.standings || []).flatMap((entry) =>
-        entry.grp ? [entry.grp] : []
+        entry.grp ? [String(entry.grp).replace(/^Group\s+/i, "").trim()] : []
       );
       const combined = [...new Set([...standingsGroups, ...participantGroups])].toSorted();
       if (combined.length > 0) return combined;
@@ -755,7 +755,7 @@ export default function StageStandingsBoard({
       return group ? [group] : [];
     });
     const standingsGroups = (activeStage.standings || []).flatMap((entry) =>
-      entry.grp ? [entry.grp] : []
+      entry.grp ? [String(entry.grp).replace(/^Group\s+/i, "").trim()] : []
     );
     if (
       tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
@@ -801,7 +801,7 @@ export default function StageStandingsBoard({
     if (!activeStage) return [];
     if (currentSelectedGroup === "overall") return activeStage.standings || [];
     if (currentSelectedGroup === "groups") return [];
-    return (activeStage.standings || []).filter((entry) => entry.grp === currentSelectedGroup);
+    return (activeStage.standings || []).filter((entry) => String(entry.grp || "").replace(/^Group\s+/i, "").trim() === currentSelectedGroup);
   }, [activeStage, currentSelectedGroup]);
   const groupParticipants = useMemo(() => {
     if (!activeStage || currentSelectedGroup === "overall" || currentSelectedGroup === "groups") return [];
