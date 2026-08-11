@@ -3,6 +3,7 @@ FROM node:22-bookworm-slim
 WORKDIR /app
 
 COPY package*.json ./
+ENV PUPPETEER_SKIP_DOWNLOAD=1
 RUN npm ci
 
 COPY . .
