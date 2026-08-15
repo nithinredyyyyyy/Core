@@ -4,7 +4,6 @@ import TeamIdentity from "@/components/shared/TeamIdentity";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { compareStageBoardStandings, getFeaturedTournamentStage } from "@/lib/stageBoard";
 import {
-  deriveBmps2026ParticipantEntries,
   isBmps2026PromotionStage,
 } from "@/lib/bmps2026Progression";
 import { resolveTournamentParticipantState } from "@/lib/tournamentProgression";
@@ -574,28 +573,8 @@ export default function StageStandingsBoard({
   const isBmps2026Detail =
     tournamentName === "Battlegrounds Mobile India Pro Series 2026";
   const resolvedParticipantEntries = useMemo(() => {
-    if (tournamentName !== "Battlegrounds Mobile India Pro Series 2026") {
-      return participantEntries;
-    }
-    return deriveBmps2026ParticipantEntries(participantEntries, stages, {
-      getRows: (stage) => stage?.standings || [],
-      getGroup: (row) => row?.grp,
-      getTeamName: (row) => row?.fullTeam || row?.team,
-      buildDerivedEntry: ({ sourceEntry, row, teamName, destinationGroup, nextStageName, derivedPlacement }) => ({
-        ...(sourceEntry || {}),
-        placement: derivedPlacement ?? sourceEntry?.placement ?? row?.placement ?? null,
-        team: sourceEntry?.team || teamName || "Unknown Team",
-        phase: destinationGroup
-          ? `${nextStageName} - Group ${destinationGroup}`
-          : nextStageName,
-        players: sourceEntry?.players || [],
-        roster: sourceEntry?.roster || [],
-        seed: sourceEntry?.seed ?? null,
-        badges: sourceEntry?.badges || [],
-        invite_status: sourceEntry?.invite_status || null,
-      }),
-    });
-  }, [participantEntries, stages, tournamentName]);
+    return participantEntries;
+  }, [participantEntries]);
 
   const {
     bmps2026PlayerStats,
@@ -789,7 +768,11 @@ export default function StageStandingsBoard({
         activeStage?.name === "Round 4") &&
       groups.length > 0) ||
     (tournamentName === "PUBG Mobile World Cup 2026" && groups.length > 0);
-  const fallbackSelectedGroup = hideOverallGroupOption ? "groups" : "overall";
+  const fallbackSelectedGroup = hideOverallGroupOption
+    ? tournamentName === "PUBG Mobile World Cup 2026"
+      ? groups[0] || "overall"
+      : "groups"
+    : "overall";
   const currentSelectedGroup =
     selectedGroup === "overall" && hideOverallGroupOption
       ? fallbackSelectedGroup
@@ -812,13 +795,20 @@ export default function StageStandingsBoard({
   const stageParticipants = useMemo(() => {
     if (!activeStage || currentSelectedGroup !== "overall") return [];
     const stageKey = String(activeStage.name || "").trim().toLowerCase();
+    const seen = new Set();
     return resolvedParticipantEntries
-      .filter((entry) =>
-        getParticipantStageGroup(entry, activeStage.name) ||
-        getParticipantEntryPhases(entry).some(
-          (phase) => String(phase || "").trim().toLowerCase() === stageKey
-        )
-      )
+      .filter((entry) => {
+        const matches =
+          getParticipantStageGroup(entry, activeStage.name) ||
+          getParticipantEntryPhases(entry).some(
+            (phase) => String(phase || "").trim().toLowerCase() === stageKey
+          );
+        if (!matches) return false;
+        const key = normalizeOrganizationName(entry.team || "");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .toSorted((left, right) =>
         String(left.team || "").localeCompare(String(right.team || ""))
       );
@@ -942,7 +932,7 @@ export default function StageStandingsBoard({
     tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
     isBmps2026SurvivalStage(activeStage?.name) &&
     currentSelectedGroup !== "overall";
-  const isPmwcMovementStage = tournamentName === "PUBG Mobile World Cup 2026" && !isStatisticsStage;
+  const isPmwcMovementStage = tournamentName === "PUBG Mobile World Cup 2026" && !isStatisticsStage && !isGrandFinalsStage;
   const showMovementColumn = usesPromotionGroups || usesBmpsKnockoutMovement || isPmwcMovementStage;
   const isGroupDrawStage = groupedParticipants.length > 0 && !activeStage?.standings?.length;
   const showsGroupedDrawTab =
