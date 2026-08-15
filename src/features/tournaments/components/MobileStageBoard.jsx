@@ -20,7 +20,10 @@ export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBo
                   type: "selectStage",
                   payload: {
                     stageName: stage.name,
-                    selectedGroup: "groups",
+                    selectedGroup:
+                      groups.length > 0
+                        ? groups[0]
+                        : "overall",
                   },
                 });
               }}
