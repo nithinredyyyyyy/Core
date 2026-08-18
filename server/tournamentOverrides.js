@@ -202,16 +202,17 @@ export function applyTournamentReadOverrides(tournament) {
   if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") {
     const stages = Array.isArray(tournament.stages)
       ? tournament.stages.map((stage) => {
-          if (stage?.name !== "Grand Finals" || !Array.isArray(stage.standings)) {
-            return stage;
-          }
           return {
             ...stage,
-            standings: stage.standings.map((entry) =>
-              normalizePlacement(entry?.placement) === 1
-                ? { ...entry, team: "GodLike Esports", fullTeam: "GodLike Esports" }
-                : entry,
-            ),
+            status: "completed",
+            standings:
+              stage?.name === "Grand Finals" && Array.isArray(stage.standings)
+                ? stage.standings.map((entry) =>
+                    normalizePlacement(entry?.placement) === 1
+                      ? { ...entry, team: "GodLike Esports", fullTeam: "GodLike Esports" }
+                      : entry,
+                  )
+                : stage.standings,
           };
         })
       : tournament.stages;

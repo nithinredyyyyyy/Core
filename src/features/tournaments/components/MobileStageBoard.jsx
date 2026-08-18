@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
-import { buildTeamLink, getDisplayTeamName, getGroupMovementRule, getGrandFinalsPlacementTone, getOutcomeTone, getGroupMovementAccent } from "@/features/tournaments/utils/participantHelpers";
+import { buildTeamLink, getDisplayTeamName, getGroupMovementRule, getGrandFinalsPlacementTone, getOutcomeTone, getGroupMovementAccent, shouldOpenBmps2026GroupsByDefault } from "@/features/tournaments/utils/participantHelpers";
 import { compareStageBoardStandings } from "@/lib/stageBoard";
 
 export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBoardUi, tournamentName, groups, showsGroupedDrawTab, hideOverallGroupOption, currentSelectedGroup, visibleGroupOptions }) {
@@ -21,7 +21,10 @@ export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBo
                   payload: {
                     stageName: stage.name,
                     selectedGroup:
-                      groups.length > 0
+                      tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+                      shouldOpenBmps2026GroupsByDefault(stage.name)
+                        ? "groups"
+                        : tournamentName === "PUBG Mobile World Cup 2026" && groups.length > 0
                         ? groups[0]
                         : "overall",
                   },

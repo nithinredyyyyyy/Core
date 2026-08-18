@@ -200,7 +200,7 @@ function EventBriefBody({ tournament, spotlightStage, allocations }) {
 function FormatCalendarItem({ tournament, stageDetails }) {
   return (
     <AccordionItem value="format-calendar" className="mb-2 rounded-xl border border-border bg-secondary/20 px-5">
-      <AccordionTrigger className="py-3 hover:no-underline [&[data-state=open]>svg:first-child]:text-primary" aria-expanded="false">
+      <AccordionTrigger className="py-3 hover:no-underline [&[data-state=open]>svg:first-child]:text-primary">
         <div className="flex items-center gap-2">
           <LayoutList className="size-4 text-muted-foreground transition-colors" />
           <h3 className="font-semibold text-foreground">Format and Calendar</h3>
@@ -614,7 +614,16 @@ function EventBriefPanel({
           allocations={allocations}
         />
         <div className="pt-4">
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion
+            type="single"
+            collapsible
+            defaultValue={
+              tournament.name === "Battlegrounds Mobile India Pro Series 2026"
+                ? "format-calendar"
+                : undefined
+            }
+            className="w-full"
+          >
             {(tournament.format_overview || tournament.calendar?.length) && (
               <FormatCalendarItem tournament={tournament} stageDetails={stageDetails} />
             )}
@@ -751,7 +760,9 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           matches: calendarMatches,
           matchResults,
           requestedStage: stage.name,
-          participantEntries: resolvedParticipantState.participantEntries,
+          participantEntries: isBmps2026Tournament(tournament)
+            ? tournament.participants ?? participantEntries
+            : resolvedParticipantState.participantEntries,
         })
       );
     }
@@ -773,7 +784,9 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         matches: calendarMatches,
         matchResults,
         requestedStage: requestedStage || null,
-        participantEntries: resolvedParticipantState.participantEntries,
+          participantEntries: isBmps2026Tournament(tournament)
+            ? tournament.participants ?? participantEntries
+            : resolvedParticipantState.participantEntries,
       }),
     [calendarMatches, matchResults, requestedStage, resolvedParticipantState.participantEntries, teams, tournament]
   );
@@ -789,6 +802,9 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           const rawStage = rawStageMap.get(stageName);
           const derived = derivedStageBoards.get(stage.name) || derivedStageBoards.get(stageName);
           const rawStandings = Array.isArray(rawStage?.standings) ? rawStage.standings : [];
+          const deduplicatedRawStandings = rawStandings.length > 0
+            ? Array.from(new Map(rawStandings.map((s) => [s.team, s])).values())
+            : rawStandings;
           const normalizedStandings = Array.isArray(stage.standings) ? stage.standings : [];
           const derivedStandings = derived?.standings?.map((entry) => ({
             placement: entry.rank,
@@ -802,8 +818,8 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
             points: entry.points,
           })) || [];
           const preferredStandings =
-            rawStandings.length > normalizedStandings.length
-              ? rawStandings
+            deduplicatedRawStandings.length > normalizedStandings.length
+              ? deduplicatedRawStandings
               : normalizedStandings;
           const shouldPreferDerivedStandings =
             tournament.name === "Battlegrounds Mobile India Pro Series 2026" &&
@@ -830,10 +846,14 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
             return stagesAcc;
           }
 
+          const stageStandings = Array.isArray(stage.standings) ? stage.standings : [];
+          const dedupedRawStandings = stageStandings.length > 0
+            ? Array.from(new Map(stageStandings.map((s) => [s.team, s])).values())
+            : stageStandings;
           stagesAcc.push({
             ...stage,
             name: stageName,
-            standings: Array.isArray(stage.standings) ? stage.standings : [],
+            standings: dedupedRawStandings,
           });
           return stagesAcc;
         }, []);
@@ -856,10 +876,14 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           points: entry.points,
         })) || [];
 
+        const fallbackStandings = stage.standings || [];
+        const dedupedFallbackStandings = fallbackStandings.length > 0
+          ? Array.from(new Map(fallbackStandings.map((s) => [s.team, s])).values())
+          : fallbackStandings;
         return {
           ...stage,
           name: stageName,
-          standings: derivedStandings.length > 0 ? derivedStandings : stage.standings || [],
+          standings: derivedStandings.length > 0 ? derivedStandings : dedupedFallbackStandings,
         };
       }));
     },
@@ -898,6 +922,8 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         ? "/images/bmps2025-champion.webp"
       : tournament.name === "Battlegrounds Mobile India Pro Series 2026"
         ? "/images/bmps2026-champion.webp"
+      : tournament.name === "PUBG Mobile World Cup 2026"
+        ? "/images/pmwc2026-champion.jpg"
       : null;
   const championRoster =
     participantEntries.find(
@@ -1106,7 +1132,11 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         {hasStageProgression && stageBoardVisible && (
           <StageStandingsBoard
             stages={stageBoardStages}
-            participantEntries={participantEntries}
+            participantEntries={
+              isBmps2026Tournament(tournament)
+                ? tournament.participants ?? participantEntries
+                : resolvedParticipantState.participantEntries
+            }
             tournamentName={tournament.name}
             tournamentId={tournament.id}
             teams={teams}

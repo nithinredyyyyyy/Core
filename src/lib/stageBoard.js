@@ -383,6 +383,55 @@ export function getStageBoardData({
     standingsMap.set(key, row);
   }
 
+  const isBmps2026KnockoutStage =
+    featuredTournament?.name === "Battlegrounds Mobile India Pro Series 2026" &&
+    ["survival stage", "semi finals", "last chance stage"].includes(
+      String(featuredStage || "").trim().toLowerCase(),
+    );
+
+  if (isBmps2026KnockoutStage && Array.isArray(participantEntries)) {
+    const stageKey = String(featuredStage || "").trim().toLowerCase();
+    const listedTeams = new Set(
+      [...standingsMap.values()].map((row) => normalizeOrganizationName(row.teamName)),
+    );
+
+    for (const participant of participantEntries) {
+      const phases = [
+        participant?.phase,
+        ...(Array.isArray(participant?.stageEntries)
+          ? participant.stageEntries.map((stageEntry) =>
+              stageEntry?.phase || stageEntry?.stageName,
+            )
+          : []),
+      ];
+      const matchingPhase = phases.find((phase) =>
+        String(phase || "").trim().toLowerCase().startsWith(stageKey),
+      );
+      const teamName = participant?.team;
+      const teamKey = normalizeOrganizationName(teamName);
+      if (!matchingPhase || !teamName || !teamKey || listedTeams.has(teamKey)) continue;
+
+      const group = isBmps2026SurvivalStage
+        ? getBmps2026SurvivalStageGroup(teamName)
+        : extractGroupLabel(matchingPhase);
+      standingsMap.set(`participant:${teamKey}`, {
+        teamId: null,
+        teamName,
+        logoName: teamName,
+        logoSrc: getTeamLogoByName(teamName) || null,
+        group: group || "-",
+        matches: 0,
+        wwcd: 0,
+        placementPoints: 0,
+        elims: 0,
+        points: 0,
+        placementSum: 0,
+        matchCells: {},
+      });
+      listedTeams.add(teamKey);
+    }
+  }
+
   const standings = [...standingsMap.values()]
     .map((row) => ({
       ...row,

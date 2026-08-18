@@ -306,13 +306,21 @@ export function deriveBmps2026ParticipantEntries(
       : "";
     return derivedEntries.some((entry) => {
       const entryTeamKey = normalizeOrganizationName(entry.team);
-      const entryPhase = normalizeStageName(entry.phase);
       if (entryTeamKey !== teamKey) return false;
-      if (groupKey) {
-        return entryPhase === `${stageKey} - group ${groupKey}`;
-      }
-      return (
-        entryPhase === stageKey || entryPhase.startsWith(`${stageKey} - group `)
+
+      const entryPhases = [
+        entry.phase,
+        ...(Array.isArray(entry.stageEntries)
+          ? entry.stageEntries.map((stageEntry) =>
+              stageEntry?.phase || stageEntry?.stageName,
+            )
+          : []),
+      ].map(normalizeStageName);
+
+      return entryPhases.some((entryPhase) =>
+        groupKey
+          ? entryPhase === `${stageKey} - group ${groupKey}`
+          : entryPhase === stageKey || entryPhase.startsWith(`${stageKey} - group `),
       );
     });
   };

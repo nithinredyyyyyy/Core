@@ -89,6 +89,6 @@ const server = http.createServer((req, res) => {
   sendFile(res, filePath);
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Core frontend running at http://127.0.0.1:${port}`);
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Core frontend running at http://0.0.0.0:${port}`);
 });

@@ -355,16 +355,10 @@ export function getNormalizedTournament(id) {
   };
 }
 
-const PMWC_OVERRIDE_TOURNAMENTS = new Set(["PUBG Mobile World Cup 2026"]);
-
 export function getNormalizedTournamentSafe(tournamentId) {
   if (!tournamentId) return null;
   try {
-    const data = getNormalizedTournament(tournamentId);
-    if (data?.tournament && PMWC_OVERRIDE_TOURNAMENTS.has(data.tournament.name)) {
-      return { ...data, participants: [] };
-    }
-    return data;
+    return getNormalizedTournament(tournamentId);
   } catch {
     return null;
   }

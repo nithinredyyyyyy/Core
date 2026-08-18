@@ -15,13 +15,7 @@ import {
   getEditorialNewsSummary,
 } from "@/lib/newsEditorial";
 
-function DetailShell({ children }) {
-  return (
-    <section className="mb-16">
-      {children}
-    </section>
-  );
-}
+// removed DetailShell helper
 
 function formatDate(value) {
   if (!value) return "Date pending";
@@ -36,12 +30,12 @@ function formatDate(value) {
 
 function ArticleHeader({ article, tags, tournaments }) {
   return (
-    <div className="border-b border-brand-border px-5 py-6 sm:px-6">
+    <div className="rounded-[28px] border border-brand-border bg-card p-6 shadow-sm dark:border-white/10">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
           {getNewsCategoryLabel(article.category)}
         </span>
-        <span className="rounded-full border border-brand-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-taupe">
+        <span className="rounded-full border border-brand-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-taupe dark:border-white/15">
           {article.game || "BGMI"}
         </span>
         {article.ai_summary ? (
@@ -51,10 +45,10 @@ function ArticleHeader({ article, tags, tournaments }) {
           </span>
         ) : null}
       </div>
-      <h1 className="mt-5 max-w-[18ch] text-[2.4rem] font-semibold leading-[0.94] tracking-[-0.06em] text-brand-ink sm:text-[3.5rem]">
+      <h1 className="mt-5 text-[2.2rem] font-semibold leading-[1.02] tracking-[-0.05em] text-brand-ink dark:text-foreground sm:text-[3.2rem]">
         {decodeNewsText(article.title)}
       </h1>
-      <p className="mt-4 max-w-3xl text-sm leading-7 text-brand-slate">
+      <p className="mt-4 max-w-3xl text-base leading-7 text-brand-slate dark:text-muted-foreground">
         {getEditorialNewsSummary(article, tournaments)}
       </p>
 
@@ -64,9 +58,9 @@ function ArticleHeader({ article, tags, tournaments }) {
           ["Game", article.game || "BGMI"],
           ["Tags", tags.length || 0],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-[20px] bg-brand-cream-milk p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-taupe">{label}</p>
-            <p className="mt-2 text-sm font-semibold text-brand-ink">{value}</p>
+          <div key={label} className="rounded-[20px] bg-secondary/30 p-4 border border-border/30">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+            <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
           </div>
         ))}
       </div>
@@ -78,23 +72,23 @@ function ArticleBodyColumn({ article, blocks }) {
   return (
     <div className="space-y-6">
       {article.ai_summary ? (
-        <div className="rounded-[24px] border border-brand-border bg-white p-5">
+        <div className="rounded-[24px] border border-brand-border bg-card p-5 shadow-sm dark:border-white/10">
           <p className="type-kicker text-brand-taupe">AI-generated summary</p>
-          <p className="mt-3 text-sm leading-7 text-brand-slate">
+          <p className="mt-3 text-sm leading-7 text-brand-slate dark:text-muted-foreground">
             {decodeNewsText(article.ai_summary)}
           </p>
         </div>
       ) : null}
 
-      <div className="rounded-[24px] border border-brand-border bg-white p-5">
+      <div className="rounded-[24px] border border-brand-border bg-card p-6 shadow-sm dark:border-white/10">
         <div className="space-y-5">
           {blocks.map((block, index) =>
             block.type === "heading" ? (
-              <h2 key={`${block.text}-${index}`} className="text-[1.25rem] font-semibold tracking-[-0.03em] text-brand-ink">
+              <h2 key={`${block.text}-${index}`} className="text-[1.25rem] font-semibold tracking-[-0.03em] text-foreground pt-4 first:pt-0">
                 {decodeNewsText(block.text)}
               </h2>
             ) : (
-              <p key={`${block.text}-${index}`} className="text-sm leading-8 text-brand-slate-ink">
+              <p key={`${block.text}-${index}`} className="text-sm leading-8 text-muted-foreground">
                 {decodeNewsText(block.text)}
               </p>
             ),
@@ -109,48 +103,47 @@ function ArticleSideColumn({ relatedArticles, tags, tournaments }) {
   return (
     <div className="space-y-6">
       {tags.length > 0 ? (
-        <DetailShell>
-          <div className="px-5 py-5 sm:px-6">
-            <p className="type-kicker text-brand-taupe">Tags</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-2 rounded-full border border-brand-border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe"
-                >
-                  <Tag className="size-3.5" />
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </DetailShell>
-      ) : null}
-
-      <DetailShell>
-        <div className="px-5 py-5 sm:px-6">
-          <p className="type-kicker text-brand-taupe">Related coverage</p>
-          <div className="mt-5 space-y-3">
-            {relatedArticles.map((entry) => (
-              <Link
-                key={entry.id}
-                to={`/news/${entry.id}`}
-                className="block rounded-[22px] border border-brand-border bg-white p-4 transition hover:border-brand-border-lift-2"
+        <div className="rounded-[24px] border border-brand-border bg-card p-6 shadow-sm dark:border-white/10">
+          <p className="type-kicker text-brand-taupe">Tags</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1.5 rounded-full border border-brand-border bg-white dark:border-white/10 dark:bg-secondary/30 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe dark:text-muted-foreground"
               >
-                <p className="text-sm font-semibold text-brand-ink">
-                  {decodeNewsText(entry.title)}
-                </p>
-                <p className="mt-2 text-[12px] leading-6 text-brand-slate">
-                  {getEditorialNewsSummary(entry, tournaments)}
-                </p>
-                <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-ink">
-                  Open coverage <ArrowRight className="size-3.5" />
-                </span>
-              </Link>
+                <Tag className="size-3" />
+                {tag}
+              </span>
             ))}
           </div>
         </div>
-      </DetailShell>
+      ) : null}
+
+      <div className="rounded-[24px] border border-brand-border bg-card p-6 shadow-sm dark:border-white/10">
+        <p className="type-kicker text-brand-taupe">Related coverage</p>
+        <div className="mt-5 space-y-4">
+          {relatedArticles.map((entry) => (
+            <Link
+              key={entry.id}
+              to={`/news/${entry.id}`}
+              className="block rounded-[22px] border border-brand-border bg-white dark:border-white/10 dark:bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
+            >
+              <p className="text-sm font-semibold text-foreground group-hover:text-primary transition line-clamp-2">
+                {decodeNewsText(entry.title)}
+              </p>
+              <p className="mt-2 text-[12px] leading-5 text-muted-foreground line-clamp-3">
+                {getEditorialNewsSummary(entry, tournaments)}
+              </p>
+              <span className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                Open coverage <ArrowRight className="size-3" />
+              </span>
+            </Link>
+          ))}
+          {relatedArticles.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No related coverage available.</p>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
@@ -209,20 +202,20 @@ export default function NewsArticle() {
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6">
       <Link
         to="/news"
-        className="inline-flex items-center gap-2 rounded-full border border-brand-border-tan bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-brand-slate transition hover:text-brand-ink"
+        className="inline-flex items-center gap-2 rounded-full border border-brand-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground transition hover:text-foreground dark:border-white/10 w-fit"
       >
         <ArrowLeft className="size-3.5" />
         Back to news desk
       </Link>
 
-      <DetailShell>
+      <article className="space-y-6">
         <ArticleHeader
           article={article}
           tags={tags}
           tournaments={tournaments}
         />
 
-        <div className="grid gap-6 px-5 py-5 sm:px-6 sm:py-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <ArticleBodyColumn
             article={article}
             blocks={blocks}
@@ -233,7 +226,7 @@ export default function NewsArticle() {
             tournaments={tournaments}
           />
         </div>
-      </DetailShell>
+      </article>
     </div>
   );
 }

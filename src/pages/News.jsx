@@ -12,19 +12,21 @@ import { decodeNewsText, getEditorialNewsSummary } from "@/lib/newsEditorial";
 
 const FILTERS = ["all", "tournament", "announcement", "patch_update", "roster_change", "general"];
 
-function Shell({ eyebrow, title, body, actions, children }) {
+function NewsHeader() {
   return (
-    <section className="mb-16">
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <div className="max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{eyebrow}</p>
-          <h2 className="mt-2 text-4xl font-black tracking-tight text-foreground">{title}</h2>
-          {body ? <p className="mt-3 text-lg text-muted-foreground max-w-2xl">{body}</p> : null}
-        </div>
-        {actions ? <div>{actions}</div> : null}
+    <div className="space-y-2">
+      <div>
+        <p className="type-kicker text-primary">
+          Editorial desk
+        </p>
+        <h1 className="type-title-xl mt-2 uppercase">
+          News Coverage
+        </h1>
+        <p className="type-body-sm mt-1 text-muted-foreground">
+          Transfers, roster updates, announcements, and AI-assisted editorial stories.
+        </p>
       </div>
-      <div>{children}</div>
-    </section>
+    </div>
   );
 }
 
@@ -100,36 +102,38 @@ function LeadStoryPanel({
   selectedTag,
   tournaments,
 }) {
+  if (!leadStory) {
+    return (
+      <div className="rounded-[28px] border border-dashed border-brand-border bg-white/70 p-8 text-center text-brand-slate dark:border-white/10 dark:bg-card">
+        <p className="type-kicker text-brand-taupe">Lead story</p>
+        <p className="mt-4 text-base font-semibold">No stories match your filter.</p>
+        <p className="mt-1 text-sm text-brand-slate/70">Clear the tag or search filter to see current coverage.</p>
+      </div>
+    );
+  }
+
   return (
-    <Shell
-      eyebrow="Lead story"
-      title={leadStory ? decodeNewsText(leadStory.title) : "Latest story loading"}
-      body={leadStory ? getEditorialNewsSummary(leadStory, tournaments) : "The latest article will appear here."}
-      actions={
-        leadStory ? (
-          <Link
-            to={`/news/${leadStory.id}`}
-            className="inline-flex items-center gap-2 rounded-full bg-brand-ink px-5 py-2.5 text-sm font-semibold text-white"
-          >
-            Open story <ArrowRight className="size-4" />
-          </Link>
-        ) : null
-      }
-    >
-      {leadStory ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-          <div className="rounded-[24px] border border-brand-border bg-white p-5 dark:border-white/10 dark:bg-card">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
-                {getNewsCategoryLabel(leadStory.category)}
-              </span>
-              {leadStory.ai_summary ? (
-                <span className="rounded-full bg-brand-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
-                  AI summary
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-5 text-sm leading-7 text-brand-slate">
+    <div className="overflow-hidden rounded-[28px] border border-brand-border bg-card shadow-[0_18px_42px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-card">
+      <div className="p-6 lg:p-7">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="type-kicker text-primary">Lead story</p>
+          <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
+            {getNewsCategoryLabel(leadStory.category)}
+          </span>
+          {leadStory.ai_summary ? (
+            <span className="rounded-full bg-brand-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+              AI summary
+            </span>
+          ) : null}
+        </div>
+
+        <h2 className="type-display-section mt-4 uppercase text-foreground leading-[1.05]">
+          {decodeNewsText(leadStory.title)}
+        </h2>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="flex flex-col justify-between rounded-[24px] border border-brand-border bg-white p-5 dark:border-white/10 dark:bg-card">
+            <p className="text-sm leading-7 text-brand-slate dark:text-muted-foreground line-clamp-6">
               {leadStory.ai_summary
                 ? decodeNewsText(leadStory.ai_summary)
                 : getEditorialNewsSummary(leadStory, tournaments)}
@@ -141,10 +145,10 @@ function LeadStoryPanel({
                     key={tag}
                     type="button"
                     onClick={() => onSelectTag(tag)}
-                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition ${
                       selectedTag === tag
                         ? "border-brand-ink bg-brand-ink text-white"
-                        : "border-brand-border bg-brand-cream text-brand-taupe"
+                        : "border-brand-border bg-brand-cream text-brand-taupe hover:border-brand-border-lift"
                     }`}
                   >
                     #{tag}
@@ -153,26 +157,40 @@ function LeadStoryPanel({
               </div>
             ) : null}
           </div>
-          <div className="rounded-[24px] border border-brand-border bg-white p-5 dark:border-white/10 dark:bg-card">
-            <p className="type-kicker text-brand-taupe">Coverage snapshot</p>
-            <div className="mt-4 space-y-3 text-sm text-brand-slate">
-              {[
-                ["Published", formatDate(leadStory.created_date)],
-                ["Game", leadStory.game || "BGMI"],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="flex items-center justify-between gap-3 rounded-[18px] bg-brand-cream-milk px-4 py-3"
-                >
-                  <span>{label}</span>
-                  <span className="font-semibold text-brand-ink">{value}</span>
+
+          <div className="flex flex-col justify-between gap-5 rounded-[24px] border border-brand-border bg-secondary/20 p-5 dark:border-white/10 dark:bg-secondary/10">
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-primary">
+                  Coverage snapshot
+                </p>
+                <div className="mt-3 space-y-2.5 text-sm text-brand-slate">
+                  {[
+                    ["Published", formatDate(leadStory.created_date)],
+                    ["Game", leadStory.game || "BGMI"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-3 rounded-[18px] bg-background px-4 py-3 border border-border"
+                    >
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                      <span className="font-semibold text-foreground">{value}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
+
+            <Link
+              to={`/news/${leadStory.id}`}
+              className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground transition hover:opacity-90"
+            >
+              Open story <ArrowRight className="size-3.5" />
+            </Link>
           </div>
         </div>
-      ) : null}
-    </Shell>
+      </div>
+    </div>
   );
 }
 
@@ -180,12 +198,18 @@ function TransferWatchPanel({ transfers }) {
   const visibleTransfers = transfers.slice(0, 6);
 
   return (
-    <Shell
-      eyebrow="Transfer watch"
-      title="Roster moves and season announcements"
-      body="Transfers, roster adjustments, and lineup drama stay visible beside the main coverage feed."
-    >
-      <div className="space-y-3">
+    <div className="flex flex-col rounded-[28px] border border-brand-border bg-card p-6 shadow-[0_18px_42px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-card">
+      <div className="mb-6">
+        <p className="type-kicker text-primary">Transfer watch</p>
+        <h2 className="type-display-section mt-2 uppercase text-foreground leading-[1.05]">
+          Roster moves
+        </h2>
+        <p className="type-body-sm mt-1 text-muted-foreground">
+          Transfers, roster adjustments, and lineup announcements.
+        </p>
+      </div>
+
+      <div className="flex-1 space-y-3 overflow-y-auto max-h-[380px] pr-1">
         {visibleTransfers.map((entry) => {
           const players = Array.isArray(entry.players)
             ? entry.players.filter(Boolean)
@@ -196,49 +220,49 @@ function TransferWatchPanel({ transfers }) {
           const hasNewTeam = Boolean(newTeam);
 
           return (
-          <div key={entry.id} className="rounded-[22px] border border-brand-border bg-white p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-                  {entry.window || "Transfer"}
-                </p>
-                {hasOldTeam && hasNewTeam ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-base font-semibold text-brand-ink">
-                    <span className="truncate">{oldTeam}</span>
-                    <span className="text-brand-coral-clay">→</span>
-                    <span className="truncate">{newTeam}</span>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-base font-semibold text-brand-ink">
-                    {hasNewTeam
-                      ? `${newTeam} roster update`
-                      : hasOldTeam
-                        ? `${oldTeam} roster update`
-                        : "Roster update"}
+            <div key={entry.id} className="rounded-[22px] border border-brand-border bg-white p-4 dark:border-white/10 dark:bg-card">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                    {entry.window || "Transfer"}
                   </p>
-                )}
-                {players.length > 0 ? (
-                  <p className="mt-2 text-[12px] leading-6 text-brand-slate">
-                    {players.join(", ")}
-                  </p>
-                ) : (
-                  <span className="mt-3 inline-flex rounded-full border border-brand-border bg-brand-cream-almond px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe">
-                    Roster watch
-                  </span>
-                )}
+                  {hasOldTeam && hasNewTeam ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-base font-semibold text-brand-ink dark:text-foreground">
+                      <span className="truncate">{oldTeam}</span>
+                      <span className="text-brand-coral-clay">→</span>
+                      <span className="truncate">{newTeam}</span>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-base font-semibold text-brand-ink dark:text-foreground">
+                      {hasNewTeam
+                        ? `${newTeam} roster update`
+                        : hasOldTeam
+                          ? `${oldTeam} roster update`
+                          : "Roster update"}
+                    </p>
+                  )}
+                  {players.length > 0 ? (
+                    <p className="mt-2 text-[12px] leading-6 text-brand-slate dark:text-muted-foreground">
+                      {players.join(", ")}
+                    </p>
+                  ) : (
+                    <span className="mt-3 inline-flex rounded-full border border-brand-border bg-brand-cream-almond px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-taupe dark:border-white/15 dark:bg-card">
+                      Roster watch
+                    </span>
+                  )}
+                </div>
+                <span className="shrink-0 text-[11px] text-brand-taupe dark:text-muted-foreground">{formatDate(entry.date)}</span>
               </div>
-              <span className="shrink-0 text-[11px] text-brand-taupe">{formatDate(entry.date)}</span>
             </div>
-          </div>
           );
         })}
         {visibleTransfers.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-brand-border bg-white/70 p-5 text-sm text-brand-slate">
+          <div className="rounded-[22px] border border-dashed border-brand-border bg-white/70 p-5 text-sm text-brand-slate dark:border-white/15 dark:bg-card">
             Transfer watch will update when roster moves are published.
           </div>
         ) : null}
       </div>
-    </Shell>
+    </div>
   );
 }
 
@@ -254,57 +278,72 @@ function CoverageFeedPanel({
   tournaments,
 }) {
   return (
-    <Shell
-      eyebrow="Coverage filters"
-      title="Filter by category, tags, or keywords"
-      body="Scan tournament announcements, patch updates, roster news, and daily stories from one organized feed."
-      actions={
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-brand-taupe" />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+            Coverage feed
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold uppercase tracking-[-0.04em] text-foreground">
+            News Archive
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Scan tournament announcements, patch updates, and daily stories.
+          </p>
+        </div>
+
+        <div className="relative w-full md:max-w-xs">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
             onChange={(event) => onSearch(event.target.value)}
             placeholder="Search news coverage"
             aria-label="Search news coverage"
-            className="h-11 rounded-full border border-brand-border-lift bg-white pl-10 pr-4 text-sm text-brand-ink outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+            className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-4 text-sm text-foreground outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
           />
         </div>
-      }
-    >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FILTERS.map((filter) => (
-          <button
-            key={filter}
-            type="button"
-            onClick={() => onSetActiveFilter(filter)}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
-              activeFilter === filter
-                ? "border-brand-ink bg-brand-ink text-white"
-                : "border-brand-border bg-white text-brand-taupe"
-            }`}
-          >
-            {getNewsCategoryLabel(filter)}
-          </button>
-        ))}
       </div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tagOptions.map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            onClick={() => onToggleTag(tag)}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
-              selectedTag === tag
-                ? "border-brand-ink bg-brand-ink text-white"
-                : "border-brand-border bg-white text-brand-taupe"
-            }`}
-          >
-            <Tag className="size-3.5" />
-            {tag}
-          </button>
-        ))}
+
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-1.5">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => onSetActiveFilter(filter)}
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition ${
+                activeFilter === filter
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {getNewsCategoryLabel(filter)}
+            </button>
+          ))}
+        </div>
+
+        {tagOptions.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {tagOptions.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => onToggleTag(tag)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs transition ${
+                  selectedTag === tag
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-muted"
+                }`}
+              >
+                <Tag className="size-3" />
+                {tag}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {followupStories.map((article) => (
           <NewsCard
             key={article.id}
@@ -312,13 +351,14 @@ function CoverageFeedPanel({
             tournaments={tournaments}
           />
         ))}
-        {followupStories.length === 0 ? (
-          <div className="rounded-[24px] border border-brand-border bg-white p-5 text-sm text-brand-slate">
-            No stories match the current filters. Try another category or clear the tag search.
-          </div>
-        ) : null}
       </div>
-    </Shell>
+      
+      {followupStories.length === 0 ? (
+        <div className="rounded-[24px] border border-dashed border-border bg-secondary/10 p-8 text-center text-sm text-muted-foreground">
+          No stories match the current filters. Try another category or clear the tag search.
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -377,6 +417,8 @@ export default function News() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
+      <NewsHeader />
+
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <LeadStoryPanel
           leadStory={leadStory}
@@ -387,7 +429,7 @@ export default function News() {
         <TransferWatchPanel transfers={transfers} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr]">
+      <section className="grid gap-6 xl:grid-cols-[1fr] pt-4">
         <CoverageFeedPanel
           followupStories={followupStories}
           onSearch={setSearch}

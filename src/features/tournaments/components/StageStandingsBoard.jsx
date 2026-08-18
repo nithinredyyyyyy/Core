@@ -24,6 +24,7 @@ import {
   buildTeamLink,
   dedupeParticipantEntriesByOrganization,
   getBmps2026FallbackGroupForTeam,
+  getBmps2026GroupDrawEntries,
   getDisplayTeamName,
   getGrandFinalsPlacementTone,
   getGroupMovementAccent,
@@ -683,7 +684,14 @@ export default function StageStandingsBoard({
   const isGrandFinalsStage = String(activeStage?.name || "").trim().toLowerCase() === "grand finals";
   const groups = useMemo(() => {
     if (!activeStage) return [];
-    if (String(activeStage.name || "").trim().toLowerCase() === "grand finals") return [];
+    const activeStageKey = String(activeStage.name || "").trim().toLowerCase();
+    if (activeStageKey === "grand finals") return [];
+    if (
+      tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
+      activeStageKey === "last chance stage"
+    ) {
+      return [];
+    }
     if (
       tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
       (isBmps2026SurvivalStage(activeStage.name) ||
@@ -768,11 +776,7 @@ export default function StageStandingsBoard({
         activeStage?.name === "Round 4") &&
       groups.length > 0) ||
     (tournamentName === "PUBG Mobile World Cup 2026" && groups.length > 0);
-  const fallbackSelectedGroup = hideOverallGroupOption
-    ? tournamentName === "PUBG Mobile World Cup 2026"
-      ? groups[0] || "overall"
-      : "groups"
-    : "overall";
+  const fallbackSelectedGroup = hideOverallGroupOption ? "groups" : "overall";
   const currentSelectedGroup =
     selectedGroup === "overall" && hideOverallGroupOption
       ? fallbackSelectedGroup
@@ -788,9 +792,14 @@ export default function StageStandingsBoard({
   }, [activeStage, currentSelectedGroup]);
   const groupParticipants = useMemo(() => {
     if (!activeStage || currentSelectedGroup === "overall" || currentSelectedGroup === "groups") return [];
-    return resolvedParticipantEntries.filter(
-      (entry) => getParticipantStageGroup(entry, activeStage.name) === currentSelectedGroup
-    );
+    const seen = new Set();
+    return resolvedParticipantEntries.filter((entry) => {
+      if (getParticipantStageGroup(entry, activeStage.name) !== currentSelectedGroup) return false;
+      const key = normalizeOrganizationName(entry.team || "");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [activeStage, currentSelectedGroup, resolvedParticipantEntries]);
   const stageParticipants = useMemo(() => {
     if (!activeStage || currentSelectedGroup !== "overall") return [];
@@ -846,9 +855,15 @@ export default function StageStandingsBoard({
       tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
       (isBmps2026SurvivalStage(activeStage.name) ||
         isBmps2026SemiFinalsStage(activeStage.name));
-    const groupSourceEntries = useOfficialDrawOnly
-      ? participantEntries
-      : resolvedParticipantEntries;
+    const fixtureEntries =
+      tournamentName === "Battlegrounds Mobile India Pro Series 2026"
+        ? getBmps2026GroupDrawEntries(activeStage.name)
+        : [];
+    const groupSourceEntries = fixtureEntries.length > 0
+      ? fixtureEntries
+      : useOfficialDrawOnly
+        ? participantEntries
+        : resolvedParticipantEntries;
     const resolveSemiFinalPlaceholder = (entry) => {
       if (
         tournamentName !== "Battlegrounds Mobile India Pro Series 2026" ||
@@ -878,7 +893,12 @@ export default function StageStandingsBoard({
               : getParticipantStageGroup(entry, activeStage.name);
           return entryGroup === group;
         })
-        .map(resolveSemiFinalPlaceholder);
+        .map(resolveSemiFinalPlaceholder)
+        .toSorted((left, right) => {
+          const leftPlacement = Number(left?.placement) || Number.MAX_SAFE_INTEGER;
+          const rightPlacement = Number(right?.placement) || Number.MAX_SAFE_INTEGER;
+          return leftPlacement - rightPlacement || String(left?.team || "").localeCompare(String(right?.team || ""));
+        });
 
       if (
         entries.length === 0 &&
@@ -1030,7 +1050,7 @@ export default function StageStandingsBoard({
         grp: currentSelectedGroup,
       }));
 
-    return completeRows
+    const sorted = completeRows
       .map((row) => ({
         ...row,
         placementPoints: row.pos || 0,
@@ -1038,6 +1058,8 @@ export default function StageStandingsBoard({
         averageEliminationPosition: row.matches > 0 ? row.placementSum / row.matches : null,
       }))
       .sort(compareStageBoardStandings);
+
+    return sorted;
   }, [usesPromotionGroups, currentSelectedGroup, filteredStandings, groupParticipants, matches, matchResults, teams, tournamentId, activeStage]);
 
   const showGroupColumn =

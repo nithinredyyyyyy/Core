@@ -30,79 +30,98 @@ const ROUND_ONE_GROUP_B_TEAMS = new Set(
 
 const BMPS_2026_SEMI_FINALS_GROUPS = {
   A: [
-    "Wyld Fangs",
     "Gods Reign",
     "Genesis Esports",
-    "Zero Ark Official",
     "iQOO Reckoning Esports",
     "iQOO Revenant XSpark",
     "Welt Esports",
-    "Survival #5",
+    "Wyld Fangs",
+    "Zero Ark Official",
+    "Versatile Esports",
   ],
   B: [
-    "Meta Ninza",
     "4TR Official",
     "Autobotz Esports",
-    "Survival #7",
-    "Higgboson Esports",
-    "Survival #3",
-    "iQOO Team Tamillas",
-    "Mysterious4",
+    "Higg Boson Esports",
+    "Mysterious4 Esports",
+    "Meta Ninza",
+    "iQOO Team Tamilas",
+    "Team AX",
+    "Rising Esports",
   ],
   C: [
-    "Survival #1",
-    "WindGod Esports",
-    "Survival #8",
-    "Survival #2",
-    "Survival #6",
-    "White Walkers",
-    "Survival #4",
     "Nebula Esports",
+    "Windgod Esports",
+    "White Walkers",
+    "Team Apex Gaming",
+    "Myth Official",
+    "True Rippers",
+    "Lastade Esports",
+    "Rapid Chaos Esports",
   ],
 };
 
 const BMPS_2026_SURVIVAL_STAGE_GROUPS = {
   A: [
-    "Madkings Esports",
-    "Team Aryan",
-    "HADX Esports",
-    "NONX Esports",
-    "Rapid Chaos Esports",
-    "VXT",
+    "Versatile Esports",
+    "Team AX",
+    "MadKings",
     "Ares Esport",
+    "Rapid Chaos Esports",
+    "NonX Esports",
+    "HadX Esports",
     "Likitha Esports",
   ],
   B: [
-    "Jaguar Esports",
+    "True Rippers",
     "K9 Esports",
     "Esport Social",
-    "Santa Esports",
-    "True Rippers",
-    "Quantum Spark",
+    "Quantum Sparks",
+    "Santa Esp",
+    "Jaguar Esports",
     "Rising Esports",
     "Team Doxy",
   ],
   C: [
-    "Naqsh Esports",
-    "Learn From Past",
-    "Team RedXross",
-    "TDR",
-    "GodSent Esports",
     "Team Apex Gaming",
-    "DCxSCR",
+    "Learn from Past",
+    "Godsent Esports",
+    "Team RedXross",
+    "Naqsh Esports",
+    "DC x SCR Esports",
     "GENxFM Esports",
+    "ThunderGods x Tortuga Gaming",
   ],
   D: [
-    "Phoenix Esports",
-    "Lastade Esports",
-    "Team H4K",
-    "Riot Nationz",
-    "T7",
-    "Troy Tamilian Esports",
-    "Aurax Esports",
     "Myth Official",
+    "Lastade Esports",
+    "T7 x Orion Esports",
+    "Troy Tamilan Esports",
+    "H4K Esports",
+    "Aura X Esports",
+    "RiotNationZ",
+    "Phoenix Esports",
   ],
 };
+
+const BMPS_2026_LAST_CHANCE_STAGE_TEAMS = [
+  "Team Apex Gaming",
+  "iQOO Team Tamilas",
+  "Zero Ark Official",
+  "Autobotz Esports",
+  "Rapid Chaos Esports",
+  "Windgod Esports",
+  "Lastade Esports",
+  "4TR Official",
+  "Higg Boson Esports",
+  "Meta Ninza",
+  "True Rippers",
+  "Welt Esports",
+  "Wyld Fangs",
+  "Team AX",
+  "Mysterious4 Esports",
+  "Rising Esports",
+];
 
 function normalizeTeam(value) {
   return String(value || "")
@@ -477,7 +496,7 @@ const tournament = {
     {
       name: "Round 1",
       order: 1,
-      status: "upcoming",
+      status: "completed",
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
@@ -528,7 +547,7 @@ const tournament = {
     {
       name: "Round 2",
       order: 2,
-      status: "upcoming",
+      status: "completed",
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
@@ -579,7 +598,7 @@ const tournament = {
     {
       name: "Round 3",
       order: 3,
-      status: "upcoming",
+      status: "completed",
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "C", day2: "B", day3: "D", day4: "A" },
@@ -630,7 +649,7 @@ const tournament = {
     {
       name: "Round 4",
       order: 4,
-      status: "upcoming",
+      status: "completed",
       teamCount: 64,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "B", day2: "A", day3: "C", day4: "D" },
@@ -681,7 +700,7 @@ const tournament = {
     {
       name: "Survival Stage",
       order: 5,
-      status: "upcoming",
+      status: "completed",
       teamCount: 32,
       mapRotation: [
         { match: 1, map: "Rondo", day1: "AB", day2: "CD", day3: "AC", day4: "BD" },
@@ -697,7 +716,7 @@ const tournament = {
     {
       name: "Semi Finals",
       order: 6,
-      status: "upcoming",
+      status: "completed",
       teamCount: 24,
       mapRotation: [
         { match: 1, map: "Erangel", day1: "AB", day2: "AC", day3: "BC", day4Map: "Miramar", day4: "AB" },
@@ -713,7 +732,7 @@ const tournament = {
     {
       name: "Last Chance Stage",
       order: 7,
-      status: "upcoming",
+      status: "completed",
       teamCount: 16,
       summary:
         "June 13th - 14th, 2026. 16 teams play 12 matches across 2 matchdays, with the top 2 teams advancing to the Grand Finals.",
@@ -770,6 +789,15 @@ for (const [group, teams] of Object.entries(BMPS_2026_SEMI_FINALS_GROUPS)) {
     });
   });
 }
+
+BMPS_2026_LAST_CHANCE_STAGE_TEAMS.forEach((team, index) => {
+  tournament.participants.push({
+    placement: index + 1,
+    team,
+    phase: "Last Chance Stage",
+    players: BMPS_2026_ROSTERS[normalizeOrganizationName(team)] || [],
+  });
+});
 
 const articles = [
   {

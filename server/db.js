@@ -1,4 +1,4 @@
-import Database from "libsql";
+import Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -9,36 +9,18 @@ const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "data");
 const migrationDir = path.join(__dirname, "db", "migrations");
 const dbPath = path.join(dataDir, "stagecore.sqlite");
-const tursoUrl = String(process.env.TURSO_DATABASE_URL || "").trim();
-const tursoAuthToken = String(process.env.TURSO_AUTH_TOKEN || "").trim();
-const isRemoteLibsql = Boolean(tursoUrl);
-
 fs.mkdirSync(migrationDir, { recursive: true });
-if (!isRemoteLibsql) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+fs.mkdirSync(dataDir, { recursive: true });
 
-export const db = isRemoteLibsql
-  ? new Database(tursoUrl, tursoAuthToken ? { authToken: tursoAuthToken } : {})
-  : new Database(dbPath);
-
-if (!isRemoteLibsql) {
-  db.pragma("journal_mode = WAL");
-}
+export const db = new Database(dbPath);
+db.pragma("journal_mode = WAL");
 
 /**
- * Runs `fn` inside a SQL transaction on local SQLite. Remote libsql (Hrana)
- * does not support BEGIN/COMMIT/ROLLBACK across statements, so statements run
- * directly there (each autocommits). Keeps atomicity locally, reliability on
- * remote.
+ * Runs `fn` inside a SQL transaction on local SQLite.
  */
 export const runInTransaction = (fn) => {
-  if (isRemoteLibsql) {
-    fn();
-    return;
-  }
   const transaction = db.transaction(fn);
-  transaction();
+  return transaction();
 };
 
 const tableDefinitions = [

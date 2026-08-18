@@ -67,3 +67,4 @@ edge-*-profile/
 Crashpad/
 *.dmp
 *.pma
+.aider*

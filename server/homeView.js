@@ -176,7 +176,22 @@ export function buildHomeViewModel(summary, options = {}) {
       includeHidden: true,
     },
   );
-  const championTeam = getTournamentChampionFromStages(lastTournament) || null;
+  const stageBoardChampion = featuredTournamentBoard?.standings?.length > 0 && featuredTournament?.id === lastTournament?.id
+    ? (() => {
+        const sorted = [...featuredTournamentBoard.standings].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+        const first = sorted[0];
+        if (!first) return null;
+        const rawName = first.teamName || first.logoName || "";
+        return {
+          teamKey: rawName.toLowerCase().replace(/\s+/g, ""),
+          rawTeamName: rawName,
+          teamName: rawName,
+          totalPoints: first.points || 0,
+          wins: first.wwcd || 0,
+        };
+      })()
+    : null;
+  const championTeam = stageBoardChampion || getTournamentChampionFromStages(lastTournament) || null;
   const championLogo = championTeam?.rawTeamName
     ? getTeamLogoByName(championTeam.rawTeamName)
     : null;

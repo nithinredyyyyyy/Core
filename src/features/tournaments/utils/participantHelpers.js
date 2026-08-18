@@ -361,9 +361,7 @@ export function isBmps2026SemiFinalsStage(stageName) {
 export function shouldOpenBmps2026GroupsByDefault(stageName) {
   return (
     isBmps2026PromotionStage(stageName) ||
-    String(stageName || "").trim() === "Round 4" ||
-    isBmps2026SurvivalStage(stageName) ||
-    isBmps2026SemiFinalsStage(stageName)
+    String(stageName || "").trim() === "Round 4"
   );
 }
 
@@ -439,6 +437,32 @@ export const BMPS_2026_SEMI_SURVIVAL_RANK_GROUP = {
   7: "B",
   8: "C",
 };
+
+const BMPS_2026_GROUP_DRAW = {
+  "Survival Stage": {
+    A: ["Versatile Esports", "Team AX", "MadKings", "Ares Esport", "Rapid Chaos Esports", "NonX Esports", "HadX Esports", "Likitha Esports"],
+    B: ["True Rippers", "K9 Esports", "Esport Social", "Quantum Sparks", "Santa Esp", "Jaguar Esports", "Rising Esports", "Team Doxy"],
+    C: ["Team Apex Gaming", "Learn from Past", "Godsent Esports", "Team RedXross", "Naqsh Esports", "DC x SCR Esports", "GENxFM Esports", "ThunderGods x Tortuga Gaming"],
+    D: ["Myth Official", "Lastade Esports", "T7 x Orion Esports", "Troy Tamilan Esports", "H4K Esports", "Aura X Esports", "RiotNationZ", "Phoenix Esports"],
+  },
+  "Semi Finals": {
+    A: ["Gods Reign", "Genesis Esports", "iQOO Reckoning Esports", "iQOO Revenant XSpark", "Welt Esports", "Wyld Fangs", "Zero Ark Official", "Versatile Esports"],
+    B: ["4TR Official", "Autobotz Esports", "Higg Boson Esports", "Mysterious4 Esports", "Meta Ninza", "iQOO Team Tamilas", "Team AX", "Rising Esports"],
+    C: ["Nebula Esports", "Windgod Esports", "White Walkers", "Team Apex Gaming", "Myth Official", "True Rippers", "Lastade Esports", "Rapid Chaos Esports"],
+  },
+};
+
+export function getBmps2026GroupDrawEntries(stageName) {
+  const groups = BMPS_2026_GROUP_DRAW[String(stageName || "").trim()] || {};
+  return Object.entries(groups).flatMap(([group, teams]) =>
+    teams.map((team, index) => ({
+      team,
+      placement: index + 1,
+      phase: `${stageName} - Group ${group}`,
+      players: [],
+    })),
+  );
+}
 
 export function getBmps2026FallbackGroupForTeam(teamName, stageName, survivalRankByTeam = new Map()) {
   const teamKey = normalizeOrganizationName(teamName);
