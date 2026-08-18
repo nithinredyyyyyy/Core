@@ -7,7 +7,7 @@ export function isBmps2026Tournament(tournament) {
 }
 
 export function isStageDrawParticipant(entry) {
-  return /^(semi finals|survival stage)\s*-\s*group\b/i.test(
+  return /^(semi finals|survival stage|last chance stage)\s*-\s*group\b/i.test(
     String(entry?.phase || "").trim(),
   );
 }

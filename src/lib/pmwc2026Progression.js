@@ -119,6 +119,7 @@ export function derivePmwc2026ParticipantEntries(
           group_name: undefined,
           phase: destinationStage,
           players: sourceEntry?.players || [],
+          stageEntries: [],
         });
       });
     }

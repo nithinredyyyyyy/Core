@@ -26,7 +26,7 @@ const THEME_AWARE_TEAM_LOGOS = [
     darkSrc: "/images/team-logos/dark-theme/ares-esport-dark.webp",
   },
   {
-    pattern: /^(Aryan x TMG Gaming|Team Aryan)$/i,
+    pattern: /^(Aryan x TMG Gaming|Team Aryan|Team AX)$/i,
     lightSrc: "/images/team-logos/light-theme/aryan-x-tmg-gaming-light.webp",
     darkSrc: "/images/team-logos/dark-theme/aryan-x-tmg-gaming-dark.webp",
   },
@@ -46,7 +46,7 @@ const THEME_AWARE_TEAM_LOGOS = [
     darkSrc: "/images/team-logos/dark-theme/blink-esports-dark.webp",
   },
   {
-    pattern: /^(DCxSCR Esports|DCXSCR Esports|Team DCxSCR)$/i,
+    pattern: /^(DCxSCR Esports|DCXSCR Esports|DC x SCR Esports|Team DCxSCR)$/i,
     lightSrc: "/images/team-logos/light-theme/dcxscr-esports-light.webp",
     darkSrc: "/images/team-logos/dark-theme/dcxscr-esports-dark.webp",
   },
@@ -258,7 +258,7 @@ const THEME_AWARE_TEAM_LOGOS = [
     darkSrc: "/images/team-logos/dark-theme/team-tamilas-dark.webp",
   },
   {
-    pattern: /^Team Versatile$/i,
+    pattern: /^(Team Versatile|Versatile Esports)$/i,
     lightSrc: "/images/team-logos/light-theme/team-versatile-light.webp",
     darkSrc: "/images/team-logos/dark-theme/team-versatile-dark.webp",
   },
@@ -467,7 +467,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/8bit.webp",
   },
   {
-    pattern: /^(Aryan x TMG Gaming|Team Aryan)$/i,
+    pattern: /^(Aryan x TMG Gaming|Team Aryan|Team AX)$/i,
     src: "/images/team-logos/aryan-x-tmg-gaming.webp",
   },
   {
@@ -512,7 +512,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/duksan-esports.webp",
   },
   {
-    pattern: /^(DCxSCR Esports|DCXSCR Esports|Team DCxSCR)$/i,
+    pattern: /^(DCxSCR Esports|DCXSCR Esports|DC x SCR Esports|Team DCxSCR)$/i,
     src: "/images/team-logos/dcxscr-esports.webp",
   },
   {
@@ -738,7 +738,7 @@ const TEAM_LOGOS = [
   },
   { pattern: /^Team Limra$/i, src: "/images/team-logos/team-limra.webp" },
   {
-    pattern: /^Team Versatile$/i,
+    pattern: /^(Team Versatile|Versatile Esports)$/i,
     src: "/images/team-logos/team-versatile.webp",
   },
   {
@@ -855,7 +855,7 @@ const TEAM_LOGOS = [
 const LOW_CONTRAST_TEAM_LOGOS = [
   /^(Esport Social|Esports Social)$/i,
   /^(Quantum Sparks)$/i,
-  /^(DCxSCR Esports|DCXSCR Esports|Team DCxSCR)$/i,
+  /^(DCxSCR Esports|DCXSCR Esports|DC x SCR Esports|Team DCxSCR)$/i,
   /^(Divine|Divine Gaming)$/i,
   /^(Futurise x Empire|Futurise x Empire Originals|Futurise Empire Originals|Futurise Esports Empire Originals|Empire Originals)$/i,
   /^(Godsent Legion|Godsent Legions)$/i,
@@ -878,7 +878,7 @@ const WIDE_TEAM_LOGOS = [
   /^(IQOO Team Tamilas|Team Tamilas)$/i,
   /^(IQOO Reckoning Esports|Reckoning Esports)$/i,
   /^(IQOO Revenant XSpark|Revenant XSpark|Revenant Esports)$/i,
-  /^(DCxSCR Esports|DCXSCR Esports|Team DCxSCR)$/i,
+  /^(DCxSCR Esports|DCXSCR Esports|DC x SCR Esports|Team DCxSCR)$/i,
   /^(Futurise x Empire|Futurise x Empire Originals|Futurise Empire Originals|Futurise Esports Empire Originals|Empire Originals)$/i,
   /^(7Aces|7 Aces|7Aces x TRB|7AcesxTRB|7ACExTRB|7AcesXTRB Esports)$/i,
   /^(T7xOrion Esports|T7xOrion|T7 x Orion Esports)$/i,

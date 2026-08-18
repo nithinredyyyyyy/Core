@@ -47,40 +47,71 @@ export function aggregateTournamentStandings(
   );
 }
 
+function extractStageStandings(stage) {
+  if (!stage) return [];
+  const raw = stage.standings;
+  if (Array.isArray(raw) && raw.length > 0) return raw;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    if (Array.isArray(raw.overall) && raw.overall.length > 0) return raw.overall;
+    const byGroup = raw.by_group;
+    if (byGroup && typeof byGroup === "object") {
+      const all = [];
+      for (const rows of Object.values(byGroup)) {
+        if (Array.isArray(rows)) all.push(...rows);
+      }
+      if (all.length > 0) {
+        return all.toSorted(
+          (a, b) => (a?.rank ?? 999) - (b?.rank ?? 999),
+        );
+      }
+    }
+  }
+  return [];
+}
+
 export function getTournamentChampionFromStages(tournament) {
   const stages = Array.isArray(tournament?.stages) ? tournament.stages : [];
-  const finalsStage =
+
+  const getStageRankings = (stage) =>
+    extractStageStandings(stage).toSorted(
+      (a, b) =>
+        (a?.rank ?? a?.placement ?? 999) -
+        (b?.rank ?? b?.placement ?? 999),
+    );
+
+  let finalsStage =
     stages.find(
       (stage) =>
         (stage?.name === "Grand Finals" || stage?.name === "grand finals") &&
-        Array.isArray(stage?.standings) &&
-        stage.standings.length > 0,
+        extractStageStandings(stage).length > 0,
     ) ||
     stages
       .toReversed()
       .find(
-        (stage) =>
-          Array.isArray(stage?.standings) && stage.standings.length > 0,
+        (stage) => extractStageStandings(stage).length > 0,
       );
 
   if (!finalsStage) return null;
 
-  const championEntry =
-    finalsStage.standings.toSorted(
-      (a, b) => (a?.placement ?? 999) - (b?.placement ?? 999),
-    )[0] || null;
+  const rankings = getStageRankings(finalsStage);
+  const championEntry = rankings[0] || null;
 
   if (!championEntry) return null;
 
-  const rawName = championEntry.fullTeam || championEntry.team || "";
+  const rawName =
+    championEntry.fullTeam ||
+    championEntry.team?.name ||
+    championEntry.team ||
+    "";
   const meta = getOrganizationMeta(rawName);
 
   return {
     teamKey: meta.key,
     rawTeamName: rawName,
     teamName: meta.name,
-    totalPoints: championEntry.points || 0,
-    wins: championEntry.wwcd || 0,
+    totalPoints:
+      championEntry.total_points ?? championEntry.points ?? 0,
+    wins: championEntry.wins ?? championEntry.wwcd ?? 0,
   };
 }
 
