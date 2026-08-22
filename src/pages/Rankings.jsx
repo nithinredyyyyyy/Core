@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import {
@@ -14,15 +14,6 @@ import {
   Activity,
   Flame,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { base44 } from "@/api/base44Client";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import PageLoader from "@/components/shared/PageLoader";
@@ -51,6 +42,29 @@ const INSIGHT_ICONS = {
   amber: Flame,
   blue: Activity,
 };
+
+const LazyPerformanceChart = React.lazy(() => import("@/components/rankings/PerformanceChart"));
+
+const HEADER_COPY = {
+  teams: {
+    title: "Team Rankings",
+    description: "Global power rankings derived from official circuit results.",
+  },
+  players: {
+    title: "Player Rankings",
+    description: "Top performers across the current competitive season.",
+  },
+  organizations: {
+    title: "EWC Club Ranking",
+    description: "Esports World Cup club standings by ccPoints, medals, and prize.",
+  },
+};
+
+const RANKING_TABS = [
+  { id: "teams", label: "Teams", icon: Users },
+  { id: "players", label: "Players", icon: User },
+  { id: "organizations", label: "EWC Club Ranking", icon: Building2 },
+];
 
 function getClubShortCode(name) {
   return CLUB_SHORT_CODES[name] || name.substring(0, 2).toUpperCase();
@@ -110,21 +124,7 @@ function ClubIdentity({ name }) {
 }
 
 function RankingHeader({ activeTab, searchQuery, onSearchChange }) {
-  const headerCopy = {
-    teams: {
-      title: "Team Rankings",
-      description: "Global power rankings derived from official circuit results.",
-    },
-    players: {
-      title: "Player Rankings",
-      description: "Top performers across the current competitive season.",
-    },
-    organizations: {
-      title: "EWC Club Ranking",
-      description: "Esports World Cup club standings by ccPoints, medals, and prize.",
-    },
-  };
-  const copy = headerCopy[activeTab] ?? headerCopy.teams;
+  const copy = HEADER_COPY[activeTab] ?? HEADER_COPY.teams;
 
   return (
     <div className="mb-10 mt-6 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -158,15 +158,9 @@ function RankingHeader({ activeTab, searchQuery, onSearchChange }) {
 }
 
 function RankingTabs({ activeTab, setActiveTab }) {
-  const tabs = [
-    { id: "teams", label: "Teams", icon: Users },
-    { id: "players", label: "Players", icon: User },
-    { id: "organizations", label: "EWC Club Ranking", icon: Building2 },
-  ];
-
   return (
     <div className="mb-8 flex space-x-2 overflow-x-auto pb-2">
-      {tabs.map((tab) => {
+      {RANKING_TABS.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
         return (
@@ -597,39 +591,6 @@ function RankingRules() {
   );
 }
 
-function PerformanceChart({ chartData = [], teamNames = [] }) {
-  const colors = ["var(--brand-sky-royal)", "var(--brand-amber)", "var(--brand-emerald)"];
-
-  return (
-    <div className="mb-12 mt-16 rounded-[32px] border border-border bg-card p-6 shadow-sm md:p-8">
-      <h2 className="mb-2 text-2xl font-black">Performance History</h2>
-      <p className="mb-8 text-muted-foreground">
-        Tracking rating point progression over the last 5 months.
-      </p>
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-            <XAxis dataKey="name" stroke="#888" tick={{ fill: "#888" }} axisLine={false} tickLine={false} />
-            <YAxis stroke="#888" tick={{ fill: "#888" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ backgroundColor: "var(--brand-ink-char)", border: "none", borderRadius: "12px" }} />
-            {teamNames.map((teamName, index) => (
-              <Line
-                key={teamName}
-                type="monotone"
-                dataKey={teamName}
-                stroke={colors[index % colors.length]}
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
 function RecentUpdates({ updates = [] }) {
   return (
     <div className="rounded-[24px] border border-border bg-card p-6 shadow-sm">
@@ -761,7 +722,9 @@ export default function Rankings() {
 
           <div className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="flex flex-col justify-end lg:col-span-2">
-              <PerformanceChart chartData={data.chartData} teamNames={chartTeamNames} />
+              <Suspense fallback={null}>
+                <LazyPerformanceChart chartData={data.chartData} teamNames={chartTeamNames} />
+              </Suspense>
               <RankingRules />
             </div>
             <div className="flex flex-col justify-start gap-6">

@@ -37,6 +37,7 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
   if (!rows.length) return [];
 
   const stageIdByName = new Map(stages.map((stage) => [stage.name, stage.id]));
+  const stageById = new Map(stages.map((stage) => [stage.id, stage]));
   const groupIdByStageAndName = new Map(
     stageGroups.map((group) => [
       `${group.stage_id}::${group.group_name}`,
@@ -49,7 +50,7 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
     const stageId = stageIdByName.get(row.stage);
     if (!stageId) return;
 
-    const stage = stages.find((entry) => entry.id === stageId);
+    const stage = stageById.get(stageId);
     const stageType = String(stage?.stage_type || "").toLowerCase();
     const normalizedGroupName =
       row.group_name && stageType !== "grand_finals"

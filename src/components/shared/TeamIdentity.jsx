@@ -3,7 +3,7 @@ import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import LogoBlock from "@/components/shared/LogoBlock";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function TeamIdentity({
+export default React.memo(function TeamIdentity({
   name,
   className = "font-medium text-foreground",
   compact = false,
@@ -118,4 +118,4 @@ export default function TeamIdentity({
       {!hideText ? <span className={className}>{name}</span> : null}
     </div>
   );
-}
+})
