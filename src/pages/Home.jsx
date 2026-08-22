@@ -7,6 +7,9 @@ import {
   buildTournamentStageLink,
 } from "@/lib/homeContent";
 
+const EMPTY_ARRAY = [];
+const EMPTY_BOARD = { standings: EMPTY_ARRAY, featuredStage: null };
+
 const STACKED_LINKS = [
   {
     title: "Tournaments",
@@ -47,10 +50,7 @@ export default function Home() {
   });
   const featuredTournament = homeView?.featuredTournament || null;
   const featuredSpotlightStage = homeView?.featuredSpotlightStage || null;
-  const featuredTournamentBoard = homeView?.featuredTournamentBoard || {
-    standings: [],
-    featuredStage: null,
-  };
+  const featuredTournamentBoard = homeView?.featuredTournamentBoard || EMPTY_BOARD;
   const boardLink = homeView?.boardTournamentId
     ? `/tournaments?id=${encodeURIComponent(homeView.boardTournamentId)}`
     : "/tournaments";
@@ -92,25 +92,25 @@ export default function Home() {
       featuredCurrentStageLink={featuredCurrentStageLink}
       featuredNews={homeView?.featuredNews || null}
       featuredSpotlightStage={featuredSpotlightStage}
-      featuredStages={homeView?.featuredStages || []}
+      featuredStages={homeView?.featuredStages || EMPTY_ARRAY}
       featuredTournament={featuredTournament}
       featuredTournamentVisual={
         homeView?.featuredTournamentVisual || "/images/bmps-2026.webp"
       }
-      featuredTournamentFacts={homeView?.featuredTournamentFacts || []}
+      featuredTournamentFacts={homeView?.featuredTournamentFacts || EMPTY_ARRAY}
       featuredTournamentLink={featuredTournamentLink}
-      heroMeta={homeView?.heroMeta || []}
-      homeBoard={homeView?.homeBoard || []}
+      heroMeta={homeView?.heroMeta || EMPTY_ARRAY}
+      homeBoard={homeView?.homeBoard || EMPTY_ARRAY}
       boardEyebrow={homeView?.boardEyebrow || "Tournament board"}
       boardHeadline={homeView?.boardHeadline || "Tournament board pending."}
       boardLink={boardLink}
       featuredTournamentBoard={featuredTournamentBoard}
-      tickerItems={homeView?.tickerItems || []}
+      tickerItems={homeView?.tickerItems || EMPTY_ARRAY}
       stackedLinks={STACKED_LINKS}
       buildTournamentStageLink={buildTournamentStageLink}
       HOME_STAGE_STATUS_STYLES={HOME_STAGE_STATUS_STYLES}
       lastTournament={homeView?.lastTournament || null}
-      upcomingMatches={homeView?.upcomingMatches || []}
+      upcomingMatches={homeView?.upcomingMatches || EMPTY_ARRAY}
     />
   );
 }

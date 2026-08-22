@@ -1034,7 +1034,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
 
     return rosterMap;
   }, [dbTransfers, participantEntries, players, teams]);
-  const featuredFacts = [
+  const featuredFacts = useMemo(() => [
     {
       label: "Format",
       value: tournament.game || "BGMI",
@@ -1059,7 +1059,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
       icon: Calendar,
       variant: "dark",
     },
-  ];
+  ], [tournament.game, tournament.prize_pool, tournament.status, participantCount, spotlightStage]);
   const stageDetails = useMemo(() => {
     const calendarByLabel = new Map(
       (tournament.calendar || []).map((item) => [getCleanStageLabel(item.label), item.week])
