@@ -46,9 +46,8 @@ tmp-*.json
 auth
 auth-wal
 *.sql
-topbar-tail.txt
-rankings-check*.png
-stats_snippet.txt
+*.cjs
+!server/scripts/*.cjs
 test-*.mjs
 test-*.cjs
 test-crash.mjs
@@ -58,6 +57,20 @@ extract_stats.cjs
 find_block.cjs
 FILE-STRUCTURE.md
 MVP-PLAN.md
+TODO-CODEX.md
+scratch/
+debug-*.png
+debug-*.json
+--viewport-width
+_server_err.txt
+_server_log.txt
+_server.log
+_srv_err.log
+_srv.log
+backend-*.log
+frontend-*.log
+server-*.log
+preview.png
 
 # Local reference/export project and browser profiles
 default project/
@@ -67,3 +80,4 @@ Crashpad/
 *.dmp
 *.pma
 .aider*
+.artifacts/

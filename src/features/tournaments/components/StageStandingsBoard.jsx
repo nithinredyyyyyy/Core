@@ -559,7 +559,7 @@ function DesktopPending({ shouldHideProjectedStageTeams, stageParticipants, matc
   );
 }
 
-export default function StageStandingsBoard({
+export default React.memo(function StageStandingsBoard({
   stages,
   participantEntries = EMPTY_STAGE_PARTICIPANT_ENTRIES,
   tournamentName,
@@ -1243,4 +1243,4 @@ export default function StageStandingsBoard({
       ) : null}
     </div>
   );
-}
+})
