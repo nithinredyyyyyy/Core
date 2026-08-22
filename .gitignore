@@ -25,7 +25,6 @@ dist-ssr
 *.sqlite-shm
 *.sqlite-wal
 !server/data/stagecore.sqlite
-server/data/stagecore.sqlite
 
 # Editor directories and files
 .vscode/*
