@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -385,13 +385,13 @@ export default function Tournaments() {
     );
   }
 
-  const calendarTournaments = decorateTournamentsWithLiveStatus(
+  const calendarTournaments = useMemo(() => decorateTournamentsWithLiveStatus(
     tournaments,
     matches,
     results,
-  );
+  ), [tournaments, matches, results]);
 
-  const years = Array.from(
+  const years = useMemo(() => Array.from(
     new Set(
       calendarTournaments.flatMap((tournament) => {
         if (!tournament.start_date) return [];
@@ -399,11 +399,11 @@ export default function Tournaments() {
         return Number.isNaN(year) ? [] : [String(year)];
       }),
     ),
-  ).sort((a, b) => Number(b) - Number(a));
+  ).sort((a, b) => Number(b) - Number(a)), [calendarTournaments]);
 
   const activeFilterYear = years.includes(filterYear) ? filterYear : "all";
 
-  const filtered = calendarTournaments
+  const filtered = useMemo(() => calendarTournaments
     .filter((tournament) => {
       const matchesStatus =
         filterStatus === "all" || tournament.status === filterStatus;
@@ -415,7 +415,7 @@ export default function Tournaments() {
 
       return matchesStatus && matchesYear;
     })
-    .sort(compareTournaments);
+    .sort(compareTournaments), [calendarTournaments, filterStatus, activeFilterYear]);
   const featuredTournament = filtered[0] || null;
 
   const selected = calendarTournaments.find(
