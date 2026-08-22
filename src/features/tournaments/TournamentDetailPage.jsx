@@ -760,9 +760,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           matches: calendarMatches,
           matchResults,
           requestedStage: stage.name,
-          participantEntries: isBmps2026Tournament(tournament)
-            ? tournament.participants ?? participantEntries
-            : resolvedParticipantState.participantEntries,
+          participantEntries: resolvedParticipantState.participantEntries,
         })
       );
     }
@@ -784,9 +782,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         matches: calendarMatches,
         matchResults,
         requestedStage: requestedStage || null,
-          participantEntries: isBmps2026Tournament(tournament)
-            ? tournament.participants ?? participantEntries
-            : resolvedParticipantState.participantEntries,
+          participantEntries: resolvedParticipantState.participantEntries,
       }),
     [calendarMatches, matchResults, requestedStage, resolvedParticipantState.participantEntries, teams, tournament]
   );
@@ -1132,11 +1128,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         {hasStageProgression && stageBoardVisible && (
           <StageStandingsBoard
             stages={stageBoardStages}
-            participantEntries={
-              isBmps2026Tournament(tournament)
-                ? tournament.participants ?? participantEntries
-                : resolvedParticipantState.participantEntries
-            }
+            participantEntries={resolvedParticipantState.participantEntries}
             tournamentName={tournament.name}
             tournamentId={tournament.id}
             teams={teams}
