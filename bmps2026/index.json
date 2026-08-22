@@ -1,0 +1,32 @@
+{
+  "tournament": "BMPS 2026",
+  "description": "Battlegrounds Mobile Pro Series 2026",
+  "files": {
+    "format": "format.json",
+    "qualifiers": {
+      "round1": "qualifiers_round1.json",
+      "round2": "qualifiers_round2.json",
+      "round3": "qualifiers_round3.json",
+      "round4": "qualifiers_round4.json"
+    },
+    "survivalStage": "survival_stage.json",
+    "semiFinals": "semi_finals.json",
+    "lastChance": "last_chance.json",
+    "grandFinals": "grand_finals.json"
+  },
+  "dataStructure": {
+    "format": "Tournament format, rules, and points system",
+    "qualifiers": "4 rounds × 4 groups × 16 teams × 6 matches",
+    "survivalStage": "32 teams × 12 matches",
+    "semiFinals": "24 teams × 16 matches (3 groups)",
+    "lastChance": "16 teams × 12 matches",
+    "grandFinals": "16 teams × 18 matches"
+  },
+  "teamCount": {
+    "qualifiers": 64,
+    "survivalStage": 32,
+    "semiFinals": 24,
+    "lastChance": 16,
+    "grandFinals": 16
+  }
+}

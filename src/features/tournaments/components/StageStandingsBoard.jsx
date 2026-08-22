@@ -601,7 +601,7 @@ export default function StageStandingsBoard({
               phase.toLowerCase().startsWith(`${String(stage.name || "").trim().toLowerCase()} - group `)
           )
         );
-        const stageHasMatches = tournamentName === "PUBG Mobile World Cup 2026" && matches.some(
+        const stageHasMatches = (tournamentName === "PUBG Mobile World Cup 2026" || tournamentName === "Battlegrounds Mobile India Pro Series 2026") && matches.some(
           (m) => m.tournament_id === tournamentId && m.stage === stage.name,
         );
         if (!stage.name || !(stage.standings?.length || stage.summary || stage.teamCount || stageHasParticipants || stageHasMatches)) {

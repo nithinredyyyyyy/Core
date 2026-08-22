@@ -1,0 +1,62 @@
+{
+  "tournament": "BMPS 2026",
+  "stages": {
+    "qualifiers": {
+      "dates": "May 6-31, 2026",
+      "teams": 64,
+      "groups": 4,
+      "teamsPerGroup": 16,
+      "matchesPerTeam": 24,
+      "rounds": 4,
+      "seeding": {
+        "groupA": { "grandFinals": "Top 8", "semiFinals": "Bottom 8" },
+        "groupB": { "semiFinals": "Top 8", "survivalStage": "Bottom 8" },
+        "groupC": { "survivalStage": "All 16" },
+        "groupD": { "survivalStage": "Top 8", "eliminated": "Bottom 8" }
+      }
+    },
+    "survivalStage": {
+      "dates": "Jun 2-5, 2026",
+      "teams": 32,
+      "groups": 4,
+      "teamsPerGroup": 8,
+      "matchesPerTeam": 12,
+      "advance": "Top 8 to Semi Finals",
+      "eliminated": "Bottom 24"
+    },
+    "semiFinals": {
+      "dates": "Jun 9-12, 2026",
+      "teams": 24,
+      "groups": 3,
+      "teamsPerGroup": 8,
+      "matchesPerTeam": 16,
+      "advance": "Top 6 to Grand Finals",
+      "lastChance": "7th-22nd (16 teams)",
+      "eliminated": "Bottom 2"
+    },
+    "lastChance": {
+      "dates": "Jun 13-14, 2026",
+      "teams": 16,
+      "matchesPerTeam": 12,
+      "advance": "Top 2 to Grand Finals",
+      "eliminated": "Bottom 14"
+    },
+    "grandFinals": {
+      "dates": "Jun 19-21, 2026",
+      "venue": "Jaipur Convention Center, India",
+      "teams": 16,
+      "matchesPerTeam": 18,
+      "prize": "Top team qualifies for 2026 PMWC"
+    }
+  },
+  "pointsSystem": {
+    "placement": { "1st": 10, "2nd": 6, "3rd": 5, "4th": 4, "5th": 3, "6th": 2, "7th": 1, "8th": 1, "9th-16th": 0 },
+    "elimination": "1 point per elimination"
+  },
+  "tiebreakerRules": [
+    "Total WWCDs",
+    "Total Placement Points",
+    "Total Elimination Points",
+    "Best Placement in most recent match"
+  ]
+}
