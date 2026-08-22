@@ -375,16 +375,6 @@ export default function Tournaments() {
     [rawResults],
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="type-kicker text-muted-foreground">
-          Loading tournaments
-        </p>
-      </div>
-    );
-  }
-
   const calendarTournaments = useMemo(() => decorateTournamentsWithLiveStatus(
     tournaments,
     matches,
@@ -417,6 +407,16 @@ export default function Tournaments() {
     })
     .sort(compareTournaments), [calendarTournaments, filterStatus, activeFilterYear]);
   const featuredTournament = filtered[0] || null;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <p className="type-kicker text-muted-foreground">
+          Loading tournaments
+        </p>
+      </div>
+    );
+  }
 
   const selected = calendarTournaments.find(
     (tournament) => tournament.id === selectedId,
