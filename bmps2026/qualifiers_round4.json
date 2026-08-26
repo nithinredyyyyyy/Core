@@ -34,7 +34,7 @@
     {"rank":13,"team":"Jaguar Esports","total":29,"games":[{"g":1,"p":"6th","k":2},{"g":2,"p":"1st","k":7},{"g":3,"p":"6th","k":0},{"g":4,"p":"4th","k":1},{"g":5,"p":"13th","k":0},{"g":6,"p":"13th","k":1}]},
     {"rank":14,"team":"Myth Official","total":25,"games":[{"g":1,"p":"14th","k":1},{"g":2,"p":"13th","k":5},{"g":3,"p":"5th","k":5},{"g":4,"p":"5th","k":2},{"g":5,"p":"8th","k":4},{"g":6,"p":"16th","k":1}]},
     {"rank":15,"team":"True Rippers","total":24,"games":[{"g":1,"p":"13th","k":8},{"g":2,"p":"7th","k":5},{"g":3,"p":"10th","k":1},{"g":4,"p":"2nd","k":3},{"g":5,"p":"14th","k":0},{"g":6,"p":"10th","k":0}]},
-    {"rank":16,"team":"Naqsh Esports","total":11,"games":[{"g":1,"p":"7th","k":4}]}
+    {"rank":16,"team":"Naqsh Esports","total":11,"games":[{"g":1,"p":"7th","k":4},{"g":2,"p":"16th","k":0},{"g":3,"p":"16th","k":0},{"g":4,"p":"12th","k":4},{"g":5,"p":"12th","k":2},{"g":6,"p":"15th","k":0}]}
   ],
   "groupC": [
     {"rank":1,"team":"Team Versatile","total":70,"games":[{"g":1,"p":"5th","k":2},{"g":2,"p":"12th","k":4},{"g":3,"p":"6th","k":11},{"g":4,"p":"6th","k":16},{"g":5,"p":"3rd","k":8},{"g":6,"p":"1st","k":7}]},
