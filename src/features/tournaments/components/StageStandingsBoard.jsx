@@ -1014,7 +1014,8 @@ export default React.memo(function StageStandingsBoard({
       ])
     );
 
-    const completeRows = groupParticipants.length > 0
+    const hasRealStandingsData = liveGroupStandings.size > 0 || filteredStandings.length > 0;
+    const completeRows = (groupParticipants.length > 0 && !hasRealStandingsData)
       ? groupParticipants.map((entry) => {
         const key = normalizeOrganizationName(entry.team);
         const existing = standingsByTeam.get(key);

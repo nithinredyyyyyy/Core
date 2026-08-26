@@ -391,6 +391,8 @@ export function getStageBoardData({
 
   if (isBmps2026KnockoutStage && Array.isArray(participantEntries)) {
     const stageKey = String(featuredStage || "").trim().toLowerCase();
+    const hasRealResults = [...standingsMap.values()].some((row) => row.matches > 0);
+    if (!hasRealResults) {
     const listedTeams = new Set(
       [...standingsMap.values()].map((row) => normalizeOrganizationName(row.teamName)),
     );
@@ -429,6 +431,7 @@ export function getStageBoardData({
         matchCells: {},
       });
       listedTeams.add(teamKey);
+    }
     }
   }
 

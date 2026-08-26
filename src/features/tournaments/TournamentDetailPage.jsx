@@ -56,7 +56,6 @@ import {
   getChampionDisplayName,
   getChampionLogoOverride,
   getDisplayTeamName,
-  isBmps2026SurvivalStage,
   normalizeTeamName,
 } from "@/features/tournaments/utils/participantHelpers";
 import StageStandingsBoard from "@/features/tournaments/components/StageStandingsBoard";
@@ -802,27 +801,25 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
             ? Array.from(new Map(rawStandings.map((s) => [s.team, s])).values())
             : rawStandings;
           const normalizedStandings = Array.isArray(stage.standings) ? stage.standings : [];
-          const derivedStandings = derived?.standings?.map((entry) => ({
-            placement: entry.rank,
-            team: entry.teamName,
-            fullTeam: entry.teamName,
-            grp: entry.group && entry.group !== "-" ? entry.group : undefined,
-            matches: entry.matches,
-            wwcd: entry.wwcd,
-            pos: entry.placementPoints,
-            elimins: entry.elims,
-            points: entry.points,
-          })) || [];
+          const derivedStandings = derived?.standings
+            ?.filter((entry) => entry.teamId != null)
+            ?.map((entry) => ({
+              placement: entry.rank,
+              team: entry.teamName,
+              fullTeam: entry.teamName,
+              grp: entry.group && entry.group !== "-" ? entry.group : undefined,
+              matches: entry.matches,
+              wwcd: entry.wwcd,
+              pos: entry.placementPoints,
+              elimins: entry.elims,
+              points: entry.points,
+            })) || [];
           const preferredStandings =
             deduplicatedRawStandings.length > normalizedStandings.length
               ? deduplicatedRawStandings
               : normalizedStandings;
-          const shouldPreferDerivedStandings =
-            tournament.name === "Battlegrounds Mobile India Pro Series 2026" &&
-            isBmps2026SurvivalStage(stageName) &&
-            derivedStandings.length > 0;
           const finalStandings =
-            shouldPreferDerivedStandings || derivedStandings.length > preferredStandings.length
+            derivedStandings.length > preferredStandings.length
               ? derivedStandings
               : preferredStandings;
 
@@ -860,7 +857,9 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
       return mergeDisplayStages(rawTournamentStages.map((stage) => {
         const stageName = getCleanStageLabel(stage.name);
         const derived = derivedStageBoards.get(stage.name) || derivedStageBoards.get(stageName);
-        const derivedStandings = derived?.standings?.map((entry) => ({
+        const derivedStandings = derived?.standings
+          ?.filter((entry) => entry.teamId != null)
+          ?.map((entry) => ({
           placement: entry.rank,
           team: entry.teamName,
           fullTeam: entry.teamName,
