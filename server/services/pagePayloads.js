@@ -67,6 +67,8 @@ export function getHomeSummaryPayload() {
 function getFeaturedTournament(tournaments) {
   return (
     tournaments.find((entry) => entry.status === "ongoing") ||
+    tournaments.find((entry) => entry.status === "completed") ||
+    tournaments.find((entry) => entry.status === "upcoming" && entry.start_date) ||
     tournaments[0] ||
     null
   );
