@@ -7,6 +7,7 @@ import PageNotFound from "./lib/PageNotFound";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { SearchProvider } from "@/lib/SearchContext";
 import AppLayout from "./components/layout/AppLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import PageLoader from "@/components/shared/PageLoader";
 import { ShieldAlert } from "lucide-react";
 import { useAdminAccess } from "@/lib/adminAccess";
@@ -16,9 +17,9 @@ const Home = lazy(() => import("./pages/Home"));
 const News = lazy(() => import("./pages/News"));
 const NewsArticle = lazy(() => import("./pages/NewsArticle"));
 const Tournaments = lazy(() => import("./pages/Tournaments"));
-const Teams = lazy(() => import("./pages/TEAMS"));
+const Teams = lazy(() => import("./pages/Teams"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
-const Leaderboard = lazy(() => import("./pages/LEADERBOARD"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Rankings = lazy(() => import("./pages/Rankings"));
 const SignIn = lazy(() => import("./pages/SignIn"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -72,33 +73,37 @@ function AdminAccessGate() {
   }
 
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Admin />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>
+        <Admin />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
 const RoutedApp = () => {
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/app" element={<Navigate to="/" replace />} />
-          <Route path="/tournaments" element={<Tournaments />} />
-          <Route path="/teams" element={<Teams />} />
-          <Route path="/players/:playerIgn" element={<PlayerProfile />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/news/:articleId" element={<NewsArticle />} />
-          <Route path="/admin" element={<AdminAccessGate />} />
-        </Route>
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/landing" element={<ErrorBoundary><LandingPage /></ErrorBoundary>} />
+          <Route path="/signin" element={<ErrorBoundary><SignIn /></ErrorBoundary>} />
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+            <Route path="/app" element={<Navigate to="/" replace />} />
+            <Route path="/tournaments" element={<ErrorBoundary><Tournaments /></ErrorBoundary>} />
+            <Route path="/teams" element={<ErrorBoundary><Teams /></ErrorBoundary>} />
+            <Route path="/players/:playerIgn" element={<ErrorBoundary><PlayerProfile /></ErrorBoundary>} />
+            <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
+            <Route path="/rankings" element={<ErrorBoundary><Rankings /></ErrorBoundary>} />
+            <Route path="/news" element={<ErrorBoundary><News /></ErrorBoundary>} />
+            <Route path="/news/:articleId" element={<ErrorBoundary><NewsArticle /></ErrorBoundary>} />
+            <Route path="/admin" element={<AdminAccessGate />} />
+          </Route>
+          <Route path="*" element={<ErrorBoundary><PageNotFound /></ErrorBoundary>} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 

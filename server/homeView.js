@@ -2,15 +2,15 @@ import { format } from "date-fns";
 import {
   getTeamLogoByName,
   getTeamLogoSurfaceTone,
-} from "../src/lib/teamLogos.js";
-import { filterPublishedMatchResults } from "../src/lib/matchResultPublication.js";
-import { resolveTournamentLiveState } from "../src/lib/tournamentLiveState.js";
-import { isCurrentCircuitArticle } from "../src/lib/currentCircuit.js";
+} from "./shared/teamLogos.js";
+import { filterPublishedMatchResults } from "./shared/matchResultPublication.js";
+import { resolveTournamentLiveState } from "./shared/tournamentLiveState.js";
+import { isCurrentCircuitArticle } from "./shared/currentCircuit.js";
 import {
   aggregateTournamentStandings,
   getTournamentChampionFromStages,
-} from "../src/lib/homeContent.js";
-import { getTournamentLogo } from "../src/lib/tournamentBranding.js";
+} from "./shared/homeContent.js";
+import { getTournamentLogo } from "./shared/tournamentBranding.js";
 
 function formatDateLabel(value, pattern) {
   if (!value) return "";

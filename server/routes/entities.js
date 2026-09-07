@@ -49,6 +49,13 @@ entitiesRouter.get("/entities/:entity", (req, res) => {
     }
   }
 
+  if (entityName === "NewsArticle") {
+    const auth = resolveRequestAuth(req);
+    if (!auth.isAuthenticated || auth.user?.role !== "admin") {
+      query = { ...query, publication_status: "published" };
+    }
+  }
+
   try {
     const records = applyListQuery(entityName, config, query, req.query);
     return res.json(records);

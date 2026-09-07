@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, entityConfigs } from "../db.js";
-import { getTeamLogoByName } from "../../src/lib/teamLogos.js";
-import { normalizeOrganizationName } from "../../src/lib/organizationIdentity.js";
+import { getTeamLogoByName } from "../shared/teamLogos.js";
+import { normalizeOrganizationName } from "../shared/organizationIdentity.js";
 import { NEWS_SOURCES } from "../newsSources.js";
 import {
   backfillImportedNewsMetadata,
@@ -16,6 +16,7 @@ import {
 } from "../services/settings.js";
 import { getNormalizedTournament } from "../services/tournaments.js";
 import { clearPagePayloadCache } from "../services/pageCache.js";
+import { clearSearchCache } from "../services/search.js";
 
 export const adminRouter = Router();
 
@@ -200,6 +201,7 @@ adminRouter.post("/admin/cache/clear", (req, res) => {
   }
   try {
     clearPagePayloadCache();
+    clearSearchCache();
     return res.json({ success: true, message: "Server page cache cleared." });
   } catch (error) {
     return res.status(500).json({ error: error.message || "Failed to clear cache" });

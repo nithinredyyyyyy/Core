@@ -9,6 +9,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { getNewsCategoryLabel } from "@/lib/newsCategories";
 import { decodeNewsText, getEditorialNewsSummary } from "@/lib/newsEditorial";
+import { formatDate } from "@/lib/dateUtils";
 
 const FILTERS = ["all", "tournament", "announcement", "patch_update", "roster_change", "general"];
 
@@ -28,17 +29,6 @@ function NewsHeader() {
       </div>
     </div>
   );
-}
-
-function formatDate(value) {
-  if (!value) return "Date pending";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date pending";
-  return date.toLocaleDateString("en-IN", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function NewsCard({ article, tournaments }) {

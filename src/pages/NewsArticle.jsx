@@ -14,19 +14,7 @@ import {
   getEditorialNewsBlocks,
   getEditorialNewsSummary,
 } from "@/lib/newsEditorial";
-
-// removed DetailShell helper
-
-function formatDate(value) {
-  if (!value) return "Date pending";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date pending";
-  return date.toLocaleDateString("en-IN", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/dateUtils";
 
 function ArticleHeader({ article, tags, tournaments }) {
   return (

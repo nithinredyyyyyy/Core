@@ -17,7 +17,7 @@ export function sendCachedPagePayload(res, cacheKey, buildPayload) {
   if (cached && now - cached.timestamp < STALE_CACHE_TTL_MS) {
     const freshPayload = buildPayload();
     pagePayloadCache.set(cacheKey, { payload: freshPayload, timestamp: now });
-    return res.json(cached.payload);
+    return res.json(freshPayload);
   }
 
   const payload = buildPayload();

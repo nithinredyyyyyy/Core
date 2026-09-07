@@ -1,4 +1,4 @@
-import { GLOBAL_LEADERBOARD, PLAYER_RANKINGS } from "../src/lib/globalLeaderboard.js";
+import { GLOBAL_LEADERBOARD, PLAYER_RANKINGS } from "./shared/globalLeaderboard.js";
 
 const EWC_CLUB_RANKINGS = [
   { rank: 1, clubName: "AG.AL International", ccPoints: 5300, goldMedals: 2, silverMedals: 3, bronzeMedals: 1, place: "1st", prize: "$7,000,000", trend: 0 },
@@ -57,24 +57,27 @@ function buildPlayerRankings() {
   }));
 }
 
+function buildChartData(teamRankings) {
+  const topTeams = teamRankings.slice(0, 3);
+  const seasons = ["BGIS '24", "BMPS '24", "BGIS '25", "BMPS '25", "BMSD '25", "BGIS '26", "BMPS '26"];
+  const keys = ["pts24BGIS", "pts24BMPS", "pts25BGIS", "pts25BMPS", "pts25BMSD", "pts26BGIS", "pts26BMPS"];
+  return seasons.map((name, seasonIndex) => {
+    const row = { name };
+    let cumulative = {};
+    for (const team of topTeams) {
+      if (!cumulative[team.teamName]) cumulative[team.teamName] = 0;
+      cumulative[team.teamName] += team[keys[seasonIndex]] || 0;
+      row[team.teamName] = cumulative[team.teamName];
+    }
+    return row;
+  });
+}
+
 function buildOrganizationRankings() {
   return EWC_CLUB_RANKINGS.map((entry, index) => ({
     ...entry,
     id: `org-${index + 1}`,
   }));
-}
-
-function buildChartData(teamRankings) {
-  const topTeams = teamRankings.slice(0, 3);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May"];
-  return months.map((name, monthIndex) => {
-    const row = { name };
-    for (const team of topTeams) {
-      const progress = (monthIndex + 1) / months.length;
-      row[team.teamName] = Math.round(team.rating * (0.65 + progress * 0.35));
-    }
-    return row;
-  });
 }
 
 function seasonPoints(entry) {
@@ -118,7 +121,7 @@ function buildRecentUpdates(teamRankings) {
     id: index + 1,
     text: `${entry.teamName} holds #${entry.rank} with ${entry.rating} points`,
     type: index % 3 === 0 ? "up" : index % 3 === 1 ? "down" : "neutral",
-    time: `${index + 1}h ago`,
+    time: "Current",
   }));
 }
 

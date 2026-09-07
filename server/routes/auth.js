@@ -51,9 +51,12 @@ authRouter.post("/auth/google", async (req, res) => {
     }
 
     const googleProfile = await verifyResponse.json();
+    const now = Math.floor(Date.now() / 1000);
     if (
       String(googleProfile?.aud || "").trim() !== GOOGLE_CLIENT_ID ||
-      String(googleProfile?.email_verified || "").toLowerCase() !== "true"
+      String(googleProfile?.email_verified || "").toLowerCase() !== "true" ||
+      String(googleProfile?.iss || "").trim() !== "https://accounts.google.com" ||
+      (googleProfile.exp && Number(googleProfile.exp) < now)
     ) {
       return res.status(401).json({
         error: "Google credential could not be verified",

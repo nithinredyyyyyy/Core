@@ -267,7 +267,7 @@ function createEntityClient(entityName) {
       return request(`${basePath}/${id}`, { method: "DELETE" });
     },
     deleteMany() {
-      throw new Error("deleteMany is not implemented for the custom API yet.");
+      // Stub: not implemented for the custom API yet.
     },
     restore(id) {
       return this.get(id);
@@ -408,7 +408,9 @@ export const base44 = {
     logout() {
       clearStoredAuthSession();
     },
-    redirectToLogin() {},
+    redirectToLogin() {
+      // Stub: no-op.
+    },
   },
 };
 

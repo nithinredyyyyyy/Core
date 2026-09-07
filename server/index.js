@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
@@ -27,20 +28,41 @@ const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
 const indexHtmlPath = path.join(distDir, "index.html");
 
+const isProduction = process.env.NODE_ENV === "production";
+app.set("trust proxy", isProduction ? 1 : false);
+
+app.use(helmet({
+  contentSecurityPolicy: isProduction ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
+      frameSrc: ["https://accounts.google.com"],
+    },
+  } : false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+
 const CONFIGURED_CORS_ORIGINS = [
   ...splitTrimmedValues(process.env.FRONTEND_ORIGIN || ""),
   ...splitTrimmedValues(process.env.CORS_ORIGIN || ""),
 ];
 const ALLOWED_CORS_ORIGINS = new Set([
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://localhost:5173",
-  "https://127.0.0.1:5173",
-  "http://localhost:4000",
-  "http://127.0.0.1:4000",
-  "https://localhost:4000",
-  "https://127.0.0.1:4000",
   ...CONFIGURED_CORS_ORIGINS,
+  ...(!isProduction ? [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://localhost:5173",
+    "https://127.0.0.1:5173",
+    "http://localhost:4000",
+    "http://127.0.0.1:4000",
+    "https://localhost:4000",
+    "https://127.0.0.1:4000",
+  ] : []),
 ]);
 
 if (process.env.CORE_BACKFILL_NEWS_ON_STARTUP === "1") {
@@ -56,13 +78,6 @@ app.use((req, res, next) => {
       if (ALLOWED_CORS_ORIGINS.has(origin)) {
         return callback(null, true);
       }
-      try {
-        if (new URL(origin).host === req.headers.host) {
-          return callback(null, true);
-        }
-      } catch {
-        // fall through to reject
-      }
       return callback(new Error(`CORS origin not allowed: ${origin}`));
     },
   })(req, res, next);
@@ -77,12 +92,20 @@ const searchLimiter = rateLimit({
   message: { error: "Too many search requests, please try again later" },
 });
 
-const newsImportLimiter = rateLimit({
-  windowMs: 300_000,
-  max: 10,
+const authLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many import requests, please try again later" },
+  message: { error: "Too many auth requests, please try again later" },
+});
+
+const adminLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many admin requests, please try again later" },
 });
 
 const entityBulkLimiter = rateLimit({
@@ -94,13 +117,13 @@ const entityBulkLimiter = rateLimit({
 });
 
 app.use("/api", healthRouter);
-app.use("/api", authRouter);
+app.use("/api", authLimiter, authRouter);
 app.use("/api", homeRouter);
 app.use("/api", newsRouter);
 app.use("/api", searchLimiter, searchRouter);
 app.use("/api", siteRouter);
 app.use("/api", tournamentsRouter);
-app.use("/api", adminRouter);
+app.use("/api", adminLimiter, adminRouter);
 app.use("/api", entityBulkLimiter, entitiesRouter);
 app.use("/api/pages", pagesRouter);
 
@@ -133,7 +156,6 @@ app.use((req, res, next) => {
 });
 
 app.use((error, _req, res, _next) => {
-  console.error(error);
   if (error instanceof z.ZodError) {
     return res.status(400).json({
       error: "Invalid payload",
@@ -149,11 +171,6 @@ const io = new Server(httpServer, {
     origin(origin, callback) {
       if (!origin) return callback(null, true);
       if (ALLOWED_CORS_ORIGINS.has(origin)) return callback(null, true);
-      try {
-        if (new URL(origin).host === `localhost:${PORT}` || new URL(origin).host === `127.0.0.1:${PORT}`) {
-          return callback(null, true);
-        }
-      } catch {}
       return callback(new Error("Socket.IO CORS origin not allowed"));
     },
     methods: ["GET", "POST"],
@@ -161,14 +178,13 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-  console.log("Client connected via socket:", socket.id);
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
+  socket.on("disconnect", () => {});
 });
 
 app.set("io", io);
 
-httpServer.listen(PORT, () => {
-  console.log(`StageCore API running at http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  httpServer.listen(PORT, () => {});
+}
+
+export { app, httpServer };

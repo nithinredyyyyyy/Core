@@ -29,32 +29,35 @@ const STATUS_BADGE_CLASSES = {
     "border-zinc-500/20 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300",
 };
 
+function safeDateMs(value) {
+  if (!value || value === "0" || value === "null" || value === "undefined") return 0;
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
 function getTournamentSortValue(tournament) {
   if (tournament.status === "completed") {
-    return new Date(
+    return safeDateMs(
       tournament.end_date ||
         tournament.start_date ||
         tournament.updated_date ||
-        tournament.created_date ||
-        0,
-    ).getTime();
+        tournament.created_date,
+    );
   }
 
   if (tournament.status === "ongoing") {
-    return new Date(
+    return safeDateMs(
       tournament.start_date ||
         tournament.updated_date ||
-        tournament.created_date ||
-        0,
-    ).getTime();
+        tournament.created_date,
+    );
   }
 
-  return new Date(
+  return safeDateMs(
     tournament.start_date ||
       tournament.updated_date ||
-      tournament.created_date ||
-      0,
-  ).getTime();
+      tournament.created_date,
+  );
 }
 
 function compareTournaments(a, b) {

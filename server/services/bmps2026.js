@@ -1,4 +1,4 @@
-import { normalizeOrganizationName } from "../../src/lib/organizationIdentity.js";
+import { normalizeOrganizationName } from "../shared/organizationIdentity.js";
 
 function isBmps2026PromotionStage(stageName) {
   return /^round\s+[123]$/i.test(String(stageName || "").trim());

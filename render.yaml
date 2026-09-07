@@ -8,6 +8,12 @@ services:
       - key: NODE_ENV
         value: production
       - key: TURSO_DATABASE_URL
-        value: libsql://stagecore-nithinredyyyyyy.aws-ap-south-1.turso.io
+        sync: false
       - key: TURSO_AUTH_TOKEN
-        value: ROTATE_ME_ON_TURSO_DASHBOARD
+        sync: false
+      - key: CORE_AUTH_SESSION_SECRET
+        generateValue: true
+      - key: CORE_ADMIN_EMAILS
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false

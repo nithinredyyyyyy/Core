@@ -1,5 +1,5 @@
 import { db, entityConfigs, normalizeRecord } from "./db.js";
-import { getOfficialParticipantCount } from "../src/lib/tournamentParticipants.js";
+import { getOfficialParticipantCount } from "./shared/tournamentParticipants.js";
 
 function normalizeWhitespace(value) {
   return String(value || "")

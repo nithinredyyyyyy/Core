@@ -1,22 +1,36 @@
-import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { entityConfigs } from "../db.js";
 import { splitTrimmedValues } from "./schemas.js";
+import { logger } from "./logger.js";
 
 const ADMIN_WRITE_ENTITIES = new Set(Object.keys(entityConfigs));
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const AUTH_SESSION_SECRET = String(
-  process.env.CORE_AUTH_SESSION_SECRET || randomUUID(),
+  process.env.CORE_AUTH_SESSION_SECRET || "",
 );
+if (isProduction && !AUTH_SESSION_SECRET) {
+  logger.error("CORE_AUTH_SESSION_SECRET is not set. Server cannot start in production without it.");
+  process.exit(1);
+}
+if (!AUTH_SESSION_SECRET) {
+  logger.warn("CORE_AUTH_SESSION_SECRET is not set. Using random secret — sessions will not persist across restarts.");
+}
 
 export const GOOGLE_CLIENT_ID = String(
-  process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "",
+  process.env.GOOGLE_CLIENT_ID || "",
 ).trim();
+if (isProduction && !GOOGLE_CLIENT_ID) {
+  logger.warn("GOOGLE_CLIENT_ID is not set. Google sign-in will be disabled.");
+}
 
 const ADMIN_EMAILS = new Set(
-  splitTrimmedValues(
-    process.env.CORE_ADMIN_EMAILS || "sathkrishna3@gmail.com",
-  ).map((value) => value.toLowerCase()),
+  splitTrimmedValues(process.env.CORE_ADMIN_EMAILS || "")
+    .map((value) => value.toLowerCase()),
 );
+
+const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 function encodeTokenSegment(value) {
   return Buffer.from(String(value), "utf8").toString("base64url");
@@ -39,7 +53,7 @@ export function createAuthSession(user) {
     fullName: String(user?.full_name || user?.displayName || "").trim(),
     role: String(user?.role || "member").trim() || "member",
     authMethod: String(user?.auth_method || "custom").trim() || "custom",
-    issuedAt: new Date().toISOString(),
+    issuedAt: Date.now(),
   };
   const encodedPayload = encodeTokenSegment(JSON.stringify(payload));
   const signature = signAuthSessionPayload(encodedPayload);
@@ -78,6 +92,10 @@ function resolveAppAuthSession(req) {
   try {
     const payload = JSON.parse(decodeTokenSegment(encodedPayload));
     if (!payload?.userId) {
+      return null;
+    }
+
+    if (payload.issuedAt && Date.now() - payload.issuedAt > TOKEN_EXPIRY_MS) {
       return null;
     }
 

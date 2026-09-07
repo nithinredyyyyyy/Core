@@ -1,6 +1,13 @@
 import { db, entityConfigs, normalizeRecord } from "../db.js";
 import { normalizeTournamentPayload } from "./tournaments.js";
 
+const searchCache = new Map();
+const SEARCH_CACHE_TTL = 30_000;
+
+export function clearSearchCache() {
+  searchCache.clear();
+}
+
 function normalizeSearchValue(value) {
   return String(value || "")
     .toLowerCase()
@@ -82,38 +89,45 @@ export function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     .trim();
   if (query.length < 2) return [];
 
+  const cacheKey = `${normalizeSearchValue(query)}:${rawLimit}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL) {
+    return cached.result;
+  }
+
   const limit = Number.isFinite(Number(rawLimit))
     ? Math.min(Math.max(Number(rawLimit), 1), 20)
     : 10;
   const compactQuery = normalizeSearchValue(query);
   const shortCodeQuery = isShortCodeQuery(query);
+
   const tournaments = db
-    .prepare("SELECT * FROM tournaments")
+    .prepare("SELECT * FROM tournaments ORDER BY created_date DESC LIMIT 200")
     .all()
     .map(normalizeTournamentPayload);
   const teams = db
-    .prepare("SELECT * FROM teams")
+    .prepare("SELECT * FROM teams ORDER BY name ASC LIMIT 500")
     .all()
     .map((row) => normalizeRecord(entityConfigs.Team, row));
   const teamAliases = db
-    .prepare("SELECT * FROM team_aliases")
+    .prepare("SELECT * FROM team_aliases LIMIT 1000")
     .all()
     .map((row) => normalizeRecord(entityConfigs.TeamAlias, row));
   const players = db
-    .prepare("SELECT * FROM players")
+    .prepare("SELECT * FROM players ORDER BY ign ASC LIMIT 500")
     .all()
     .map((row) => normalizeRecord(entityConfigs.Player, row));
   const playerAliases = db
-    .prepare("SELECT * FROM player_aliases")
+    .prepare("SELECT * FROM player_aliases LIMIT 1000")
     .all()
     .map((row) => normalizeRecord(entityConfigs.PlayerAlias, row));
   const matches = db
-    .prepare("SELECT * FROM matches")
+    .prepare("SELECT * FROM matches ORDER BY scheduled_time DESC LIMIT 200")
     .all()
     .map((row) => normalizeRecord(entityConfigs.Match, row));
   const news = db
     .prepare(
-      "SELECT * FROM news_articles WHERE publication_status = 'published'",
+      "SELECT * FROM news_articles WHERE publication_status = 'published' ORDER BY created_date DESC LIMIT 100",
     )
     .all()
     .map((row) => normalizeRecord(entityConfigs.NewsArticle, row));
@@ -268,22 +282,25 @@ export function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     });
   });
 
-  return results
-    .filter((result) => result.label && result.path)
+  const finalResults = results
+    .filter((r) => r.label && r.path)
     .sort(
       (left, right) =>
         right.score - left.score || left.label.localeCompare(right.label),
     )
-    .filter((result, index, list) => {
+    .filter((r, index, list) => {
       const duplicateIndex = list.findIndex(
         (item) =>
-          item.type === result.type &&
-          item.path === result.path &&
+          item.type === r.type &&
+          item.path === r.path &&
           normalizeSearchValue(item.label) ===
-            normalizeSearchValue(result.label),
+            normalizeSearchValue(r.label),
       );
       return duplicateIndex === index;
     })
     .slice(0, limit)
-    .map(({ score, ...result }) => result);
+    .map(({ score, ...rest }) => rest);
+
+  searchCache.set(cacheKey, { result: finalResults, timestamp: Date.now() });
+  return finalResults;
 }

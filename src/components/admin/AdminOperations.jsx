@@ -88,9 +88,7 @@ export default function AdminOperations({ onSelectTab }) {
     setCacheClearing(true);
     setCacheMsg("");
     try {
-      const AUTH_TOKEN_KEY = "stagecore_auth_token";
-      const stored = localStorage.getItem(AUTH_TOKEN_KEY);
-      const authSession = (() => { try { return JSON.parse(stored || "{}"); } catch { return {}; } })();
+      const authSession = base44.auth.getStoredSession();
       const res = await fetch("/api/admin/cache/clear", {
         method: "POST",
         headers: {

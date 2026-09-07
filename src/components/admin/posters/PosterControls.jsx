@@ -372,7 +372,8 @@ export default function PosterControls({
                 <label className="text-[10px] font-semibold text-muted-foreground">Standings JSON (paste rows)</label>
                 <textarea
                   value={customConfig?._standingsJson || ""}
-                  onChange={(e) => {
+                  onChange={(e) => onCustomConfigChange({ ...customConfig, _standingsJson: e.target.value })}
+                  onBlur={(e) => {
                     let rows = [];
                     try { rows = JSON.parse(e.target.value); } catch {}
                     onCustomConfigChange({ ...customConfig, _standingsJson: e.target.value, standingsRows: rows });

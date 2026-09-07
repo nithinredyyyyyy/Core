@@ -6,5 +6,7 @@ tmp-snapshot-check
 *.log
 .env
 .env.*
+server/data/*.sqlite
 server/data/*.sqlite-shm
 server/data/*.sqlite-wal
+server/data/

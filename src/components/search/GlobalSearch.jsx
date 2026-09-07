@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   Newspaper,
   Search,
@@ -27,6 +27,7 @@ const SEARCH_SUGGESTIONS = [
 
 export default function GlobalSearch({ open, onClose }) {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -38,6 +39,13 @@ export default function GlobalSearch({ open, onClose }) {
   }, [open]);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
+
+  useEffect(() => {
     const handler = (event) => {
       if (event.key === "Escape") onClose();
     };
@@ -45,7 +53,7 @@ export default function GlobalSearch({ open, onClose }) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const q = query.toLowerCase().trim();
+  const q = debouncedQuery.toLowerCase().trim();
 
   const { data: rawResults = [] } = useQuery({
     queryKey: ["global-search", q],

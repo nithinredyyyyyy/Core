@@ -20,7 +20,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 const AdminTournaments = lazy(() => import("../components/admin/AdminTournaments"));
 const AdminTeams = lazy(() => import("../components/admin/AdminTeams"));
 const AdminMatches = lazy(() => import("../components/admin/AdminMatches"));
-const AdminResults = lazy(() => import("../components/admin/ADMINRESULTS"));
+const AdminResults = lazy(() => import("../components/admin/AdminResults"));
 const AdminNews = lazy(() => import("../components/admin/AdminNews"));
 const AdminTransfers = lazy(() => import("../components/admin/AdminTransfers"));
 const AdminInspector = lazy(() => import("../components/admin/AdminInspector"));
@@ -72,11 +72,7 @@ export default function Admin() {
   const { data: overview = null, isError: overviewError } = useQuery({
     queryKey: ["admin-overview"],
     queryFn: async () => {
-      const AUTH_TOKEN_KEY = "stagecore_auth_token";
-      const stored = localStorage.getItem(AUTH_TOKEN_KEY);
-      const authSession = (() => {
-        try { return JSON.parse(stored || "{}"); } catch { return {}; }
-      })();
+      const authSession = base44.auth.getStoredSession();
       const response = await fetch("/api/admin/overview", {
         headers: {
           "Content-Type": "application/json",
