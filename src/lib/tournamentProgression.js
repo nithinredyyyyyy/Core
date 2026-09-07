@@ -1,6 +1,6 @@
 import { isBmps2026PromotionStage, buildParticipantEntries, buildStageOptions, resolveBmps2026ParticipantState } from "./bmps2026Progression.js";
 export { isBmps2026PromotionStage, buildParticipantEntries, buildStageOptions };
-import { resolvePmwc2026ParticipantState } from "./pmwc2026Progression.js";
+import { resolvePmwc2026ParticipantState, isPmwcTournament } from "./pmwc2026Progression.js";
 import { getStageBoardData } from "./stageBoard.js";
 
 export function resolveTournamentParticipantState({
@@ -10,6 +10,7 @@ export function resolveTournamentParticipantState({
   matchResults = [],
   participantEntries = null,
   stageNames = null,
+  stageStandings = null,
 }) {
   if (!tournament) {
     return {
@@ -26,10 +27,11 @@ export function resolveTournamentParticipantState({
       matchResults,
       participantEntries,
       stageNames,
+      stageStandings,
     });
   }
 
-  if (tournament.name === "PUBG Mobile World Cup 2026") {
+  if (isPmwcTournament(tournament)) {
     return resolvePmwc2026ParticipantState({
       tournament,
       teams,
@@ -37,6 +39,7 @@ export function resolveTournamentParticipantState({
       matchResults,
       participantEntries,
       stageNames,
+      stageStandings,
     });
   }
 
@@ -59,6 +62,7 @@ export function resolveTournamentParticipantState({
       matchResults,
       requestedStage: stageName,
       participantEntries: baseEntries,
+      stageStandings,
     }).standings,
   }));
 

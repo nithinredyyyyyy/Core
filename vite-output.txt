@@ -1,0 +1,67 @@
+[2m5:08:04 pm[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\surak\core\src\components\admin\AdminStagePosters.jsx: Unexpected token, expected "," (1287:0)
+
+[0m [90m 1285 |[31m
+ [90m 1286 |[31m [90m/* ===== CONTROLS ===== */[31m
+[31m[1m>[22m[31m[90m 1287 |[31m [36mfunction[31m [33mPosterControls[31m({
+ [90m      |[31m [31m[1m^[22m[31m
+ [90m 1288 |[31m   activeOption[33m,[31m posterOptions[33m,[31m onSelectOption[33m,[31m
+ [90m 1289 |[31m   posterMode[33m,[31m onPosterModeChange[33m,[31m
+ [90m 1290 |[31m   posterTeams[33m,[31m standingsRows[33m,[31m onDownload[33m,[31m isDownloading[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/surak/core/src/components/admin/AdminStagePosters.jsx[39m:1287:0
+[33m  1285|  
+  1286|  /* ===== CONTROLS ===== */
+  1287|  function PosterControls({
+     |  ^
+  1288|    activeOption, posterOptions, onSelectOption,
+  1289|    posterMode, onPosterModeChange,[39m
+      at constructor (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:6616:19)
+      at JSXParserMixin.unexpected (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:6636:16)
+      at JSXParserMixin.expect (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:6916:12)
+      at JSXParserMixin.parseCallExpressionArguments (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11260:14)
+      at JSXParserMixin.parseCoverCallAndAsyncArrowHead (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11203:29)
+      at JSXParserMixin.parseSubscript (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11137:19)
+      at JSXParserMixin.parseSubscripts (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11111:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11102:17)
+      at JSXParserMixin.parseUpdate (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11083:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11063:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10916:61)
+      at JSXParserMixin.parseExprOps (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10921:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10898:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10848:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10801:23)
+      at C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10797:39
+      at JSXParserMixin.allowInAnd (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:12443:12)
+      at JSXParserMixin.parseExpression (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10797:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:4644:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:4723:36)
+      at JSXParserMixin.jsxParseElement (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:4761:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:4771:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11098:23)
+      at JSXParserMixin.parseUpdate (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11083:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11063:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10916:61)
+      at JSXParserMixin.parseExprOps (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10921:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10898:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10848:21)
+      at C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10817:39
+      at JSXParserMixin.allowInAnd (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:12443:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10817:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:12510:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11692:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11348:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:4776:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11098:23)
+      at JSXParserMixin.parseUpdate (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11083:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:11063:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10916:61)
+      at JSXParserMixin.parseExprOps (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10921:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10898:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10848:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10801:23)
+      at C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10797:39
+      at JSXParserMixin.allowInAnd (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:12438:16)
+      at JSXParserMixin.parseExpression (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:10797:17)
+      at JSXParserMixin.parseReturnStatement (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:13159:28)
+      at JSXParserMixin.parseStatementContent (C:\Users\surak\core\node_modules\@babel\parser\lib\index.js:12815:21)

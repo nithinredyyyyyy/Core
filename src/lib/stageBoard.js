@@ -82,6 +82,33 @@ function getBmps2026SurvivalStageGroup(teamName) {
   );
 }
 
+const STAGE_ALIASES = new Map([
+  ["finals", "grand finals"],
+  ["grand finals", "grand finals"],
+  ["regular season", "regular season"],
+  ["playoffs", "playoffs"],
+  ["playoff", "playoffs"],
+  ["semi finals", "semi finals"],
+  ["semifinals", "semi finals"],
+  ["survival stage", "survival stage"],
+  ["last chance stage", "last chance stage"],
+  ["last chance", "last chance stage"],
+]);
+
+function normalizeStageName(s) {
+  return String(s || "").trim().toLowerCase();
+}
+
+function stagesMatch(a, b) {
+  const na = normalizeStageName(a);
+  const nb = normalizeStageName(b);
+  if (na === nb) return true;
+  const aliasA = STAGE_ALIASES.get(na);
+  const aliasB = STAGE_ALIASES.get(nb);
+  if (aliasA && aliasB) return aliasA === aliasB;
+  return na.includes(nb) || nb.includes(na);
+}
+
 export function normalizeStageBoardValue(value) {
   return String(value || "")
     .trim()
@@ -108,6 +135,15 @@ export function sortStageBoardMatches(matches) {
 function isTodayMatch(match, now = Date.now()) {
   if (!match?.scheduled_time) return false;
   return new Date(match.scheduled_time).toDateString() === new Date(now).toDateString();
+}
+
+function resolveDeclaredStage(rawStage, declaredStages) {
+  if (!rawStage) return rawStage;
+  if (declaredStages.includes(rawStage)) return rawStage;
+  for (const ds of declaredStages) {
+    if (stagesMatch(rawStage, ds)) return ds;
+  }
+  return rawStage;
 }
 
 export function getFeaturedTournamentStage(
@@ -140,7 +176,7 @@ export function getFeaturedTournamentStage(
       if (timeDelta !== 0) return timeDelta;
       return (declaredStageOrder.get(left.stage) ?? 999) - (declaredStageOrder.get(right.stage) ?? 999);
     })[0]?.stage;
-  if (todayStage) return todayStage;
+  if (todayStage) return resolveDeclaredStage(todayStage, declaredStages);
 
   const upcomingStage = scheduledMatches
     .filter((match) => {
@@ -154,7 +190,7 @@ export function getFeaturedTournamentStage(
       if (timeDelta !== 0) return timeDelta;
       return (declaredStageOrder.get(left.stage) ?? 999) - (declaredStageOrder.get(right.stage) ?? 999);
     })[0]?.stage;
-  if (upcomingStage) return upcomingStage;
+  if (upcomingStage) return resolveDeclaredStage(upcomingStage, declaredStages);
 
   const resultStage = tournamentResults
     .filter((result) => result.stage)
@@ -163,7 +199,7 @@ export function getFeaturedTournamentStage(
       const rightOrder = declaredStageOrder.get(right.stage) ?? -1;
       return rightOrder - leftOrder;
     })[0]?.stage;
-  if (resultStage) return resultStage;
+  if (resultStage) return resolveDeclaredStage(resultStage, declaredStages);
 
   const latestScheduledStage = scheduledMatches
     .toSorted((left, right) => {
@@ -173,7 +209,7 @@ export function getFeaturedTournamentStage(
       if (timeDelta !== 0) return timeDelta;
       return (declaredStageOrder.get(right.stage) ?? -1) - (declaredStageOrder.get(left.stage) ?? -1);
     })[0]?.stage;
-  if (latestScheduledStage) return latestScheduledStage;
+  if (latestScheduledStage) return resolveDeclaredStage(latestScheduledStage, declaredStages);
 
   const availableStageSet = new Set([
     ...tournamentResults.flatMap((result) => (result.stage ? [result.stage] : [])),
@@ -258,6 +294,7 @@ export function getStageBoardData({
   matchResults,
   requestedStage,
   participantEntries = null,
+  stageStandings = null,
 }) {
   if (!featuredTournament) {
     return {
@@ -284,15 +321,13 @@ export function getStageBoardData({
       tournamentResults,
     );
   const isGrandFinalsStage =
-    String(featuredStage || "")
-      .trim()
-      .toLowerCase() === "grand finals";
+    stagesMatch(featuredStage, "Grand Finals");
   const isBmps2026SurvivalStage =
     featuredTournament?.name === "Battlegrounds Mobile India Pro Series 2026" &&
     String(featuredStage || "").trim().toLowerCase() === "survival stage";
   const strictStageMatches = sortStageBoardMatches(
     tournamentMatches.filter(
-      (match) => !featuredStage || match.stage === featuredStage,
+      (match) => !featuredStage || stagesMatch(match.stage, featuredStage),
     ),
   );
   const rawBoardMatches =
@@ -313,7 +348,7 @@ export function getStageBoardData({
   const standingsMap = new Map();
 
   for (const result of tournamentResults) {
-    if (featuredStage && result.stage && result.stage !== featuredStage)
+    if (featuredStage && result.stage && !stagesMatch(result.stage, featuredStage))
       continue;
     const team = teamMap.get(result.team_id);
     const displayName = team?.name || result.team_name || "Unknown Team";
@@ -443,6 +478,50 @@ export function getStageBoardData({
     }))
     .sort(compareStageBoardStandings)
     .map((row, index) => ({ ...row, rank: index + 1 }));
+
+  if (standings.length === 0 && Array.isArray(stageStandings) && stageStandings.length > 0) {
+    const teamMapForFallback = new Map(teams.map((team) => [team.id, team]));
+    const stageKey = normalizeStageName(featuredStage);
+    const filtered = stageStandings.filter((ss) => {
+      const ssStageName = normalizeStageName(ss.stage_name || ss.stage || "");
+      return ssStageName === stageKey || stagesMatch(ssStageName, stageKey);
+    });
+    const fallbackStandings = filtered
+      .map((ss) => {
+        const teamEntry = ss.team || teamMapForFallback.get(ss.team_id) || {};
+        const displayName = teamEntry.name || ss.team_name || "Unknown Team";
+        const logoUrl = teamEntry.logo_url || teamEntry.logoSrc || null;
+        return {
+          teamId: ss.team_id,
+          teamName: displayName,
+          logoName: displayName,
+          logoSrc: logoUrl || getTeamLogoByName(displayName) || null,
+          group: "-",
+          matches: ss.matches_played || 0,
+          wwcd: ss.wins || 0,
+          placementPoints: ss.place_points || 0,
+          elims: ss.elim_points || 0,
+          points: ss.total_points || 0,
+          placementSum: 0,
+          matchCells: {},
+          averageEliminationPosition: null,
+          rank: ss.rank || 0,
+        };
+      })
+      .sort(compareStageBoardStandings)
+      .map((row, index) => ({ ...row, rank: index + 1 }));
+
+    if (fallbackStandings.length > 0) {
+      return {
+        featuredStage,
+        stageMatches: boardMatches,
+        standings: fallbackStandings,
+        liveMatch: null,
+        nextMatch: null,
+        leader: fallbackStandings[0] || null,
+      };
+    }
+  }
 
   return {
     featuredStage,

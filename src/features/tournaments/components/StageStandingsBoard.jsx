@@ -298,6 +298,14 @@ function DesktopGroupedDraw({ activeStage, groupedParticipants, maxGroupRows }) 
 }
 
 function DesktopStandingsTable({ usesPromotionGroups, completeGroupStandings, filteredStandings, showMovementColumn, isPmwcMovementStage, activeStage, currentSelectedGroup, tournamentName, useContainedGroupLogos, showGroupColumn, getOverallStandingGroupLabel }) {
+  const customCols = Object.keys((usesPromotionGroups ? completeGroupStandings : filteredStandings)[0] || {})
+    .filter(k => /^m\d+$/i.test(k) || /^week\d+$/i.test(k))
+    .sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.replace(/\D/g, '')) || 0;
+      return numA - numB;
+    });
+
   return (
     <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
       <table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
@@ -308,6 +316,9 @@ function DesktopStandingsTable({ usesPromotionGroups, completeGroupStandings, fi
             {showGroupColumn ? <th className="border-r border-border/60 p-4 text-center">Grp</th> : null}
             <th className="border-r border-border/60 p-4 text-center">M</th>
             <th className="border-r border-border/60 p-4 text-center">WWCD</th>
+            {customCols.map(col => (
+              <th key={col} className="border-r border-border/60 p-4 text-center">{col.toUpperCase()}</th>
+            ))}
             <th className="border-r border-border/60 p-4 text-center">Place</th>
             <th className="border-r border-border/60 p-4 text-center">Elims</th>
             <th className="border-r border-border/60 p-4 text-center font-black text-foreground">Pts</th>
@@ -356,6 +367,11 @@ function DesktopStandingsTable({ usesPromotionGroups, completeGroupStandings, fi
                 {showGroupColumn ? <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{getOverallStandingGroupLabel(entry)}</td> : null}
                 <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.matches ?? "-"}</td>
                 <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.wwcd ?? "-"}</td>
+                {customCols.map(col => (
+                  <td key={col} className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">
+                    {entry[col] ?? "-"}
+                  </td>
+                ))}
                 <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.pos ?? "-"}</td>
                 <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.elimins ?? "-"}</td>
                 <td className={`border-r border-border/50 p-4 text-center text-lg font-black ${podiumTone?.points || "text-foreground"}`}>{entry.points}</td>
@@ -386,7 +402,7 @@ function DesktopStandingsTable({ usesPromotionGroups, completeGroupStandings, fi
 function DesktopGroupParticipants({ tournamentName, activeStage, isSurvivalStageLobbyView, groupParticipants, showGroupParticipantMovement, currentSelectedGroup }) {
   return (
     <div className="space-y-4">
-      {tournamentName !== "PUBG Mobile World Cup 2026" ? (
+      {!tournamentName?.startsWith("PUBG Mobile World Cup") ? (
       <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
         <p className="text-lg font-semibold uppercase tracking-[0.08em] text-foreground">
           {activeStage.name.toUpperCase()} GROUPS
@@ -601,7 +617,7 @@ export default React.memo(function StageStandingsBoard({
               phase.toLowerCase().startsWith(`${String(stage.name || "").trim().toLowerCase()} - group `)
           )
         );
-        const stageHasMatches = (tournamentName === "PUBG Mobile World Cup 2026" || tournamentName === "Battlegrounds Mobile India Pro Series 2026") && matches.some(
+        const stageHasMatches = (tournamentName?.startsWith("PUBG Mobile World Cup") || tournamentName === "Battlegrounds Mobile India Pro Series 2026") && matches.some(
           (m) => m.tournament_id === tournamentId && m.stage === stage.name,
         );
         if (!stage.name || !(stage.standings?.length || stage.summary || stage.teamCount || stageHasParticipants || stageHasMatches)) {
@@ -713,7 +729,7 @@ export default React.memo(function StageStandingsBoard({
       return [];
     }
 
-    if (tournamentName === "PUBG Mobile World Cup 2026") {
+    if (tournamentName?.startsWith("PUBG Mobile World Cup")) {
       const participantGroups = resolvedParticipantEntries.flatMap((entry) => {
         const group = getParticipantStageGroup(entry, activeStage.name);
         return group ? [group] : [];
@@ -731,10 +747,10 @@ export default React.memo(function StageStandingsBoard({
             m.group_name,
         )
         .flatMap((m) => {
-          const raw = String(m.group_name).replace(/^group\s+/i, "").trim().toUpperCase();
-          return raw && /^[A-Z0-9]$/.test(raw) ? [raw] : [];
+          const raw = String(m.group_name).replace(/^group\s+/i, "").trim();
+          return raw ? [raw] : [];
         });
-      return [...new Set(matchGroups)].toSorted();
+      return [...new Set([...standingsGroups, ...participantGroups, ...matchGroups])].toSorted();
     }
 
     const participantGroups = resolvedParticipantEntries.flatMap((entry) => {
@@ -775,7 +791,8 @@ export default React.memo(function StageStandingsBoard({
       (isBmps2026PromotionStage(activeStage?.name) ||
         activeStage?.name === "Round 4") &&
       groups.length > 0) ||
-    (tournamentName === "PUBG Mobile World Cup 2026" && groups.length > 0);
+    (tournamentName?.startsWith("PUBG Mobile World Cup") && groups.length > 0) ||
+    (tournamentName === "PUBG Mobile Global Championship 2025" && groups.length > 0);
   const fallbackSelectedGroup = hideOverallGroupOption ? "groups" : "overall";
   const currentSelectedGroup =
     selectedGroup === "overall" && hideOverallGroupOption
@@ -947,12 +964,12 @@ export default React.memo(function StageStandingsBoard({
     !isStatisticsStage &&
     currentSelectedGroup === "overall" &&
     Boolean(filteredStandings.length || activeStage?.standings?.length);
-  const showGroupParticipantMovement = usesPromotionGroups || (tournamentName === "PUBG Mobile World Cup 2026" && !isStatisticsStage);
+  const showGroupParticipantMovement = usesPromotionGroups || (tournamentName?.startsWith("PUBG Mobile World Cup") && !isStatisticsStage);
   const isSurvivalStageLobbyView =
     tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
     isBmps2026SurvivalStage(activeStage?.name) &&
     currentSelectedGroup !== "overall";
-  const isPmwcMovementStage = tournamentName === "PUBG Mobile World Cup 2026" && !isStatisticsStage && !isGrandFinalsStage;
+  const isPmwcMovementStage = tournamentName?.startsWith("PUBG Mobile World Cup") && !isStatisticsStage && !isGrandFinalsStage && (tournamentName?.startsWith("PUBG Mobile World Cup") || currentSelectedGroup === "overall");
   const showMovementColumn = usesPromotionGroups || usesBmpsKnockoutMovement || isPmwcMovementStage;
   const isGroupDrawStage = groupedParticipants.length > 0 && !activeStage?.standings?.length;
   const showsGroupedDrawTab =
@@ -960,7 +977,8 @@ export default React.memo(function StageStandingsBoard({
     usesPromotionGroups ||
     survivalStageHasGroupedLobby ||
     isBmps2026SemiFinalsGroupDraw ||
-    (tournamentName === "PUBG Mobile World Cup 2026" && groups.length > 0);
+    (tournamentName?.startsWith("PUBG Mobile World Cup") && groups.length > 0) ||
+    (tournamentName === "PUBG Mobile Global Championship 2025" && groups.length > 0);
   const completeGroupStandings = useMemo(() => {
     if (!usesPromotionGroups || currentSelectedGroup === "overall") return filteredStandings;
     const selectedGroupMatchIds = new Set();

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ArrowRightLeft,
   BarChart3,
@@ -7,10 +7,12 @@ import {
   FileText,
   Image,
   Newspaper,
+  RefreshCw,
   Swords,
   Trophy,
   Users,
 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const CONTROL_AREAS = [
   {
@@ -79,6 +81,33 @@ const DAILY_FLOW = [
 ];
 
 export default function AdminOperations({ onSelectTab }) {
+  const [cacheClearing, setCacheClearing] = useState(false);
+  const [cacheMsg, setCacheMsg] = useState("");
+
+  async function clearCache() {
+    setCacheClearing(true);
+    setCacheMsg("");
+    try {
+      const AUTH_TOKEN_KEY = "stagecore_auth_token";
+      const stored = localStorage.getItem(AUTH_TOKEN_KEY);
+      const authSession = (() => { try { return JSON.parse(stored || "{}"); } catch { return {}; } })();
+      const res = await fetch("/api/admin/cache/clear", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authSession.token ? { "X-StageCore-Auth-Token": authSession.token } : {}),
+        },
+      });
+      const data = await res.json();
+      setCacheMsg(data.message || "Cache cleared!");
+    } catch {
+      setCacheMsg("Failed to clear cache.");
+    } finally {
+      setCacheClearing(false);
+      setTimeout(() => setCacheMsg(""), 4000);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="rounded-[24px] border border-border bg-card p-5 shadow-sm">
@@ -93,6 +122,25 @@ export default function AdminOperations({ onSelectTab }) {
           tournament structure, schedules, results, player stats, teams, news, transfers,
           and data checks.
         </p>
+      </div>
+
+      <div className="rounded-[24px] border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-amber-600 dark:text-amber-400">Server Cache</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            After running import scripts or updating standings directly in the DB, clear the server cache so changes appear immediately.
+          </p>
+          {cacheMsg && <p className="mt-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400">{cacheMsg}</p>}
+        </div>
+        <button
+          type="button"
+          onClick={clearCache}
+          disabled={cacheClearing}
+          className="flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white transition hover:bg-amber-600 disabled:opacity-50"
+        >
+          <RefreshCw className={`size-3.5 ${cacheClearing ? "animate-spin" : ""}`} />
+          {cacheClearing ? "Clearing…" : "Clear Cache"}
+        </button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">

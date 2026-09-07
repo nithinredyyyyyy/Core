@@ -25,6 +25,7 @@ const AdminNews = lazy(() => import("../components/admin/AdminNews"));
 const AdminTransfers = lazy(() => import("../components/admin/AdminTransfers"));
 const AdminInspector = lazy(() => import("../components/admin/AdminInspector"));
 const AdminStagePosters = lazy(() => import("../components/admin/AdminStagePosters"));
+const AdminInstaPosters = lazy(() => import("../components/admin/AdminInstaPosters"));
 const AdminPlayerStats = lazy(() => import("../components/admin/AdminPlayerStats"));
 const AdminOperations = lazy(() => import("../components/admin/AdminOperations"));
 
@@ -38,6 +39,7 @@ const tabs = [
   { id: "transfers", label: "Transfers", icon: ArrowRightLeft },
   { id: "news", label: "News", icon: Newspaper },
   { id: "posters", label: "Posters", icon: Image },
+  { id: "insta-posters", label: "Insta Posters", icon: Image },
   { id: "inspector", label: "Inspector", icon: Database },
 ];
 
@@ -59,6 +61,8 @@ const TAB_DESCRIPTIONS = {
   news: "Publish announcements, tournament stories, and update notes for the frontend feed.",
   posters:
     "Generate stage-group poster previews from live tournament stages and results data.",
+  "insta-posters":
+    "Generate 4:5 social posters for standings, rosters, news, awards, qualified teams, and podium placements.",
   inspector:
     "Inspect live backend tournament payloads, match wiring, and result coverage without guessing from frontend views.",
 };
@@ -251,6 +255,7 @@ export default function Admin() {
           {activeTab === "transfers" && <AdminTransfers />}
           {activeTab === "news" && <AdminNews />}
           {activeTab === "posters" && <AdminStagePosters />}
+          {activeTab === "insta-posters" && <AdminInstaPosters />}
           {activeTab === "inspector" && <AdminInspector />}
         </ErrorBoundary>
       </Suspense>

@@ -100,8 +100,6 @@ app.use("/api", newsRouter);
 app.use("/api", searchLimiter, searchRouter);
 app.use("/api", siteRouter);
 app.use("/api", tournamentsRouter);
-app.use("/api/admin/news/import", newsImportLimiter, adminRouter);
-app.use("/api/admin/news/backfill", newsImportLimiter, adminRouter);
 app.use("/api", adminRouter);
 app.use("/api", entityBulkLimiter, entitiesRouter);
 app.use("/api/pages", pagesRouter);

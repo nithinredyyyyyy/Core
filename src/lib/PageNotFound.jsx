@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -19,21 +19,21 @@ export default function PageNotFound({}) {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="w-full max-w-md">
         <div className="space-y-6 text-center">
           <div className="space-y-2">
-            <h1 className="text-7xl font-light text-slate-300">404</h1>
-            <div className="mx-auto h-0.5 w-16 bg-slate-200"></div>
+            <h1 className="text-7xl font-light text-muted-foreground">404</h1>
+            <div className="mx-auto h-0.5 w-16 bg-border"></div>
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-2xl font-medium text-slate-800">
+            <h2 className="text-2xl font-medium text-foreground">
               Page Not Found
             </h2>
-            <p className="leading-relaxed text-slate-600">
+            <p className="leading-relaxed text-muted-foreground">
               The page{" "}
-              <span className="font-medium text-slate-700">"{pageName}"</span>{" "}
+              <span className="font-medium text-foreground">"{pageName}"</span>{" "}
               could not be found in this application.
             </p>
           </div>
@@ -41,16 +41,16 @@ export default function PageNotFound({}) {
           {isFetched &&
             authData.isAuthenticated &&
             authData.user?.role === "admin" && (
-              <div className="mt-8 rounded-lg border border-slate-200 bg-slate-100 p-4">
+              <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-orange-100">
+                  <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
                     <div className="size-2 rounded-full bg-orange-400"></div>
                   </div>
                   <div className="space-y-1 text-left">
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-sm font-medium text-foreground">
                       Admin Note
                     </p>
-                    <p className="text-sm leading-relaxed text-slate-600">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       Check the route or use the main navigation to return to a
                       live page.
                     </p>
@@ -60,10 +60,9 @@ export default function PageNotFound({}) {
             )}
 
           <div className="pt-6">
-            <button
-              type="button"
-              onClick={() => (window.location.href = "/")}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+            <Link
+              to="/"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-secondary hover:border-border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
             >
               <svg
                 className="mr-2 size-4"
@@ -79,7 +78,7 @@ export default function PageNotFound({}) {
                 />
               </svg>
               Go Home
-            </button>
+            </Link>
           </div>
         </div>
       </div>

@@ -191,7 +191,24 @@ export function buildHomeViewModel(summary, options = {}) {
         };
       })()
     : null;
-  const championTeam = stageBoardChampion || getTournamentChampionFromStages(lastTournament) || null;
+  const championTeam = stageBoardChampion || getTournamentChampionFromStages(lastTournament) || (() => {
+    if (lastTournamentResults.length > 0) {
+      const gfResults = lastTournamentResults.filter((r) => r.stage === "Grand Finals");
+      const source = gfResults.length > 0 ? gfResults : lastTournamentResults;
+      const gfStandings = aggregateTournamentStandings(source, teamsMap, { includeHidden: true });
+      if (gfStandings.length > 0) {
+        const first = gfStandings[0];
+        return {
+          teamKey: first.teamKey,
+          rawTeamName: first.rawTeamName,
+          teamName: first.teamName,
+          totalPoints: first.totalPoints,
+          wins: first.wins,
+        };
+      }
+    }
+    return null;
+  })();
   const championLogo = championTeam?.rawTeamName
     ? getTeamLogoByName(championTeam.rawTeamName)
     : null;

@@ -8,13 +8,19 @@ export function getTournamentLogo(tournament) {
     "Battlegrounds Mobile India Series 2025": "/images/bgis-2025.webp",
     "India - Korea Invitational": "/images/in-kr.webp",
     "Battlegrounds Mobile India Showdown 2025": "/images/bmsd-2025.webp",
+    "Battlegrounds Mobile India Showdown 2026": "/images/bmsd-2025.png",
     "Battlegrounds Mobile India International Cup 2025": "/images/bmic-2025.webp",
+    "Battlegrounds Mobile India International Cup 2026": "/images/bmic-2025.png",
     "Battlegrounds Mobile India Pro Series 2023": "/images/bmps-2023.webp",
     "Battlegrounds Mobile India Pro Series 2024": "/images/bmps-2024.webp",
     "Battlegrounds Mobile India Pro Series 2025": "/images/bmps-2025.webp",
     "Battlegrounds Mobile India Pro Series 2026": "/images/bmps-2026.webp",
     "PUBG Mobile World Cup 2026": "/images/pubg-mobile-world-cup-2026.webp",
+    "PUBG Mobile World Cup 2025": "/images/pubg-mobile-world-cup-2024.webp",
     "PUBG Mobile World Cup 2024": "/images/pubg-mobile-world-cup-2024.webp",
+    "Peacekeeper Elite League 2026 Summer": "/images/PEL.png",
+    "BGMI Masters Series Season 5": "/images/BGMS.png",
+    "PUBG Mobile Global Championship 2025": "/images/gc.png",
   };
 
   return logoByName[tournament.name] || tournament.banner_url || null;

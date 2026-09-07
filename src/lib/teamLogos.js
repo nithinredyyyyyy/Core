@@ -158,7 +158,7 @@ const THEME_AWARE_TEAM_LOGOS = [
     darkSrc: "/images/team-logos/dark-theme/mysterious-4-dark.webp",
   },
   {
-    pattern: /^Myth Official$/i,
+    pattern: /^(Myth Official|IRIS Myth|IRIS MYTH)$/i,
     lightSrc: "/images/team-logos/light-theme/myth-light.webp",
     darkSrc: "/images/team-logos/dark-theme/myth-dark.webp",
   },
@@ -288,8 +288,8 @@ const THEME_AWARE_TEAM_LOGOS = [
   },
   {
     pattern: /^Victores Sumus$/i,
-    lightSrc: "/images/team-logos/light-theme/victores-sumus-light.webp",
-    darkSrc: "/images/team-logos/dark-theme/victores-sumus-dark.webp",
+    lightSrc: "/images/team-logos/victores-sumus.png",
+    darkSrc: "/images/team-logos/VS.png",
   },
   {
     pattern: /^Welt Esports$/i,
@@ -326,6 +326,36 @@ const THEME_AWARE_TEAM_LOGOS = [
     lightSrc: "/images/team-logos/light-theme/orangutan-light.webp",
     darkSrc: "/images/team-logos/dark-theme/orangutan-dark.webp",
   },
+  {
+    pattern: /^eArena$/i,
+    lightSrc: "/images/team-logos/ea.png",
+    darkSrc: "/images/team-logos/dark-theme/ea.png",
+  },
+  {
+    pattern: /^GOAT Team$/i,
+    lightSrc: "/images/team-logos/goat.png",
+    darkSrc: "/images/team-logos/dark-theme/goat.png",
+  },
+  {
+    pattern: /^ULF Esports$/i,
+    lightSrc: "/images/team-logos/ulf.png",
+    darkSrc: "/images/team-logos/dark-theme/ulf.png",
+  },
+  {
+    pattern: /^Team Flash$/i,
+    lightSrc: "/images/team-logos/team flash.png",
+    darkSrc: "/images/team-logos/dark-theme/team flash.png",
+  },
+  {
+    pattern: /^Alpha7 Esports$/i,
+    lightSrc: "/images/team-logos/alpha 7.png",
+    darkSrc: "/images/team-logos/dark-theme/alpha 7.png",
+  },
+  {
+    pattern: /^ThunderTalk Gaming$/i,
+    lightSrc: "/images/team-logos/thundertalk.png",
+    darkSrc: "/images/team-logos/dark-theme/thundertalk.png",
+  },
 ];
 
 const TEAM_LOGOS = [
@@ -346,6 +376,26 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/ag.webp",
   },
   {
+    pattern: /^(Team Liquid|Liquid)$/i,
+    src: "/images/team-logos/Team liquid.png",
+  },
+  {
+    pattern: /^(G2 Esports|G2)$/i,
+    src: "/images/team-logos/G2 Esports.png",
+  },
+  {
+    pattern: /^(Karmine Corp|KC)$/i,
+    src: "/images/team-logos/Karmine Corp.png",
+  },
+  {
+    pattern: /^(Spacestation Gaming|SpaceStation Gaming|SSG)$/i,
+    src: "/images/team-logos/SpaceStation Gaming.png",
+  },
+  {
+    pattern: /^(BIG)$/i,
+    src: "/images/team-logos/BIG.png",
+  },
+  {
     pattern: /^(ThunderTalk Gaming)$/i,
     src: "/images/team-logos/thundertalk.webp",
   },
@@ -358,7 +408,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/furia.webp",
   },
   {
-    pattern: /^(Aurora Gaming)$/i,
+    pattern: /^(Aurora Gaming|Aurora)$/i,
     src: "/images/team-logos/aurora.webp",
   },
   {
@@ -370,11 +420,11 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/KIWOOM DRX.webp",
   },
   {
-    pattern: /^(AlUla Club Esports|AlUla)$/i,
+    pattern: /^(AlUla Club Esports|AlUla Club|AlUla)$/i,
     src: "/images/team-logos/ula.webp",
   },
   {
-    pattern: /^(Geekay Esports)$/i,
+    pattern: /^(Geekay Esports|Geekay)$/i,
     src: "/images/team-logos/geekay.webp",
   },
   {
@@ -382,7 +432,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/Nigma Galaxy.webp",
   },
   {
-    pattern: /^(4thrives Esports)$/i,
+    pattern: /^(4thrives Esports|4Thrives)$/i,
     src: "/images/team-logos/4t.webp",
   },
   {
@@ -394,7 +444,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/team flash.webp",
   },
   {
-    pattern: /^(Gaming Stars Esports)$/i,
+    pattern: /^(Gaming Stars Esports|Gaming Stars)$/i,
     src: "/images/team-logos/gaming stars.webp",
   },
   {
@@ -410,7 +460,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/Tianba.webp",
   },
   {
-    pattern: /^(Alpha7 Esports|Alpha 7)$/i,
+    pattern: /^(Alpha7 Esports|Alpha7|Alpha 7)$/i,
     src: "/images/team-logos/alpha 7.webp",
   },
   {
@@ -426,7 +476,7 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/DOPENESS.webp",
   },
   {
-    pattern: /^(721 Esports)$/i,
+    pattern: /^(721 Esports|GS 721)$/i,
     src: "/images/team-logos/721.webp",
   },
   {
@@ -505,8 +555,17 @@ const TEAM_LOGOS = [
     pattern: /^Cincinnati Kids$/i,
     src: "/images/team-logos/cincinnati-kids.webp",
   },
-  { pattern: /^(Dplus|Dplus KIA)$/i, src: "/images/team-logos/dplus-kia.webp" },
+  { pattern: /^(Dplus|Dplus KIA)$/i, src: "/images/team-logos/dplus-kia.png" },
   { pattern: /^DRX$/i, src: "/images/team-logos/drx.webp" },
+  { pattern: /^Alpha Gaming$/i, src: "/images/team-logos/Alpha Gaming.png" },
+  { pattern: /^Alter Ego Ares$/i, src: "/images/team-logos/Alter Ego Ares.png" },
+  { pattern: /^R8 Esports$/i, src: "/images/team-logos/R8 Esports.png" },
+  { pattern: /^Regnum Carya Esports$/i, src: "/images/team-logos/Regnum Carya Esports.png" },
+  { pattern: /^MadBulls$/i, src: "/images/team-logos/MadBulls.png" },
+  { pattern: /^Kara Esports$/i, src: "/images/team-logos/Kara Esports.png" },
+  { pattern: /^D'Xavier$/i, src: "/images/team-logos/D'Xavier.png" },
+  { pattern: /^Vampire Esports$/i, src: "/images/team-logos/Vampire Esports.png" },
+  { pattern: /^ThunderTalk Gaming$/i, src: "/images/team-logos/thundertalk.png" },
   {
     pattern: /^DUKSAN Esports$/i,
     src: "/images/team-logos/duksan-esports.webp",
@@ -548,7 +607,7 @@ const TEAM_LOGOS = [
   },
   {
     pattern: /^(Gladiators Esports|Gladiator Esports)$/i,
-    src: "/images/team-logos/gladiators-esports.webp",
+    src: "/images/team-logos/Gladiators Esports.png",
   },
   { pattern: /^GlitchXReborn$/i, src: "/images/team-logos/glitchxreborn.webp" },
   {
@@ -768,7 +827,7 @@ const TEAM_LOGOS = [
   { pattern: /^Vasista Esports$/i, src: "/images/team-logos/vasista.webp" },
   {
     pattern: /^Victores Sumus$/i,
-    src: "/images/team-logos/victores-sumus.webp",
+    src: "/images/team-logos/victores-sumus.png",
   },
   { pattern: /^Welt Esports$/i, src: "/images/team-logos/welt.webp" },
   { pattern: /^White Walkers$/i, src: "/images/team-logos/white-walkers.webp" },
@@ -819,7 +878,7 @@ const TEAM_LOGOS = [
   },
   {
     pattern: /^(JD Gaming|JDG)$/i,
-    src: "/images/team-logos/JD Gaming.webp",
+    src: "/images/team-logos/JD Gaming.png",
   },
   {
     pattern: /^(ONIC|ONIC Esports)$/i,
@@ -850,6 +909,26 @@ const TEAM_LOGOS = [
     src: "/images/team-logos/Team Heretics.png",
   },
   { pattern: /^(ZZ|ZZ ESPORTS)$/i, src: "/images/team-logos/zz-esports.webp" },
+  { pattern: /^(Team Outrage|Outrage)$/i, src: "/images/team-logos/Team Outrage.png" },
+  { pattern: /^(Elite Nova Esports|Elite Nova)$/i, src: "/images/team-logos/Elite Nova.png" },
+  { pattern: /^(IRIS Myth|IRIS MYTH)$/i, src: "/images/team-logos/myth.png" },
+  // PEL 2026 Summer teams
+  { pattern: /^All Gamers$/i, src: "/images/team-logos/All Gamers.png" },
+  { pattern: /^LGD Gaming$/i, src: "/images/team-logos/LGD Gaming.png" },
+  { pattern: /^Four Angry Men$|^4AM$/i, src: "/images/team-logos/Four Angry Men.png" },
+  { pattern: /^Regans Gaming$/i, src: "/images/team-logos/Regans Gaming.png" },
+  { pattern: /^(Crab Esports|CRAB ESPORTS)$/i, src: "/images/team-logos/CRAB ESPORTS.png" },
+  { pattern: /^Hao Han Gaming$/i, src: "/images/team-logos/Hao Han Gaming.png" },
+  { pattern: /^KONE ESPORT$/i, src: "/images/team-logos/KONE ESPORT.png" },
+  { pattern: /^KuaiShou Gaming$/i, src: "/images/team-logos/KuaiShou Gaming.png" },
+  { pattern: /^LT Gaming$/i, src: "/images/team-logos/LT Gaming.png" },
+  { pattern: /^Nova Esports$/i, src: "/images/team-logos/Nova Esports.png" },
+  { pattern: /^Rogue Warriors$/i, src: "/images/team-logos/Rogue Warriors.png" },
+  { pattern: /^(Six Two Eight|YOU ARE)$/i, src: "/images/team-logos/Six Two Eight.png" },
+  { pattern: /^The Chosen$/i, src: "/images/team-logos/The Chosen.png" },
+  { pattern: /^Tong Jia Bao Esports$/i, src: "/images/team-logos/Tong Jia Bao Esports.png" },
+  { pattern: /^Titan Esports Club$/i, src: "/images/team-logos/Titan Esports Club.png" },
+  { pattern: /^Vision Esports$/i, src: "/images/team-logos/Vision Esports.png" },
 ];
 
 const LOW_CONTRAST_TEAM_LOGOS = [
@@ -889,12 +968,13 @@ const WIDE_TEAM_LOGOS = [
 
 function resolveTeamLogoAsset(teamName) {
   if (!teamName) return null;
+  const trimmed = teamName.trim();
   const isDarkTheme =
     typeof document !== "undefined" &&
     document.documentElement.classList.contains("dark");
 
   const themeAwareMatch = THEME_AWARE_TEAM_LOGOS.find((entry) =>
-    entry.pattern.test(teamName),
+    entry.pattern.test(trimmed),
   );
   if (themeAwareMatch) {
     return {
@@ -903,17 +983,92 @@ function resolveTeamLogoAsset(teamName) {
     };
   }
 
-  const match = TEAM_LOGOS.find((entry) => entry.pattern.test(teamName));
-  if (!match?.src) return null;
+  const match = TEAM_LOGOS.find((entry) => entry.pattern.test(trimmed));
+  if (match?.src) {
+    return {
+      src: match.src,
+      surfaceTone: isDarkTheme ? "dark" : "light",
+    };
+  }
 
-  return {
-    src: match.src,
-    surfaceTone: isDarkTheme ? "dark" : "light",
-  };
+  const lower = trimmed.toLowerCase();
+  if (lower.length >= 3) {
+    const fuzzyMatch = THEME_AWARE_TEAM_LOGOS.find((entry) => {
+      const src = entry.pattern.source;
+      const aliases = src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
+      return aliases.some(a => lower.includes(a) || a.includes(lower));
+    });
+    if (fuzzyMatch) {
+      return {
+        src: isDarkTheme ? fuzzyMatch.darkSrc : fuzzyMatch.lightSrc,
+        surfaceTone: isDarkTheme ? "dark" : "light",
+      };
+    }
+
+    const fuzzyMatch2 = TEAM_LOGOS.find((entry) => {
+      const src = entry.pattern.source;
+      const aliases = src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
+      return aliases.some(a => lower.includes(a) || a.includes(lower));
+    });
+    if (fuzzyMatch2?.src) {
+      return {
+        src: fuzzyMatch2.src,
+        surfaceTone: isDarkTheme ? "dark" : "light",
+      };
+    }
+  }
+
+  return null;
 }
 
 export function getTeamLogoByName(teamName) {
   return resolveTeamLogoAsset(teamName)?.src ?? null;
+}
+
+export function getTeamLogoForDark(teamName) {
+  if (!teamName) return null;
+  const trimmed = teamName.trim();
+  const themeAware = THEME_AWARE_TEAM_LOGOS.find((e) => e.pattern.test(trimmed));
+  if (themeAware) return themeAware.darkSrc;
+  const match = TEAM_LOGOS.find((e) => e.pattern.test(trimmed));
+  if (match?.src) return match.src;
+  const lower = trimmed.toLowerCase();
+  if (lower.length >= 3) {
+    const fuzzy1 = THEME_AWARE_TEAM_LOGOS.find((e) => {
+      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
+      return aliases.some(a => lower.includes(a) || a.includes(lower));
+    });
+    if (fuzzy1) return fuzzy1.darkSrc;
+    const fuzzy2 = TEAM_LOGOS.find((e) => {
+      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
+      return aliases.some(a => lower.includes(a) || a.includes(lower));
+    });
+    if (fuzzy2?.src) return fuzzy2.src;
+  }
+  return null;
+}
+
+export function getTeamLogoForLight(teamName) {
+  if (!teamName) return null;
+  const trimmed = teamName.trim();
+  const themeAware = THEME_AWARE_TEAM_LOGOS.find((e) => e.pattern.test(trimmed));
+  if (themeAware) return themeAware.darkSrc;
+  const match = TEAM_LOGOS.find((e) => e.pattern.test(trimmed));
+  if (match?.src) return match.src;
+  const lower = trimmed.toLowerCase();
+  if (lower.length >= 3) {
+    const fuzzy1 = THEME_AWARE_TEAM_LOGOS.find((e) => {
+      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
+      return aliases.some(a => lower.includes(a) || a.includes(lower));
+    });
+    if (fuzzy1) return fuzzy1.darkSrc;
+    const fuzzy2 = TEAM_LOGOS.find((e) => {
+      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
+      return aliases.some(a => lower.includes(a) || a.includes(lower));
+    });
+    if (fuzzy2?.src) return fuzzy2.src;
+  }
+  return null;
 }
 
 export function getTeamLogoSurfaceTone(teamName) {

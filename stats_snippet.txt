@@ -1,0 +1,397 @@
+          </div>
+
+          {currentStatisticsCategory === "eliminator" ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-[#165ca8] px-5 py-4 text-center">
+                  <p className="text-lg font-semibold uppercase tracking-[0.08em] text-white">
+                    ELIMINATOR
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 border-b border-border px-5 py-3">
+                  {eliminatorSubStages.map((subStage) => (
+                    <button
+                      key={subStage.key}
+                      type="button"
+                                  onClick={() =>
+                                    dispatchStageBoardUi({
+                                      type: "selectStatisticsSubStage",
+                                      payload: subStage.key,
+                                    })
+                                  }
+                      className={`rounded-t-xl border-b-2 px-2 py-2 text-sm font-semibold transition-colors md:px-3 ${
+                        currentStatisticsSubStage === subStage.key
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {subStage.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {statisticsTableRows.length > 0 ? (
+                <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                  <table className="w-full min-w-[1280px] border-separate border-spacing-0 text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-left">
+                          <SortableColumnHeader label="Rank" field="rank" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-left">
+                          <SortableColumnHeader label="Player" field="player" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Matches" field="matches" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Finishes" field="finishes" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="FPM" field="fpm" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Contribution" field="contribution" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Best" field="best" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="5+" field="fivePlus" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Erangel" field="erangel" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-r border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Miramar" field="miramar" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                        <th className="sticky top-0 z-20 border-b border-border/60 bg-secondary p-4 text-center">
+                          <SortableColumnHeader label="Rondo" field="rondo" tableKey={statisticsTableKey} tableSort={tableSort} dispatch={dispatchStageBoardUi} align="center" />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {sortedStatisticsTableRows.map((entry, index) => {
+                        const rawTeamName =
+                          entry.teamName ||
+                          BMPS_2026_PLAYER_ROW_TEAM_OVERRIDES[`${entry.rank}:${entry.player}`] ||
+                          BMPS_2026_PLAYER_TEAM_OVERRIDES[normalizeOrganizationName(entry.player)] ||
+                          bmps2026PlayerTeams.get(normalizeOrganizationName(entry.player)) ||
+                          null;
+                        const teamName = rawTeamName ? getOrganizationMeta(rawTeamName).name : null;
+
+                        return (
+                          <tr
+                            key={`bmps-2026-stat-${entry.rank}-${entry.player}`}
+                            className={`${index % 2 === 0 ? "bg-background/70" : "bg-secondary/10"} transition-colors hover:bg-secondary/20`}
+                          >
+                            <td className="border-r border-border/50 p-4 font-semibold text-foreground">#{entry.rank}</td>
+                            <td className="border-r border-border/50 p-4">
+                              {teamName ? (
+                                <Link to={buildTeamLink(teamName)} className="inline-flex items-center gap-3 font-semibold text-foreground">
+                                  <TeamIdentity
+                                    name={teamName}
+                                    contained
+                                    compact
+                                    hideText
+                                    logoClassName="size-5 object-contain"
+                                    logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
+                                  />
+                                  <span className="leading-none">{entry.player}</span>
+                                </Link>
+                              ) : (
+                                <span className="font-semibold text-foreground">{entry.player}</span>
+                              )}
+                            </td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-semibold text-primary">{entry.finishes}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.fpm}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.contribution}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.best ?? "-"}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.fivePlusFinishes ?? "-"}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.erangel ?? "-"}</td>
+                            <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.miramar ?? "-"}</td>
+                            <td className="p-4 text-center font-medium text-muted-foreground">{entry.rondo ?? "-"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+          ) : currentStatisticsCategory === "igl" ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-[#165ca8] px-5 py-4 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <Trophy className="size-4 text-white" />
+                    <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                      {statisticsPanelTitle}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                <table className="w-full min-w-[980px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <th className="border-r border-border/60 p-4 text-left">Rank</th>
+                      <th className="border-r border-border/60 p-4 text-left">Player</th>
+                      <th className="border-r border-border/60 p-4 text-center">IGL Rating</th>
+                      <th className="border-r border-border/60 p-4 text-center">Team Avg. Pts.</th>
+                      <th className="border-r border-border/60 p-4 text-center">WWCD</th>
+                      <th className="border-r border-border/60 p-4 text-center">Top 5s</th>
+                      <th className="border-r border-border/60 p-4 text-center">Team Avg. Sur.</th>
+                      <th className="p-4 text-center">Matches</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {BMPS_2026_IGL_STATS.map((entry, index) => (
+                      <tr
+                        key={`bmps-2026-igl-${entry.rank}-${entry.player}`}
+                        className={`${index % 2 === 0 ? "bg-background/70" : "bg-secondary/10"} transition-colors hover:bg-secondary/20`}
+                      >
+                        <td className="border-r border-border/50 p-4 font-semibold text-foreground">#{entry.rank}</td>
+                        <td className="border-r border-border/50 p-4">
+                          <Link to={buildTeamLink(entry.teamName)} className="inline-flex items-center gap-3 font-semibold text-foreground">
+                            <TeamIdentity
+                              name={entry.teamName}
+                              contained
+                              compact
+                              hideText
+                              logoClassName="size-5 object-contain"
+                              logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
+                            />
+                            <span className="leading-none">{entry.player}</span>
+                          </Link>
+                        </td>
+                        <td className="border-r border-border/50 p-4 text-center font-semibold text-primary">{entry.iglRating}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.teamAvgPts}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.wwcd}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.top5s}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.teamAvgSurvival}</td>
+                        <td className="p-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : currentStatisticsCategory === "mvp" || currentStatisticsCategory === "fmvp" ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-[#165ca8] px-5 py-4 text-center">
+                  <p className="text-lg font-semibold uppercase tracking-[0.08em] text-white">
+                    {statisticsPanelTitle}
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
+                <table className="w-full min-w-[1320px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <th className="border-r border-border/60 p-4 text-left">Rank</th>
+                      <th className="border-r border-border/60 p-4 text-left">Player</th>
+                      <th className="border-r border-border/60 p-4 text-center">M</th>
+                      <th className="border-r border-border/60 p-4 text-center">MVP Rating</th>
+                      <th className="border-r border-border/60 p-4 text-center">Finishes</th>
+                      <th className="border-r border-border/60 p-4 text-center">FPM</th>
+                      <th className="border-r border-border/60 p-4 text-center">Damage</th>
+                      <th className="border-r border-border/60 p-4 text-center">Avg. Survival</th>
+                      <th className="p-4 text-center">Knocks</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {selectedMvpStats.map((entry, index) => (
+                      <tr
+                        key={`bmps-2026-${currentStatisticsCategory}-${entry.rank}-${entry.player}`}
+                        className={`${index % 2 === 0 ? "bg-background/70" : "bg-secondary/10"} transition-colors hover:bg-secondary/20`}
+                      >
+                        <td className="border-r border-border/50 p-4 font-semibold text-foreground">#{entry.rank}</td>
+                        <td className="border-r border-border/50 p-4">
+                          <Link to={buildTeamLink(entry.teamName)} className="inline-flex items-center gap-3 font-semibold text-foreground">
+                            <TeamIdentity
+                              name={entry.teamName}
+                              contained
+                              compact
+                              hideText
+                              logoClassName="size-5 object-contain"
+                              logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
+                            />
+                            <span className="leading-none">{entry.player}</span>
+                          </Link>
+                        </td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.matches}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-semibold text-primary">{entry.mvpRating}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.finishes}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.fpm}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.damage}</td>
+                        <td className="border-r border-border/50 p-4 text-center font-medium text-muted-foreground">{entry.avgSurvival}</td>
+                        <td className="p-4 text-center font-medium text-muted-foreground">{entry.knocks}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isRankingsStatisticsStage ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
+            <p className="text-lg font-semibold uppercase tracking-[0.08em] text-foreground">
+              {activeStage?.name?.toUpperCase() || "STATISTICS"}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Tournament player and team leaderboards collected from the official stage rankings for this event.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {rankings.map((ranking) => (
+              <div key={ranking.title} className="rounded-xl border border-border bg-background/80 p-4 shadow-sm">
+                <p className="mb-3 text-[10px] uppercase tracking-wider text-primary">{ranking.title}</p>
+                <RankingTable ranking={ranking} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {!isStatisticsStage &&
+      currentSelectedGroup === "groups" &&
+      showsGroupedDrawTab ? (
+        <>
+          {isBmps2026SurvivalStage(activeStage?.name) ? (
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-5 shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-200">
+                Survival Stage Logic
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                These four groups are match lobbies. After the stage is played, the overall 32-team standings decide movement: top 8 advance to Semi Finals, ranks 9-32 are eliminated from BMPS 2026.
+              </p>
+            </div>
+          ) : null}
+          {isBmps2026SurvivalStage(activeStage?.name) ? (
+            <div className="grid overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:grid-cols-2 xl:grid-cols-4">
+              {groupedParticipants.map((section, index) => (
+                <div
+                  key={`${activeStage.name}-${section.group}`}
+                  className={`min-w-0 ${
+                    index < groupedParticipants.length - 1 ? "border-b" : ""
+                  } ${index % 2 === 0 ? "md:border-r" : ""} ${
+                    index < 2 ? "md:border-b" : "md:border-b-0"
+                  } ${
+                    index < groupedParticipants.length - 1 ? "xl:border-r" : "xl:border-r-0"
+                  } xl:border-b-0 border-border`}
+                >
+                  <div className="bg-[#165ca8] px-5 py-4 text-center">
+                    <p className="text-sm font-black uppercase tracking-[0.12em] text-white">
+                      Group {section.group}
+                    </p>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {section.entries.length > 0 ? (
+                      section.entries.map((entry, index) => (
+                        <div
+                          key={`${activeStage.name}-${section.group}-${entry.team || index}`}
+                          className="flex items-center gap-3 px-4 py-3"
+                        >
+                          {entry?.team ? (
+                            <Link
+                              to={buildTeamLink(entry.team)}
+                              className="flex min-w-0 flex-1 items-center text-left"
+                            >
+                              <TeamIdentity
+                                name={getDisplayTeamName(entry.team)}
+                                className="min-w-0 flex-1 text-left font-semibold text-foreground"
+                                containerClassName="w-full justify-start text-left"
+                                contained
+                                compact
+                                surfaceToneOverride="light"
+                              />
+                            </Link>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Team pending</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-5 text-sm text-muted-foreground">
+                        Teams pending
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="bg-[#165ca8] px-5 py-4 text-center">
+                <p className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                  {activeStage.name.toUpperCase()} GROUPS
+                </p>
+              </div>
+              <div className="max-h-[70vh] overflow-auto">
+              <table className="w-full min-w-[920px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-[#d7e5f7] dark:[&_thead_th]:bg-slate-800">
+                <thead>
+                  <tr className="border-b border-border bg-[#d7e5f7] text-sm font-black uppercase tracking-[0.06em] text-slate-800 dark:bg-slate-800 dark:text-slate-100">
+                    {groupedParticipants.map((section) => (
+                      <th
+                        key={`${activeStage.name}-${section.group}`}
+                        className="border-r border-border/60 px-6 py-4 text-center last:border-r-0"
+                      >
+                        Group {section.group}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: maxGroupRows }).map((_, rowIndex) => (
+                    <tr
+                      key={`${activeStage.name}-group-row-${rowIndex}`}
+                      className="border-b border-border bg-background last:border-b-0 dark:bg-slate-950"
+                    >
+                      {groupedParticipants.map((section) => {
+                        const entry = section.entries[rowIndex];
+                        return (
+                          <td
+                            key={`${activeStage.name}-${section.group}-${rowIndex}`}
+                            className="border-r border-border/60 px-5 py-4 align-middle last:border-r-0"
+                          >
+                            {entry ? (
+                              <div className="flex min-w-0 items-center gap-3">
+                                <Link to={buildTeamLink(entry.team)} className="inline-flex min-w-0 items-center gap-3">
+                                  <TeamIdentity
+                                    name={getDisplayTeamName(entry.team)}
+                                    className="font-semibold text-foreground"
+                                    contained
+                                    surfaceToneOverride="light"
+                                  />
+                                </Link>
+                                {entry.sourcePlaceholder ? (
+                                  <span className="shrink-0 rounded-full border border-violet-300 bg-violet-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 dark:border-violet-400/40 dark:text-violet-200">
+                                    {entry.sourcePlaceholder}
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            </div>
+          )}
+        </>

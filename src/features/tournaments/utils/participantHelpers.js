@@ -1,6 +1,6 @@
 import { getOrganizationMeta, normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { isBmps2026PromotionStage } from "@/lib/tournamentProgression";
-import { getPmwc2026MovementRule } from "@/lib/pmwc2026Progression";
+import { getPmwc2026MovementRule, isPmwcTournament } from "@/lib/pmwc2026Progression";
 import { getCleanStageLabel } from "@/features/tournaments/utils/stageHelpers";
 
 export { buildPhaseLabelFromEntry } from "@/features/tournaments/utils/stageHelpers";
@@ -74,8 +74,9 @@ export function getGrandFinalsPlacementTone(stageName, placement) {
 export function getGroupMovementRule(tournamentName, stageName, group, position, totalTeams) {
   const normalizedStage = String(stageName || "").trim().toLowerCase();
 
-  if (tournamentName === "PUBG Mobile World Cup 2026") {
-    return getPmwc2026MovementRule(stageName, group, position);
+  // PMWC 2024/2025/2026: Use unified movement rule
+  if (tournamentName?.startsWith("PUBG Mobile World Cup")) {
+    return getPmwc2026MovementRule(stageName, group, position, tournamentName);
   }
 
   if (normalizedStage === "round 4") {
@@ -297,9 +298,9 @@ export function getParticipantEntryPhases(entry) {
 export function getParticipantStageGroup(entry, stageName) {
   const stageKey = String(stageName || "").trim().toLowerCase();
   for (const phase of getParticipantEntryPhases(entry)) {
-    const match = String(phase || "").match(/^(.+?)\s*-\s*Group\s+([A-Z])$/i);
+    const match = String(phase || "").match(/^(.+?)\s*-\s*Group\s+(.+)$/i);
     if (match && match[1].trim().toLowerCase() === stageKey) {
-      return match[2].toUpperCase();
+      return match[2].trim();
     }
   }
   return null;

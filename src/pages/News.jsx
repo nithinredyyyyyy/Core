@@ -367,7 +367,7 @@ export default function News() {
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
 
-  const { data: articles = [] } = useQuery({
+  const { data: articles = [], isLoading } = useQuery({
     queryKey: ["news-published"],
     queryFn: () => base44.news.listPublished("-created_date", 120),
     staleTime: 60_000,
@@ -417,6 +417,15 @@ export default function News() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6">
+      {isLoading ? (
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">Loading news</p>
+          </div>
+        </div>
+      ) : (
+      <>
       <NewsHeader />
 
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -442,6 +451,8 @@ export default function News() {
           tournaments={tournaments}
         />
       </section>
+      </>
+      )}
     </div>
   );
 }

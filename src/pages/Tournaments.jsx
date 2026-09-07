@@ -82,15 +82,21 @@ function formatTournamentWindow(startDate, endDate) {
   return `${startLabel} - ${format(end, "MMM d, yyyy")}`;
 }
 
+function ordinalSuffix(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
+}
+
 function formatTournamentCardDates(startDate, endDate) {
   if (!startDate) return "TBA";
   const start = new Date(startDate);
   if (Number.isNaN(start.getTime())) return "TBA";
-  const startLabel = format(start, "d'th' MMM yyyy");
+  const startLabel = format(start, `d'${ordinalSuffix(start.getDate())}' MMM yyyy`);
   if (!endDate) return startLabel;
   const end = new Date(endDate);
   if (Number.isNaN(end.getTime())) return startLabel;
-  return `${startLabel} to ${format(end, "d'th' MMM yyyy")}`;
+  return `${startLabel} to ${format(end, `d'${ordinalSuffix(end.getDate())}' MMM yyyy`)}`;
 }
 
 function TournamentsHeader() {

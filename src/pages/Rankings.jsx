@@ -7,7 +7,6 @@ import {
   TrendingDown,
   Minus,
   Search,
-  Filter,
   Users,
   Building2,
   User,
@@ -21,20 +20,30 @@ import QueryError from "@/components/shared/QueryError";
 import { getTeamLogoByName } from "@/lib/teamLogos";
 
 const CLUB_SHORT_CODES = {
+  "AG.AL International": "AGAL",
   "Team Falcons": "FLCN",
+  "Team Vitality": "VIT",
   "Natus Vincere": "NAVI",
-  "Virtus.Pro": "VP",
-  "Team Vision": "VIS",
-  "ZETA DIVISION": "ZETA",
-  "Twisted Minds": "TM",
+  "Team Liquid": "TL",
   "Team Spirit": "TS",
+  "Virtus.pro": "VP",
+  "Aurora Gaming": "AUR",
+  "Twisted Minds": "TM",
+  T1: "T1",
+  "Team Vision": "VIS",
+  "100 Thieves": "100T",
+  "ZETA DIVISION": "ZETA",
+  "Nongshim RedForce": "NS",
+  "G2 Esports": "G2",
+  "FaZe Clan": "FAZE",
+  BIG: "BIG",
   "Weibo Gaming": "WBG",
-  "JD Gaming": "JDG",
-  ONIC: "ONIC",
-  "Saishunkan Sol Kumamoto": "SSK",
-  "Gen.G Esports": "GEN",
-  "Gentle Mates": "M8",
-  "MIBR.LOS": "MIBR",
+  "Karmine Corp": "KC",
+  FURIA: "FURIA",
+  REJECT: "RJT",
+  "Team Heretics": "TH",
+  DRX: "DRX",
+  "Spacestation Gaming": "SSG",
 };
 
 const INSIGHT_ICONS = {
@@ -146,12 +155,6 @@ function RankingHeader({ activeTab, searchQuery, onSearchChange }) {
             className="h-10 w-full rounded-full border border-border bg-background/50 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary sm:w-64"
           />
         </div>
-        <button
-          type="button"
-          className="flex h-10 items-center gap-2 rounded-full border border-border bg-background/50 px-4 text-sm hover:bg-secondary"
-        >
-          <Filter className="size-4" /> Filters
-        </button>
       </div>
     </div>
   );

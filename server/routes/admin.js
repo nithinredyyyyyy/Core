@@ -15,6 +15,7 @@ import {
   setSiteSetting,
 } from "../services/settings.js";
 import { getNormalizedTournament } from "../services/tournaments.js";
+import { clearPagePayloadCache } from "../services/pageCache.js";
 
 export const adminRouter = Router();
 
@@ -173,7 +174,7 @@ adminRouter.post("/admin/news/backfill", (req, res) => {
   }
 });
 
-adminRouter.put("/admin/bmps-2026-player-stats", (req, res) => {
+adminRouter.post("/admin/bmps-2026-player-stats", (req, res) => {
   if (!requireAdminAccess(req, res)) {
     return;
   }
@@ -190,5 +191,17 @@ adminRouter.put("/admin/bmps-2026-player-stats", (req, res) => {
     return res
       .status(500)
       .json({ error: error.message || "Failed to update BMPS 2026 stats" });
+  }
+});
+
+adminRouter.post("/admin/cache/clear", (req, res) => {
+  if (!requireAdminAccess(req, res)) {
+    return;
+  }
+  try {
+    clearPagePayloadCache();
+    return res.json({ success: true, message: "Server page cache cleared." });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Failed to clear cache" });
   }
 });

@@ -19,7 +19,7 @@ export default defineConfig({
     react(),
     process.env.DISABLE_PWA === "1" ? null : VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'images/**/*'],
+      includeAssets: ['favicon.ico', 'images/core-logo.png', 'images/**/*'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,

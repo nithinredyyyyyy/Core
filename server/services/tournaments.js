@@ -348,11 +348,13 @@ export function getNormalizedTournament(id) {
         ),
       },
     })),
-    participants: participants.map((participant) => ({
-      ...participant,
-      stage_entries: groupedEntries.get(participant.id) || [],
-      players: groupedPlayers.get(participant.id) || [],
-    })),
+    participants: Array.isArray(tournament.participants) && tournament.participants.length > 0
+      ? tournament.participants
+      : participants.map((participant) => ({
+          ...participant,
+          stage_entries: groupedEntries.get(participant.id) || [],
+          players: groupedPlayers.get(participant.id) || [],
+        })),
   };
 }
 

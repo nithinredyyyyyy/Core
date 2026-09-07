@@ -24,7 +24,7 @@ export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBo
                       tournamentName === "Battlegrounds Mobile India Pro Series 2026" &&
                       shouldOpenBmps2026GroupsByDefault(stage.name)
                         ? "groups"
-                        : tournamentName === "PUBG Mobile World Cup 2026" && groups.length > 0
+                        : tournamentName?.startsWith("PUBG Mobile World Cup") && groups.length > 0
                         ? groups[0]
                         : "overall",
                   },

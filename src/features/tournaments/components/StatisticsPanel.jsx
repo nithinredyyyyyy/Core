@@ -256,24 +256,60 @@ function MvpStatistics({ title, rows }) {
 }
 
 function RankingsStatistics({ activeStage, rankings }) {
+  const [activeRanking, setActiveRanking] = React.useState(0);
+
+  if (rankings.length <= 1) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
+          <p className="text-lg font-semibold uppercase tracking-[0.08em] text-foreground">
+            {activeStage?.name?.toUpperCase() || "STATISTICS"}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Tournament player and team leaderboards collected from the official stage rankings for this event.
+          </p>
+        </div>
+        <div className="space-y-3">
+          {rankings.map((ranking) => (
+            <div key={ranking.title} className="rounded-xl border border-border bg-background/80 p-4 shadow-sm">
+              <p className="mb-3 text-[10px] uppercase tracking-wider text-primary">{ranking.title}</p>
+              <RankingTable ranking={ranking} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
-        <p className="text-lg font-semibold uppercase tracking-[0.08em] text-foreground">
-          {activeStage?.name?.toUpperCase() || "STATISTICS"}
-        </p>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          Tournament player and team leaderboards collected from the official stage rankings for this event.
-        </p>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="bg-brand-navy px-5 py-4 text-center">
+          <p className="text-lg font-semibold uppercase tracking-[0.08em] text-white">
+            {activeStage?.name?.toUpperCase() || "STATISTICS"}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 border-b border-border px-5 py-3">
+          {rankings.map((ranking, index) => (
+            <button
+              key={ranking.title}
+              type="button"
+              onClick={() => setActiveRanking(index)}
+              className={`rounded-t-xl border-b-2 px-2 py-2 text-sm font-semibold transition-colors md:px-3 ${
+                activeRanking === index
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {ranking.title.replace(/^Overall\s+/i, "").replace(/\s+Rankings$/i, "")}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {rankings.map((ranking) => (
-          <div key={ranking.title} className="rounded-xl border border-border bg-background/80 p-4 shadow-sm">
-            <p className="mb-3 text-[10px] uppercase tracking-wider text-primary">{ranking.title}</p>
-            <RankingTable ranking={ranking} />
-          </div>
-        ))}
+      <div className="rounded-xl border border-border bg-background/80 p-4 shadow-sm">
+        <p className="mb-3 text-[10px] uppercase tracking-wider text-primary">{rankings[activeRanking].title}</p>
+        <RankingTable ranking={rankings[activeRanking]} />
       </div>
     </div>
   );

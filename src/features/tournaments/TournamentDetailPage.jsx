@@ -34,6 +34,7 @@ import {
   isBmps2026Tournament,
 } from "@/lib/tournamentParticipants";
 import { getTournamentLogo } from "@/features/tournaments/utils/tournamentBranding";
+import { getPlayerPhotoByIgn } from "@/lib/playerPhotos";
 import { getTournamentAllocations } from "@/features/tournaments/utils/tournamentAllocations";
 import {
   BMPS_2026_STYLE_STAGE_TOURNAMENTS,
@@ -152,7 +153,7 @@ function EventBriefBody({ tournament, spotlightStage, allocations }) {
   return (
     <div className="space-y-4">
       {tournament.format_overview && (
-        <p className="text-sm leading-relaxed text-muted-foreground">{tournament.format_overview}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{tournament.format_overview}</p>
       )}
       {tournament.status !== "completed" && spotlightStage?.summary && (
         <div className="rounded-xl border border-border bg-background/80 px-5 py-4">
@@ -366,6 +367,7 @@ function PrizePoolItem({ tournament, prizeColumns }) {
                 <th className="px-4 py-3 text-left">Place</th>
                 <th className="px-4 py-3 text-left">Team</th>
                 {prizeColumns.hasInr && <th className="px-4 py-3 text-right">INR</th>}
+                {prizeColumns.hasCny && <th className="px-4 py-3 text-right">CNY</th>}
                 {prizeColumns.hasUsd && <th className="px-4 py-3 text-right">USD</th>}
                 {prizeColumns.hasQualifiesTo && <th className="px-4 py-3 text-right">Qualifies To</th>}
               </tr>
@@ -391,6 +393,11 @@ function PrizePoolItem({ tournament, prizeColumns }) {
                     {prizeColumns.hasInr && (
                       <td className="px-4 py-3 text-right text-primary font-semibold">
                         {entry.inr ? `INR ${entry.inr}` : "-"}
+                      </td>
+                    )}
+                    {prizeColumns.hasCny && (
+                      <td className="px-4 py-3 text-right text-primary font-semibold">
+                        {entry.cny ? `${entry.cny}` : "-"}
                       </td>
                     )}
                     {prizeColumns.hasUsd && (
@@ -518,72 +525,124 @@ function ChampionCard({
   championTeamName,
   championDisplayName,
   championLogoOverride,
+  tournament,
+  tournamentLogo,
 }) {
+  const isBgms = /bgms|masters\s*series/i.test(tournament?.name);
+  const publisherLogo = isBgms ? "/images/NODWIN.png" : "/images/Krafton.png";
+  const players = (championRoster || []).slice(0, 5);
+
   return (
-    <div className="relative overflow-hidden rounded-[32px] border border-border bg-card p-6 shadow-xl sm:p-8">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
-
-      <div className="relative z-10 mb-8 flex items-center gap-3">
-        <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
-          <Trophy className="size-6" />
+    <div className="poster-root">
+      <div style={{
+        width: "min(100%, 480px)", height: "640px", position: "relative", overflow: "hidden",
+        fontFamily: "'Inter', sans-serif", borderRadius: "20px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)",
+      }}>
+        {/* BG: Gold gradient + grid */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(180deg, #D4AF37 0%, #D4AF37cc 15%, #D4AF3766 30%, #D4AF3722 45%, #f0ece8 65%, #f2eeeb 85%, #f5f2ef 100%)",
+          }} />
+          <div style={{
+            position: "absolute", top: "-120px", left: "50%", transform: "translateX(-50%)",
+            width: "400px", height: "400px",
+            background: "radial-gradient(ellipse, rgba(212,175,55,0.25), transparent 65%)",
+          }} />
+          <div style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }} />
         </div>
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Tournament</p>
-          <h2 className="text-sm font-black text-foreground">Champion</h2>
+
+        {/* Publisher + Core logos */}
+        <div style={{ position: "absolute", top: "16px", left: "18px", zIndex: 10 }}>
+          <img src={publisherLogo} alt="Publisher" style={{ height: "32px", width: "auto", objectFit: "contain" }} />
         </div>
-      </div>
+        <div style={{ position: "absolute", top: "16px", right: "18px", zIndex: 10 }}>
+          <img src="/images/core-logo.png" alt="Core Esports" style={{ height: "32px", width: "auto", objectFit: "contain" }} />
+        </div>
 
-      <div className="relative z-10 space-y-6">
-        {championEntry && (
-          <div className="flex flex-col">
-            {championImageSrc && (
-              <img
-                src={championImageSrc}
-                alt={`${championEntry.fullTeam || championEntry.team} champion celebration`}
-                className="mb-8 aspect-[4/3] w-full rounded-[24px] object-cover object-top shadow-2xl"
-                loading="lazy"
-              />
-            )}
-
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="relative flex-shrink-0">
-                <div className="absolute left-1/2 top-1/2 size-32 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-amber-500/20 blur-2xl" />
-                <div className="relative z-10 transition-transform duration-500 hover:scale-105">
-                  {championLogoOverride ? (
-                    <img
-                      src={championLogoOverride}
-                      alt={`${championTeamName} champion logo`}
-                      className="h-32 w-32 object-contain drop-shadow-[0_0_20px_rgba(244,196,0,0.6)]"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <TeamIdentity
-                      name={championTeamName}
-                      className="font-heading text-4xl font-bold tracking-wide text-amber-400"
-                      compact
-                      plain
-                      hideText
-                      containerClassName="size-32"
-                      logoClassName="h-32 w-32 object-contain drop-shadow-[0_0_20px_rgba(244,196,0,0.6)]"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-center sm:pt-2 text-center sm:text-left">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/80">Winning Team</p>
-                <p className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">{championDisplayName}</p>
-
-                {championRoster?.length ? (
-                  <div className="mt-4 text-sm font-semibold text-muted-foreground">
-                    <span className="mr-2 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/60">Roster</span>
-                    {championRoster.join(" • ")}
-                  </div>
-                ) : null}
-              </div>
-            </div>
+        {/* Champion image or player slices */}
+        {championImageSrc ? (
+          <div style={{ position: "absolute", top: "60px", left: "16px", right: "16px", bottom: "200px", zIndex: 2, overflow: "hidden", borderRadius: "8px" }}>
+            <img
+              src={championImageSrc}
+              alt={`${championTeamName} champion`}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+            />
           </div>
-        )}
+        ) : players.length > 0 ? (
+          <div style={{ position: "absolute", top: "60px", left: "16px", right: "16px", bottom: "200px", display: "flex", zIndex: 2, overflow: "hidden", borderRadius: "8px" }}>
+            {players.map((player, pi) => {
+              const name = typeof player === "string" ? player : player.name || player.ign || "";
+              const photo = getPlayerPhotoByIgn(name);
+              return (
+                <React.Fragment key={pi}>
+                  <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                    {photo ? (
+                      <img
+                        src={photo}
+                        alt={name}
+                        style={{
+                          width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top",
+                          filter: "contrast(1.15) brightness(0.95) saturate(0.85) sepia(0.15) hue-rotate(-5deg)",
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: "100%", height: "100%",
+                        background: "linear-gradient(180deg, rgba(212,175,55,0.3), #111)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "28px", fontWeight: 900, color: "rgba(212,175,55,0.6)",
+                      }}>
+                        {name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{
+                      position: "absolute", bottom: 0, left: 0, right: 0, height: "24px",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)",
+                      fontFamily: "'Inter', sans-serif", fontSize: "8px", fontWeight: 800,
+                      color: "#fff", letterSpacing: "0.15em", textTransform: "uppercase", zIndex: 10,
+                    }}>
+                      {name}
+                    </div>
+                  </div>
+                  {pi < players.length - 1 && (
+                    <div style={{ width: "2px", background: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Team logo + name */}
+        <div style={{ position: "absolute", bottom: "100px", left: 0, right: 0, height: "100px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "6px", zIndex: 3 }}>
+          {championLogoOverride ? (
+            <img src={championLogoOverride} alt={championTeamName} style={{ width: "52px", height: "52px", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }} />
+          ) : (
+            <TeamIdentity name={championTeamName} compact plain hideText containerClassName="!size-[52px]" logoClassName="!w-[52px] !h-[52px] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]" />
+          )}
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#111", letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {championTeamName}
+          </h1>
+        </div>
+
+        {/* CHAMPIONS label + tournament */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "100px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", zIndex: 3, padding: "0 24px" }}>
+          <h2 style={{ fontSize: "46px", fontWeight: 900, color: "#111", letterSpacing: "-0.02em", lineHeight: 0.9, textTransform: "uppercase", textAlign: "center" }}>
+            CHAMPIONS
+          </h2>
+          <div style={{ marginTop: "6px" }}>
+            <span style={{ fontSize: "8px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+              {tournament?.name || "Tournament"}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -709,12 +768,17 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
       }));
 
     if (normalizedParticipants.length > 0) {
-      const normalizedEntries = buildNormalizedParticipantEntries(normalizedParticipants);
-      if (normalizedEntries.length >= rawParticipantEntries.length) {
-        return cleanEntries(normalizedEntries);
+      const hasDbFormat = normalizedParticipants.some(
+        (p) => p.team && typeof p.team === "object" && p.team?.name,
+      );
+      if (hasDbFormat) {
+        const normalizedEntries = buildNormalizedParticipantEntries(normalizedParticipants);
+        if (normalizedEntries.length >= rawParticipantEntries.length) {
+          return cleanEntries(normalizedEntries);
+        }
       }
 
-      return cleanEntries(rawParticipantEntries);
+      return cleanEntries(normalizedParticipants);
     }
 
     return cleanEntries(rawParticipantEntries);
@@ -917,7 +981,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         ? "/images/bmps2025-champion.webp"
       : tournament.name === "Battlegrounds Mobile India Pro Series 2026"
         ? "/images/bmps2026-champion.webp"
-      : tournament.name === "PUBG Mobile World Cup 2026"
+      : tournament.name?.startsWith("PUBG Mobile World Cup")
         ? "/images/pmwc2026-champion.jpg"
       : null;
   const championRoster =
@@ -950,7 +1014,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
     16,
   );
   const participantSections = useMemo(() => {
-    if (tournament.name === "Battlegrounds Mobile India Pro Series 2026" || tournament.name === "PUBG Mobile World Cup 2026") {
+    if (tournament.name === "Battlegrounds Mobile India Pro Series 2026" || tournament.name === "BGMI Masters Series Season 5" || tournament.name?.startsWith("PUBG Mobile World Cup")) {
       return [
         {
           phase: "Teams",
@@ -1035,7 +1099,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
   }, [dbTransfers, participantEntries, players, teams]);
   const featuredFacts = useMemo(() => [
     {
-      label: "Format",
+      label: "Game",
       value: tournament.game || "BGMI",
       icon: Award,
       variant: "blue",
@@ -1082,6 +1146,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
       : [];
     return {
       hasInr: rows.some((entry) => entry?.inr),
+      hasCny: rows.some((entry) => entry?.cny),
       hasUsd: rows.some((entry) => entry?.usd),
       hasQualifiesTo: rows.some((entry) => entry?.qualifiesTo),
     };
@@ -1120,6 +1185,8 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           championTeamName={championTeamName}
           championDisplayName={championDisplayName}
           championLogoOverride={championLogoOverride}
+          tournament={tournament}
+          tournamentLogo={tournamentLogo}
         />
       </div>
 

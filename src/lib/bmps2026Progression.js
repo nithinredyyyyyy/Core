@@ -515,6 +515,7 @@ export function resolveBmps2026ParticipantState({
   matchResults = [],
   participantEntries = null,
   stageNames = null,
+  stageStandings = null,
 }) {
   const baseEntries = Array.isArray(participantEntries)
     ? participantEntries
@@ -542,6 +543,7 @@ export function resolveBmps2026ParticipantState({
         matchResults,
         requestedStage: stageName,
         participantEntries: baseEntries,
+        stageStandings,
       }).standings,
     }));
 
@@ -568,6 +570,7 @@ export function resolveBmps2026ParticipantState({
       matchResults,
       requestedStage: stageName,
       participantEntries: resolvedEntries,
+      stageStandings,
     });
 
     const stageBoard = {

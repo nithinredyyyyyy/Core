@@ -1,11 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Trophy, BarChart3, Star, Newspaper } from "lucide-react";
+import { Home, Trophy, Users, Star, Newspaper } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Home", path: "/", icon: Home },
   { label: "Tournaments", path: "/tournaments", icon: Trophy },
-  { label: "Standings", path: "/leaderboard", icon: BarChart3 },
+  { label: "Teams", path: "/teams", icon: Users },
   { label: "Rankings", path: "/rankings", icon: Star },
   { label: "News", path: "/news", icon: Newspaper },
 ];
