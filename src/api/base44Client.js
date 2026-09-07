@@ -84,15 +84,6 @@ function normalizeEntityResponse(entityName, payload) {
   return normalizeEntityRecord(entityName, payload);
 }
 
-function getStoredAdminKey() {
-  if (typeof window === "undefined") return "";
-  try {
-    return window.localStorage.getItem("core_admin_key") || "";
-  } catch {
-    return "";
-  }
-}
-
 function getStoredAuthSession() {
   if (typeof window === "undefined") {
     return {
@@ -188,13 +179,11 @@ function buildApiUrl(path) {
 
 async function request(path, options = {}) {
   const { headers: requestHeaders = {}, ...fetchOptions } = options;
-  const adminKey = getStoredAdminKey();
   const authSession = getStoredAuthSession();
 
   const response = await fetch(buildApiUrl(path), {
     headers: {
       "Content-Type": "application/json",
-      ...(adminKey ? { "X-Core-Admin-Key": adminKey } : {}),
       ...(authSession.token
         ? { "X-StageCore-Auth-Token": authSession.token }
         : {}),
@@ -375,12 +364,10 @@ export const base44 = {
       return clearStoredAuthSession();
     },
     async me() {
-      const adminKey = getStoredAdminKey();
       const authSession = getStoredAuthSession();
       const response = await fetch(buildApiUrl("/api/auth/me"), {
         headers: {
           "Content-Type": "application/json",
-          ...(adminKey ? { "X-Core-Admin-Key": adminKey } : {}),
           ...(authSession.token
             ? { "X-StageCore-Auth-Token": authSession.token }
             : {}),

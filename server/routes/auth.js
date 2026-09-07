@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
 import {
   createAuthSession,
   GOOGLE_CLIENT_ID,
@@ -8,6 +9,8 @@ import {
 } from "../services/auth.js";
 
 export const authRouter = Router();
+
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 authRouter.get("/auth/me", (req, res) => {
   const auth = resolveRequestAuth(req);
@@ -18,8 +21,9 @@ authRouter.get("/auth/me", (req, res) => {
 });
 
 authRouter.get("/auth/config", (_req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
   return res.json({
-    googleClientId: GOOGLE_CLIENT_ID || null,
+    googleClientId: isProduction ? null : GOOGLE_CLIENT_ID || null,
     googleEnabled: Boolean(GOOGLE_CLIENT_ID),
   });
 });
@@ -32,35 +36,33 @@ authRouter.post("/auth/google", async (req, res) => {
   try {
     const payload = payloadSchema.parse(req.body || {});
 
-    if (!GOOGLE_CLIENT_ID) {
+    if (!GOOGLE_CLIENT_ID || !googleClient) {
       return res.status(500).json({
         error: "Google sign-in is not configured",
         code: "google_signin_not_configured",
       });
     }
 
-    const verifyResponse = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(payload.credential)}`,
-    );
+    const ticket = await googleClient.verifyIdToken({
+      idToken: payload.credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
 
-    if (!verifyResponse.ok) {
+    const googleProfile = ticket.getPayload();
+
+    if (!googleProfile) {
       return res.status(401).json({
         error: "Invalid Google credential",
         code: "google_signin_invalid_token",
       });
     }
 
-    const googleProfile = await verifyResponse.json();
-    const now = Math.floor(Date.now() / 1000);
     if (
-      String(googleProfile?.aud || "").trim() !== GOOGLE_CLIENT_ID ||
-      String(googleProfile?.email_verified || "").toLowerCase() !== "true" ||
-      String(googleProfile?.iss || "").trim() !== "https://accounts.google.com" ||
-      (googleProfile.exp && Number(googleProfile.exp) < now)
+      googleProfile.email_verified !== true
     ) {
       return res.status(401).json({
-        error: "Google credential could not be verified",
-        code: "google_signin_verification_failed",
+        error: "Google email not verified",
+        code: "google_signin_email_not_verified",
       });
     }
 

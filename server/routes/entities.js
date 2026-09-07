@@ -24,7 +24,6 @@ const PUBLIC_ENTITY_GET = new Set([
   "Player",
   "Match",
   "MatchResult",
-  "NewsArticle",
   "TransferWindow",
 ]);
 
@@ -46,13 +45,6 @@ entitiesRouter.get("/entities/:entity", (req, res) => {
       query = JSON.parse(req.query.q);
     } catch {
       return res.status(400).json({ error: "Invalid q filter" });
-    }
-  }
-
-  if (entityName === "NewsArticle") {
-    const auth = resolveRequestAuth(req);
-    if (!auth.isAuthenticated || auth.user?.role !== "admin") {
-      query = { ...query, publication_status: "published" };
     }
   }
 

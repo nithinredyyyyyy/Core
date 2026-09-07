@@ -116,26 +116,6 @@ function resolveAppAuthSession(req) {
 }
 
 export function resolveRequestAuth(req) {
-  const configuredAdminKey = String(process.env.CORE_ADMIN_KEY || "").trim();
-  const providedAdminKey = String(req.headers["x-core-admin-key"] || "").trim();
-
-  if (configuredAdminKey && providedAdminKey) {
-    const configuredBuf = Buffer.from(configuredAdminKey, "utf8");
-    const providedBuf = Buffer.from(providedAdminKey, "utf8");
-    if (configuredBuf.length === providedBuf.length && timingSafeEqual(configuredBuf, providedBuf)) {
-      return {
-        isAuthenticated: true,
-        user: {
-          id: "token-admin",
-          email: "admin@core.remote",
-          full_name: "Remote Admin",
-          role: "admin",
-          auth_method: "admin_key",
-        },
-      };
-    }
-  }
-
   const appSession = resolveAppAuthSession(req);
   if (appSession?.user) {
     return {
