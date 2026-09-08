@@ -77,7 +77,7 @@ entitiesRouter.post("/entities/:entity", (req, res) => {
         .status(400)
         .json({ error: "Invalid payload", issues: error.issues });
     }
-    throw error;
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -103,7 +103,7 @@ entitiesRouter.post("/entities/:entity/bulk", (req, res) => {
         .status(400)
         .json({ error: "Invalid bulk payload", issues: error.issues });
     }
-    throw error;
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -144,7 +144,7 @@ entitiesRouter.put("/entities/:entity/:id", (req, res) => {
         .status(400)
         .json({ error: "Invalid payload", issues: error.issues });
     }
-    throw error;
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

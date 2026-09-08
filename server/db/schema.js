@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { logger } from "../services/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -186,7 +187,7 @@ function applySqlMigrations() {
 try {
   applySqlMigrations();
 } catch (migrationError) {
-  console.error("Migration warning (non-fatal):", migrationError?.message || migrationError);
+  logger.error("Migration warning (non-fatal)", { error: migrationError?.message || migrationError });
 }
 
 const ensureColumn = (table, column, definition) => {
@@ -196,7 +197,7 @@ const ensureColumn = (table, column, definition) => {
       db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
     }
   } catch (e) {
-    console.error(`ensureColumn warning (${table}.${column}):`, e?.message);
+    logger.warn(`ensureColumn warning (${table}.${column})`, { error: e?.message });
   }
 };
 
@@ -232,7 +233,7 @@ try {
         is_auto_ingested = COALESCE(is_auto_ingested, 0)
   `);
 } catch (e) {
-  console.error("news_articles update warning (non-fatal):", e?.message);
+  logger.warn("news_articles update warning (non-fatal)", { error: e?.message });
 }
 
 export const entityConfigs = {

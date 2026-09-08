@@ -20,6 +20,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "test:unit": "node --test \"tests/unit/*.test.js\"",
+    "test:integration": "node --test tests/api.test.js",
+    "test": "npm run test:unit && npm run test:integration",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -81,8 +83,6 @@
     "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^6.26.0",
     "recharts": "^2.15.4",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",

@@ -4,7 +4,6 @@ import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createServer } from "node:http";
-import { Server } from "socket.io";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -116,16 +115,24 @@ const entityBulkLimiter = rateLimit({
   message: { error: "Too many bulk requests, please try again later" },
 });
 
+const publicLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+
 app.use("/api", healthRouter);
 app.use("/api", authLimiter, authRouter);
-app.use("/api", homeRouter);
-app.use("/api", newsRouter);
+app.use("/api", publicLimiter, homeRouter);
+app.use("/api", publicLimiter, newsRouter);
 app.use("/api", searchLimiter, searchRouter);
-app.use("/api", siteRouter);
-app.use("/api", tournamentsRouter);
+app.use("/api", publicLimiter, siteRouter);
+app.use("/api", publicLimiter, tournamentsRouter);
 app.use("/api", adminLimiter, adminRouter);
 app.use("/api", entityBulkLimiter, entitiesRouter);
-app.use("/api/pages", pagesRouter);
+app.use("/api/pages", publicLimiter, pagesRouter);
 
 app.use(
   express.static(distDir, {
@@ -166,25 +173,13 @@ app.use((error, _req, res, _next) => {
 });
 
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (ALLOWED_CORS_ORIGINS.has(origin)) return callback(null, true);
-      return callback(new Error("Socket.IO CORS origin not allowed"));
-    },
-    methods: ["GET", "POST"],
-  },
-});
-
-io.on("connection", (socket) => {
-  socket.on("disconnect", () => {});
-});
-
-app.set("io", io);
 
 if (process.env.NODE_ENV !== "test") {
   httpServer.listen(PORT, () => {});
 }
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
 
 export { app, httpServer };

@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { db, runInTransaction } from "./schema.js";
 import { normalizeLookupValue, canonicalizeTeamLookupValue, TEAM_ALIAS_VARIANTS } from "./teamAliases.js";
+import { logger } from "../services/logger.js";
 
 export const parseJsonField = (value, fallback = []) => {
   if (!value) return fallback;
   try {
     return JSON.parse(value);
   } catch (error) {
-    console.error(`[db] Failed to parse JSON field:`, error.message);
+    logger.error("Failed to parse JSON field", { error: error.message });
     return fallback;
   }
 };
@@ -150,7 +151,7 @@ export function ensureParticipantTeams() {
   }
 
   if (createdNames.size > 0) {
-    console.log(`[participant-sync] created ${createdNames.size} missing team(s): ${[...createdNames].join(", ")}`);
+    logger.info(`[participant-sync] created ${createdNames.size} missing team(s): ${[...createdNames].join(", ")}`);
   }
 }
 
