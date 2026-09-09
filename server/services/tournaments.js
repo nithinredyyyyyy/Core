@@ -362,7 +362,7 @@ export function getNormalizedTournamentSafe(tournamentId) {
   if (!tournamentId) return null;
   try {
     return getNormalizedTournament(tournamentId);
-  } catch {
+  } catch (error) {
     return null;
   }
 }

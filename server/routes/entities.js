@@ -14,6 +14,7 @@ import {
 } from "../services/entities.js";
 import { applyListQuery } from "../services/listQuery.js";
 import { clearPagePayloadCache } from "../services/pageCache.js";
+import { clearSearchCache } from "../services/search.js";
 import { validateEntityPayload } from "../services/schemas.js";
 
 export const entitiesRouter = Router();
@@ -70,6 +71,7 @@ entitiesRouter.post("/entities/:entity", (req, res) => {
     const payload = validateEntityPayload(entityName, req.body, "create");
     const created = insertRecord(entityName, payload);
     clearPagePayloadCache();
+    clearSearchCache();
     return res.status(201).json(created);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -96,6 +98,7 @@ entitiesRouter.post("/entities/:entity/bulk", (req, res) => {
     );
     const created = insertRecords(entityName, validatedPayload);
     clearPagePayloadCache();
+    clearSearchCache();
     return res.status(201).json(created);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -137,6 +140,7 @@ entitiesRouter.put("/entities/:entity/:id", (req, res) => {
     const payload = validateEntityPayload(entityName, req.body, "update");
     const updated = updateRecord(entityName, req.params.id, payload);
     clearPagePayloadCache();
+    clearSearchCache();
     return res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -155,7 +159,12 @@ entitiesRouter.delete("/entities/:entity/:id", (req, res) => {
   if (!ensureEntityWriteAccess(req, res, req.params.entity)) {
     return;
   }
-  const ok = deleteRecord(req.params.entity, req.params.id);
-  clearPagePayloadCache();
-  return res.json({ ok });
+  try {
+    const ok = deleteRecord(req.params.entity, req.params.id);
+    clearPagePayloadCache();
+    clearSearchCache();
+    return res.json({ ok });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });

@@ -143,9 +143,9 @@ adminRouter.post("/admin/news/import", async (req, res) => {
   try {
     const result = await importNewsFromSources({
       sourceIds: Array.isArray(req.body?.source_ids) ? req.body.source_ids : [],
-      limitPerSource: Number.isFinite(Number(req.body?.limit_per_source))
+      limitPerSource: Math.min(Number.isFinite(Number(req.body?.limit_per_source))
         ? Number(req.body.limit_per_source)
-        : 8,
+        : 8, 50),
       manualUrl: req.body?.manual_url,
       manualSourceName: req.body?.manual_source_name,
       manualSourceType: req.body?.manual_source_type,

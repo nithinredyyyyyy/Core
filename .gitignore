@@ -20,7 +20,6 @@ node_modules
 dist
 dist-ssr
 *.local
-*.db
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
@@ -37,7 +36,6 @@ server/data/
 *.sln
 *.sw?
 
-.env
 .vite
 
 # Local temp/debug payloads

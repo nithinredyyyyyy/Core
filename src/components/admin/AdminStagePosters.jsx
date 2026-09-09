@@ -41,7 +41,7 @@ export default function AdminStagePosters() {
     queryFn: () => base44.entities.Tournament.list("-created_date", 100),
   });
 
-  const posterTournaments = useMemo(() => tournaments, [tournaments]);
+  const posterTournaments = tournaments;
 
   const activeTournament = useMemo(() => {
     if (selectedTournamentId) {
@@ -75,7 +75,7 @@ export default function AdminStagePosters() {
 
   const { data: newsArticles = [] } = useQuery({
     queryKey: ["admin-stage-posters-news"],
-    queryFn: () => base44.entities.News.list("-created_date", 10),
+    queryFn: () => base44.entities.NewsArticle.list("-created_date", 10),
   });
 
   const { data: matches = [] } = useQuery({

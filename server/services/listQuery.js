@@ -183,7 +183,7 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
 
   for (const [key, value] of Object.entries(query)) {
     if (!allowedFilterColumns.has(key)) {
-      throw new Error(`Unsupported filter key: ${key}`);
+      throw new Error("Invalid filter parameter");
     }
     whereClauses.push(`${key} = ?`);
     params.push(serializeFilterValue(config, key, value));

@@ -5,7 +5,7 @@ import pluginReactHooks from "eslint-plugin-react-hooks";
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "logs/**", "server/data/**"],
+    ignores: ["dist/**", "node_modules/**", "logs/**", "server/data/**", "tools/**"],
   },
   {
     files: ["src/**/*.{js,mjs,cjs,jsx}"],
@@ -32,7 +32,7 @@ export default [
       "react-hooks": pluginReactHooks,
     },
     rules: {
-      "no-unused-vars": "off",
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "no-undef": "error",
       "max-lines": ["warn", { max: 500, skipBlankLines: true, skipComments: true }],
       "react/jsx-uses-vars": "error",
@@ -44,6 +44,7 @@ export default [
         { ignore: ["cmdk-input-wrapper", "toast-close"] },
       ],
       "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];

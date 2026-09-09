@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, randomUUID, timingSafeEqual, createHash } from "node:crypto";
 import { entityConfigs } from "../db.js";
 import { splitTrimmedValues } from "./schemas.js";
 import { logger } from "./logger.js";
@@ -17,6 +17,7 @@ if (isProduction && !AUTH_SESSION_SECRET) {
 if (!AUTH_SESSION_SECRET) {
   logger.warn("CORE_AUTH_SESSION_SECRET is not set. Using random secret — sessions will not persist across restarts.");
 }
+const EFFECTIVE_SECRET = AUTH_SESSION_SECRET || randomBytes(32).toString("hex");
 
 export const GOOGLE_CLIENT_ID = String(
   process.env.GOOGLE_CLIENT_ID || "",
@@ -32,6 +33,20 @@ const ADMIN_EMAILS = new Set(
 
 const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
+const revokedTokens = new Set();
+
+export function revokeToken(tokenHash) {
+  revokedTokens.add(tokenHash);
+  if (revokedTokens.size > 10000) {
+    const first = revokedTokens.values().next().value;
+    revokedTokens.delete(first);
+  }
+}
+
+export function isTokenRevoked(tokenHash) {
+  return revokedTokens.has(tokenHash);
+}
+
 function encodeTokenSegment(value) {
   return Buffer.from(String(value), "utf8").toString("base64url");
 }
@@ -41,7 +56,7 @@ function decodeTokenSegment(value) {
 }
 
 function signAuthSessionPayload(encodedPayload) {
-  return createHmac("sha256", AUTH_SESSION_SECRET)
+  return createHmac("sha256", EFFECTIVE_SECRET)
     .update(String(encodedPayload))
     .digest("base64url");
 }
@@ -99,6 +114,11 @@ function resolveAppAuthSession(req) {
       return null;
     }
 
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    if (revokedTokens.has(tokenHash)) {
+      return null;
+    }
+
     return {
       token: rawToken,
       user: {
@@ -143,7 +163,7 @@ export function requireAdminAccess(req, res) {
     });
     return false;
   }
-  if (auth.user?.role !== "admin") {
+  if (!isConfiguredAdminEmail(auth.user?.email) && auth.user?.role !== "admin") {
     res.status(403).json({
       error: "Admin permission required",
       code: "admin_required",
@@ -156,7 +176,11 @@ export function requireAdminAccess(req, res) {
 
 export function ensureEntityWriteAccess(req, res, entityName) {
   if (!ADMIN_WRITE_ENTITIES.has(entityName)) {
-    return null;
+    res.status(403).json({
+      error: "Entity not writable",
+      code: "entity_not_writable",
+    });
+    return false;
   }
 
   const auth = resolveRequestAuth(req);

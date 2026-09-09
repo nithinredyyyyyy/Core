@@ -255,9 +255,6 @@ function createEntityClient(entityName) {
     delete(id) {
       return request(`${basePath}/${id}`, { method: "DELETE" });
     },
-    deleteMany() {
-      // Stub: not implemented for the custom API yet.
-    },
     restore(id) {
       return this.get(id);
     },
@@ -394,9 +391,6 @@ export const base44 = {
     },
     logout() {
       clearStoredAuthSession();
-    },
-    redirectToLogin() {
-      // Stub: no-op.
     },
   },
 };

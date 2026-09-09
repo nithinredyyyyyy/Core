@@ -8,7 +8,7 @@ import { VitePWA } from "vite-plugin-pwa";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  logLevel: "error", // Suppress warnings, only show errors
+  logLevel: "warn",
   cacheDir: path.resolve(__dirname, "node_modules/.vite"),
   resolve: {
     alias: {
@@ -22,7 +22,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'images/core-logo.png', 'images/**/*'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -95,7 +95,7 @@ export default defineConfig({
     })
   ].filter(Boolean),
   server: {
-    host: true,
+    host: "localhost",
     proxy: {
       "/api": {
         target: "http://localhost:4000",

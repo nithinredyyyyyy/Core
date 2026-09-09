@@ -191,10 +191,14 @@ try {
 }
 
 const ensureColumn = (table, column, definition) => {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table) || !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(column)) {
+    logger.warn(`ensureColumn: invalid identifier (${table}.${column})`);
+    return;
+  }
   try {
-    const existing = db.prepare(`PRAGMA table_info(${table})`).all();
+    const existing = db.prepare(`PRAGMA table_info("${table}")`).all();
     if (!existing.some((entry) => entry.name === column)) {
-      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+      db.exec(`ALTER TABLE "${table}" ADD COLUMN "${column}" ${definition}`);
     }
   } catch (e) {
     logger.warn(`ensureColumn warning (${table}.${column})`, { error: e?.message });
@@ -367,7 +371,15 @@ export function normalizeRecord(config, row) {
   if (!row) return null;
   const normalized = { ...row };
   for (const key of config.jsonFields) {
-    normalized[key] = normalized[key] ? JSON.parse(normalized[key]) : [];
+    if (normalized[key]) {
+      try {
+        normalized[key] = JSON.parse(normalized[key]);
+      } catch {
+        normalized[key] = [];
+      }
+    } else {
+      normalized[key] = [];
+    }
   }
   if (Object.prototype.hasOwnProperty.call(normalized, "featured")) {
     normalized.featured = Boolean(normalized.featured);
