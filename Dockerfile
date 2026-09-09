@@ -5,7 +5,7 @@ ENV PUPPETEER_SKIP_DOWNLOAD=1
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/* && npm ci
 COPY . .
 ENV DISABLE_PWA=1
-RUN npx vite build --configLoader runner
+RUN npx vite build --configLoader runner --logLevel info 2>&1
 
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
