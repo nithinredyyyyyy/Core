@@ -10,6 +10,8 @@ services:
       - key: CORE_AUTH_SESSION_SECRET
         generateValue: true
       - key: CORE_ADMIN_EMAILS
-        sync: false
+        value: sathkrishna3@gmail.com
       - key: GOOGLE_CLIENT_ID
+        value: 13045307296-v52idel7q4medhlhedjciv4qeq0e964e.apps.googleusercontent.com
+      - key: FRONTEND_ORIGIN
         sync: false
