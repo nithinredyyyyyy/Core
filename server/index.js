@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync, readdirSync } from "node:fs";
 import { z } from "zod";
 import { backfillImportedNewsMetadata } from "./newsIngest.js";
 import { splitTrimmedValues } from "./services/schemas.js";
@@ -27,6 +28,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
 const indexHtmlPath = path.join(distDir, "index.html");
+
+if (isProduction) {
+  try {
+    if (existsSync(distDir)) {
+      const assets = existsSync(path.join(distDir, "assets")) ? readdirSync(path.join(distDir, "assets")).length : 0;
+      logger.info(`dist OK: ${readdirSync(distDir).length} entries, ${assets} assets`);
+    } else {
+      logger.error(`dist directory NOT FOUND at ${distDir}`);
+    }
+  } catch (e) {
+    logger.error("dist check failed", { error: String(e) });
+  }
+}
 
 const isProduction = process.env.NODE_ENV === "production";
 app.set("trust proxy", isProduction ? 1 : false);
@@ -153,7 +167,7 @@ app.use((req, res, next) => {
     return next();
   }
   if (/\.[a-z0-9]{1,8}$/i.test(req.path)) {
-    return res.status(404).json({ error: "Not found" });
+    return res.status(404).send("Not found");
   }
   res.setHeader("Cache-Control", "no-cache");
   return res.sendFile(indexHtmlPath, (error) => {
