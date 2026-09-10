@@ -5,7 +5,7 @@ import { db } from "../db.js";
 import { logger } from "./logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SEED_PATH = join(__dirname, "seed", "seed.json");
+const SEED_PATH = join(__dirname, "..", "seed", "seed.json");
 
 const SEED_TABLES = [
   "tournaments", "teams", "players", "matches", "match_results",
