@@ -29,6 +29,8 @@ const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
 const indexHtmlPath = path.join(distDir, "index.html");
 
+const isProduction = process.env.NODE_ENV === "production";
+
 if (isProduction) {
   try {
     if (existsSync(distDir)) {
@@ -42,7 +44,6 @@ if (isProduction) {
   }
 }
 
-const isProduction = process.env.NODE_ENV === "production";
 app.set("trust proxy", isProduction ? 1 : false);
 
 app.use(helmet({
