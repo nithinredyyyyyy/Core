@@ -1178,6 +1178,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           useIntegratedRankingsStage={useIntegratedRankingsStage}
         />
 
+        {championEntry && (
         <ChampionCard
           championEntry={championEntry}
           championImageSrc={championImageSrc}
@@ -1188,6 +1189,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           tournament={tournament}
           tournamentLogo={tournamentLogo}
         />
+        )}
       </div>
 
       <div ref={stageBoardRef}>
