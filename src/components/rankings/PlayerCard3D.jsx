@@ -211,25 +211,11 @@ export default function PlayerCard3D({ player, rank }) {
               </div>
 
               {/* Tournament list */}
-              <div className="flex-1 space-y-1.5 overflow-hidden">
-                {/* Column headers */}
-                <div className="flex items-center gap-2 px-2.5 pb-1 border-b border-white/[0.06]">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Event</p>
-                  </div>
-                  <div className="w-[50px] text-center shrink-0">
-                    <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Elims</p>
-                  </div>
-                  <div className="w-px h-3 bg-white/[0.08] shrink-0" />
-                  <div className="w-[65px] text-right shrink-0">
-                    <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Position</p>
-                  </div>
-                </div>
-
+              <div className="flex-1 space-y-1 overflow-hidden">
                 {history.map((t, i) => {
                   const isWinner = t.position === "Winner";
                   return (
-                    <div key={i} className={`flex items-center gap-2 rounded-[6px] px-2.5 py-2 ${isWinner ? "border border-amber-500/20 bg-amber-500/[0.06]" : "border border-white/[0.05] bg-white/[0.03]"}`}>
+                    <div key={i} className={`flex items-center gap-2 rounded-[6px] px-2.5 py-1.5 ${isWinner ? "border border-amber-500/20 bg-amber-500/[0.06]" : "border border-white/[0.05] bg-white/[0.03]"}`}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-['Archivo_Black',sans-serif] text-[9px] font-bold uppercase tracking-wider text-white/80 truncate">{t.tournament}</p>
@@ -237,12 +223,10 @@ export default function PlayerCard3D({ player, rank }) {
                         </div>
                         <p className="text-[6px] font-medium tracking-wider text-white/35 truncate">{t.team}</p>
                       </div>
-                      <div className="w-[50px] text-center shrink-0">
-                        <p className="font-['Archivo_Black',sans-serif] text-[12px] font-black text-white">{t.finishes}</p>
-                      </div>
-                      <div className="w-px h-5 bg-white/[0.08] shrink-0" />
-                      <div className="w-[65px] text-right shrink-0">
-                        <p className={`font-['Archivo_Black',sans-serif] text-[8px] font-bold uppercase tracking-wider ${isWinner ? "text-amber-400" : "text-white/60"}`}>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <p className="font-['Archivo_Black',sans-serif] text-[11px] font-black text-white text-center w-[28px]">{t.finishes}</p>
+                        <div className="w-px h-4 bg-white/[0.08]" />
+                        <p className={`font-['Archivo_Black',sans-serif] text-[7px] font-bold uppercase tracking-wider w-[55px] text-right ${isWinner ? "text-amber-400" : "text-white/60"}`}>
                           {t.position}
                         </p>
                       </div>
