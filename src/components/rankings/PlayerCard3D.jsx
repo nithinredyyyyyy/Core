@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 
-export default function PlayerCard3D({ player, rank, isFirst }) {
+export default function PlayerCard3D({ player, rank }) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const rankLabel = rank === 1 ? "1ST" : rank === 2 ? "2ND" : rank === 3 ? "3RD" : `${rank}TH`;
@@ -45,7 +45,7 @@ export default function PlayerCard3D({ player, rank, isFirst }) {
               }}
             />
 
-            {/* Animated shimmer band */}
+            {/* Shimmer */}
             <div
               className="absolute inset-0 opacity-60"
               style={{
@@ -54,15 +54,14 @@ export default function PlayerCard3D({ player, rank, isFirst }) {
               }}
             />
 
-            {/* Geometric shapes (university card style) */}
+            {/* Geometric shapes */}
             <div className="absolute inset-0 overflow-hidden opacity-15">
               <div className="absolute -left-20 top-1/4 h-[200px] w-[140px] rotate-[-25deg] rounded-[20px] bg-white/20" />
               <div className="absolute -right-16 top-1/3 h-[180px] w-[120px] rotate-[20deg] rounded-[16px] bg-white/15" />
               <div className="absolute left-1/3 -top-10 h-[100px] w-[250px] rotate-[-15deg] rounded-[24px] bg-white/10" />
-              <div className="absolute right-1/4 bottom-1/4 h-[80px] w-[180px] rotate-[30deg] rounded-[14px] bg-white/12" />
             </div>
 
-            {/* Diagonal stripes (university card style) */}
+            {/* Diagonal stripes */}
             <div
               className="absolute inset-0 opacity-[0.06]"
               style={{
@@ -71,7 +70,7 @@ export default function PlayerCard3D({ player, rank, isFirst }) {
               }}
             />
 
-            {/* Noise/grain texture */}
+            {/* Grain */}
             <div
               className="absolute inset-0"
               style={{
@@ -80,124 +79,120 @@ export default function PlayerCard3D({ player, rank, isFirst }) {
               }}
             />
 
-            {/* ====== PLAYER PHOTO — POP OUT EFFECT ====== */}
-            <div className="absolute inset-0 flex items-end justify-center">
-              {player.photo ? (
-                <img
-                  src={player.photo}
-                  alt={player.playerName}
-                  className="relative h-[92%] w-auto object-contain object-bottom drop-shadow-[0_-4px_20px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-[1.02]"
-                  style={{ marginBottom: -8 }}
+            {/* ====== RIGID LAYOUT GRID ====== */}
+            <div className="absolute inset-0 flex flex-col">
+              {/* TOP SECTION — fixed 40px for rank badge + icon */}
+              <div className="relative z-20 flex h-10 shrink-0 items-start justify-between px-3 pt-3">
+                <div className="rounded-[6px] border border-white/10 bg-black/40 px-2 py-1 backdrop-blur-md">
+                  <p className="font-['Archivo_Black',sans-serif] text-[9px] font-black tracking-wider text-white/80">
+                    #{rank}
+                  </p>
+                </div>
+                <img src="/images/core-logo.png" alt="" className="size-5 rounded-full opacity-50" />
+              </div>
+
+              {/* MIDDLE SECTION — flex-1, photo area */}
+              <div className="relative z-10 flex flex-1 items-end justify-center overflow-hidden">
+                {/* Large rank number — right side */}
+                <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                  <p
+                    className="font-['Archivo_Black',sans-serif] font-black leading-none text-white/[0.12]"
+                    style={{ fontSize: 100, writingMode: "vertical-lr", letterSpacing: "-5px" }}
+                  >
+                    {String(rank).padStart(2, "0")}
+                  </p>
+                </div>
+
+                {/* Vertical text — left edge */}
+                <div className="absolute left-[7px] top-1/2 -translate-y-1/2">
+                  <p
+                    className="font-['Archivo_Black',sans-serif] text-[7px] font-bold uppercase tracking-[4px] text-white/30"
+                    style={{ writingMode: "vertical-lr" }}
+                  >
+                    GLOBAL RANKINGS
+                  </p>
+                </div>
+
+                {/* Player photo — constrained to middle area */}
+                <div className="flex h-full items-end justify-center">
+                  {player.photo ? (
+                    <img
+                      src={player.photo}
+                      alt={player.playerName}
+                      className="h-[85%] w-auto object-contain object-bottom drop-shadow-[0_-4px_16px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
+                  ) : (
+                    <div className="flex size-24 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 font-['Archivo_Black',sans-serif] text-4xl font-black text-white">
+                      {player.playerName?.[0]}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* BOTTOM SECTION — fixed height for name + stats */}
+              <div className="relative z-20 shrink-0">
+                {/* Bottom gradient */}
+                <div
+                  className="absolute inset-x-0 bottom-0"
+                  style={{
+                    height: "100%",
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 60%, transparent 100%)",
+                  }}
                 />
-              ) : (
-                <div className="relative flex size-28 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 font-['Archivo_Black',sans-serif] text-4xl font-black text-white">
-                  {player.playerName?.[0]}
-                </div>
-              )}
-            </div>
 
-            {/* ====== LARGE RANK NUMBER — RIGHT SIDE ====== */}
-            <div className="absolute right-1 top-1/2 -translate-y-1/2">
-              <p
-                className="font-['Archivo_Black',sans-serif] font-black leading-none text-white/[0.12]"
-                style={{ fontSize: 100, writingMode: "vertical-lr", letterSpacing: "-5px" }}
-              >
-                {String(rank).padStart(2, "0")}
-              </p>
-            </div>
+                <div className="relative z-10 p-3.5">
+                  {/* Player name — fixed position */}
+                  <div className="mb-2.5 h-[52px]">
+                    <p className="text-[9px] font-semibold tracking-[3px] text-white/50">
+                      {player.playerName?.split(" ").slice(0, -1).join(" ")}
+                    </p>
+                    <h3
+                      className="font-['Archivo_Black',sans-serif] font-black uppercase leading-[0.82] text-white"
+                      style={{ fontSize: 36, letterSpacing: "-1.5px" }}
+                    >
+                      {player.playerName?.split(" ").pop()}
+                    </h3>
+                  </div>
 
-            {/* ====== VERTICAL TEXT — LEFT EDGE ====== */}
-            <div className="absolute left-[7px] top-1/2 -translate-y-1/2">
-              <p
-                className="font-['Archivo_Black',sans-serif] text-[7px] font-bold uppercase tracking-[4px] text-white/30"
-                style={{ writingMode: "vertical-lr" }}
-              >
-                GLOBAL RANKINGS
-              </p>
-            </div>
-
-            {/* ====== TOP-RANK BADGE ====== */}
-            <div className="absolute left-3 top-3">
-              <div className="rounded-[6px] border border-white/10 bg-black/40 px-2 py-1 backdrop-blur-md">
-                <p className="font-['Archivo_Black',sans-serif] text-[9px] font-black tracking-wider text-white/80">
-                  #{rank}
-                </p>
-              </div>
-            </div>
-
-            {/* ====== TOP-RIGHT ICON ====== */}
-            <div className="absolute right-3 top-3">
-              <img src="/images/core-logo.png" alt="" className="size-5 rounded-full opacity-50" />
-            </div>
-
-            {/* ====== BOTTOM GRADIENT ====== */}
-            <div
-              className="absolute inset-x-0 bottom-0"
-              style={{
-                height: "52%",
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.75) 45%, transparent 100%)",
-              }}
-            />
-
-            {/* ====== BOTTOM CONTENT ====== */}
-            <div className="absolute inset-x-0 bottom-0 z-10 p-3.5">
-              {/* Player name — split style */}
-              <div className="mb-3">
-                <p className="text-[9px] font-semibold tracking-[3px] text-white/50">
-                  {player.playerName?.split(" ").slice(0, -1).join(" ")}
-                </p>
-                <h3
-                  className="font-['Archivo_Black',sans-serif] font-black uppercase leading-[0.8] text-white"
-                  style={{ fontSize: 38, letterSpacing: "-1.5px" }}
-                >
-                  {player.playerName?.split(" ").pop()}
-                </h3>
-              </div>
-
-              {/* Stats bar — dark glass */}
-              <div className="flex items-center gap-0 rounded-[10px] border border-white/[0.08] bg-[#12121a]/70 backdrop-blur-xl">
-                {/* Team */}
-                <div className="flex items-center gap-2 border-r border-white/[0.08] px-3 py-2.5">
-                  <TeamIdentity
-                    name={player.teamName}
-                    hideText
-                    contained
-                    logoBlockClassName="size-5"
-                    logoClassName="h-4 w-4 object-contain"
-                  />
-                  <span className="text-[8px] font-bold tracking-wider text-white/55">
-                    {player.teamName?.slice(0, 14)}
-                  </span>
-                </div>
-
-                {/* Rating */}
-                <div className="flex flex-col items-center border-r border-white/[0.08] px-3 py-2">
-                  <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Rating</p>
-                  <p className="font-['Archivo_Black',sans-serif] text-[12px] font-black text-white">
-                    {player.rating}
-                  </p>
-                </div>
-
-                {/* Finishes */}
-                <div className="flex flex-col items-center border-r border-white/[0.08] px-3 py-2">
-                  <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Finishes</p>
-                  <p className="font-['Archivo_Black',sans-serif] text-[12px] font-black text-white">
-                    {player.eliminations}
-                  </p>
-                </div>
-
-                {/* Rank label */}
-                <div className="flex items-center justify-center px-3 py-2">
-                  <p className="font-['Archivo_Black',sans-serif] text-[11px] font-black text-white/70">
-                    {rankLabel}
-                  </p>
+                  {/* Stats bar — fixed position */}
+                  <div className="flex items-center gap-0 rounded-[10px] border border-white/[0.08] bg-[#12121a]/70 backdrop-blur-xl">
+                    <div className="flex items-center gap-2 border-r border-white/[0.08] px-3 py-2.5">
+                      <TeamIdentity
+                        name={player.teamName}
+                        hideText
+                        contained
+                        logoBlockClassName="size-5"
+                        logoClassName="h-4 w-4 object-contain"
+                      />
+                      <span className="text-[8px] font-bold tracking-wider text-white/55">
+                        {player.teamName?.slice(0, 14)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center border-r border-white/[0.08] px-3 py-2">
+                      <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Rating</p>
+                      <p className="font-['Archivo_Black',sans-serif] text-[12px] font-black text-white">
+                        {player.rating}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center border-r border-white/[0.08] px-3 py-2">
+                      <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Finishes</p>
+                      <p className="font-['Archivo_Black',sans-serif] text-[12px] font-black text-white">
+                        {player.eliminations}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center px-3 py-2">
+                      <p className="font-['Archivo_Black',sans-serif] text-[11px] font-black text-white/70">
+                        {rankLabel}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ====== GLOW BORDER EFFECT ====== */}
+          {/* Glow border */}
           <div
             className="absolute inset-0 rounded-[16px] pointer-events-none"
             style={{
@@ -314,7 +309,6 @@ export default function PlayerCard3D({ player, rank, isFirst }) {
                   </p>
                 </div>
 
-                {/* Stats grid */}
                 <div className="grid w-full grid-cols-2 gap-3">
                   <div className="rounded-[10px] border border-white/[0.08] bg-[#12121a]/60 px-3 py-3 text-center backdrop-blur-md">
                     <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Rating</p>
