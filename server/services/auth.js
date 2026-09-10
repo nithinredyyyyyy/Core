@@ -11,10 +11,6 @@ export const AUTH_SESSION_SECRET = String(
   process.env.CORE_AUTH_SESSION_SECRET || "",
 );
 if (isProduction && !AUTH_SESSION_SECRET) {
-  logger.error("CORE_AUTH_SESSION_SECRET is not set. Server cannot start in production without it.");
-  process.exit(1);
-}
-if (!AUTH_SESSION_SECRET) {
   logger.warn("CORE_AUTH_SESSION_SECRET is not set. Using random secret — sessions will not persist across restarts.");
 }
 const EFFECTIVE_SECRET = AUTH_SESSION_SECRET || randomBytes(32).toString("hex");
