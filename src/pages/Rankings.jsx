@@ -207,13 +207,24 @@ function TopThreeShowcase({ data, type }) {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <TeamIdentity
-                    name={item.teamName}
-                    hideText
-                    contained
-                    logoBlockClassName="size-16 rounded-xl"
-                    logoClassName="h-12 w-12 object-contain"
-                  />
+                  {item.photo ? (
+                    <div className={isFirst ? "scale-[1.3] md:scale-[1.5]" : "scale-110"}>
+                      <img
+                        src={item.photo}
+                        alt={item.playerName}
+                        className="size-16 rounded-xl object-cover ring-2 ring-border shadow-md"
+                        onError={(e) => { e.target.style.display = "none"; }}
+                      />
+                    </div>
+                  ) : (
+                    <TeamIdentity
+                      name={item.teamName}
+                      hideText
+                      contained
+                      logoBlockClassName="size-16 rounded-xl"
+                      logoClassName="h-12 w-12 object-contain"
+                    />
+                  )}
                   <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-bold text-muted-foreground">
                     {item.teamName}
                   </span>
