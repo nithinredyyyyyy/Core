@@ -79,14 +79,14 @@ export default function PlayerCard3D({ player, rank }) {
               }}
             />
 
-            {/* ====== LARGE PLAYER PHOTO — fills card, centered ====== */}
+            {/* ====== LARGE PLAYER PHOTO — fills card, covers ====== */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative h-full w-full">
                 {player.photo ? (
                   <img
                     src={player.photo}
                     alt={player.playerName}
-                    className="absolute inset-0 h-full w-full object-contain object-center transition-transform duration-300 group-hover:scale-[1.01]"
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.01]"
                     style={{ filter: "drop-shadow(0 -8px 24px rgba(0,0,0,0.5))" }}
                   />
                 ) : (
