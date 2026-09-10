@@ -155,17 +155,26 @@ export default function PlayerCard3D({ player, rank }) {
         >
           <div className="absolute inset-0 rounded-[16px] bg-[#0c0c0c]" />
           <div className="absolute inset-[5px] rounded-[12px] overflow-hidden">
-            {/* Dark base */}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #1a1a2e 0%, #16213e 30%, #0f3460 60%, #1a1a2e 100%)" }} />
+            {/* Holographic base — matches front */}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(140deg, #e879f9 0%, #818cf8 12%, #38bdf8 24%, #a78bfa 36%, #34d399 48%, #f472b6 60%, #818cf8 72%, #c084fc 84%, #38bdf8 100%)" }} />
 
-            {/* Subtle holographic accent */}
-            <div className="absolute inset-0 opacity-30" style={{ background: "linear-gradient(140deg, transparent 20%, rgba(232,121,249,0.15) 35%, rgba(56,189,248,0.15) 50%, rgba(52,211,153,0.1) 65%, transparent 80%)" }} />
+            {/* Shimmer */}
+            <div className="absolute inset-0 opacity-50" style={{ background: "linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.35) 40%, transparent 60%)" }} />
+
+            {/* Geometric shapes */}
+            <div className="absolute inset-0 overflow-hidden opacity-15">
+              <div className="absolute -right-20 top-1/4 h-[200px] w-[140px] rotate-[-25deg] rounded-[20px] bg-white/20" />
+              <div className="absolute -left-16 bottom-1/3 h-[180px] w-[120px] rotate-[20deg] rounded-[16px] bg-white/15" />
+            </div>
 
             {/* Diagonal stripes */}
-            <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "repeating-linear-gradient(135deg, white 0 1px, transparent 1px 8px)" }} />
+            <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "repeating-linear-gradient(135deg, white 0 2px, transparent 2px 12px)" }} />
 
             {/* Grain */}
-            <div className="absolute inset-0" style={{ opacity: 0.12, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E")` }} />
+            <div className="absolute inset-0" style={{ opacity: 0.18, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E")` }} />
+
+            {/* Dark overlay for readability */}
+            <div className="absolute inset-0 bg-black/40" />
 
             <div className="relative z-10 flex h-full flex-col p-4">
               {/* Top: Avatar + name + rank */}
