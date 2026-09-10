@@ -79,29 +79,6 @@ function getClubShortCode(name) {
   return CLUB_SHORT_CODES[name] || name.substring(0, 2).toUpperCase();
 }
 
-function TrendIndicator({ trend }) {
-  if (trend > 0) {
-    return (
-      <span className="flex items-center font-bold text-green-500">
-        <TrendingUp className="mr-1 size-4" />
-        {trend}
-      </span>
-    );
-  }
-  if (trend < 0) {
-    return (
-      <span className="flex items-center font-bold text-red-500">
-        <TrendingDown className="mr-1 size-4" />
-        {Math.abs(trend)}
-      </span>
-    );
-  }
-  return (
-    <span className="flex items-center font-bold text-muted-foreground">
-      <Minus className="mr-1 size-4" />
-    </span>
-  );
-}
 
 function LogoOrInitials({ name, className = "" }) {
   if (getTeamLogoByName(name)) {
@@ -259,13 +236,11 @@ function TopThreeShowcase({ data, type }) {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {type === "organizations" ? "Prize" : "Trend"}
-                </p>
-                {type === "organizations" ? (
-                  <span className="text-lg font-black text-green-500">{item.prize}</span>
-                ) : (
-                  <TrendIndicator trend={item.trend} />
+                {type === "organizations" && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Prize</p>
+                    <span className="text-lg font-black text-green-500">{item.prize}</span>
+                  </>
                 )}
               </div>
             </div>
@@ -316,7 +291,6 @@ function MobileRankingList({ data, type }) {
                   26 BMPS{" "}
                   <span className="font-bold text-foreground">{row.pts26BMPS || 0}</span>
                 </span>
-                <TrendIndicator trend={row.trend} />
               </div>
             </>
           ) : isPlayer ? (
@@ -356,9 +330,6 @@ function MobileRankingList({ data, type }) {
                     {row.eliminations} finishes
                   </p>
                 </div>
-              </div>
-              <div className="mt-3 flex items-center justify-end border-t border-border/50 pt-2 text-xs text-muted-foreground">
-                <TrendIndicator trend={row.trend} />
               </div>
             </>
           ) : (
@@ -452,7 +423,6 @@ function RankingTable({ data, type }) {
                   <th className="px-6 py-4 font-semibold">Prize</th>
                 </>
               )}
-              <th className="px-6 py-4 text-right font-semibold">Trend</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -546,11 +516,6 @@ function RankingTable({ data, type }) {
                     <td className="px-6 py-4 font-semibold text-green-500">{row.prize}</td>
                   </>
                 )}
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end">
-                    <TrendIndicator trend={row.trend} />
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
