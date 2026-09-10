@@ -14,4 +14,4 @@ services:
       - key: GOOGLE_CLIENT_ID
         value: 13045307296-v52idel7q4medhlhedjciv4qeq0e964e.apps.googleusercontent.com
       - key: FRONTEND_ORIGIN
-        sync: false
+        value: https://core-esports-1ibg.onrender.com

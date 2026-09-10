@@ -84,7 +84,7 @@ if (process.env.CORE_BACKFILL_NEWS_ON_STARTUP === "1") {
   backfillImportedNewsMetadata();
 }
 
-app.use((req, res, next) => {
+app.use("/api", (req, res, next) => {
   cors({
     origin(origin, callback) {
       if (!origin) {
@@ -97,7 +97,7 @@ app.use((req, res, next) => {
     },
   })(req, res, next);
 });
-app.use(express.json({ limit: "2mb" }));
+app.use("/api", express.json({ limit: "2mb" }));
 
 const searchLimiter = rateLimit({
   windowMs: 60_000,
