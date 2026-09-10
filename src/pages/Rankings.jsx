@@ -1,6 +1,7 @@
 import React, { Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LazyMotion, domAnimation, m } from "framer-motion";
+import PlayerCard3D from "@/components/rankings/PlayerCard3D";
 import {
   Medal,
   TrendingUp,
@@ -167,6 +168,24 @@ function TopThreeShowcase({ data, type }) {
   if (!data || data.length < 3) return null;
   const top3 = data.slice(0, 3);
   const podium = [top3[1], top3[0], top3[2]];
+
+  if (type === "players") {
+    return (
+      <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
+        {podium.map((item, idx) => (
+          <m.div
+            key={item.id}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.15, duration: 0.5 }}
+            className={item.rank === 1 ? "md:order-2 md:scale-105" : item.rank === 2 ? "md:order-1" : "md:order-3"}
+          >
+            <PlayerCard3D player={item} rank={item.rank} isFirst={item.rank === 1} />
+          </m.div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="mb-12 grid grid-cols-1 gap-4 md:grid-cols-3 md:items-end">
