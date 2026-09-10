@@ -2,6 +2,10 @@
 .env
 .env.*
 
+# Large binaries
+tools/cloudflared.exe
+tools/bfg.jar
+
 # Test/build artifacts
 playwright-report/
 test-results/
