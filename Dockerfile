@@ -16,6 +16,7 @@ ENV PUPPETEER_SKIP_DOWNLOAD=1
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server
+RUN mkdir -p /app/server/data && chown -R appuser:appgroup /app/server/data
 ENV NODE_ENV=production
 ENV PORT=4000
 EXPOSE 4000
