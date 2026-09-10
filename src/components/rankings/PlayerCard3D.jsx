@@ -178,55 +178,55 @@ export default function PlayerCard3D({ player, rank }) {
 
             <div className="relative z-10 flex h-full flex-col p-4">
               {/* Top: Avatar + name + rank */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
                   <div className="relative">
-                    <div className="absolute -inset-1.5 rounded-full border border-white/[0.12]" />
-                    <div className="flex size-14 items-center justify-center rounded-full border-2 border-white/20 bg-white/[0.08]">
+                    <div className="absolute -inset-1 rounded-full border border-white/[0.12]" />
+                    <div className="flex size-11 items-center justify-center rounded-full border-2 border-white/20 bg-white/[0.08]">
                       {player.photo ? (
-                        <img src={player.photo} alt="" className="size-12 rounded-full object-cover" />
+                        <img src={player.photo} alt="" className="size-9 rounded-full object-cover" />
                       ) : (
-                        <span className="font-['Archivo_Black',sans-serif] text-base font-black text-white/40">{lastName?.[0]}</span>
+                        <span className="font-['Archivo_Black',sans-serif] text-sm font-black text-white/40">{lastName?.[0]}</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[7px] font-bold uppercase tracking-[2px] text-white/50">Player</p>
-                    <p className="font-['Archivo_Black',sans-serif] text-[15px] font-black uppercase leading-tight text-white drop-shadow-sm">{lastName}</p>
+                    <p className="text-[6px] font-bold uppercase tracking-[2px] text-white/50">Player</p>
+                    <p className="font-['Archivo_Black',sans-serif] text-[13px] font-black uppercase leading-tight text-white drop-shadow-sm">{lastName}</p>
                   </div>
                 </div>
-                <div className="rounded-[8px] border border-white/20 bg-white/[0.08] px-3 py-2 text-center shadow-[0_0_12px_rgba(255,255,255,0.08)]">
-                  <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/50">Rank</p>
-                  <p className="font-['Archivo_Black',sans-serif] text-[18px] font-black text-white drop-shadow-sm">#{rank}</p>
+                <div className="rounded-[7px] border border-white/20 bg-white/[0.08] px-2.5 py-1.5 text-center shadow-[0_0_10px_rgba(255,255,255,0.08)]">
+                  <p className="text-[5px] font-bold uppercase tracking-[1.5px] text-white/50">Rank</p>
+                  <p className="font-['Archivo_Black',sans-serif] text-[16px] font-black text-white drop-shadow-sm">#{rank}</p>
                 </div>
               </div>
 
               {/* Divider */}
-              <div className="mb-2.5 h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              <div className="mb-1.5 h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
               {/* Header */}
-              <div className="mb-2.5 flex items-center justify-between px-1">
-                <p className="font-['Archivo_Black',sans-serif] text-[8px] font-bold uppercase tracking-[3px] text-white/65">Tournament History</p>
-                <p className="text-[8px] font-bold uppercase tracking-[2px] text-white/50">{history.length} Events</p>
+              <div className="mb-1.5 flex items-center justify-between px-1">
+                <p className="font-['Archivo_Black',sans-serif] text-[7px] font-bold uppercase tracking-[3px] text-white/60">Tournament History</p>
+                <p className="text-[7px] font-bold uppercase tracking-[2px] text-white/45">{history.length} Events</p>
               </div>
 
               {/* Tournament list */}
-              <div className="flex-1 space-y-1 overflow-y-auto scrollbar-hide">
+              <div className="flex-1 space-y-[3px] overflow-y-auto scrollbar-hide">
                 {history.map((t, i) => {
                   const isWinner = t.position === "Winner";
                   return (
-                    <div key={i} className={`flex items-center h-[44px] rounded-[6px] px-2.5 ${isWinner ? "border border-amber-500/20 bg-amber-500/[0.06]" : "border border-white/[0.05] bg-white/[0.03]"}`}>
+                    <div key={i} className={`flex items-center h-[38px] rounded-[5px] px-2 ${isWinner ? "border border-amber-500/20 bg-amber-500/[0.06]" : "border border-white/[0.05] bg-white/[0.03]"}`}>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-['Archivo_Black',sans-serif] text-[9px] font-bold uppercase tracking-wider text-white/80 truncate">{t.tournament}</p>
-                          {isWinner && <span className="shrink-0 rounded bg-amber-500/20 px-1 py-0.5 text-[5px] font-bold uppercase tracking-wider text-amber-400">WIN</span>}
+                        <div className="flex items-center gap-1">
+                          <p className="font-['Archivo_Black',sans-serif] text-[8px] font-bold uppercase tracking-wider text-white/80 truncate">{t.tournament}</p>
+                          {isWinner && <span className="shrink-0 rounded bg-amber-500/20 px-1 py-[1px] text-[4px] font-bold uppercase tracking-wider text-amber-400">WIN</span>}
                         </div>
-                        <p className="text-[6px] font-medium tracking-wider text-white/35 truncate">{t.team}</p>
+                        <p className="text-[5px] font-medium tracking-wider text-white/35 truncate">{t.team}</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <p className="font-['Archivo_Black',sans-serif] text-[11px] font-black text-white text-center w-[28px]">{t.finishes}</p>
-                        <div className="w-px h-4 bg-white/[0.08]" />
-                        <p className={`font-['Archivo_Black',sans-serif] text-[7px] font-bold uppercase tracking-wider w-[55px] text-right ${isWinner ? "text-amber-400" : "text-white/60"}`}>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <p className="font-['Archivo_Black',sans-serif] text-[10px] font-black text-white text-center w-[24px]">{t.finishes}</p>
+                        <div className="w-px h-3 bg-white/[0.08]" />
+                        <p className={`font-['Archivo_Black',sans-serif] text-[6px] font-bold uppercase tracking-wider w-[50px] text-right ${isWinner ? "text-amber-400" : "text-white/60"}`}>
                           {t.position}
                         </p>
                       </div>
@@ -236,9 +236,9 @@ export default function PlayerCard3D({ player, rank }) {
               </div>
 
               {/* Total */}
-              <div className="mt-2 flex items-center justify-between rounded-[6px] border border-white/[0.08] bg-white/[0.05] px-3 py-2">
-                <p className="font-['Archivo_Black',sans-serif] text-[8px] font-bold uppercase tracking-[2px] text-white/50">Total Finishes</p>
-                <p className="font-['Archivo_Black',sans-serif] text-[16px] font-black text-white drop-shadow-sm">
+              <div className="mt-1.5 flex items-center justify-between rounded-[5px] border border-white/[0.08] bg-white/[0.05] px-2.5 py-1.5">
+                <p className="font-['Archivo_Black',sans-serif] text-[7px] font-bold uppercase tracking-[2px] text-white/50">Total Finishes</p>
+                <p className="font-['Archivo_Black',sans-serif] text-[14px] font-black text-white drop-shadow-sm">
                   {history.reduce((sum, t) => sum + t.finishes, 0)}
                 </p>
               </div>
