@@ -171,14 +171,20 @@ function TopThreeShowcase({ data, type }) {
 
   if (type === "players") {
     return (
-      <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
+      <div className="mb-16 flex flex-col items-center gap-8 md:flex-row md:items-end md:justify-center md:gap-6">
         {podium.map((item, idx) => (
           <m.div
             key={item.id}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.15, duration: 0.5 }}
-            className={item.rank === 1 ? "md:order-2 md:scale-105" : item.rank === 2 ? "md:order-1" : "md:order-3"}
+            className={
+              item.rank === 1
+                ? "md:order-2 md:z-10 md:-translate-y-4 md:scale-[1.08]"
+                : item.rank === 2
+                  ? "md:order-1 md:translate-y-2"
+                  : "md:order-3 md:translate-y-2"
+            }
           >
             <PlayerCard3D player={item} rank={item.rank} isFirst={item.rank === 1} />
           </m.div>
