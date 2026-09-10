@@ -211,11 +211,11 @@ export default function PlayerCard3D({ player, rank }) {
               </div>
 
               {/* Tournament list */}
-              <div className="flex-1 space-y-1 overflow-hidden">
+              <div className="flex-1 space-y-1 overflow-y-auto scrollbar-hide">
                 {history.map((t, i) => {
                   const isWinner = t.position === "Winner";
                   return (
-                    <div key={i} className={`flex items-center h-[46px] rounded-[6px] px-2.5 ${isWinner ? "border border-amber-500/20 bg-amber-500/[0.06]" : "border border-white/[0.05] bg-white/[0.03]"}`}>
+                    <div key={i} className={`flex items-center h-[44px] rounded-[6px] px-2.5 ${isWinner ? "border border-amber-500/20 bg-amber-500/[0.06]" : "border border-white/[0.05] bg-white/[0.03]"}`}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-['Archivo_Black',sans-serif] text-[9px] font-bold uppercase tracking-wider text-white/80 truncate">{t.tournament}</p>
