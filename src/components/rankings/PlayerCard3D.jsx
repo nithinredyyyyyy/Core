@@ -2,10 +2,36 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 
+const TOURNAMENT_HISTORY = {
+  LEGIT: [
+    { tournament: "BMPS 2024", team: "TWOB", finishes: 23, position: "4th" },
+    { tournament: "BGIS 2025", team: "Medal Esports", finishes: 23, position: "8th" },
+    { tournament: "BMSD 2025", team: "iQOO SOUL", finishes: 23, position: "2nd Runner Up" },
+    { tournament: "BGIS 2026", team: "iQOO SOUL", finishes: 38, position: "Winner" },
+    { tournament: "BMPS 2026", team: "iQOO SOUL", finishes: 25, position: "13th" },
+  ],
+  JONATHAN: [
+    { tournament: "BMPS 2024", team: "Hero Xtreme Godlike", finishes: 27, position: "2nd Runner Up" },
+    { tournament: "BGIS 2025", team: "Hero Xtreme Godlike", finishes: 38, position: "Runner Up" },
+    { tournament: "BMSD 2025", team: "Hero Xtreme Godlike", finishes: 23, position: "13th" },
+    { tournament: "BGIS 2026", team: "Hero Xtreme Godlike", finishes: 33, position: "5th" },
+    { tournament: "BMPS 2026", team: "Team Apex Gaming", finishes: 31, position: "5th" },
+  ],
+  MAFIAA: [
+    { tournament: "BMPS 2024", team: "Team Forever", finishes: 31, position: "Runner Up" },
+    { tournament: "BMPS 2025", team: "Team Forever", finishes: 23, position: "11th" },
+    { tournament: "BMSD 2025", team: "Victores Sumus", finishes: 24, position: "12th" },
+    { tournament: "BGIS 2026", team: "Victores Sumus", finishes: 33, position: "4th" },
+    { tournament: "BMPS 2026", team: "Victores Sumus", finishes: 31, position: "2nd Runner Up" },
+  ],
+};
+
 export default function PlayerCard3D({ player, rank }) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const rankLabel = rank === 1 ? "1ST" : rank === 2 ? "2ND" : rank === 3 ? "3RD" : `${rank}TH`;
+  const lastName = player.playerName?.split(" ").pop();
+  const history = TOURNAMENT_HISTORY[lastName] || [];
 
   return (
     <div
@@ -151,7 +177,7 @@ export default function PlayerCard3D({ player, rank }) {
                   className="font-['Archivo_Black',sans-serif] font-black uppercase leading-[0.82] text-white"
                   style={{ fontSize: 36, letterSpacing: "-1.5px" }}
                 >
-                  {player.playerName?.split(" ").pop()}
+                  {lastName}
                 </h3>
               </div>
 
@@ -200,7 +226,7 @@ export default function PlayerCard3D({ player, rank }) {
           />
         </div>
 
-        {/* ====== BACK FACE — REDESIGNED ====== */}
+        {/* ====== BACK FACE — TOURNAMENT HISTORY ====== */}
         <div
           className="absolute inset-0 overflow-visible rounded-[16px]"
           style={{
@@ -251,97 +277,97 @@ export default function PlayerCard3D({ player, rank }) {
             />
 
             {/* Content */}
-            <div className="relative z-10 flex h-full flex-col p-5">
-              {/* Top row: Team logo + rank badge */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-[10px] border border-white/10 bg-white/[0.05] p-2 backdrop-blur-md">
-                    <TeamIdentity
-                      name={player.teamName}
-                      hideText
-                      contained
-                      logoBlockClassName="size-10"
-                      logoClassName="h-9 w-9 object-contain"
-                    />
+            <div className="relative z-10 flex h-full flex-col p-4">
+              {/* Top: Player name + rank */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  {/* Avatar */}
+                  <div className="relative">
+                    <div className="absolute -inset-1 rounded-full border border-white/[0.08]" />
+                    <div className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
+                      {player.photo ? (
+                        <img
+                          src={player.photo}
+                          alt=""
+                          className="size-9 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-['Archivo_Black',sans-serif] text-sm font-black text-white/30">
+                          {lastName?.[0]}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div>
-                    <p className="text-[8px] font-bold uppercase tracking-[2px] text-white/40">Team</p>
-                    <p className="font-['Archivo_Black',sans-serif] text-[13px] font-bold uppercase tracking-wider text-white/90">
-                      {player.teamName}
+                    <p className="text-[7px] font-bold uppercase tracking-[2px] text-white/40">Player</p>
+                    <p className="font-['Archivo_Black',sans-serif] text-[14px] font-black uppercase leading-tight text-white">
+                      {lastName}
                     </p>
                   </div>
                 </div>
-                <div className="rounded-[10px] border border-white/10 bg-white/[0.05] px-3 py-2 text-center backdrop-blur-md">
-                  <p className="text-[6px] font-bold uppercase tracking-[2px] text-white/40">Rank</p>
-                  <p className="font-['Archivo_Black',sans-serif] text-[22px] font-black text-white">
+                <div className="rounded-[8px] border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-center backdrop-blur-md">
+                  <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/40">Rank</p>
+                  <p className="font-['Archivo_Black',sans-serif] text-[16px] font-black text-white">
                     #{rank}
                   </p>
                 </div>
               </div>
 
-              {/* Center: Player avatar + name */}
-              <div className="flex flex-1 flex-col items-center justify-center gap-4">
-                {/* Avatar ring */}
-                <div className="relative">
-                  <div className="absolute -inset-3 rounded-full border border-white/[0.08]" />
-                  <div className="absolute -inset-1.5 rounded-full border border-white/[0.05]" />
-                  <div className="flex size-[88px] items-center justify-center rounded-full border-2 border-white/10 bg-white/[0.05] backdrop-blur-md">
-                    {player.photo ? (
-                      <img
-                        src={player.photo}
-                        alt=""
-                        className="size-[72px] rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="font-['Archivo_Black',sans-serif] text-2xl font-black text-white/30">
-                        {player.playerName?.[0]}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              {/* Divider */}
+              <div className="mb-2.5 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-                {/* Player name */}
-                <div className="text-center">
-                  <p className="text-[8px] font-semibold tracking-[3px] text-white/40">
-                    {player.playerName?.split(" ").slice(0, -1).join(" ")}
-                  </p>
-                  <p
-                    className="font-['Archivo_Black',sans-serif] font-black uppercase leading-[0.85] text-white"
-                    style={{ fontSize: 28, letterSpacing: "-1px" }}
-                  >
-                    {player.playerName?.split(" ").pop()}
-                  </p>
-                </div>
-
-                {/* Stats grid */}
-                <div className="grid w-full grid-cols-3 gap-2">
-                  <div className="rounded-[8px] border border-white/[0.06] bg-white/[0.04] px-2 py-2.5 text-center backdrop-blur-md">
-                    <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Rating</p>
-                    <p className="mt-0.5 font-['Archivo_Black',sans-serif] text-[15px] font-black text-white">
-                      {player.rating}
-                    </p>
-                  </div>
-                  <div className="rounded-[8px] border border-white/[0.06] bg-white/[0.04] px-2 py-2.5 text-center backdrop-blur-md">
-                    <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Finishes</p>
-                    <p className="mt-0.5 font-['Archivo_Black',sans-serif] text-[15px] font-black text-white">
-                      {player.eliminations}
-                    </p>
-                  </div>
-                  <div className="rounded-[8px] border border-white/[0.06] bg-white/[0.04] px-2 py-2.5 text-center backdrop-blur-md">
-                    <p className="text-[6px] font-bold uppercase tracking-[1.5px] text-white/35">Standing</p>
-                    <p className="mt-0.5 font-['Archivo_Black',sans-serif] text-[15px] font-black text-white">
-                      {rankLabel}
-                    </p>
-                  </div>
-                </div>
+              {/* Tournament history header */}
+              <div className="mb-2 flex items-center justify-between px-1">
+                <p className="text-[7px] font-bold uppercase tracking-[2px] text-white/40">
+                  Tournament History
+                </p>
+                <p className="text-[7px] font-bold uppercase tracking-[1.5px] text-white/30">
+                  {history.length} Events
+                </p>
               </div>
 
-              {/* Bottom: Season bar */}
-              <div className="flex items-center justify-between rounded-[8px] border border-white/[0.06] bg-white/[0.03] px-4 py-2 backdrop-blur-md">
-                <p className="font-['Archivo_Black',sans-serif] text-[8px] font-bold uppercase tracking-[2px] text-white/50">
-                  BGMI Global Rankings
+              {/* Tournament list */}
+              <div className="flex-1 space-y-1.5 overflow-hidden">
+                {history.map((t, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-[6px] border border-white/[0.05] bg-white/[0.03] px-2.5 py-2"
+                  >
+                    {/* Tournament name */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-['Archivo_Black',sans-serif] text-[9px] font-bold uppercase tracking-wider text-white/80 truncate">
+                        {t.tournament}
+                      </p>
+                      <p className="text-[6px] font-medium tracking-wider text-white/30 truncate">
+                        {t.team}
+                      </p>
+                    </div>
+
+                    {/* Finishes */}
+                    <div className="flex flex-col items-center px-2">
+                      <p className="text-[5px] font-bold uppercase tracking-[1px] text-white/30">Elims</p>
+                      <p className="font-['Archivo_Black',sans-serif] text-[11px] font-black text-white">
+                        {t.finishes}
+                      </p>
+                    </div>
+
+                    {/* Position */}
+                    <div className="flex flex-col items-end min-w-[60px]">
+                      <p className="text-[5px] font-bold uppercase tracking-[1px] text-white/30">Position</p>
+                      <p className="font-['Archivo_Black',sans-serif] text-[8px] font-bold text-white/70 truncate">
+                        {t.position}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom: Total */}
+              <div className="mt-2 flex items-center justify-between rounded-[6px] border border-white/[0.06] bg-white/[0.04] px-3 py-2">
+                <p className="text-[7px] font-bold uppercase tracking-[2px] text-white/40">Total Finishes</p>
+                <p className="font-['Archivo_Black',sans-serif] text-[14px] font-black text-white">
+                  {history.reduce((sum, t) => sum + t.finishes, 0)}
                 </p>
-                <p className="text-[7px] font-semibold tracking-wider text-white/30">Season 2026</p>
               </div>
             </div>
           </div>
