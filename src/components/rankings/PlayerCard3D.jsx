@@ -79,20 +79,24 @@ export default function PlayerCard3D({ player, rank }) {
               }}
             />
 
-            {/* ====== LARGE PLAYER PHOTO — fills entire card ====== */}
-            <div className="absolute inset-0 flex items-end justify-center">
-              {player.photo ? (
-                <img
-                  src={player.photo}
-                  alt={player.playerName}
-                  className="h-[95%] w-auto object-contain object-bottom transition-transform duration-300 group-hover:scale-[1.01]"
-                  style={{ filter: "drop-shadow(0 -8px 24px rgba(0,0,0,0.5))" }}
-                />
-              ) : (
-                <div className="flex size-28 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 font-['Archivo_Black',sans-serif] text-4xl font-black text-white">
-                  {player.playerName?.[0]}
-                </div>
-              )}
+            {/* ====== LARGE PLAYER PHOTO — fills card, centered ====== */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative h-full w-full">
+                {player.photo ? (
+                  <img
+                    src={player.photo}
+                    alt={player.playerName}
+                    className="absolute inset-0 h-full w-full object-contain object-center transition-transform duration-300 group-hover:scale-[1.01]"
+                    style={{ filter: "drop-shadow(0 -8px 24px rgba(0,0,0,0.5))" }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex size-28 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 font-['Archivo_Black',sans-serif] text-4xl font-black text-white">
+                      {player.playerName?.[0]}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Large rank number — right side */}
