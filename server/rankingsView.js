@@ -53,6 +53,7 @@ function buildPlayerRankings() {
     teamName: entry.teamName,
     rating: entry.pts,
     eliminations: entry.finishes,
+    photo: entry.photo || null,
     trend: 0,
   }));
 }

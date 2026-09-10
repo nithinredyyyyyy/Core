@@ -325,14 +325,23 @@ function MobileRankingList({ data, type }) {
                 <span className="w-9 shrink-0 text-sm font-black text-foreground">
                   #{row.rank}
                 </span>
-                <TeamIdentity
-                  name={row.teamName}
-                  hideText
-                  contained
-                  compact
-                  logoBlockClassName="size-9 shrink-0"
-                  logoClassName="h-7 w-7 object-contain"
-                />
+                {row.photo ? (
+                  <img
+                    src={row.photo}
+                    alt={row.playerName}
+                    className="size-9 shrink-0 rounded-full object-cover ring-2 ring-border"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                  />
+                ) : (
+                  <TeamIdentity
+                    name={row.teamName}
+                    hideText
+                    contained
+                    compact
+                    logoBlockClassName="size-9 shrink-0"
+                    logoClassName="h-7 w-7 object-contain"
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-foreground">
                     {row.playerName}
@@ -344,7 +353,7 @@ function MobileRankingList({ data, type }) {
                     {row.rating}
                   </p>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Total Points
+                    {row.eliminations} finishes
                   </p>
                 </div>
               </div>
@@ -430,6 +439,7 @@ function RankingTable({ data, type }) {
                 </>
               ) : isPlayer ? (
                 <>
+                  <th className="px-6 py-4 font-semibold">Finishes</th>
                   <th className="px-6 py-4 font-semibold">Total Points</th>
                 </>
               ) : (
@@ -454,13 +464,22 @@ function RankingTable({ data, type }) {
                     <TeamIdentity name={row.teamName} />
                   ) : isPlayer ? (
                     <div className="flex items-center gap-3 font-bold text-foreground">
-                      <TeamIdentity
-                        name={row.teamName}
-                        hideText
-                        contained
-                        logoBlockClassName="size-9"
-                        logoClassName="h-7 w-7 object-contain"
-                      />
+                      {row.photo ? (
+                        <img
+                          src={row.photo}
+                          alt={row.playerName}
+                          className="size-9 shrink-0 rounded-full object-cover ring-2 ring-border"
+                          onError={(e) => { e.target.style.display = "none"; }}
+                        />
+                      ) : (
+                        <TeamIdentity
+                          name={row.teamName}
+                          hideText
+                          contained
+                          logoBlockClassName="size-9"
+                          logoClassName="h-7 w-7 object-contain"
+                        />
+                      )}
                       <div>
                         <div>{row.playerName}</div>
                         <div className="text-xs font-medium text-muted-foreground">
@@ -499,6 +518,7 @@ function RankingTable({ data, type }) {
                   </>
                 ) : isPlayer ? (
                   <>
+                    <td className="px-6 py-4 text-muted-foreground">{row.eliminations}</td>
                     <td className="px-6 py-4 font-bold text-primary">{row.rating}</td>
                   </>
                 ) : (
