@@ -370,8 +370,32 @@ export function applyTournamentReadOverrides(tournament) {
       if (!pmwcPlayerToTeam[alias]) pmwcPlayerToTeam[alias] = team;
     }
 
+    const PMWC_2026_GRAND_FINALS_STANDINGS = [
+      { placement: 1, team: "S2G Esports", fullTeam: "S2G Esports", matches: 18, wwcd: 3, pos: 65, place: 89, elimins: 89, elims: 89, points: 154, pts: 154 },
+      { placement: 2, team: "Nongshim RedForce", fullTeam: "Nongshim RedForce", matches: 18, wwcd: 3, pos: 47, place: 102, elimins: 102, elims: 102, points: 149, pts: 149 },
+      { placement: 3, team: "Aurora Gaming", fullTeam: "Aurora Gaming", matches: 18, wwcd: 2, pos: 53, place: 93, elimins: 93, elims: 93, points: 146, pts: 146 },
+      { placement: 4, team: "eArena", fullTeam: "eArena", matches: 18, wwcd: 2, pos: 42, place: 98, elimins: 98, elims: 98, points: 140, pts: 140 },
+      { placement: 5, team: "Tianba", fullTeam: "Tianba", matches: 18, wwcd: 2, pos: 37, place: 88, elimins: 88, elims: 88, points: 125, pts: 125 },
+      { placement: 6, team: "4thrives Esports", fullTeam: "4thrives Esports", matches: 18, wwcd: 0, pos: 24, place: 88, elimins: 88, elims: 88, points: 112, pts: 112 },
+      { placement: 7, team: "Team Flash", fullTeam: "Team Flash", matches: 18, wwcd: 1, pos: 41, place: 70, elimins: 70, elims: 70, points: 111, pts: 111 },
+      { placement: 8, team: "Horaa Esports", fullTeam: "Horaa Esports", matches: 18, wwcd: 0, pos: 36, place: 73, elimins: 73, elims: 73, points: 109, pts: 109 },
+      { placement: 9, team: "Nigma Galaxy", fullTeam: "Nigma Galaxy", matches: 18, wwcd: 1, pos: 35, place: 71, elimins: 71, elims: 71, points: 106, pts: 106 },
+      { placement: 10, team: "FURIA", fullTeam: "FURIA", matches: 18, wwcd: 1, pos: 47, place: 58, elimins: 58, elims: 58, points: 105, pts: 105 },
+      { placement: 11, team: "ULF Esports", fullTeam: "ULF Esports", matches: 18, wwcd: 1, pos: 26, place: 73, elimins: 73, elims: 73, points: 99, pts: 99 },
+      { placement: 12, team: "Team Vitality", fullTeam: "Team Vitality", matches: 18, wwcd: 0, pos: 32, place: 67, elimins: 67, elims: 67, points: 99, pts: 99 },
+      { placement: 13, team: "GodLike Esports", fullTeam: "GodLike Esports", matches: 18, wwcd: 1, pos: 18, place: 66, elimins: 66, elims: 66, points: 84, pts: 84 },
+      { placement: 14, team: "AlUla Club", fullTeam: "AlUla Club", matches: 18, wwcd: 1, pos: 32, place: 51, elimins: 51, elims: 51, points: 83, pts: 83 },
+      { placement: 15, team: "Orangutan", fullTeam: "Orangutan", matches: 18, wwcd: 0, pos: 16, place: 60, elimins: 60, elims: 60, points: 76, pts: 76 },
+      { placement: 16, team: "IDA Esports", fullTeam: "IDA Esports", matches: 18, wwcd: 0, pos: 25, place: 44, elimins: 44, elims: 44, points: 69, pts: 69 },
+    ];
+
     const pmwcStages = Array.isArray(tournament.stages)
       ? tournament.stages.map((stage) => {
+          // Inject Grand Finals standings if stage is Grand Finals and has no standings
+          if (stage.name === "Grand Finals" && (!Array.isArray(stage.standings) || stage.standings.length === 0)) {
+            stage = { ...stage, status: "completed", standings: PMWC_2026_GRAND_FINALS_STANDINGS };
+          }
+
           if (!Array.isArray(stage.standings)) return stage;
           
           let groupCounters = {};

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Search, Shield, Sun } from "lucide-react";
+import { Moon, Search, Shield, Sun, LogIn } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { BrandMark } from "@/components/shared/BrandMark";
@@ -151,7 +151,19 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
             <Shield className="size-4" />
             Admin
           </Link>
-        ) : null}
+        ) : (
+          <Link
+            to="/signin"
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] transition-all ${
+              isDark
+                ? "border-white/8 bg-brand-navy-storm text-white hover:border-white/12 hover:bg-brand-navy-dusk"
+                : "border-brand-sky-wash bg-white text-brand-ink hover:border-brand-sky-cloud hover:bg-brand-cream-porcelain"
+            }`}
+          >
+            <LogIn className="size-4" />
+            Sign In
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -883,7 +883,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
               ? deduplicatedRawStandings
               : normalizedStandings;
           const finalStandings =
-            derivedStandings.length > preferredStandings.length
+            derivedStandings.length > 0
               ? derivedStandings
               : preferredStandings;
 
@@ -1178,7 +1178,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           useIntegratedRankingsStage={useIntegratedRankingsStage}
         />
 
-        {championEntry && (
+        {championEntry && tournament.status !== "upcoming" && (championImageSrc || championRoster?.length > 0) && (
         <ChampionCard
           championEntry={championEntry}
           championImageSrc={championImageSrc}

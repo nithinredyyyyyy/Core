@@ -153,7 +153,7 @@ function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
           >
             Open desktop app
           </Link>
-          {isInstallable ? (
+          {isInstallable && (
             <button
               type="button"
               onClick={promptInstall}
@@ -161,14 +161,13 @@ function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
             >
               Get the app <Download className="size-4" />
             </button>
-          ) : (
-            <Link
-              to="/signin"
-              className="inline-flex items-center gap-2 rounded-full bg-brand-ink-pure px-5 py-2.5 text-sm font-semibold text-white"
-            >
-              Admin sign in <ArrowRight className="size-4" />
-            </Link>
           )}
+          <Link
+            to="/signin"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-ink-pure px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Admin sign in <ArrowRight className="size-4" />
+          </Link>
         </div>
       </div>
     </header>
@@ -206,7 +205,7 @@ function LandingHero({ featuredTournament, featuredStages, featuredFacts, isInst
           >
                 Open desktop app <ArrowRight className="size-4" />
               </Link>
-              {isInstallable ? (
+                {isInstallable && (
                 <button
                   type="button"
                   onClick={promptInstall}
@@ -214,14 +213,13 @@ function LandingHero({ featuredTournament, featuredStages, featuredFacts, isInst
                 >
                   Install mobile app <Download className="size-4" />
                 </button>
-              ) : (
+                )}
               <Link
                   to="/signin"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-cream-line bg-white px-6 py-3 text-sm font-semibold text-brand-ink-pure"
                 >
                   Admin sign in <Waves className="size-4" />
                 </Link>
-              )}
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">

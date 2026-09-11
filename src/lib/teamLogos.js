@@ -993,10 +993,10 @@ function resolveTeamLogoAsset(teamName) {
 
   const lower = trimmed.toLowerCase();
   if (lower.length >= 3) {
+    const extractAliases = (src) => src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").replace(/[()]/g, "").toLowerCase());
     const fuzzyMatch = THEME_AWARE_TEAM_LOGOS.find((entry) => {
-      const src = entry.pattern.source;
-      const aliases = src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
-      return aliases.some(a => lower.includes(a) || a.includes(lower));
+      const aliases = extractAliases(entry.pattern.source);
+      return aliases.filter(a => a.length >= 3).some(a => lower.includes(a) || a.includes(lower));
     });
     if (fuzzyMatch) {
       return {
@@ -1006,9 +1006,8 @@ function resolveTeamLogoAsset(teamName) {
     }
 
     const fuzzyMatch2 = TEAM_LOGOS.find((entry) => {
-      const src = entry.pattern.source;
-      const aliases = src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
-      return aliases.some(a => lower.includes(a) || a.includes(lower));
+      const aliases = extractAliases(entry.pattern.source);
+      return aliases.filter(a => a.length >= 3).some(a => lower.includes(a) || a.includes(lower));
     });
     if (fuzzyMatch2?.src) {
       return {
@@ -1034,14 +1033,15 @@ export function getTeamLogoForDark(teamName) {
   if (match?.src) return match.src;
   const lower = trimmed.toLowerCase();
   if (lower.length >= 3) {
+    const extractAliases = (src) => src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").replace(/[()]/g, "").toLowerCase());
     const fuzzy1 = THEME_AWARE_TEAM_LOGOS.find((e) => {
-      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
-      return aliases.some(a => lower.includes(a) || a.includes(lower));
+      const aliases = extractAliases(e.pattern.source);
+      return aliases.filter(a => a.length >= 3).some(a => lower.includes(a) || a.includes(lower));
     });
     if (fuzzy1) return fuzzy1.darkSrc;
     const fuzzy2 = TEAM_LOGOS.find((e) => {
-      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
-      return aliases.some(a => lower.includes(a) || a.includes(lower));
+      const aliases = extractAliases(e.pattern.source);
+      return aliases.filter(a => a.length >= 3).some(a => lower.includes(a) || a.includes(lower));
     });
     if (fuzzy2?.src) return fuzzy2.src;
   }
@@ -1057,14 +1057,15 @@ export function getTeamLogoForLight(teamName) {
   if (match?.src) return match.src;
   const lower = trimmed.toLowerCase();
   if (lower.length >= 3) {
+    const extractAliases = (src) => src.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").replace(/[()]/g, "").toLowerCase());
     const fuzzy1 = THEME_AWARE_TEAM_LOGOS.find((e) => {
-      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
-      return aliases.some(a => lower.includes(a) || a.includes(lower));
+      const aliases = extractAliases(e.pattern.source);
+      return aliases.filter(a => a.length >= 3).some(a => lower.includes(a) || a.includes(lower));
     });
     if (fuzzy1) return fuzzy1.darkSrc;
     const fuzzy2 = TEAM_LOGOS.find((e) => {
-      const aliases = e.pattern.source.replace(/^\^|\$$/g, "").split("|").map(s => s.replace(/\\(.)/g, "$1").toLowerCase());
-      return aliases.some(a => lower.includes(a) || a.includes(lower));
+      const aliases = extractAliases(e.pattern.source);
+      return aliases.filter(a => a.length >= 3).some(a => lower.includes(a) || a.includes(lower));
     });
     if (fuzzy2?.src) return fuzzy2.src;
   }

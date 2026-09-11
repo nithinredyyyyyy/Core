@@ -21,9 +21,8 @@ authRouter.get("/auth/me", (req, res) => {
 });
 
 authRouter.get("/auth/config", (_req, res) => {
-  const isProduction = process.env.NODE_ENV === "production";
   return res.json({
-    googleClientId: isProduction ? null : GOOGLE_CLIENT_ID || null,
+    googleClientId: GOOGLE_CLIENT_ID || null,
     googleEnabled: Boolean(GOOGLE_CLIENT_ID),
   });
 });
