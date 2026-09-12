@@ -363,6 +363,17 @@ export function getNormalizedTournamentSafe(tournamentId) {
   try {
     return getNormalizedTournament(tournamentId);
   } catch (error) {
-    return null;
+    try {
+      const fallback = db.prepare("SELECT * FROM tournaments WHERE id = ?").get(tournamentId);
+      if (!fallback) return null;
+      const tournament = normalizeTournamentPayload(fallback);
+      return {
+        tournament,
+        stages: [],
+        participants: Array.isArray(tournament.participants) ? tournament.participants : [],
+      };
+    } catch {
+      return null;
+    }
   }
 }

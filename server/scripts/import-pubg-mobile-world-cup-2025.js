@@ -255,16 +255,48 @@ const tx = db.transaction(() => {
     );
   }
 
-  db.prepare(
-    `
-    INSERT INTO tournaments (
-      id, name, game, tier, status, prize_pool, start_date, end_date, stages,
-      description, banner_url, rules, max_teams, format_overview, calendar,
-      prize_breakdown, awards, participants, rankings, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-  ).run(
-    randomUUID(),
+  const existing = db.prepare("SELECT id FROM tournaments WHERE name = ?").get(tournament.name);
+  const tournamentId = existing ? existing.id : randomUUID();
+
+  if (existing) {
+    db.prepare(
+      `UPDATE tournaments SET
+        game = ?, tier = ?, status = ?, prize_pool = ?, start_date = ?, end_date = ?, stages = ?,
+        description = ?, banner_url = ?, rules = ?, max_teams = ?, format_overview = ?, calendar = ?,
+        prize_breakdown = ?, awards = ?, participants = ?, rankings = ?, updated_date = ?
+      WHERE id = ?`,
+    ).run(
+      tournament.game,
+      tournament.tier,
+      tournament.status,
+      tournament.prize_pool,
+      tournament.start_date,
+      tournament.end_date,
+      JSON.stringify(tournament.stages),
+      tournament.description,
+      tournament.banner_url,
+      tournament.rules,
+      tournament.max_teams,
+      tournament.format_overview,
+      JSON.stringify(tournament.calendar),
+      JSON.stringify(tournament.prize_breakdown),
+      JSON.stringify(tournament.awards),
+      JSON.stringify(tournament.participants),
+      JSON.stringify(tournament.rankings),
+      now,
+      tournamentId,
+    );
+  } else {
+    db.prepare(
+      `
+      INSERT INTO tournaments (
+        id, name, game, tier, status, prize_pool, start_date, end_date, stages,
+        description, banner_url, rules, max_teams, format_overview, calendar,
+        prize_breakdown, awards, participants, rankings, created_date, updated_date, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    ).run(
+      tournamentId,
     tournament.name,
     tournament.game,
     tournament.tier,
@@ -286,7 +318,8 @@ const tx = db.transaction(() => {
     now,
     now,
     "admin@stagecore.local",
-  );
+    );
+  }
 
   const deleteArticle = db.prepare("DELETE FROM news_articles WHERE title = ?");
   const insertArticle = db.prepare(`
