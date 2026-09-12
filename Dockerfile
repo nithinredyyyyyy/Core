@@ -21,7 +21,7 @@ COPY --from=build /app/server ./server
 COPY run.sh ./
 RUN chmod +x run.sh
 
-RUN mkdir -p /app/server/data && chown -R appuser:appgroup /app/server/data && chown appuser:appgroup run.sh
+RUN mkdir -p /app/server/data /app/server/backup-repo && chown -R appuser:appgroup /app/server/data /app/server/backup-repo && chown appuser:appgroup run.sh
 ENV NODE_ENV=production
 ENV PORT=4000
 EXPOSE 4000
