@@ -11,7 +11,10 @@ FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 RUN groupadd -r appgroup && useradd -r -g appgroup -m appuser
 # Install git for backups
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ git ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 ENV PUPPETEER_SKIP_DOWNLOAD=1
