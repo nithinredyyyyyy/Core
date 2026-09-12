@@ -340,6 +340,12 @@ export function getStageBoardData({
   }));
   const matchById = new Map(boardMatches.map((match) => [match.id, match]));
   const teamMap = new Map(teams.map((team) => [team.id, team]));
+  const TEAM_ID_FALLBACKS = {
+    "7f0dee2c-8dc8-4ab8-bcb1-331928bf6e62": { id: "92a19672-3273-46dd-a31b-4dd8e40af73a", name: "4Thrives Esports", tag: "4THR", logo_url: "/images/team-logos/4t.webp" },
+  };
+  for (const [phantomId, fallback] of Object.entries(TEAM_ID_FALLBACKS)) {
+    if (!teamMap.has(phantomId)) teamMap.set(phantomId, fallback);
+  }
   const groupMap = getStageBoardTeamGroups(
     featuredTournament,
     participantEntries,
