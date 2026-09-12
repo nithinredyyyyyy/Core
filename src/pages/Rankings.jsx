@@ -1,7 +1,6 @@
 import React, { Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LazyMotion, domAnimation, m } from "framer-motion";
-import PlayerCard3D from "@/components/rankings/PlayerCard3D";
 import {
   Medal,
   TrendingUp,
@@ -170,25 +169,67 @@ function TopThreeShowcase({ data, type }) {
   const podium = [top3[1], top3[0], top3[2]];
 
   if (type === "players") {
+    const podiumConfig = [
+      { height: "h-52", medal: "from-slate-300 to-slate-400", text: "text-slate-500", border: "border-slate-300" },
+      { height: "h-68", medal: "from-amber-300 to-amber-500", text: "text-amber-600", border: "border-amber-400" },
+      { height: "h-44", medal: "from-amber-600 to-amber-800", text: "text-amber-700", border: "border-amber-600" },
+    ];
+
     return (
-      <div className="mb-16 flex flex-col items-center gap-8 md:flex-row md:items-end md:justify-center md:gap-6">
-        {podium.map((item, idx) => (
-          <m.div
-            key={item.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.15, duration: 0.5 }}
-            className={
-              item.rank === 1
-                ? "md:order-2 md:z-10 md:-translate-y-4 md:scale-[1.08]"
-                : item.rank === 2
-                  ? "md:order-1 md:translate-y-2"
-                  : "md:order-3 md:translate-y-2"
-            }
-          >
-            <PlayerCard3D player={item} rank={item.rank} isFirst={item.rank === 1} />
-          </m.div>
-        ))}
+      <div className="mb-16 flex flex-col items-center gap-6 md:flex-row md:items-end md:justify-center md:gap-4 px-4">
+        {podium.map((item, idx) => {
+          const cfg = podiumConfig[idx];
+          const isFirst = item.rank === 1;
+          const medalColors = ["from-slate-300 to-slate-400", "from-amber-400 to-amber-500", "from-amber-700 to-amber-800"];
+          const stepBg = isFirst
+            ? "bg-gradient-to-b from-amber-500/20 via-amber-500/5 to-transparent border-amber-400/30"
+            : item.rank === 2
+              ? "bg-gradient-to-b from-slate-400/15 via-slate-400/5 to-transparent border-slate-300/30"
+              : "bg-gradient-to-b from-amber-700/15 via-amber-700/5 to-transparent border-amber-700/25";
+
+          return (
+            <m.div
+              key={item.id}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.15, duration: 0.5, ease: "easeOut" }}
+              className={`flex flex-col items-center ${isFirst ? "md:order-2 md:z-10 md:-translate-y-6" : item.rank === 2 ? "md:order-1" : "md:order-3"}`}
+            >
+              <div className="relative flex flex-col items-center gap-3 mb-4">
+                <div className={`flex size-14 items-center justify-center rounded-full bg-gradient-to-br ${medalColors[idx]} text-white text-lg font-black shadow-lg`}>
+                  {item.rank}
+                </div>
+                {item.photo ? (
+                  <div className={`relative size-24 overflow-hidden rounded-2xl border-2 ${cfg.border} shadow-xl ${isFirst ? "md:size-32" : ""}`}>
+                    <img src={item.photo} alt={item.playerName} className="h-full w-full object-cover" onError={(e) => { e.target.style.display = "none"; }} />
+                  </div>
+                ) : (
+                  <div className={`flex size-24 items-center justify-center rounded-2xl border-2 ${cfg.border} bg-secondary/50 text-3xl font-black ${cfg.text} shadow-xl ${isFirst ? "md:size-32" : ""}`}>
+                    {(item.playerName || "?")[0]}
+                  </div>
+                )}
+                <div className="text-center">
+                  <p className="text-base font-black text-foreground md:text-lg">{item.playerName}</p>
+                  <p className="text-xs text-muted-foreground">{item.teamName}</p>
+                </div>
+              </div>
+
+              <div className={`w-full rounded-t-xl border ${stepBg} ${cfg.height} flex items-end justify-center pb-4`}>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Rating</p>
+                    <p className={`text-xl font-black ${isFirst ? "text-amber-500" : "text-primary"}`}>{item.rating}</p>
+                  </div>
+                  <div className="h-8 w-px bg-border" />
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Finishes</p>
+                    <p className="text-xl font-black text-foreground">{item.eliminations}</p>
+                  </div>
+                </div>
+              </div>
+            </m.div>
+          );
+        })}
       </div>
     );
   }

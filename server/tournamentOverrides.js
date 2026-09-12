@@ -667,5 +667,44 @@ export function applyTournamentReadOverrides(tournament) {
     };
   }
 
+  if (tournament.name === "Battlegrounds Mobile India Series 2023") {
+    const BGIS_2023_GRAND_FINALS_STANDINGS = [
+      { placement: 1, team: "Gladiators Esports", fullTeam: "Gladiators Esports", matches: 18, wwcd: 0, pos: 96, place: 96, elimins: 104, elims: 104, points: 200, pts: 200 },
+      { placement: 2, team: "BIG BROTHER ESPORTS", fullTeam: "BIG BROTHER ESPORTS", matches: 18, wwcd: 3, pos: 87, place: 87, elimins: 104, elims: 104, points: 191, pts: 191 },
+      { placement: 3, team: "TeamXSpark", fullTeam: "TeamXSpark", matches: 18, wwcd: 3, pos: 85, place: 85, elimins: 88, elims: 88, points: 173, pts: 173 },
+      { placement: 4, team: "Blind eSports", fullTeam: "Blind eSports", matches: 18, wwcd: 3, pos: 92, place: 92, elimins: 72, elims: 72, points: 164, pts: 164 },
+      { placement: 5, team: "Gods Reign", fullTeam: "Gods Reign", matches: 18, wwcd: 2, pos: 86, place: 86, elimins: 78, elims: 78, points: 164, pts: 164 },
+      { placement: 6, team: "Medal Esports", fullTeam: "Medal Esports", matches: 18, wwcd: 1, pos: 75, place: 75, elimins: 88, elims: 88, points: 163, pts: 163 },
+      { placement: 7, team: "Revenant Esports", fullTeam: "Revenant Esports", matches: 18, wwcd: 1, pos: 91, place: 91, elimins: 70, elims: 70, points: 161, pts: 161 },
+      { placement: 8, team: "TWM Gaming", fullTeam: "TWM Gaming", matches: 18, wwcd: 1, pos: 85, place: 85, elimins: 70, elims: 70, points: 155, pts: 155 },
+      { placement: 9, team: "OREsports", fullTeam: "OREsports", matches: 18, wwcd: 1, pos: 79, place: 79, elimins: 55, elims: 55, points: 134, pts: 134 },
+      { placement: 10, team: "Midwave Esports", fullTeam: "Midwave Esports", matches: 18, wwcd: 2, pos: 63, place: 63, elimins: 65, elims: 65, points: 128, pts: 128 },
+      { placement: 11, team: "GlitchXReborn", fullTeam: "GlitchXReborn", matches: 18, wwcd: 0, pos: 62, place: 62, elimins: 61, elims: 61, points: 123, pts: 123 },
+      { placement: 12, team: "MICI Esports", fullTeam: "MICI Esports", matches: 18, wwcd: 0, pos: 54, place: 54, elimins: 42, elims: 42, points: 96, pts: 96 },
+      { placement: 13, team: "Growing Strong", fullTeam: "Growing Strong", matches: 18, wwcd: 1, pos: 51, place: 51, elimins: 41, elims: 41, points: 92, pts: 92 },
+      { placement: 14, team: "4 Aggressive Man", fullTeam: "4 Aggressive Man", matches: 18, wwcd: 0, pos: 50, place: 50, elimins: 38, elims: 38, points: 88, pts: 88 },
+      { placement: 15, team: "Night Owls", fullTeam: "Night Owls", matches: 18, wwcd: 0, pos: 33, place: 33, elimins: 25, elims: 25, points: 58, pts: 58 },
+      { placement: 16, team: "CS Esports", fullTeam: "CS Esports", matches: 18, wwcd: 0, pos: 27, place: 27, elimins: 28, elims: 28, points: 55, pts: 55 },
+    ];
+
+    const stages = Array.isArray(tournament.stages)
+      ? tournament.stages.map((stage) => {
+          if (stage.name === "Grand Finals" && (!Array.isArray(stage.standings) || stage.standings.length === 0)) {
+            return { ...stage, status: "completed", standings: BGIS_2023_GRAND_FINALS_STANDINGS };
+          }
+          return stage;
+        })
+      : [{ name: "Grand Finals", order: 1, status: "completed", teamCount: 16, standings: BGIS_2023_GRAND_FINALS_STANDINGS }];
+
+    return {
+      ...tournament,
+      status: "completed",
+      tier: "S-Tier",
+      prize_pool: "₹2,00,00,000",
+      max_teams: 16,
+      stages,
+    };
+  }
+
   return tournament;
 }
