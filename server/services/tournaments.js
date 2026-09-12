@@ -160,12 +160,36 @@ export function getNormalizedTournament(id) {
   if (!tournamentRow) return null;
 
   const tournament = normalizeTournamentPayload(tournamentRow);
-  const stages = db
+  let stages = db
     .prepare(
       "SELECT * FROM tournament_stages WHERE tournament_id = ? ORDER BY stage_order ASC, name ASC",
     )
     .all(id)
     .map((row) => normalizeRecord(entityConfigs.TournamentStage, row));
+
+  let stagesFromJson = false;
+  if (!stages.length && Array.isArray(tournament.stages) && tournament.stages.length) {
+    stagesFromJson = true;
+    stages = tournament.stages.map((s, i) => ({
+      id: `json-${id}-${i}`,
+      tournament_id: id,
+      name: s.name || `Stage ${i + 1}`,
+      stage_order: s.order ?? i + 1,
+      status: s.status || "completed",
+      team_count: s.teamCount || 0,
+      map_rotation: s.mapRotation || [],
+      bonus_points: s.bonusPoints || [],
+      summary: s.summary || "",
+      standings: (s.standings || []).map((entry) => ({
+        ...entry,
+        team: typeof entry.team === "string"
+          ? { name: entry.team, tag: entry.tag || "", logo_url: entry.team_logo_url || null }
+          : entry.team || null,
+        points: entry.points ?? entry.pts ?? 0,
+        kills: entry.kills ?? entry.elimins ?? entry.elims ?? 0,
+      })),
+    }));
+  }
 
   const stageIds = stages.map((stage) => stage.id);
   const stageGroups = stageIds.length
@@ -261,11 +285,9 @@ export function getNormalizedTournament(id) {
         }))
     : [];
 
-  const derivedStandings = deriveStandingsFromMatchResults(
-    id,
-    stages,
-    stageGroups,
-  );
+  const derivedStandings = stagesFromJson
+    ? []
+    : deriveStandingsFromMatchResults(id, stages, stageGroups);
   const persistedByBoard = new Map();
   standings.forEach((entry) => {
     const boardKey = `${entry.stage_id}::${entry.group_id || "overall"}`;
@@ -293,16 +315,20 @@ export function getNormalizedTournament(id) {
     }
   });
 
-  const mergedStandings = standings.filter((entry) => {
-    const boardKey = `${entry.stage_id}::${entry.group_id || "overall"}`;
-    return !selectedBoards.has(boardKey);
-  });
-  derivedStandings.forEach((entry) => {
-    const boardKey = `${entry.stage_id}::${entry.group_id || "overall"}`;
-    if (selectedBoards.has(boardKey)) {
-      mergedStandings.push(entry);
-    }
-  });
+  const mergedStandings = stagesFromJson
+    ? []
+    : standings.filter((entry) => {
+        const boardKey = `${entry.stage_id}::${entry.group_id || "overall"}`;
+        return !selectedBoards.has(boardKey);
+      });
+  if (!stagesFromJson) {
+    derivedStandings.forEach((entry) => {
+      const boardKey = `${entry.stage_id}::${entry.group_id || "overall"}`;
+      if (selectedBoards.has(boardKey)) {
+        mergedStandings.push(entry);
+      }
+    });
+  }
 
   const groupedEntries = new Map();
   participantStageEntries.forEach((entry) => {
@@ -335,19 +361,28 @@ export function getNormalizedTournament(id) {
 
   return {
     tournament,
-    stages: stages.map((stage) => ({
-      ...stage,
-      groups: groupedGroups.get(stage.id) || [],
-      standings: {
-        overall: groupedStandings.get(`${stage.id}::overall`) || [],
-        by_group: Object.fromEntries(
-          (groupedGroups.get(stage.id) || []).map((group) => [
-            group.group_name,
-            groupedStandings.get(`${stage.id}::${group.id}`) || [],
-          ]),
-        ),
-      },
-    })),
+    stages: stages.map((stage) => {
+      const dbOverall = groupedStandings.get(`${stage.id}::overall`) || [];
+      const jsonStandings = Array.isArray(stage.standings) ? stage.standings : [];
+      const hasDbStandings = dbOverall.length > 0;
+      const mergedOverall = hasDbStandings ? dbOverall : jsonStandings;
+    
+      return {
+        ...stage,
+        groups: groupedGroups.get(stage.id) || [],
+        standings: {
+          overall: mergedOverall,
+          by_group: hasDbStandings
+            ? Object.fromEntries(
+                (groupedGroups.get(stage.id) || []).map((group) => [
+                  group.group_name,
+                  groupedStandings.get(`${stage.id}::${group.id}`) || [],
+                ]),
+              )
+            : {},
+        },
+      };
+    }),
     participants: Array.isArray(tournament.participants) && tournament.participants.length > 0
       ? tournament.participants
       : participants.map((participant) => ({
