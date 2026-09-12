@@ -86,6 +86,8 @@ authRouter.post("/auth/google", async (req, res) => {
       });
     }
 
+    console.error("Google sign-in error:", error);
+
     return res.status(500).json({
       error: error?.message || "Google sign-in failed",
       code: "google_signin_failed",
