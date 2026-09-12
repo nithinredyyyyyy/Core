@@ -1,11 +1,6 @@
 import { readFileSync } from "node:fs";
 
 const { db: local } = await import("file:///C:/Users/surak/core/server/db.js");
-const env = readFileSync(".env", "utf8");
-const tursoUrl = env.match(/TURSO_DATABASE_URL=(\S+)/)?.[1] || "";
-const tursoToken = env.match(/TURSO_AUTH_TOKEN=(\S+)/)?.[1] || "";
-const { default: Database } = await import("libsql");
-const remote = tursoUrl ? new Database(tursoUrl, tursoToken ? { authToken: tursoToken } : {}) : null;
 
 const norm = (v) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -119,4 +114,3 @@ async function investigate(db, label) {
 }
 
 await investigate(local, "LOCAL");
-if (remote) await investigate(remote, "REMOTE");

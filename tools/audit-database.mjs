@@ -3,12 +3,6 @@ import { fileURLToPath } from "node:url";
 
 const { db: local } = await import("file:///C:/Users/surak/core/server/db.js");
 
-const env = readFileSync(".env", "utf8");
-const tursoUrl = env.match(/TURSO_DATABASE_URL=(\S+)/)?.[1] || "";
-const tursoToken = env.match(/TURSO_AUTH_TOKEN=(\S+)/)?.[1] || "";
-const { default: Database } = await import("libsql");
-const remote = tursoUrl ? new Database(tursoUrl, tursoToken ? { authToken: tursoToken } : {}) : null;
-
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const norm = (v) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -245,8 +239,3 @@ function printReport(report) {
 
 const localReport = buildAudit(local, "LOCAL (server/data/stagecore.sqlite)");
 printReport(localReport);
-
-if (remote) {
-  const remoteReport = buildAudit(remote, "REMOTE (Turso)");
-  printReport(remoteReport);
-}
