@@ -689,7 +689,7 @@ export function applyTournamentReadOverrides(tournament) {
 
     const stages = Array.isArray(tournament.stages)
       ? tournament.stages.map((stage) => {
-          if (stage.name === "Grand Finals" && (!Array.isArray(stage.standings) || stage.standings.length === 0)) {
+          if (stage.name === "Grand Finals") {
             return { ...stage, status: "completed", standings: BGIS_2023_GRAND_FINALS_STANDINGS };
           }
           return stage;
