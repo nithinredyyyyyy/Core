@@ -4,6 +4,8 @@ services:
     runtime: docker
     plan: free
     healthCheckPath: /api/health
+    dockerBuildArgs:
+      - VITE_GOOGLE_CLIENT_ID=13045307296-v52idel7q4medhlhedjciv4qeq0e964e.apps.googleusercontent.com
     envVars:
       - key: NODE_ENV
         value: production
