@@ -999,7 +999,7 @@ export default React.memo(function StageStandingsBoard({
     for (const result of matchResults) {
       if (!selectedGroupMatchIds.has(result.match_id)) continue;
       const team = teamMap.get(result.team_id);
-      const displayName = team?.name || result.team_name || "Unknown Team";
+      const displayName = team?.name || result.team_name || "-";
       const key = normalizeOrganizationName(displayName);
       const existing = liveGroupStandings.get(key) || {
         placement: null,

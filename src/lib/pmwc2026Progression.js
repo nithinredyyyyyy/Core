@@ -150,7 +150,7 @@ export function derivePmwc2026ParticipantEntries(
         });
         if (!destinationStage) return;
 
-        const teamName = getTeamName(row) || "Unknown Team";
+        const teamName = getTeamName(row) || "-";
         if (hasStageEntry(teamName, destinationStage)) return;
 
         const sourceEntry = teamEntryMap.get(normalizeOrganizationName(teamName));
@@ -187,7 +187,7 @@ export function derivePmwc2026ParticipantEntries(
           });
           if (!destinationStage) return;
 
-          const teamName = getTeamName(row) || "Unknown Team";
+          const teamName = getTeamName(row) || "-";
           if (hasStageEntry(teamName, destinationStage)) return;
 
           const sourceEntry = teamEntryMap.get(normalizeOrganizationName(teamName));

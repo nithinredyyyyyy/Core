@@ -76,7 +76,7 @@ export function buildNormalizedParticipantEntries(normalizedParticipants) {
         primaryStageEntry?.placement ??
         participant.seed ??
         null,
-      team: participant.team?.name || "Unknown Team",
+      team: participant.team?.name || "-",
       phase: buildPhaseLabelFromEntry(primaryStageEntry) || "Participants",
       players: (participant.players || []).flatMap((player) =>
         player.player_name ? [player.player_name] : []
@@ -131,8 +131,8 @@ export function buildNormalizedStageBoardStages(normalizedStages, normalizedPart
       (rows || []).forEach((entry) => {
         groupedRows.push({
           placement: entry.rank,
-          team: entry.team?.name || "Unknown Team",
-          fullTeam: entry.team?.name || "Unknown Team",
+          team: entry.team?.name || "-",
+          fullTeam: entry.team?.name || "-",
           grp: groupLabel || undefined,
           matches: entry.matches_played || 0,
           wwcd: entry.wins || 0,
@@ -146,8 +146,8 @@ export function buildNormalizedStageBoardStages(normalizedStages, normalizedPart
 
     const overallRows = (stage?.standings?.overall || []).map((entry) => ({
       placement: entry.rank,
-      team: entry.team?.name || "Unknown Team",
-      fullTeam: entry.team?.name || "Unknown Team",
+      team: entry.team?.name || "-",
+      fullTeam: entry.team?.name || "-",
       grp: entry.group_name
         ? String(entry.group_name).replace(/^Group\s+/i, "").trim()
         : undefined,

@@ -32,7 +32,7 @@ export function buildTeamMapStats({
     const teamKey =
       result.team_id || normalizeOrganizationName(result.team_name);
     const displayName =
-      result.team_name || teamStats.get(teamKey)?.teamName || "Unknown Team";
+      result.team_name || teamStats.get(teamKey)?.teamName || "-";
     const teamEntry = teamStats.get(teamKey) || {
       teamId: result.team_id,
       teamName: displayName,

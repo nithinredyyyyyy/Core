@@ -357,7 +357,7 @@ export function getStageBoardData({
     if (featuredStage && result.stage && !stagesMatch(result.stage, featuredStage))
       continue;
     const team = teamMap.get(result.team_id);
-    const displayName = team?.name || result.team_name || "Unknown Team";
+    const displayName = team?.name || result.team_name || "-";
     const key = result.team_id || normalizeStageBoardValue(displayName);
     const match = matchById.get(result.match_id);
     const matchGroup = isGrandFinalsStage
@@ -495,7 +495,7 @@ export function getStageBoardData({
     const fallbackStandings = filtered
       .map((ss) => {
         const teamEntry = ss.team || teamMapForFallback.get(ss.team_id) || {};
-        const displayName = teamEntry.name || ss.team_name || "Unknown Team";
+        const displayName = teamEntry.name || ss.team_name || "-";
         const logoUrl = teamEntry.logo_url || teamEntry.logoSrc || null;
         return {
           teamId: ss.team_id,

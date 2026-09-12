@@ -209,7 +209,7 @@ function getBmps2026SemiFinalsGroup(teamName, sourceStageName, index) {
 export function deriveBmps2026OverviewEntries(normalizedTournament) {
   const baseEntries = (normalizedTournament?.participants || []).map(
     (participant) => ({
-      team: participant?.team?.name || "Unknown Team",
+      team: participant?.team?.name || "-",
       phase:
         participant?.stage_entries?.[0]?.stage_name &&
         participant?.stage_entries?.[0]?.group_name
@@ -283,7 +283,7 @@ export function deriveBmps2026OverviewEntries(normalizedTournament) {
 
       for (const [destinationStage, destinationRows] of rowsByDestination.entries()) {
         sortRound4Rows(destinationRows).forEach((row, index) => {
-          const teamName = row?.team?.name || "Unknown Team";
+          const teamName = row?.team?.name || "-";
           const destinationGroup =
             String(destinationStage || "").trim().toLowerCase() ===
             "survival stage"
@@ -325,7 +325,7 @@ export function deriveBmps2026OverviewEntries(normalizedTournament) {
       });
 
       orderedRows.forEach((row, index) => {
-        const teamName = row?.team?.name || "Unknown Team";
+        const teamName = row?.team?.name || "-";
         const destinationStage = nextStageName;
         if (!destinationStage) return;
         const destinationGroup = getBmps2026MovementGroup(group, index + 1, orderedRows.length);

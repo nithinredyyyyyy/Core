@@ -883,9 +883,11 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
               ? deduplicatedRawStandings
               : normalizedStandings;
           const finalStandings =
-            derivedStandings.length > 0
-              ? derivedStandings
-              : preferredStandings;
+            normalizedStandings.length > 0
+              ? normalizedStandings
+              : derivedStandings.length > 0
+                ? derivedStandings
+                : preferredStandings;
 
           return {
             ...stage,
@@ -942,7 +944,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         return {
           ...stage,
           name: stageName,
-          standings: derivedStandings.length > 0 ? derivedStandings : dedupedFallbackStandings,
+          standings: dedupedFallbackStandings.length > 0 ? dedupedFallbackStandings : derivedStandings,
         };
       }));
     },

@@ -416,7 +416,7 @@ export function deriveBmps2026ParticipantEntries(
           .toSorted(compareStageBoardStandings);
 
         orderedRows.forEach((row, index) => {
-          const teamName = getTeamName(row) || "Unknown Team";
+          const teamName = getTeamName(row) || "-";
           const sourceEntry = teamEntryMap.get(
             normalizeOrganizationName(teamName),
           );
@@ -443,7 +443,7 @@ export function deriveBmps2026ParticipantEntries(
     if (!isPromotionRound) {
       const orderedRows = stageStandings.toSorted(compareStageBoardStandings);
       orderedRows.forEach((row, index) => {
-        const teamName = getTeamName(row) || "Unknown Team";
+        const teamName = getTeamName(row) || "-";
         const sourceEntry = teamEntryMap.get(
           normalizeOrganizationName(teamName),
         );
@@ -489,7 +489,7 @@ export function deriveBmps2026ParticipantEntries(
           index + 1,
           orderedRows.length,
         );
-        const teamName = getTeamName(row) || "Unknown Team";
+        const teamName = getTeamName(row) || "-";
         const sourceEntry = teamEntryMap.get(
           normalizeOrganizationName(teamName),
         );

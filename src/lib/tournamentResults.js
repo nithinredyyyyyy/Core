@@ -112,8 +112,8 @@ function getResolvedNormalizedStageStandings({
     const team = teamMap.get(entry.team_id);
     rows.push({
       placement: entry.rank,
-      team: team?.name || "Unknown Team",
-      fullTeam: team?.name || "Unknown Team",
+      team: team?.name || "-",
+      fullTeam: team?.name || "-",
       grp: undefined,
       matches: entry.matches_played || 0,
       wwcd: entry.wins || 0,
