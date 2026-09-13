@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { Moon, Search, Shield, Sun, LogIn } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Moon, Search, Shield, Sun, LogIn, LogOut } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { BrandMark } from "@/components/shared/BrandMark";
 import { useAdminAccess } from "@/lib/adminAccess";
 
 export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
   const routerLocation = useLocation();
+  const navigate = useNavigate();
   const { hasAdminAccess } = useAdminAccess();
   const [authSession, setAuthSession] = useState(() => base44.auth.getStoredSession());
   const isDark = theme === "dark";
@@ -19,7 +20,14 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
     { label: "News", path: "/news" },
     ...(hasAdminAccess ? [{ label: "Admin", path: "/admin", icon: Shield }] : []),
   ];
-  const isAdminSignedIn = Boolean(authSession.token && authSession.user?.role === "admin");
+  const isSignedIn = Boolean(authSession.token);
+  const isAdminSignedIn = isSignedIn && authSession.user?.role === "admin";
+
+  function handleSignOut() {
+    base44.auth.logout();
+    setAuthSession({ user: null, token: "" });
+    navigate("/", { replace: true });
+  }
 
   useEffect(() => {
     const syncSession = () => {
@@ -151,6 +159,20 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
             <Shield className="size-4" />
             Admin
           </Link>
+        ) : isSignedIn ? (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            title={`Signed in as ${authSession.user?.email || ""}`}
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] transition-all ${
+              isDark
+                ? "border-white/8 bg-brand-navy-storm text-white hover:border-white/12 hover:bg-brand-navy-dusk"
+                : "border-brand-sky-wash bg-white text-brand-ink hover:border-brand-sky-cloud hover:bg-brand-cream-porcelain"
+            }`}
+          >
+            <LogOut className="size-4" />
+            {authSession.user?.full_name?.split(" ")[0] || authSession.user?.email?.split("@")[0] || "Sign Out"}
+          </button>
         ) : (
           <Link
             to="/signin"
