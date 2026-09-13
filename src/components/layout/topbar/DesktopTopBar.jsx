@@ -19,7 +19,7 @@ export default function DesktopTopBar({ setSearchOpen, theme, toggle }) {
     { label: "News", path: "/news" },
     ...(hasAdminAccess ? [{ label: "Admin", path: "/admin", icon: Shield }] : []),
   ];
-  const isAdminSignedIn = Boolean(authSession.token && authSession.user?.email);
+  const isAdminSignedIn = Boolean(authSession.token && authSession.user?.role === "admin");
 
   useEffect(() => {
     const syncSession = () => {
