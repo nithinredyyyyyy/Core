@@ -305,7 +305,7 @@ const tournament = {
         {
           placement: 1,
           team: "GDR",
-          fullTeam: "Gladiator Esports",
+          fullTeam: "Gladiators Esports",
           matches: 18,
           wwcd: 0,
           pos: 96,
@@ -316,7 +316,7 @@ const tournament = {
         {
           placement: 2,
           team: "BB",
-          fullTeam: "Big Brother Esports",
+          fullTeam: "BIG BROTHER ESPORTS",
           matches: 18,
           wwcd: 3,
           pos: 87,
@@ -327,7 +327,7 @@ const tournament = {
         {
           placement: 3,
           team: "TX",
-          fullTeam: "Team X Spark",
+          fullTeam: "TeamXSpark",
           matches: 18,
           wwcd: 3,
           pos: 85,
@@ -338,7 +338,7 @@ const tournament = {
         {
           placement: 4,
           team: "Blind",
-          fullTeam: "Blind Esports",
+          fullTeam: "Blind eSports",
           matches: 18,
           wwcd: 3,
           pos: 92,
@@ -393,7 +393,7 @@ const tournament = {
         {
           placement: 9,
           team: "OR",
-          fullTeam: "OR Esports",
+          fullTeam: "OREsports",
           matches: 18,
           wwcd: 1,
           pos: 79,
@@ -470,7 +470,7 @@ const tournament = {
         {
           placement: 16,
           team: "CS",
-          fullTeam: "CS Esports x One Power",
+          fullTeam: "CS Esports",
           matches: 18,
           wwcd: 0,
           pos: 27,
