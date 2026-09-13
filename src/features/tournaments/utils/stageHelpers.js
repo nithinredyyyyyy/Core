@@ -130,33 +130,33 @@ export function buildNormalizedStageBoardStages(normalizedStages, normalizedPart
       const groupLabel = String(groupName || "").replace(/^Group\s+/i, "").trim();
       (rows || []).forEach((entry) => {
         groupedRows.push({
-          placement: entry.rank,
-          team: entry.team?.name || "-",
-          fullTeam: entry.team?.name || "-",
-          grp: groupLabel || undefined,
-          matches: entry.matches_played || 0,
-          wwcd: entry.wins || 0,
-          pos: entry.place_points || 0,
-          elimins: entry.elim_points || 0,
-          points: entry.total_points || 0,
-          outcome: entry.progression_status || null,
+          placement: entry.rank ?? entry.placement,
+          team: entry.team?.name || entry.fullTeam || entry.team || "-",
+          fullTeam: entry.team?.name || entry.fullTeam || entry.team || "-",
+          grp: groupLabel || entry.grp || undefined,
+          matches: entry.matches_played ?? entry.matches ?? 0,
+          wwcd: entry.wins ?? entry.wwcd ?? 0,
+          pos: entry.place_points ?? entry.pos ?? 0,
+          elimins: entry.elim_points ?? entry.elimins ?? entry.elims ?? 0,
+          points: entry.total_points ?? entry.points ?? 0,
+          outcome: entry.progression_status || entry.outcome || null,
         });
       });
     });
 
     const overallRows = (stage?.standings?.overall || []).map((entry) => ({
-      placement: entry.rank,
-      team: entry.team?.name || "-",
-      fullTeam: entry.team?.name || "-",
+      placement: entry.rank ?? entry.placement,
+      team: entry.team?.name || entry.fullTeam || entry.team || "-",
+      fullTeam: entry.team?.name || entry.fullTeam || entry.team || "-",
       grp: entry.group_name
         ? String(entry.group_name).replace(/^Group\s+/i, "").trim()
-        : undefined,
-      matches: entry.matches_played || 0,
-      wwcd: entry.wins || 0,
-      pos: entry.place_points || 0,
-      elimins: entry.elim_points || 0,
-      points: entry.total_points || 0,
-      outcome: entry.progression_status || null,
+        : entry.grp || undefined,
+      matches: entry.matches_played ?? entry.matches ?? 0,
+      wwcd: entry.wins ?? entry.wwcd ?? 0,
+      pos: entry.place_points ?? entry.pos ?? 0,
+      elimins: entry.elim_points ?? entry.elimins ?? entry.elims ?? 0,
+      points: entry.total_points ?? entry.points ?? 0,
+      outcome: entry.progression_status || entry.outcome || null,
     }));
 
     const standings = overallRows.length > 0 ? overallRows : groupedRows;
