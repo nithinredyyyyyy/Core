@@ -73,6 +73,9 @@ const CONFIGURED_CORS_ORIGINS = [
 ];
 const ALLOWED_CORS_ORIGINS = new Set([
   ...CONFIGURED_CORS_ORIGINS,
+  "https://core-esports-1ibg.onrender.com",
+  "https://core-ten-rouge.vercel.app",
+  "https://core-git-main-nithin-surkantis-projects.vercel.app",
   ...(!isProduction ? [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
