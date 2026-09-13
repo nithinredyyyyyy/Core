@@ -60,26 +60,30 @@ const insertMatch = db.prepare(`
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
-updateTournament.run(JSON.stringify(stages), now, existing.id);
-deleteSurvivalStageMatches.run(existing.id, STAGE_NAME);
+const tx = db.transaction(() => {
+  updateTournament.run(JSON.stringify(stages), now, existing.id);
+  deleteSurvivalStageMatches.run(existing.id, STAGE_NAME);
 
-survivalSchedule.forEach((entry) => {
-  insertMatch.run(
-    randomUUID(),
-    existing.id,
-    STAGE_NAME,
-    `Group ${entry.group}`,
-    entry.match,
-    entry.map,
-    "scheduled",
-    `2026-06-${String(entry.day + 1).padStart(2, "0")}T00:00:00+05:30`,
-    null,
-    entry.day,
-    now,
-    now,
-    "admin@stagecore.local",
-  );
+  for (const entry of survivalSchedule) {
+    insertMatch.run(
+      randomUUID(),
+      existing.id,
+      STAGE_NAME,
+      `Group ${entry.group}`,
+      entry.match,
+      entry.map,
+      "scheduled",
+      `2026-06-${String(entry.day + 1).padStart(2, "0")}T00:00:00+05:30`,
+      null,
+      entry.day,
+      now,
+      now,
+      "admin@stagecore.local",
+    );
+  }
 });
+
+tx();
 
 console.log(
   `Updated ${TOURNAMENT_NAME} ${STAGE_NAME} with ${survivalSchedule.length} matches across 4 days.`,
