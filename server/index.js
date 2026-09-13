@@ -190,6 +190,9 @@ app.use((error, _req, res, _next) => {
       issues: error.issues,
     });
   }
+  
+  console.error("Global Error Handler caught:", error);
+  
   return res.status(500).json({ error: "Internal server error" });
 });
 
