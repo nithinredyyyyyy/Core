@@ -108,11 +108,11 @@ export function importTournament(config) {
           name=excluded.name, tag=excluded.tag, game=excluded.game,
           region=excluded.region, updated_date=excluded.updated_date
       `);
-      const findPlayerByIGN = db.prepare(
-        "SELECT id FROM players WHERE ign = ?",
-      );
       const findPlayerOnTeam = db.prepare(
         "SELECT id FROM players WHERE ign = ? AND team_id = ?",
+      );
+      const findDepartedPlayer = db.prepare(
+        "SELECT id FROM players WHERE ign = ? AND team_id IS NULL",
       );
       const updatePlayerTeam = db.prepare(
         "UPDATE players SET team_id = ?, updated_date = ? WHERE id = ?",
@@ -183,11 +183,11 @@ export function importTournament(config) {
             continue;
           }
 
-          // Second: does this ign exist ANYWHERE? (returning player)
-          const anywhere = findPlayerByIGN.get(ign);
-          if (anywhere) {
+          // Second: does this ign exist with team_id = NULL? (departed player returning)
+          const departed = findDepartedPlayer.get(ign);
+          if (departed) {
             // Reactivate — move to this team, preserve UUID and FK references
-            updatePlayerTeam.run(teamId, now, anywhere.id);
+            updatePlayerTeam.run(teamId, now, departed.id);
             continue;
           }
 
