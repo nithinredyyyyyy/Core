@@ -9,25 +9,27 @@ import {
 } from "../db.js";
 
 export function insertRecord(entityName, payload, options = {}) {
-  const config = entityConfigs[entityName];
-  const now = new Date().toISOString();
-  const record = {
-    id: randomUUID(),
-    created_date: now,
-    updated_date: now,
-    ...serializePayload(config, payload),
-  };
+  return runInTransaction(() => {
+    const config = entityConfigs[entityName];
+    const now = new Date().toISOString();
+    const record = {
+      id: randomUUID(),
+      created_date: now,
+      updated_date: now,
+      ...serializePayload(config, payload),
+    };
 
-  const columns = Object.keys(record);
-  const placeholders = columns.map(() => "?").join(", ");
-  const sql = `INSERT INTO ${config.table} (${columns.join(", ")}) VALUES (${placeholders})`;
-  db.prepare(sql).run(...columns.map((column) => record[column]));
+    const columns = Object.keys(record);
+    const placeholders = columns.map(() => "?").join(", ");
+    const sql = `INSERT INTO ${config.table} (${columns.join(", ")}) VALUES (${placeholders})`;
+    db.prepare(sql).run(...columns.map((column) => record[column]));
 
-  if (entityName === "MatchResult" && options.recompute !== false) {
-    recomputeTeamStats();
-  }
+    if (entityName === "MatchResult" && options.recompute !== false) {
+      recomputeTeamStats();
+    }
 
-  return getRecord(entityName, record.id);
+    return getRecord(entityName, record.id);
+  });
 }
 
 export function insertRecords(entityName, payloads) {
@@ -51,21 +53,23 @@ export function getRecord(entityName, id) {
 }
 
 export function updateRecord(entityName, id, payload) {
-  const config = entityConfigs[entityName];
-  const updates = serializePayload(config, payload);
-  updates.updated_date = new Date().toISOString();
-  const fields = Object.keys(updates);
-  if (fields.length === 0) {
+  return runInTransaction(() => {
+    const config = entityConfigs[entityName];
+    const updates = serializePayload(config, payload);
+    updates.updated_date = new Date().toISOString();
+    const fields = Object.keys(updates);
+    if (fields.length === 0) {
+      return getRecord(entityName, id);
+    }
+    const sql = `UPDATE ${config.table} SET ${fields.map((field) => `${field} = ?`).join(", ")} WHERE id = ?`;
+    db.prepare(sql).run(...fields.map((field) => updates[field]), id);
+
+    if (entityName === "MatchResult") {
+      recomputeTeamStats();
+    }
+
     return getRecord(entityName, id);
-  }
-  const sql = `UPDATE ${config.table} SET ${fields.map((field) => `${field} = ?`).join(", ")} WHERE id = ?`;
-  db.prepare(sql).run(...fields.map((field) => updates[field]), id);
-
-  if (entityName === "MatchResult") {
-    recomputeTeamStats();
-  }
-
-  return getRecord(entityName, id);
+  });
 }
 
 export function deleteRecord(entityName, id) {
