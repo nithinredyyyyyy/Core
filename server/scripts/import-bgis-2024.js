@@ -741,13 +741,18 @@ const tx = db.transaction(() => {
 
   const aliasToTeamName = new Map([
     ["iQOO Revenant XSpark", "TeamXSpark"],
+    ["Team XSpark", "TeamXSpark"],
     ["GLOBAL ESPORTS", "Global Esports"],
     ["iQOO RECKONING ESPORTS", "Reckoning Esports"],
+    ["Reckoning Esports", "Reckoning Esports"],
     ["iQOO Soul", "Team Soul"],
+    ["Team SouL", "Team Soul"],
     ["Venom Gaming", "Venom Gaming"],
     ["Team Limra", "Team Limra"],
     ["iQOO 8bit", "8BIT"],
+    ["8Bit", "8BIT"],
     ["iQOO Team Tamilas", "Team Tamilas"],
+    ["Team Tamilas", "Team Tamilas"],
     ["Raven Esports", "Raven Esports"],
     ["FS eSports", "FS Esports"],
     ["Team Insane", "Team iNSANE"],
@@ -756,6 +761,7 @@ const tx = db.transaction(() => {
     ["MOGO ESPORTS", "MOGO Esports"],
     ["CARNIVAL GAMING", "Carnival Gaming"],
     ["Rising Inferno Esports", "Inferno Squad"],
+    ["Inferno Squad", "Inferno Squad"],
   ]);
 
   const insertMatch = db.prepare(`

@@ -21,8 +21,8 @@ const ORGANIZATION_ALIAS_MAP = {
   thwxnonxesports: "nonxesports",
   nonxesports: "nonxesports",
 
-  teamxspark: "revenantxspark",
-  revenantesports: "revenantxspark",
+  teamxspark: "teamxspark",
+  revenantesports: "revenantesports",
   revenantxspark: "revenantxspark",
 
   orangutan: "orangutan",
@@ -141,6 +141,8 @@ const ORGANIZATION_CANONICAL = {
   gladiatorsesports: { name: "Gladiators Esports", tag: "GDR" },
   godsreign: { name: "Gods Reign", tag: "GDR" },
   revenantxspark: { name: "Revenant XSpark", tag: "RNTX" },
+  revenantesports: { name: "Revenant Esports", tag: "RNT" },
+  teamxspark: { name: "TeamXSpark", tag: "TXS" },
   teamversatile: { name: "Team Versatile", tag: "TV" },
   teamredxross: { name: "Team RedXRoss", tag: "RRX" },
   teaminsane: { name: "Team Insane", tag: "INSANE" },
