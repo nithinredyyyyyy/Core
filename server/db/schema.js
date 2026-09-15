@@ -147,6 +147,32 @@ const tableDefinitions = [
     updated_date TEXT NOT NULL,
     created_by TEXT
   )`,
+  `CREATE TABLE IF NOT EXISTS team_season_ratings (
+    id TEXT PRIMARY KEY,
+    season TEXT NOT NULL,
+    team_id TEXT NOT NULL REFERENCES teams(id),
+    rating INTEGER NOT NULL,
+    tournament_points TEXT NOT NULL,
+    status TEXT DEFAULT 'Active',
+    computed_at TEXT NOT NULL,
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT,
+    UNIQUE(season, team_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS player_season_ratings (
+    id TEXT PRIMARY KEY,
+    season TEXT NOT NULL,
+    player_id TEXT NOT NULL REFERENCES players(id),
+    team_id TEXT NOT NULL REFERENCES teams(id),
+    rating REAL NOT NULL,
+    finishes INTEGER DEFAULT 0,
+    computed_at TEXT NOT NULL,
+    created_date TEXT NOT NULL,
+    updated_date TEXT NOT NULL,
+    created_by TEXT,
+    UNIQUE(season, player_id)
+  )`,
 ];
 
 for (const definition of tableDefinitions) {
@@ -363,6 +389,22 @@ export const entityConfigs = {
   StageMatchBreakdown: {
     table: "stage_match_breakdown",
     fields: ["standing_id", "match_id", "placement", "kills", "total_points"],
+    jsonFields: [],
+  },
+  TeamSeasonRating: {
+    table: "team_season_ratings",
+    fields: [
+      "season", "team_id", "rating", "tournament_points", "status",
+      "computed_at", "created_by",
+    ],
+    jsonFields: ["tournament_points"],
+  },
+  PlayerSeasonRating: {
+    table: "player_season_ratings",
+    fields: [
+      "season", "player_id", "team_id", "rating", "finishes",
+      "computed_at", "created_by",
+    ],
     jsonFields: [],
   },
 };
