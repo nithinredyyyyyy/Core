@@ -1,173 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { db } from "../db.js";
-
-const now = new Date().toISOString();
-
-const groupStageStandings = [
-  [1, "Yoodo Alliance", 3, 43, 79, 122, "Main Tournament"],
-  [2, "Tianba", 0, 29, 77, 106, "Main Tournament"],
-  [3, "4Merical Vibes", 2, 29, 65, 94, "Main Tournament"],
-  [4, "Team Liquid", 2, 37, 54, 91, "Main Tournament"],
-  [5, "Alpha7 Esports", 1, 34, 57, 91, "Main Tournament"],
-  [6, "Al Ula x IHC", 1, 30, 54, 84, "Main Tournament"],
-  [7, "D'Xavier", 1, 39, 43, 82, "Main Tournament"],
-  [8, "Talon Esports", 0, 21, 59, 80, "Main Tournament"],
-  [9, "POWR Esports", 2, 33, 46, 79, "Main Tournament"],
-  [10, "BOOM Esports", 1, 25, 51, 76, "Main Tournament"],
-  [11, "Vampire Esports", 0, 28, 42, 70, "Main Tournament"],
-  [12, "REJECT", 0, 20, 49, 69, "Main Tournament"],
-  [13, "iNCO Gaming", 1, 28, 38, 66, "Survival Stage"],
-  [14, "Dplus", 1, 14, 49, 63, "Survival Stage"],
-  [15, "Falcons Force", 0, 15, 45, 60, "Survival Stage"],
-  [16, "MadBulls", 0, 22, 38, 60, "Survival Stage"],
-  [17, "Tong Jia Bao Esports", 1, 24, 32, 56, "Survival Stage"],
-  [18, "Besiktas Black", 1, 30, 25, 55, "Survival Stage"],
-  [19, "Brute Force", 0, 21, 32, 53, "Survival Stage"],
-  [20, "Money Makers", 1, 14, 37, 51, "Survival Stage"],
-  [21, "Harame Bro", 0, 13, 29, 42, "Survival Stage"],
-  [22, "IW NRX", 0, 10, 32, 42, "Survival Stage"],
-  [23, "CAG OSAKA", 0, 12, 19, 31, "Survival Stage"],
-  [24, "DRX", 0, 5, 18, 23, "Survival Stage"],
-];
-
-const survivalStageStandings = [
-  [1, "IW NRX", 2, 48, 74, 122, "Main Tournament"],
-  [2, "DRX", 3, 41, 52, 93, "Main Tournament"],
-  [3, "Tong Jia Bao Esports", 1, 33, 48, 81, "Main Tournament"],
-  [4, "Twisted Minds", 1, 32, 48, 80, "Main Tournament"],
-  [5, "Falcons Force", 1, 21, 56, 77, "Eliminated"],
-  [6, "Dplus", 0, 21, 55, 76, "Eliminated"],
-  [7, "Brute Force", 0, 26, 48, 74, "Eliminated"],
-  [8, "Money Makers", 0, 22, 51, 73, "Eliminated"],
-  [9, "Team Pandum", 1, 19, 53, 72, "Eliminated"],
-  [10, "CAG OSAKA", 2, 28, 43, 71, "Eliminated"],
-  [11, "MadBulls", 0, 17, 50, 67, "Eliminated"],
-  [12, "Harame Bro", 1, 20, 29, 49, "Eliminated"],
-  [13, "Besiktas Black", 0, 20, 25, 45, "Eliminated"],
-  [14, "RUKH Esports", 0, 9, 33, 42, "Eliminated"],
-  [15, "Team Spirit", 0, 12, 27, 39, "Eliminated"],
-  [16, "iNCO Gaming", 0, 15, 23, 38, "Eliminated"],
-];
-
-const mainTournamentStandings = [
-  [1, "Alpha7 Esports", 153, "Champion"],
-  [2, "REJECT", 124, "Finalist"],
-  [3, "Tianba", 124, "Finalist"],
-  [4, "DRX", 111, "Finalist"],
-  [5, "BOOM Esports", 108, "Finalist"],
-  [6, "Talon Esports", 106, "Finalist"],
-  [7, "Vampire Esports", 104, "Finalist"],
-  [8, "Team Liquid", 101, "Finalist"],
-  [9, "D'Xavier", 97, "Finalist"],
-  [10, "Tong Jia Bao Esports", 94, "Finalist"],
-  [11, "Al Ula x IHC", 93, "Finalist"],
-  [12, "4Merical Vibes", 90, "Finalist"],
-  [13, "Twisted Minds", 88, "Finalist"],
-  [14, "IW NRX", 85, "Finalist"],
-  [15, "Yoodo Alliance", 82, "Finalist"],
-  [16, "POWR Esports", 65, "Finalist"],
-];
-
-function toStanding([placement, team, wwcd, pos, elimins, points, outcome]) {
-  return {
-    placement,
-    rank: placement,
-    team,
-    fullTeam: team,
-    matches: 12,
-    wwcd,
-    pos,
-    place: pos,
-    elimins,
-    elims: elimins,
-    points,
-    pts: points,
-    outcome,
-  };
-}
-
-function toFinalStanding([placement, team, points, outcome]) {
-  return {
-    placement,
-    rank: placement,
-    team,
-    fullTeam: team,
-    matches: 18,
-    wwcd: "",
-    pos: "",
-    place: "",
-    elimins: "",
-    elims: "",
-    points,
-    pts: points,
-    outcome,
-  };
-}
-
-const groupStageTeams = [
-  ["BOOM Esports", "Group Yellow"],
-  ["D'Xavier", "Group Red"],
-  ["Yoodo Alliance", "Group Red"],
-  ["Talon Esports", "Group Green"],
-  ["4Merical Vibes", "Group Red"],
-  ["Falcons Force", "Group Green"],
-  ["MadBulls", "Group Green"],
-  ["Al Ula x IHC", "Group Green"],
-  ["Brute Force", "Group Red"],
-  ["IW NRX", "Group Yellow"],
-  ["Besiktas Black", "Group Red"],
-  ["Money Makers", "Group Yellow"],
-  ["Team Liquid", "Group Green"],
-  ["Alpha7 Esports", "Group Yellow"],
-  ["iNCO Gaming", "Group Yellow"],
-  ["Harame Bro", "Group Green"],
-  ["REJECT", "Group Red"],
-  ["CAG OSAKA", "Group Yellow"],
-  ["DRX", "Group Yellow"],
-  ["Dplus", "Group Red"],
-  ["Tianba", "Group Red"],
-  ["Tong Jia Bao Esports", "Group Green"],
-  ["POWR Esports", "Group Yellow"],
-  ["Vampire Esports", "Group Green"],
-];
-
-const survivalInviteTeams = [
-  ["Team Pandum", "Survival Stage"],
-  ["RUKH Esports", "Survival Stage"],
-  ["Team Spirit", "Survival Stage"],
-  ["Twisted Minds", "Survival Stage"],
-];
-
-const prizeBreakdown = [
-  ["1st", "Alpha7 Esports", "467,312.50"],
-  ["2nd", "REJECT", "259,312.50"],
-  ["3rd", "Tianba", "212,312.50"],
-  ["4th", "DRX", "162,312.50"],
-  ["5th", "BOOM Esports", "151,312.50"],
-  ["6th", "Talon Esports", "143,312.50"],
-  ["7th", "Vampire Esports", "135,312.50"],
-  ["8th", "Team Liquid", "133,812.50"],
-  ["9th", "D'Xavier", "124,312.50"],
-  ["10th", "Tong Jia Bao Esports", "110,312.50"],
-  ["11th", "Al Ula x IHC", "115,812.50"],
-  ["12th", "4Merical Vibes", "115,312.50"],
-  ["13th", "Twisted Minds", "71,312.50"],
-  ["14th", "IW NRX", "88,812.50"],
-  ["15th", "Yoodo Alliance", "105,312.50"],
-  ["16th", "POWR Esports", "87,312.50"],
-  ["17th", "Falcons Force", "49,500"],
-  ["18th", "Dplus", "50,000"],
-  ["19th", "Brute Force", "47,000"],
-  ["20th", "Money Makers", "46,000"],
-  ["21st", "Team Pandum", "23,500"],
-  ["22nd", "CAG OSAKA", "43,500"],
-  ["23rd", "MadBulls", "47,000"],
-  ["24th", "Harame Bro", "43,500"],
-  ["25th", "Besiktas Black", "44,500"],
-  ["26th", "RUKH Esports", "21,000"],
-  ["27th", "Team Spirit", "20,500"],
-  ["28th", "iNCO Gaming", "45,500"],
-].map(([placement, team, usd]) => ({ placement, team, usd }));
+import { importTournament } from "./importTournament.js";
+import { PMWC_2024_ELIM_RANKINGS } from "./_pmwc2024_elim_rankings.js";
 
 const tournament = {
   name: "PUBG Mobile World Cup 2024",
@@ -190,22 +22,77 @@ const tournament = {
     { week: "Jul 23 - Jul 24", label: "Survival Stage" },
     { week: "Jul 26 - Jul 28", label: "Main Tournament" },
   ],
-  prize_breakdown: prizeBreakdown,
+  prize_breakdown: [
+    { placement: "1st", team: "Alpha7 Esports", usd: "467,312.50" },
+    { placement: "2nd", team: "REJECT", usd: "259,312.50" },
+    { placement: "3rd", team: "Tianba", usd: "212,312.50" },
+    { placement: "4th", team: "DRX", usd: "162,312.50" },
+    { placement: "5th", team: "BOOM Esports", usd: "151,312.50" },
+    { placement: "6th", team: "Talon Esports", usd: "143,312.50" },
+    { placement: "7th", team: "Vampire Esports", usd: "135,312.50" },
+    { placement: "8th", team: "Team Liquid", usd: "133,812.50" },
+    { placement: "9th", team: "D'Xavier", usd: "124,312.50" },
+    { placement: "10th", team: "Tong Jia Bao Esports", usd: "110,312.50" },
+    { placement: "11th", team: "Al Ula x IHC", usd: "115,812.50" },
+    { placement: "12th", team: "4Merical Vibes", usd: "115,312.50" },
+    { placement: "13th", team: "Twisted Minds", usd: "71,312.50" },
+    { placement: "14th", team: "IW NRX", usd: "88,812.50" },
+    { placement: "15th", team: "Yoodo Alliance", usd: "105,312.50" },
+    { placement: "16th", team: "POWR Esports", usd: "87,312.50" },
+    { placement: "17th", team: "Falcons Force", usd: "49,500" },
+    { placement: "18th", team: "Dplus", usd: "50,000" },
+    { placement: "19th", team: "Brute Force", usd: "47,000" },
+    { placement: "20th", team: "Money Makers", usd: "46,000" },
+    { placement: "21st", team: "Team Pandum", usd: "23,500" },
+    { placement: "22nd", team: "CAG OSAKA", usd: "43,500" },
+    { placement: "23rd", team: "MadBulls", usd: "47,000" },
+    { placement: "24th", team: "Harame Bro", usd: "43,500" },
+    { placement: "25th", team: "Besiktas Black", usd: "44,500" },
+    { placement: "26th", team: "RUKH Esports", usd: "21,000" },
+    { placement: "27th", team: "Team Spirit", usd: "20,500" },
+    { placement: "28th", team: "iNCO Gaming", usd: "45,500" },
+  ],
   awards: [
     { title: "MVP", player: "Reiji", team: "REJECT", country: "Japan", usd: "50,000" },
     { title: "Gunslinger", player: "Mafioso", team: "Alpha7 Esports", country: "Brazil", usd: "-" },
     { title: "Grenade Master", player: "Revo", team: "Alpha7 Esports", country: "Brazil", usd: "-" },
     { title: "Field Medic", player: "Frentzy", team: "BOOM Esports", country: "Indonesia", usd: "-" },
   ],
-  participants: [...groupStageTeams, ...survivalInviteTeams].map(
-    ([team, phase], index) => ({
-      placement: index + 1,
-      team,
-      phase,
-      players: [],
-    }),
-  ),
+  participants: [
+    { placement: 1, team: "BOOM Esports", phase: "Group Yellow" },
+    { placement: 2, team: "D'Xavier", phase: "Group Red" },
+    { placement: 3, team: "Yoodo Alliance", phase: "Group Red" },
+    { placement: 4, team: "Talon Esports", phase: "Group Green" },
+    { placement: 5, team: "4Merical Vibes", phase: "Group Red" },
+    { placement: 6, team: "Falcons Force", phase: "Group Green" },
+    { placement: 7, team: "MadBulls", phase: "Group Green" },
+    { placement: 8, team: "Al Ula x IHC", phase: "Group Green" },
+    { placement: 9, team: "Brute Force", phase: "Group Red" },
+    { placement: 10, team: "IW NRX", phase: "Group Yellow" },
+    { placement: 11, team: "Besiktas Black", phase: "Group Red" },
+    { placement: 12, team: "Money Makers", phase: "Group Yellow" },
+    { placement: 13, team: "Team Liquid", phase: "Group Green" },
+    { placement: 14, team: "Alpha7 Esports", phase: "Group Yellow" },
+    { placement: 15, team: "iNCO Gaming", phase: "Group Yellow" },
+    { placement: 16, team: "Harame Bro", phase: "Group Green" },
+    { placement: 17, team: "REJECT", phase: "Group Red" },
+    { placement: 18, team: "CAG OSAKA", phase: "Group Yellow" },
+    { placement: 19, team: "DRX", phase: "Group Yellow" },
+    { placement: 20, team: "Dplus", phase: "Group Red" },
+    { placement: 21, team: "Tianba", phase: "Group Red" },
+    { placement: 22, team: "Tong Jia Bao Esports", phase: "Group Green" },
+    { placement: 23, team: "POWR Esports", phase: "Group Yellow" },
+    { placement: 24, team: "Vampire Esports", phase: "Group Green" },
+    { placement: 25, team: "Team Pandum", phase: "Survival Stage" },
+    { placement: 26, team: "RUKH Esports", phase: "Survival Stage" },
+    { placement: 27, team: "Team Spirit", phase: "Survival Stage" },
+    { placement: 28, team: "Twisted Minds", phase: "Survival Stage" },
+  ],
   rankings: [
+    {
+      title: "Grand Finals Elimination Rankings",
+      entries: PMWC_2024_ELIM_RANKINGS,
+    },
     {
       title: "Dream Squad",
       entries: [
@@ -232,7 +119,31 @@ const tournament = {
         { match: 5, map: "Miramar" },
         { match: 6, map: "Miramar" },
       ],
-      standings: groupStageStandings.map(toStanding),
+      standings: [
+        { placement: 1, matches: 12, wwcd: 3, pos: 43, elimins: 79, points: 122, group: "Group Red", team: "Alliance" },
+        { placement: 2, matches: 12, wwcd: 0, pos: 29, elimins: 77, points: 106, group: "Group Red", team: "Tianba" },
+        { placement: 3, matches: 12, wwcd: 2, pos: 29, elimins: 65, points: 94, group: "Group Red", team: "4Merical Vibes" },
+        { placement: 4, matches: 12, wwcd: 2, pos: 37, elimins: 54, points: 91, group: "Group Green", team: "Team Liquid" },
+        { placement: 5, matches: 12, wwcd: 1, pos: 34, elimins: 57, points: 91, group: "Group Yellow", team: "Alpha7 Esports" },
+        { placement: 6, matches: 12, wwcd: 1, pos: 30, elimins: 54, points: 84, group: "Group Green", team: "IHC ESPORTS" },
+        { placement: 7, matches: 12, wwcd: 1, pos: 39, elimins: 43, points: 82, group: "Group Red", team: "D'Xavier" },
+        { placement: 8, matches: 12, wwcd: 0, pos: 21, elimins: 59, points: 80, group: "Group Green", team: "Talon Esports" },
+        { placement: 9, matches: 12, wwcd: 2, pos: 33, elimins: 46, points: 79, group: "Group Yellow", team: "POWR eSports" },
+        { placement: 10, matches: 12, wwcd: 1, pos: 25, elimins: 51, points: 76, group: "Group Yellow", team: "BOOM Esports" },
+        { placement: 11, matches: 12, wwcd: 0, pos: 28, elimins: 42, points: 70, group: "Group Green", team: "Vampire Esports" },
+        { placement: 12, matches: 12, wwcd: 0, pos: 20, elimins: 49, points: 69, group: "Group Red", team: "REJECT" },
+        { placement: 13, matches: 12, wwcd: 1, pos: 28, elimins: 38, points: 66, group: "Group Yellow", team: "iNCO Gaming" },
+        { placement: 14, matches: 12, wwcd: 1, pos: 14, elimins: 49, points: 63, group: "Group Red", team: "Dplus" },
+        { placement: 15, matches: 12, wwcd: 0, pos: 15, elimins: 45, points: 60, group: "Group Green", team: "Falcons Force" },
+        { placement: 16, matches: 12, wwcd: 0, pos: 22, elimins: 38, points: 60, group: "Group Green", team: "MadBulls" },
+        { placement: 17, matches: 12, wwcd: 1, pos: 24, elimins: 32, points: 56, group: "Group Green", team: "Tong Jia Bao Esports" },
+        { placement: 18, matches: 12, wwcd: 1, pos: 30, elimins: 25, points: 55, group: "Group Red", team: "Beşiktaş Esports" },
+        { placement: 19, matches: 12, wwcd: 0, pos: 21, elimins: 32, points: 53, group: "Group Red", team: "Brute Force" },
+        { placement: 20, matches: 12, wwcd: 1, pos: 14, elimins: 37, points: 51, group: "Group Yellow", team: "Money Makers" },
+        { placement: 21, matches: 12, wwcd: 0, pos: 13, elimins: 29, points: 42, group: "Group Green", team: "Harame Bro" },
+        { placement: 23, matches: 12, wwcd: 0, pos: 12, elimins: 19, points: 31, group: "Group Yellow", team: "CAG OSAKA" },
+        { placement: 24, matches: 12, wwcd: 0, pos: 5, elimins: 18, points: 23, group: "Group Yellow", team: "DRX" },
+      ],
     },
     {
       name: "Survival Stage",
@@ -249,10 +160,27 @@ const tournament = {
         { match: 5, map: "Miramar" },
         { match: 6, map: "Miramar" },
       ],
-      standings: survivalStageStandings.map(toStanding),
+      standings: [
+        { placement: 1, matches: 12, wwcd: 2, pos: 48, elimins: 74, points: 122, team: "Bushido Wildcats Next Ruya" },
+        { placement: 2, matches: 12, wwcd: 3, pos: 41, elimins: 52, points: 93, team: "DRX" },
+        { placement: 3, matches: 12, wwcd: 1, pos: 33, elimins: 48, points: 81, team: "Tong Jia Bao Esports" },
+        { placement: 4, matches: 12, wwcd: 1, pos: 32, elimins: 48, points: 80, team: "Twisted Minds" },
+        { placement: 5, matches: 12, wwcd: 1, pos: 21, elimins: 56, points: 77, team: "Falcons Force" },
+        { placement: 6, matches: 12, wwcd: 0, pos: 21, elimins: 55, points: 76, team: "Dplus" },
+        { placement: 7, matches: 12, wwcd: 0, pos: 26, elimins: 48, points: 74, team: "Brute Force" },
+        { placement: 8, matches: 12, wwcd: 0, pos: 22, elimins: 51, points: 73, team: "Money Makers" },
+        { placement: 9, matches: 12, wwcd: 1, pos: 19, elimins: 53, points: 72, team: "Team Pandum" },
+        { placement: 10, matches: 12, wwcd: 2, pos: 28, elimins: 43, points: 71, team: "CAG OSAKA" },
+        { placement: 11, matches: 12, wwcd: 0, pos: 17, elimins: 50, points: 67, team: "MadBulls" },
+        { placement: 12, matches: 12, wwcd: 1, pos: 20, elimins: 29, points: 49, team: "Harame Bro" },
+        { placement: 13, matches: 12, wwcd: 0, pos: 20, elimins: 25, points: 45, team: "Beşiktaş Esports" },
+        { placement: 14, matches: 12, wwcd: 0, pos: 9, elimins: 33, points: 42, team: "RUKH eSports" },
+        { placement: 15, matches: 12, wwcd: 0, pos: 12, elimins: 27, points: 39, team: "Team Spirit" },
+        { placement: 16, matches: 12, wwcd: 0, pos: 15, elimins: 23, points: 38, team: "iNCO Gaming" },
+      ],
     },
     {
-      name: "Main Tournament",
+      name: "Grand Finals",
       order: 3,
       status: "completed",
       teamCount: 16,
@@ -266,7 +194,24 @@ const tournament = {
         { match: 5, map: "Miramar" },
         { match: 6, map: "Miramar" },
       ],
-      standings: mainTournamentStandings.map(toFinalStanding),
+      standings: [
+        { placement: 1, matches: 18, wwcd: 5, pos: 71, elimins: 82, points: 153, team: "Alpha7 Esports" },
+        { placement: 2, matches: 18, wwcd: 2, pos: 40, elimins: 84, points: 124, team: "REJECT" },
+        { placement: 3, matches: 18, wwcd: 0, pos: 27, elimins: 97, points: 124, team: "Tianba" },
+        { placement: 4, matches: 18, wwcd: 4, pos: 48, elimins: 63, points: 111, team: "DRX" },
+        { placement: 5, matches: 18, wwcd: 2, pos: 38, elimins: 70, points: 108, team: "BOOM Esports" },
+        { placement: 6, matches: 18, wwcd: 1, pos: 33, elimins: 73, points: 106, team: "Talon Esports" },
+        { placement: 7, matches: 18, wwcd: 1, pos: 45, elimins: 59, points: 104, team: "Vampire Esports" },
+        { placement: 8, matches: 18, wwcd: 1, pos: 35, elimins: 66, points: 101, team: "Team Liquid" },
+        { placement: 9, matches: 18, wwcd: 1, pos: 39, elimins: 58, points: 97, team: "D'Xavier" },
+        { placement: 10, matches: 18, wwcd: 1, pos: 40, elimins: 54, points: 94, team: "Tong Jia Bao Esports" },
+        { placement: 11, matches: 18, wwcd: 1, pos: 39, elimins: 54, points: 93, team: "Al Ula x IHC" },
+        { placement: 12, matches: 18, wwcd: 2, pos: 39, elimins: 51, points: 90, team: "4Merical Vibes" },
+        { placement: 13, matches: 18, wwcd: 1, pos: 40, elimins: 48, points: 88, team: "Twisted Minds" },
+        { placement: 14, matches: 18, wwcd: 1, pos: 39, elimins: 46, points: 85, team: "IW NRX" },
+        { placement: 15, matches: 18, wwcd: 2, pos: 36, elimins: 46, points: 82, team: "Yoodo Alliance" },
+        { placement: 16, matches: 18, wwcd: 1, pos: 25, elimins: 40, points: 65, team: "POWR eSports" },
+      ],
     },
   ],
 };
@@ -282,79 +227,6 @@ const articles = [
   },
 ];
 
-const tx = db.transaction(() => {
-  const existingTournament = db
-    .prepare("SELECT id FROM tournaments WHERE name = ?")
-    .get(tournament.name);
-  if (existingTournament) {
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
-      existingTournament.id,
-    );
-  }
-
-  db.prepare(
-    `
-    INSERT INTO tournaments (
-      id, name, game, tier, status, prize_pool, start_date, end_date, stages,
-      description, banner_url, rules, max_teams, format_overview, calendar,
-      prize_breakdown, awards, participants, rankings, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-  ).run(
-    randomUUID(),
-    tournament.name,
-    tournament.game,
-    tournament.tier,
-    tournament.status,
-    tournament.prize_pool,
-    tournament.start_date,
-    tournament.end_date,
-    JSON.stringify(tournament.stages),
-    tournament.description,
-    tournament.banner_url,
-    tournament.rules,
-    tournament.max_teams,
-    tournament.format_overview,
-    JSON.stringify(tournament.calendar),
-    JSON.stringify(tournament.prize_breakdown),
-    JSON.stringify(tournament.awards),
-    JSON.stringify(tournament.participants),
-    JSON.stringify(tournament.rankings),
-    now,
-    now,
-    "admin@stagecore.local",
-  );
-
-  const deleteArticle = db.prepare("DELETE FROM news_articles WHERE title = ?");
-  const insertArticle = db.prepare(`
-    INSERT INTO news_articles (
-      id, title, content, category, thumbnail_url, featured, game, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const article of articles) {
-    deleteArticle.run(article.title);
-    insertArticle.run(
-      randomUUID(),
-      article.title,
-      article.content,
-      article.category,
-      tournament.banner_url,
-      article.featured,
-      article.game,
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-  }
-});
-
-tx();
+importTournament({ tournament, articles });
 
 console.log("Imported PUBG Mobile World Cup 2024 tournament.");
