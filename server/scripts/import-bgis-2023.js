@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { db, recomputeTeamStats } from "../db.js";
-
-const now = new Date().toISOString();
+import { db } from "../db.js";
+import { importTournament } from "./importTournament.js";
 
 const tournament = {
   name: "Battlegrounds Mobile India Series 2023",
@@ -569,18 +568,6 @@ const teams = [
   },
 ];
 
-const finalsStandings = tournament.stages
-  .find((stage) => stage.name === "Grand Finals")
-  .standings.map((entry) => ({
-    teamName: entry.fullTeam,
-    placement: entry.placement,
-    matches: entry.matches,
-    wwcd: entry.wwcd,
-    placementPoints: entry.pos,
-    killPoints: entry.elimins,
-    totalPoints: entry.points,
-  }));
-
 const grandFinalSchedule = [
   "2023-10-12T13:30:00+05:30",
   "2023-10-12T14:15:00+05:30",
@@ -622,211 +609,53 @@ const articles = [
   },
 ];
 
-const tx = db.transaction(() => {
-  const existingTournament = db
-    .prepare("SELECT id FROM tournaments WHERE name = ?")
-    .get(tournament.name);
-  if (existingTournament) {
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
-      existingTournament.id,
-    );
-  }
+const grandFinalStandings = tournament.stages
+  .find((s) => s.name === "Grand Finals")
+  .standings.map((e) => ({
+    placement: e.placement,
+    team: e.fullTeam,
+    killPoints: e.elimins,
+    placementPoints: e.pos,
+    totalPoints: e.points,
+    matches: e.matches,
+    wins: e.wwcd,
+  }));
 
-  const tournamentId = randomUUID();
-  db.prepare(
-    `
-    INSERT INTO tournaments (
-      id, name, game, tier, status, prize_pool, start_date, end_date, stages,
-      description, banner_url, rules, max_teams, format_overview, calendar, prize_breakdown, awards, participants, rankings,
-      created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-  ).run(
-    tournamentId,
-    tournament.name,
-    tournament.game,
-    tournament.tier,
-    tournament.status,
-    tournament.prize_pool,
-    tournament.start_date,
-    tournament.end_date,
-    JSON.stringify(tournament.stages),
-    tournament.description,
-    tournament.banner_url,
-    tournament.rules,
-    tournament.max_teams,
-    tournament.format_overview,
-    JSON.stringify(tournament.calendar),
-    JSON.stringify(tournament.prize_breakdown),
-    JSON.stringify(tournament.awards),
-    JSON.stringify(tournament.participants),
-    JSON.stringify([]),
-    now,
-    now,
-    "admin@stagecore.local",
-  );
-
-  const findTeamByName = db.prepare("SELECT id FROM teams WHERE name = ?");
-  const upsertTeam = db.prepare(`
-    INSERT INTO teams (
-      id, name, tag, logo_url, game, region, total_kills, total_points, matches_played, wins, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      name=excluded.name,
-      tag=excluded.tag,
-      game=excluded.game,
-      region=excluded.region,
-      updated_date=excluded.updated_date
-  `);
-  const deletePlayersByTeam = db.prepare(
-    "DELETE FROM players WHERE team_id = ?",
-  );
-  const insertPlayer = db.prepare(`
-    INSERT INTO players (
-      id, ign, real_name, team_id, role, photo_url, total_kills, matches_played, avg_damage,
-      created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const teamIds = new Map();
-  for (const team of teams) {
-    const existing = findTeamByName.get(team.name);
-    const teamId = existing?.id || randomUUID();
-    upsertTeam.run(
-      teamId,
-      team.name,
-      team.tag,
-      null,
-      "BGMI",
-      "India",
-      0,
-      0,
-      0,
-      0,
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-    deletePlayersByTeam.run(teamId);
-    for (const ign of team.players) {
-      insertPlayer.run(
+importTournament({
+  tournament,
+  teams,
+  resolveTeamName(rawAlias) {
+    return rawAlias;
+  },
+  getStandingsForStage(stageName) {
+    if (stageName === "Grand Finals") return grandFinalStandings;
+    return [];
+  },
+  insertMatchSchedule(tournamentId) {
+    grandFinalSchedule.forEach((scheduledTime, index) => {
+      db.prepare(
+        `INSERT INTO matches (
+          id, tournament_id, stage, match_number, map, status,
+          scheduled_time, stream_url, day, created_date, updated_date, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
         randomUUID(),
-        ign,
+        tournamentId,
+        "Grand Finals",
+        index + 1,
+        mapRotation[index % mapRotation.length],
+        "completed",
+        scheduledTime,
         null,
-        teamId,
-        "Assaulter",
-        null,
-        0,
-        0,
-        0,
-        now,
-        now,
+        Math.floor(index / 6) + 1,
+        new Date().toISOString(),
+        new Date().toISOString(),
         "admin@stagecore.local",
       );
-    }
-    teamIds.set(team.name, teamId);
-  }
-
-  const insertMatch = db.prepare(`
-    INSERT INTO matches (
-      id, tournament_id, stage, match_number, map, status, scheduled_time, stream_url, day, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  grandFinalSchedule.forEach((scheduledTime, index) => {
-    insertMatch.run(
-      randomUUID(),
-      tournamentId,
-      "Grand Finals",
-      index + 1,
-      mapRotation[index % mapRotation.length],
-      "completed",
-      scheduledTime,
-      null,
-      Math.floor(index / 6) + 1,
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-  });
-
-  const standingsMatchId = randomUUID();
-  insertMatch.run(
-    standingsMatchId,
-    tournamentId,
-    "Grand Finals Standings",
-    0,
-    "Other",
-    "completed",
-    "2023-10-15T17:15:00+05:30",
-    null,
-    3,
-    now,
-    now,
-    "admin@stagecore.local",
-  );
-
-  const insertResult = db.prepare(`
-    INSERT INTO match_results (
-      id, match_id, tournament_id, team_id, placement, kill_points, placement_points, total_points, matches_count, wins_count, stage,
-      created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const standing of finalsStandings) {
-    const teamId = teamIds.get(standing.teamName);
-    if (!teamId) continue;
-    insertResult.run(
-      randomUUID(),
-      standingsMatchId,
-      tournamentId,
-      teamId,
-      standing.placement,
-      standing.killPoints,
-      standing.placementPoints,
-      standing.totalPoints,
-      standing.matches,
-      standing.wwcd,
-      "Grand Finals",
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-  }
-
-  const deleteArticle = db.prepare("DELETE FROM news_articles WHERE title = ?");
-  const insertArticle = db.prepare(`
-    INSERT INTO news_articles (
-      id, title, content, category, thumbnail_url, featured, game, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const article of articles) {
-    deleteArticle.run(article.title);
-    insertArticle.run(
-      randomUUID(),
-      article.title,
-      article.content,
-      article.category,
-      null,
-      article.featured,
-      article.game,
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-  }
-
-  recomputeTeamStats();
+    });
+  },
+  articles,
 });
-
-tx();
 
 console.log(
   "Imported BGIS 2023 tournament, finalists, schedule, standings, and article.",
