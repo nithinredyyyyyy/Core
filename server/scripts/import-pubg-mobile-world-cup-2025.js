@@ -1,158 +1,4 @@
-import { randomUUID } from "node:crypto";
-import { db } from "../db.js";
-
-const now = new Date().toISOString();
-
-const groupStageStandings = [
-  [1, "Alter Ego Ares", 121, "Grand Finals"],
-  [2, "4thrives Esports", 111, "Grand Finals"],
-  [3, "DRX", 89, "Grand Finals"],
-  [4, "Weibo Gaming", 89, "Grand Finals"],
-  [5, "Alpha Gaming", 86, "Grand Finals"],
-  [6, "Team Secret", 86, "Grand Finals"],
-  [7, "ThunderTalk Gaming", 83, "Grand Finals"],
-  [8, "IDA Esports", 83, "Grand Finals"],
-  [9, "Regnum Carya Esports", 81, "Survival Stage"],
-  [10, "Nongshim RedForce", 76, "Survival Stage"],
-  [11, "Yangon Galacticos", 75, "Survival Stage"],
-  [12, "Alpha7 Esports", 70, "Survival Stage"],
-  [13, "Horaa Esports", 70, "Survival Stage"],
-  [14, "POWR Esports", 63, "Survival Stage"],
-  [15, "Team Aryan", 62, "Survival Stage"],
-  [16, "Team Vision", 59, "Survival Stage"],
-  [17, "eArena", 58, "Survival Stage"],
-  [18, "INFLUENCE RAGE", 54, "Survival Stage"],
-  [19, "R8 Esports", 50, "Survival Stage"],
-  [20, "INTENSE GAME", 45, "Survival Stage"],
-  [21, "Fire Flux Esports", 38, "Survival Stage"],
-  [22, "Team Falcons", 37, "Survival Stage"],
-  [23, "KINOTROPE gaming", 36, "Survival Stage"],
-  [24, "Team GAMAX", 26, "Survival Stage"],
-];
-
-const survivalStageStandings = [
-  [1, "Horaa Esports", 108, "Grand Finals"],
-  [2, "Fire Flux Esports", 104, "Grand Finals"],
-  [3, "POWR Esports", 104, "Grand Finals"],
-  [4, "Regnum Carya Esports", 100, "Grand Finals"],
-  [5, "eArena", 92, "Grand Finals"],
-  [6, "Nongshim RedForce", 92, "Grand Finals"],
-  [7, "Team Falcons", 71, "Grand Finals"],
-  [8, "Yangon Galacticos", 70, "Grand Finals"],
-  [9, "INFLUENCE RAGE", 69, "Eliminated"],
-  [10, "R8 Esports", 55, "Eliminated"],
-  [11, "Team Vision", 50, "Eliminated"],
-  [12, "INTENSE GAME", 48, "Eliminated"],
-  [13, "Alpha7 Esports", 45, "Eliminated"],
-  [14, "Team Aryan", 37, "Eliminated"],
-  [15, "KINOTROPE gaming", 30, "Eliminated"],
-  [16, "Team GAMAX", 27, "Eliminated"],
-];
-
-const grandFinalsStandings = [
-  [1, "Yangon Galacticos", 157, "Champion"],
-  [2, "Weibo Gaming", 142, "Finalist"],
-  [3, "Alpha Gaming", 141, "Finalist"],
-  [4, "DRX", 117, "Finalist"],
-  [5, "Regnum Carya Esports", 112, "Finalist"],
-  [6, "Nongshim RedForce", 110, "Finalist"],
-  [7, "4thrives Esports", 109, "Finalist"],
-  [8, "Alter Ego Ares", 104, "Finalist"],
-  [9, "Horaa Esports", 100, "Finalist"],
-  [10, "Team Falcons", 95, "Finalist"],
-  [11, "IDA Esports", 92, "Finalist"],
-  [12, "POWR Esports", 89, "Finalist"],
-  [13, "Team Secret", 83, "Finalist"],
-  [14, "Fire Flux Esports", 82, "Finalist"],
-  [15, "eArena", 57, "Finalist"],
-  [16, "ThunderTalk Gaming", 54, "Finalist"],
-];
-
-function standing([placement, team, points, outcome], matches) {
-  return {
-    placement,
-    rank: placement,
-    team,
-    fullTeam: team,
-    matches,
-    wwcd: "",
-    pos: "",
-    place: "",
-    elimins: "",
-    elims: "",
-    points,
-    pts: points,
-    outcome,
-  };
-}
-
-const participants = [
-  ["R8 Esports", "Group Stage"],
-  ["eArena", "Group Stage"],
-  ["Alter Ego Ares", "Group Stage"],
-  ["Team Secret", "Group Stage"],
-  ["Alpha Gaming", "Group Stage"],
-  ["Horaa Esports", "Group Stage"],
-  ["4thrives Esports", "Group Stage"],
-  ["Team Falcons", "Group Stage"],
-  ["Fire Flux Esports", "Group Stage"],
-  ["IDA Esports", "Group Stage"],
-  ["Regnum Carya Esports", "Group Stage"],
-  ["Team Vision", "Group Stage"],
-  ["POWR Esports", "Group Stage"],
-  ["Team GAMAX", "Group Stage"],
-  ["INTENSE GAME", "Group Stage"],
-  ["INFLUENCE RAGE", "Group Stage"],
-  ["Alpha7 Esports", "Group Stage"],
-  ["Yangon Galacticos", "Group Stage"],
-  ["Weibo Gaming", "Group Stage"],
-  ["ThunderTalk Gaming", "Group Stage"],
-  ["DRX", "Group Stage"],
-  ["KINOTROPE gaming", "Group Stage"],
-  ["Nongshim RedForce", "Group Stage"],
-  ["Team Aryan", "Group Stage"],
-].map(([team, phase], index) => ({
-  placement: index + 1,
-  team,
-  phase,
-  players: [],
-}));
-
-const prizeBreakdown = [
-  ["1st", "Yangon Galacticos", "547,000"],
-  ["2nd", "Weibo Gaming", "323,500"],
-  ["3rd", "Alpha Gaming", "222,000"],
-  ["4th", "DRX", "195,000"],
-  ["5th", "Regnum Carya Esports", "153,000"],
-  ["6th", "Nongshim RedForce", "140,000"],
-  ["7th", "4thrives Esports", "157,000"],
-  ["8th", "Alter Ego Ares", "150,000"],
-  ["9th", "Horaa Esports", "127,500"],
-  ["10th", "Team Falcons", "97,000"],
-  ["11th", "IDA Esports", "118,000"],
-  ["12th", "POWR Esports", "95,000"],
-  ["13th", "Team Secret", "110,500"],
-  ["14th", "Fire Flux Esports", "87,500"],
-  ["15th", "eArena", "76,500"],
-  ["16th", "ThunderTalk Gaming", "94,000"],
-  ["17th", "INFLUENCE RAGE", "42,000"],
-  ["18th", "R8 Esports", "40,500"],
-  ["19th", "Team Vision", "41,000"],
-  ["20th", "INTENSE GAME", "38,000"],
-  ["21st", "Alpha7 Esports", "41,000"],
-  ["22nd", "Team Aryan", "38,500"],
-  ["23rd", "KINOTROPE gaming", "33,500"],
-  ["24th", "Team GAMAX", "32,000"],
-].map(([placement, team, usd]) => ({ placement, team, usd }));
-
-const mapRotation = [
-  { match: 1, map: "Sanhok" },
-  { match: 2, map: "Erangel" },
-  { match: 3, map: "Erangel" },
-  { match: 4, map: "Erangel" },
-  { match: 5, map: "Miramar" },
-  { match: 6, map: "Miramar" },
-];
+import { importTournament } from "./importTournament.js";
 
 const tournament = {
   name: "PUBG Mobile World Cup 2025",
@@ -175,7 +21,32 @@ const tournament = {
     { week: "Jul 29 - Jul 30", label: "Survival Stage" },
     { week: "Aug 1 - Aug 3", label: "Grand Finals" },
   ],
-  prize_breakdown: prizeBreakdown,
+  prize_breakdown: [
+    { placement: "1st", team: "Yangon Galacticos", usd: "547,000" },
+    { placement: "2nd", team: "Weibo Gaming", usd: "323,500" },
+    { placement: "3rd", team: "Alpha Gaming", usd: "222,000" },
+    { placement: "4th", team: "DRX", usd: "195,000" },
+    { placement: "5th", team: "Regnum Carya Esports", usd: "153,000" },
+    { placement: "6th", team: "Nongshim RedForce", usd: "140,000" },
+    { placement: "7th", team: "4thrives Esports", usd: "157,000" },
+    { placement: "8th", team: "Alter Ego Ares", usd: "150,000" },
+    { placement: "9th", team: "Horaa Esports", usd: "127,500" },
+    { placement: "10th", team: "Team Falcons", usd: "97,000" },
+    { placement: "11th", team: "IDA Esports", usd: "118,000" },
+    { placement: "12th", team: "POWR Esports", usd: "95,000" },
+    { placement: "13th", team: "Team Secret", usd: "110,500" },
+    { placement: "14th", team: "Fire Flux Esports", usd: "87,500" },
+    { placement: "15th", team: "eArena", usd: "76,500" },
+    { placement: "16th", team: "ThunderTalk Gaming", usd: "94,000" },
+    { placement: "17th", team: "INFLUENCE RAGE", usd: "42,000" },
+    { placement: "18th", team: "R8 Esports", usd: "40,500" },
+    { placement: "19th", team: "Team Vision", usd: "41,000" },
+    { placement: "20th", team: "INTENSE GAME", usd: "38,000" },
+    { placement: "21st", team: "Alpha7 Esports", usd: "41,000" },
+    { placement: "22nd", team: "Team Aryan", usd: "38,500" },
+    { placement: "23rd", team: "KINOTROPE gaming", usd: "33,500" },
+    { placement: "24th", team: "Team GAMAX", usd: "32,000" },
+  ],
   awards: [
     { title: "FMVP", player: "DOK", team: "Alpha Gaming", country: "Mongolia", usd: "50,000" },
     { title: "Best IGL", player: "Smile", team: "Yangon Galacticos", country: "Myanmar", usd: "-" },
@@ -183,7 +54,32 @@ const tournament = {
     { title: "Field Medic", player: "DOK", team: "Alpha Gaming", country: "Mongolia", usd: "-" },
     { title: "Eagle Eye", player: "NoFear", team: "Horaa Esports", country: "Nepal", usd: "-" },
   ],
-  participants,
+  participants: [
+    { placement: 1, team: "R8 Esports", phase: "Group Stage" },
+    { placement: 2, team: "eArena", phase: "Group Stage" },
+    { placement: 3, team: "Alter Ego Ares", phase: "Group Stage" },
+    { placement: 4, team: "Team Secret", phase: "Group Stage" },
+    { placement: 5, team: "Alpha Gaming", phase: "Group Stage" },
+    { placement: 6, team: "Horaa Esports", phase: "Group Stage" },
+    { placement: 7, team: "4thrives Esports", phase: "Group Stage" },
+    { placement: 8, team: "Team Falcons", phase: "Group Stage" },
+    { placement: 9, team: "Fire Flux Esports", phase: "Group Stage" },
+    { placement: 10, team: "IDA Esports", phase: "Group Stage" },
+    { placement: 11, team: "Regnum Carya Esports", phase: "Group Stage" },
+    { placement: 12, team: "Team Vision", phase: "Group Stage" },
+    { placement: 13, team: "POWR Esports", phase: "Group Stage" },
+    { placement: 14, team: "Team GAMAX", phase: "Group Stage" },
+    { placement: 15, team: "INTENSE GAME", phase: "Group Stage" },
+    { placement: 16, team: "INFLUENCE RAGE", phase: "Group Stage" },
+    { placement: 17, team: "Alpha7 Esports", phase: "Group Stage" },
+    { placement: 18, team: "Yangon Galacticos", phase: "Group Stage" },
+    { placement: 19, team: "Weibo Gaming", phase: "Group Stage" },
+    { placement: 20, team: "ThunderTalk Gaming", phase: "Group Stage" },
+    { placement: 21, team: "DRX", phase: "Group Stage" },
+    { placement: 22, team: "KINOTROPE gaming", phase: "Group Stage" },
+    { placement: 23, team: "Nongshim RedForce", phase: "Group Stage" },
+    { placement: 24, team: "Team Aryan", phase: "Group Stage" },
+  ],
   rankings: [
     {
       title: "Awards",
@@ -202,8 +98,40 @@ const tournament = {
       teamCount: 24,
       summary:
         "July 25th - 27th, 2025. 24 teams were divided into three groups of eight, with each group playing 12 matches. The top eight advanced to Grand Finals and the remaining 16 moved to Survival Stage.",
-      mapRotation,
-      standings: groupStageStandings.map((entry) => standing(entry, 12)),
+      mapRotation: [
+        { match: 1, map: "Sanhok" },
+        { match: 2, map: "Erangel" },
+        { match: 3, map: "Erangel" },
+        { match: 4, map: "Erangel" },
+        { match: 5, map: "Miramar" },
+        { match: 6, map: "Miramar" },
+      ],
+      standings: [
+        { placement: 1, matches: 12, wwcd: "", pos: "", elimins: "", points: 121, outcome: "Grand Finals", team: "Alter Ego Ares" },
+        { placement: 2, matches: 12, wwcd: "", pos: "", elimins: "", points: 111, outcome: "Grand Finals", team: "4thrives Esports" },
+        { placement: 3, matches: 12, wwcd: "", pos: "", elimins: "", points: 89, outcome: "Grand Finals", team: "DRX" },
+        { placement: 4, matches: 12, wwcd: "", pos: "", elimins: "", points: 89, outcome: "Grand Finals", team: "Weibo Gaming" },
+        { placement: 5, matches: 12, wwcd: "", pos: "", elimins: "", points: 86, outcome: "Grand Finals", team: "Alpha Gaming" },
+        { placement: 6, matches: 12, wwcd: "", pos: "", elimins: "", points: 86, outcome: "Grand Finals", team: "Team Secret" },
+        { placement: 7, matches: 12, wwcd: "", pos: "", elimins: "", points: 83, outcome: "Grand Finals", team: "ThunderTalk Gaming" },
+        { placement: 8, matches: 12, wwcd: "", pos: "", elimins: "", points: 83, outcome: "Grand Finals", team: "IDA Esports" },
+        { placement: 9, matches: 12, wwcd: "", pos: "", elimins: "", points: 81, outcome: "Survival Stage", team: "Regnum Carya Esports" },
+        { placement: 10, matches: 12, wwcd: "", pos: "", elimins: "", points: 76, outcome: "Survival Stage", team: "Nongshim RedForce" },
+        { placement: 11, matches: 12, wwcd: "", pos: "", elimins: "", points: 75, outcome: "Survival Stage", team: "Yangon Galacticos" },
+        { placement: 12, matches: 12, wwcd: "", pos: "", elimins: "", points: 70, outcome: "Survival Stage", team: "Alpha7 Esports" },
+        { placement: 13, matches: 12, wwcd: "", pos: "", elimins: "", points: 70, outcome: "Survival Stage", team: "Horaa Esports" },
+        { placement: 14, matches: 12, wwcd: "", pos: "", elimins: "", points: 63, outcome: "Survival Stage", team: "POWR Esports" },
+        { placement: 15, matches: 12, wwcd: "", pos: "", elimins: "", points: 62, outcome: "Survival Stage", team: "Team Aryan" },
+        { placement: 16, matches: 12, wwcd: "", pos: "", elimins: "", points: 59, outcome: "Survival Stage", team: "Team Vision" },
+        { placement: 17, matches: 12, wwcd: "", pos: "", elimins: "", points: 58, outcome: "Survival Stage", team: "eArena" },
+        { placement: 18, matches: 12, wwcd: "", pos: "", elimins: "", points: 54, outcome: "Survival Stage", team: "INFLUENCE RAGE" },
+        { placement: 19, matches: 12, wwcd: "", pos: "", elimins: "", points: 50, outcome: "Survival Stage", team: "R8 Esports" },
+        { placement: 20, matches: 12, wwcd: "", pos: "", elimins: "", points: 45, outcome: "Survival Stage", team: "INTENSE GAME" },
+        { placement: 21, matches: 12, wwcd: "", pos: "", elimins: "", points: 38, outcome: "Survival Stage", team: "Fire Flux Esports" },
+        { placement: 22, matches: 12, wwcd: "", pos: "", elimins: "", points: 37, outcome: "Survival Stage", team: "Team Falcons" },
+        { placement: 23, matches: 12, wwcd: "", pos: "", elimins: "", points: 36, outcome: "Survival Stage", team: "KINOTROPE gaming" },
+        { placement: 24, matches: 12, wwcd: "", pos: "", elimins: "", points: 26, outcome: "Survival Stage", team: "Team GAMAX" },
+      ],
     },
     {
       name: "Survival Stage",
@@ -212,8 +140,32 @@ const tournament = {
       teamCount: 16,
       summary:
         "July 29th - 30th, 2025. 16 teams played 12 matches, with the top eight advancing to Grand Finals and the bottom eight eliminated.",
-      mapRotation,
-      standings: survivalStageStandings.map((entry) => standing(entry, 12)),
+      mapRotation: [
+        { match: 1, map: "Sanhok" },
+        { match: 2, map: "Erangel" },
+        { match: 3, map: "Erangel" },
+        { match: 4, map: "Erangel" },
+        { match: 5, map: "Miramar" },
+        { match: 6, map: "Miramar" },
+      ],
+      standings: [
+        { placement: 1, matches: 12, wwcd: "", pos: "", elimins: "", points: 108, outcome: "Grand Finals", team: "Horaa Esports" },
+        { placement: 2, matches: 12, wwcd: "", pos: "", elimins: "", points: 104, outcome: "Grand Finals", team: "Fire Flux Esports" },
+        { placement: 3, matches: 12, wwcd: "", pos: "", elimins: "", points: 104, outcome: "Grand Finals", team: "POWR Esports" },
+        { placement: 4, matches: 12, wwcd: "", pos: "", elimins: "", points: 100, outcome: "Grand Finals", team: "Regnum Carya Esports" },
+        { placement: 5, matches: 12, wwcd: "", pos: "", elimins: "", points: 92, outcome: "Grand Finals", team: "eArena" },
+        { placement: 6, matches: 12, wwcd: "", pos: "", elimins: "", points: 92, outcome: "Grand Finals", team: "Nongshim RedForce" },
+        { placement: 7, matches: 12, wwcd: "", pos: "", elimins: "", points: 71, outcome: "Grand Finals", team: "Team Falcons" },
+        { placement: 8, matches: 12, wwcd: "", pos: "", elimins: "", points: 70, outcome: "Grand Finals", team: "Yangon Galacticos" },
+        { placement: 9, matches: 12, wwcd: "", pos: "", elimins: "", points: 69, outcome: "Eliminated", team: "INFLUENCE RAGE" },
+        { placement: 10, matches: 12, wwcd: "", pos: "", elimins: "", points: 55, outcome: "Eliminated", team: "R8 Esports" },
+        { placement: 11, matches: 12, wwcd: "", pos: "", elimins: "", points: 50, outcome: "Eliminated", team: "Team Vision" },
+        { placement: 12, matches: 12, wwcd: "", pos: "", elimins: "", points: 48, outcome: "Eliminated", team: "INTENSE GAME" },
+        { placement: 13, matches: 12, wwcd: "", pos: "", elimins: "", points: 45, outcome: "Eliminated", team: "Alpha7 Esports" },
+        { placement: 14, matches: 12, wwcd: "", pos: "", elimins: "", points: 37, outcome: "Eliminated", team: "Team Aryan" },
+        { placement: 15, matches: 12, wwcd: "", pos: "", elimins: "", points: 30, outcome: "Eliminated", team: "KINOTROPE gaming" },
+        { placement: 16, matches: 12, wwcd: "", pos: "", elimins: "", points: 27, outcome: "Eliminated", team: "Team GAMAX" },
+      ],
     },
     {
       name: "Grand Finals",
@@ -222,8 +174,32 @@ const tournament = {
       teamCount: 16,
       summary:
         "August 1st - 3rd, 2025. 16 teams played 18 matches, with Yangon Galacticos winning the World Cup.",
-      mapRotation,
-      standings: grandFinalsStandings.map((entry) => standing(entry, 18)),
+      mapRotation: [
+        { match: 1, map: "Sanhok" },
+        { match: 2, map: "Erangel" },
+        { match: 3, map: "Erangel" },
+        { match: 4, map: "Erangel" },
+        { match: 5, map: "Miramar" },
+        { match: 6, map: "Miramar" },
+      ],
+      standings: [
+        { placement: 1, matches: 18, wwcd: "", pos: "", elimins: "", points: 157, outcome: "Champion", team: "Yangon Galacticos" },
+        { placement: 2, matches: 18, wwcd: "", pos: "", elimins: "", points: 142, outcome: "Finalist", team: "Weibo Gaming" },
+        { placement: 3, matches: 18, wwcd: "", pos: "", elimins: "", points: 141, outcome: "Finalist", team: "Alpha Gaming" },
+        { placement: 4, matches: 18, wwcd: "", pos: "", elimins: "", points: 117, outcome: "Finalist", team: "DRX" },
+        { placement: 5, matches: 18, wwcd: "", pos: "", elimins: "", points: 112, outcome: "Finalist", team: "Regnum Carya Esports" },
+        { placement: 6, matches: 18, wwcd: "", pos: "", elimins: "", points: 110, outcome: "Finalist", team: "Nongshim RedForce" },
+        { placement: 7, matches: 18, wwcd: "", pos: "", elimins: "", points: 109, outcome: "Finalist", team: "4thrives Esports" },
+        { placement: 8, matches: 18, wwcd: "", pos: "", elimins: "", points: 104, outcome: "Finalist", team: "Alter Ego Ares" },
+        { placement: 9, matches: 18, wwcd: "", pos: "", elimins: "", points: 100, outcome: "Finalist", team: "Horaa Esports" },
+        { placement: 10, matches: 18, wwcd: "", pos: "", elimins: "", points: 95, outcome: "Finalist", team: "Team Falcons" },
+        { placement: 11, matches: 18, wwcd: "", pos: "", elimins: "", points: 92, outcome: "Finalist", team: "IDA Esports" },
+        { placement: 12, matches: 18, wwcd: "", pos: "", elimins: "", points: 89, outcome: "Finalist", team: "POWR Esports" },
+        { placement: 13, matches: 18, wwcd: "", pos: "", elimins: "", points: 83, outcome: "Finalist", team: "Team Secret" },
+        { placement: 14, matches: 18, wwcd: "", pos: "", elimins: "", points: 82, outcome: "Finalist", team: "Fire Flux Esports" },
+        { placement: 15, matches: 18, wwcd: "", pos: "", elimins: "", points: 57, outcome: "Finalist", team: "eArena" },
+        { placement: 16, matches: 18, wwcd: "", pos: "", elimins: "", points: 54, outcome: "Finalist", team: "ThunderTalk Gaming" },
+      ],
     },
   ],
 };
@@ -239,112 +215,6 @@ const articles = [
   },
 ];
 
-const tx = db.transaction(() => {
-  const existingTournament = db
-    .prepare("SELECT id FROM tournaments WHERE name = ?")
-    .get(tournament.name);
-  if (existingTournament) {
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
-      existingTournament.id,
-    );
-  }
-
-  const existing = db.prepare("SELECT id FROM tournaments WHERE name = ?").get(tournament.name);
-  const tournamentId = existing ? existing.id : randomUUID();
-
-  if (existing) {
-    db.prepare(
-      `UPDATE tournaments SET
-        game = ?, tier = ?, status = ?, prize_pool = ?, start_date = ?, end_date = ?, stages = ?,
-        description = ?, banner_url = ?, rules = ?, max_teams = ?, format_overview = ?, calendar = ?,
-        prize_breakdown = ?, awards = ?, participants = ?, rankings = ?, updated_date = ?
-      WHERE id = ?`,
-    ).run(
-      tournament.game,
-      tournament.tier,
-      tournament.status,
-      tournament.prize_pool,
-      tournament.start_date,
-      tournament.end_date,
-      JSON.stringify(tournament.stages),
-      tournament.description,
-      tournament.banner_url,
-      tournament.rules,
-      tournament.max_teams,
-      tournament.format_overview,
-      JSON.stringify(tournament.calendar),
-      JSON.stringify(tournament.prize_breakdown),
-      JSON.stringify(tournament.awards),
-      JSON.stringify(tournament.participants),
-      JSON.stringify(tournament.rankings),
-      now,
-      tournamentId,
-    );
-  } else {
-    db.prepare(
-      `
-      INSERT INTO tournaments (
-        id, name, game, tier, status, prize_pool, start_date, end_date, stages,
-        description, banner_url, rules, max_teams, format_overview, calendar,
-        prize_breakdown, awards, participants, rankings, created_date, updated_date, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-    ).run(
-      tournamentId,
-    tournament.name,
-    tournament.game,
-    tournament.tier,
-    tournament.status,
-    tournament.prize_pool,
-    tournament.start_date,
-    tournament.end_date,
-    JSON.stringify(tournament.stages),
-    tournament.description,
-    tournament.banner_url,
-    tournament.rules,
-    tournament.max_teams,
-    tournament.format_overview,
-    JSON.stringify(tournament.calendar),
-    JSON.stringify(tournament.prize_breakdown),
-    JSON.stringify(tournament.awards),
-    JSON.stringify(tournament.participants),
-    JSON.stringify(tournament.rankings),
-    now,
-    now,
-    "admin@stagecore.local",
-    );
-  }
-
-  const deleteArticle = db.prepare("DELETE FROM news_articles WHERE title = ?");
-  const insertArticle = db.prepare(`
-    INSERT INTO news_articles (
-      id, title, content, category, thumbnail_url, featured, game, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const article of articles) {
-    deleteArticle.run(article.title);
-    insertArticle.run(
-      randomUUID(),
-      article.title,
-      article.content,
-      article.category,
-      tournament.banner_url,
-      article.featured,
-      article.game,
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-  }
-});
-
-tx();
+importTournament({ tournament, articles });
 
 console.log("Imported PUBG Mobile World Cup 2025 tournament.");
