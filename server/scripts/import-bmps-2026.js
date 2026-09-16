@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { db } from "../db.js";
 import { normalizeOrganizationName } from "../../SRC/LIB/organizationIdentity.js";
 import { BMPS_2026_ROSTERS } from "./bmps-2026-rosters.js";
 import { BMPS_2026_PRIZE_BREAKDOWN } from "../tournamentOverrides.js";
+import { importTournament } from "./importTournament.js";
 
 const now = new Date().toISOString();
 const ROUND_ONE_GROUP_B_TEAMS = new Set(
@@ -810,79 +810,9 @@ const articles = [
   },
 ];
 
-const tx = db.transaction(() => {
-  const existingTournament = db
-    .prepare("SELECT id FROM tournaments WHERE name = ?")
-    .get(tournament.name);
-
-  if (existingTournament) {
-    db.prepare("DELETE FROM matches WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM match_results WHERE tournament_id = ?").run(
-      existingTournament.id,
-    );
-    db.prepare("DELETE FROM tournaments WHERE id = ?").run(
-      existingTournament.id,
-    );
-  }
-
-  const tournamentId = randomUUID();
-  db.prepare(
-    `
-    INSERT INTO tournaments (
-      id, name, game, tier, status, prize_pool, start_date, end_date, stages,
-      description, banner_url, rules, max_teams, format_overview, calendar,
-      prize_breakdown, participants, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-  ).run(
-    tournamentId,
-    tournament.name,
-    tournament.game,
-    tournament.tier,
-    tournament.status,
-    tournament.prize_pool,
-    tournament.start_date,
-    tournament.end_date,
-    JSON.stringify(tournament.stages),
-    tournament.description,
-    tournament.banner_url,
-    tournament.rules,
-    tournament.max_teams,
-    tournament.format_overview,
-    JSON.stringify(tournament.calendar),
-    JSON.stringify(tournament.prize_breakdown),
-    JSON.stringify(tournament.participants),
-    now,
-    now,
-    "admin@stagecore.local",
-  );
-
-  const deleteArticle = db.prepare("DELETE FROM news_articles WHERE title = ?");
-  const insertArticle = db.prepare(`
-    INSERT INTO news_articles (
-      id, title, content, category, thumbnail_url, featured, game, created_date, updated_date, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const article of articles) {
-    deleteArticle.run(article.title);
-    insertArticle.run(
-      randomUUID(),
-      article.title,
-      article.content,
-      article.category,
-      null,
-      article.featured,
-      article.game,
-      now,
-      now,
-      "admin@stagecore.local",
-    );
-  }
+importTournament({
+  tournament,
+  articles,
 });
-
-tx();
 
 console.log("Imported BMPS 2026 tournament, key schedule, and announcement.");
