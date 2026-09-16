@@ -209,6 +209,60 @@ export function importTournament(config) {
         }
         teamIds.set(team.name, teamId);
       }
+
+      // ── Insert remaining teams from participants JSON ──────────
+      // League-stage / non-qualifying teams that have rosters in participants
+      // but don't appear in the teams array (which only has Grand Finals teams).
+      if (tournament.participants?.length) {
+        const participantsTeams = [
+          ...new Set(tournament.participants.map((p) => p.team)),
+        ];
+        const upsertTeamMinimal = db.prepare(`
+          INSERT INTO teams (
+            id, name, tag, logo_url, game, region, total_kills, total_points,
+            matches_played, wins, created_date, updated_date, created_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            name=excluded.name, game=excluded.game,
+            region=excluded.region, updated_date=excluded.updated_date
+        `);
+        const insertPlayerMinimal = db.prepare(`
+          INSERT INTO players (
+            id, ign, real_name, team_id, role, photo_url, total_kills,
+            matches_played, avg_damage, created_date, updated_date, created_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const findTeamByName2 = db.prepare("SELECT id FROM teams WHERE name = ?");
+
+        for (const teamName of participantsTeams) {
+          if (teamIds.has(teamName)) continue;
+          const existingTeam = findTeamByName2.get(teamName);
+          const teamId = existingTeam?.id || randomUUID();
+          upsertTeamMinimal.run(
+            teamId, teamName, null, null, game, region,
+            0, 0, 0, 0, now, now, "admin@stagecore.local",
+          );
+          teamIds.set(teamName, teamId);
+
+          const roster = tournament.participants
+            .filter((p) => p.team === teamName && p.inGameName)
+            .map((p) => p.inGameName);
+          for (const ign of roster) {
+            const onTeam = db.prepare("SELECT id FROM players WHERE ign = ? AND team_id = ?").get(ign, teamId);
+            if (onTeam) continue;
+            const departed = db.prepare("SELECT id FROM players WHERE ign = ? AND team_id IS NULL").get(ign);
+            if (departed) {
+              db.prepare("UPDATE players SET team_id = ?, updated_date = ? WHERE id = ?").run(teamId, now, departed.id);
+              continue;
+            }
+            insertPlayerMinimal.run(
+              randomUUID(), ign, null, teamId, "Assaulter", null,
+              0, 0, 0, now, now, "admin@stagecore.local",
+            );
+          }
+        }
+      }
+
       recomputeTeamStats();
       if (insertMatchSchedule) insertMatchSchedule(tournamentId);
     }
