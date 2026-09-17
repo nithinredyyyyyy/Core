@@ -340,7 +340,7 @@ export const base44 = {
   admin: {
     saveBmps2026PlayerStats(payload) {
       return request("/api/admin/bmps-2026-player-stats", {
-        method: "PUT",
+        method: "POST",
         body: JSON.stringify(payload),
       });
     },

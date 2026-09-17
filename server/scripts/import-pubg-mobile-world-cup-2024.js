@@ -1,14 +1,15 @@
 import { importTournament } from "./importTournament.js";
+import { postImportTournamentTransforms } from "./postImportTransforms.js";
 
 const tournament = {
   name: "PUBG Mobile World Cup 2024",
   game: "PUBG Mobile",
   tier: "S-Tier",
   status: "completed",
-  prize_pool: "$3,050,000",
+  prize_pool: "$3,000,000",
   start_date: "2024-07-19",
   end_date: "2024-07-28",
-  max_teams: 28,
+  max_teams: 24,
   banner_url: "/images/pubg-mobile-world-cup-2024.webp",
   description:
     "PUBG Mobile World Cup 2024 was the mid-season international event of the 2024 PUBG Mobile competitive season, held offline at Boulevard Riyadh City in Riyadh, Saudi Arabia.",
@@ -221,6 +222,6 @@ const articles = [
   },
 ];
 
-importTournament({ tournament, articles });
+importTournament({ tournament, articles, postImport: postImportTournamentTransforms });
 
 console.log("Imported PUBG Mobile World Cup 2024 tournament.");

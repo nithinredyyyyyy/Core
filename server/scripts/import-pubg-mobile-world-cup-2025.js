@@ -1,4 +1,5 @@
 import { importTournament } from "./importTournament.js";
+import { postImportTournamentTransforms } from "./postImportTransforms.js";
 
 const tournament = {
   name: "PUBG Mobile World Cup 2025",
@@ -215,6 +216,6 @@ const articles = [
   },
 ];
 
-importTournament({ tournament, articles });
+importTournament({ tournament, articles, postImport: postImportTournamentTransforms });
 
 console.log("Imported PUBG Mobile World Cup 2025 tournament.");

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { normalizeOrganizationName } from "../../SRC/LIB/organizationIdentity.js";
 import { BMPS_2026_ROSTERS } from "./bmps-2026-rosters.js";
-import { BMPS_2026_PRIZE_BREAKDOWN } from "../tournamentOverrides.js";
+import { BMPS_2026_PRIZE_BREAKDOWN } from "./data/bmps2026.js";
 import { importTournament } from "./importTournament.js";
 
 const now = new Date().toISOString();

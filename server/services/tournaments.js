@@ -1,9 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { db, entityConfigs, normalizeRecord } from "../db.js";
-import { applyTournamentReadOverrides } from "../tournamentOverrides.js";
 
 export function normalizeTournamentPayload(row) {
-  return applyTournamentReadOverrides(normalizeRecord(entityConfigs.Tournament, row));
+  return normalizeRecord(entityConfigs.Tournament, row);
 }
 
 function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {

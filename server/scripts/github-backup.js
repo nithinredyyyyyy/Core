@@ -3,8 +3,14 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import fs from "node:fs";
 
-const dbPath = "/app/server/data/stagecore.sqlite";
-const backupRepoPath = "/app/server/backup-repo";
+const localDbPath = path.resolve(process.cwd(), "server/data/stagecore.sqlite");
+const dockerDbPath = "/app/server/data/stagecore.sqlite";
+const dbPath = process.env.BACKUP_DB_PATH || (fs.existsSync(dockerDbPath) ? dockerDbPath : localDbPath);
+const backupRepoPath =
+  process.env.BACKUP_REPO_PATH ||
+  (dbPath === dockerDbPath
+    ? "/app/server/backup-repo"
+    : path.resolve(process.cwd(), "server/backup-repo"));
 const backupDbPath = path.join(backupRepoPath, "stagecore.sqlite");
 
 if (!fs.existsSync(dbPath)) {

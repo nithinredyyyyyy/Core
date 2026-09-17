@@ -1,5 +1,4 @@
 import { db, entityConfigs, normalizeRecord } from "../db.js";
-import { applyTournamentReadOverrides } from "../tournamentOverrides.js";
 
 const ORDERABLE_COLUMNS = {
   Tournament: new Set([
@@ -230,9 +229,7 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
     .prepare(sql)
     .all(...params)
     .map((row) => normalizeRecord(config, row));
-  return entityName === "Tournament"
-    ? records.map(applyTournamentReadOverrides)
-    : records;
+  return records;
 }
 
 export function listEntity(entityName, query = {}, options = {}) {

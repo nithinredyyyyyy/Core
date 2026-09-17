@@ -31,6 +31,10 @@ const now = new Date().toISOString();
  *   individual match records (scheduled matches with timestamps/maps) that the
  *   standings-only path does not create. The callback receives the new
  *   tournamentId and has access to the db object via closure.
+ * @param {Function} [config.postImport] — (tournament, db) => void
+ *   Called inside the transaction after the tournament and related rows are
+ *   inserted. Use this for one-time data normalization that must be persisted
+ *   instead of transformed at read time.
  * @param {Array} [config.articles] — [{title, content, category, featured, game}]
  */
 export function importTournament(config) {
@@ -42,6 +46,7 @@ export function importTournament(config) {
     resolveTeamName,
     getStandingsForStage,
     insertMatchSchedule,
+    postImport,
     articles = [],
   } = config;
 
@@ -391,6 +396,10 @@ export function importTournament(config) {
           "admin@stagecore.local",
         );
       }
+    }
+
+    if (postImport) {
+      postImport({ ...tournament, id: tournamentId }, db);
     }
 
     // ── Post-import verification ───────────────────────────────────

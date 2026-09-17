@@ -1,5 +1,5 @@
 import { db } from "../server/db.js";
-import { PMWC_2026_PARTICIPANTS } from "../server/tournamentOverrides.js";
+import { PMWC_2026_PARTICIPANTS } from "../server/scripts/data/pmwc2026.js";
 
 const row = db
   .prepare("SELECT id, participants FROM tournaments WHERE name = ?")

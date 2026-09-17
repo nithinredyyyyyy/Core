@@ -1,4 +1,7 @@
+import { PMWC_2026_RANKINGS } from "./data/pmwc2026Stats.js";
+import { PMWC_2026_AWARDS, PMWC_2026_PARTICIPANTS, PMWC_2026_PRIZE_BREAKDOWN } from "./data/pmwc2026.js";
 import { importTournament } from "./importTournament.js";
+import { postImportTournamentTransforms } from "./postImportTransforms.js";
 
 const mapRotation = [
   { match: 1, map: "Rondo" },
@@ -87,60 +90,10 @@ const tournament = {
     { week: "Aug 11 - Aug 12", label: "Survival Stage" },
     { week: "Aug 14 - Aug 16", label: "Grand Finals" },
   ],
-  prize_breakdown: [
-    { placement: "1st", team: "TBD", inr: "", usd: "500,000" },
-    { placement: "2nd", team: "TBD", inr: "", usd: "250,000" },
-    { placement: "3rd", team: "TBD", inr: "", usd: "150,000" },
-    { placement: "4th", team: "TBD", inr: "", usd: "120,000" },
-    { placement: "5th", team: "TBD", inr: "", usd: "100,000" },
-    { placement: "6th", team: "TBD", inr: "", usd: "90,000" },
-    { placement: "7th", team: "TBD", inr: "", usd: "80,000" },
-    { placement: "8th", team: "TBD", inr: "", usd: "70,000" },
-    { placement: "9th", team: "TBD", inr: "", usd: "60,000" },
-    { placement: "10th", team: "TBD", inr: "", usd: "55,000" },
-    { placement: "11th", team: "TBD", inr: "", usd: "50,000" },
-    { placement: "12th", team: "TBD", inr: "", usd: "45,000" },
-    { placement: "13th", team: "TBD", inr: "", usd: "40,000" },
-    { placement: "14th", team: "TBD", inr: "", usd: "35,000" },
-    { placement: "15th", team: "TBD", inr: "", usd: "30,000" },
-    { placement: "16th", team: "TBD", inr: "", usd: "25,000" },
-  ],
-  awards: [{ title: "FMVP", player: "TBD", team: "TBD", country: "", inr: "", usd: "25,000" }],
-  participants: [
-    { placement: 1, team: "AG.AL International", phase: "Group Stage - Group A", qualification: "2026 PEL Points", seed: "1st", players: ["Lyu", "仙崽", "FlowerH", "子枫", "司马光"] },
-    { placement: 2, team: "Yangon Galacticos", phase: "Group Stage - Group A", qualification: "2025 PMWC Champion", seed: "Invited", players: ["Smile", "Marnett", "Romeo", "SAYCLOUD"] },
-    { placement: 3, team: "ThunderTalk Gaming", phase: "Group Stage - Group A", qualification: "2026 PEL Points", seed: "3rd", players: ["Ajay", "Xing", "SiTing", "北陌", "清醒", "Jimmy"] },
-    { placement: 4, team: "Tianba", phase: "Group Stage - Group A", qualification: "2026 PEL Points", seed: "2nd", players: ["Qzz", "Eagle", "Aching", "MiLu", "浅唱"] },
-    { placement: 5, team: "XForce Rejects", phase: "Group Stage - Group A", qualification: "Africa Points", seed: "1st", players: ["Reverb", "Shiva", "Baby", "Devil", "Kuza"] },
-    { placement: 6, team: "Alpha7 Esports", phase: "Group Stage - Group A", qualification: "Americas Points", seed: "3rd", players: ["Carrilho", "Guizão", "Revo", "Obscure", "Nouthz"] },
-    { placement: 7, team: "FURIA Esports", phase: "Group Stage - Group A", qualification: "Americas Points", seed: "1st", players: ["Higor", "Silenceee", "Ayala", "Chieff"] },
-    { placement: 8, team: "Wolves Esports", phase: "Group Stage - Group A", qualification: "Americas Points", seed: "2nd", players: ["SLONIK", "Baton", "Lmntrixxx", "NCSSRY"] },
-    { placement: 9, team: "Aurora Gaming", phase: "Group Stage - Group A", qualification: "EECA Points", seed: "1st", players: ["DOK", "REFUS", "TOP", "Zyol", "EAST"] },
-    { placement: 10, team: "Godlike Esports", phase: "Group Stage - Group A", qualification: "BMPS 2026", seed: "1st", players: ["ADMINO", "Manya", "Spower", "Godz", "Saumay"] },
-    { placement: 11, team: "GOAT Team", phase: "Group Stage - Group A", qualification: "EECA Points", seed: "2nd", players: ["AYATO", "FORCE", "Focus", "MOXXXYY", "SAYREX"] },
-    { placement: 12, team: "TT Project", phase: "Group Stage - Group A", qualification: "EECA Points", seed: "3rd", players: ["NEOZ", "EFFYIS", "EFFECT", "ZERYCH"] },
-    { placement: 13, team: "Kiwoom DRX", phase: "Group Stage - Group A", qualification: "Invited", seed: "Invited", players: ["Qxzzz", "BINI", "Hoxy", "TRE", "Bigfafa"] },
-    { placement: 14, team: "DOPENESS", phase: "Group Stage - Group A", qualification: "Japan League", seed: "1st", players: ["KenG", "Lufa", "MIT1KA", "SpiCa"] },
-    { placement: 15, team: "Orangutan", phase: "Group Stage - Group A", qualification: "KIE Leaderboard", seed: "1st", players: ["AKop", "WizzGOD", "Aaru", "Attanki"] },
-    { placement: 16, team: "721 Esports", phase: "Group Stage - Group A", qualification: "MENA Points", seed: "3rd", players: ["ALEKO", "MALIK", "Masko", "Rehan", "ZORO"] },
-    { placement: 17, team: "AlUla Club Esports", phase: "Group Stage - Group B", qualification: "MENA Points", seed: "1st", players: ["Quick", "KLAWSINHO", "Y4SR", "R3B", "Khattab"] },
-    { placement: 18, team: "ETSH Esports", phase: "Group Stage - Group B", qualification: "MENA Points", seed: "5th", players: ["Apkrino", "NASSER", "FAHiTA", "Speedoo"] },
-    { placement: 19, team: "Geekay Esports", phase: "Group Stage - Group B", qualification: "MENA Points", seed: "4th", players: ["EZ4BADBOY", "KEVIN", "RAGNARoK", "SAFG", "Saleh Nasser Al-Qahtani"] },
-    { placement: 20, team: "Nongshim Redforce", phase: "Group Stage - Group B", qualification: "Pro Series Korea 2026", seed: "1st", players: ["SOEZ", "XZY", "TIZ1", "HYUNBIN", "DokC"] },
-    { placement: 21, team: "Nigma Galaxy", phase: "Group Stage - Group B", qualification: "MENA Points", seed: "2nd", players: ["4YDO", "LORD", "RAOUF", "SaTaN"] },
-    { placement: 22, team: "Horaa Esports", phase: "Group Stage - Group B", qualification: "South Asia Points", seed: "2nd", players: ["JiGGL3", "SkY", "NoFear", "SleepY"] },
-    { placement: 23, team: "4thrives Esports", phase: "Group Stage - Group B", qualification: "South Asia Points", seed: "1st", players: ["FALAK", "Huzaifa", "Nocki", "T24 OP"] },
-    { placement: 24, team: "Bigetron by Vitality", phase: "Group Stage - Group B", qualification: "Southeast Asia Points", seed: "4th", players: ["Reizy", "FEDERALES", "Reyzak", "Axel", "V3xxy", "Ryzen"] },
-    { placement: 25, team: "RRQ RYU", phase: "Group Stage - Group B", qualification: "Southeast Asia Points", seed: "3rd", players: ["Nerpehko", "GenFos", "Lapar", "Firen"] },
-    { placement: 26, team: "eArena", phase: "Group Stage - Group B", qualification: "Southeast Asia Points", seed: "2nd", players: ["MORMAN", "Jowker", "TernyK", "SchwepXz"] },
-    { placement: 27, team: "Team Flash", phase: "Group Stage - Group B", qualification: "Southeast Asia Points", seed: "1st", players: ["Bowz", "Zhius", "Topz", "Win"] },
-    { placement: 28, team: "IDA Esports", phase: "Group Stage - Group B", qualification: "Türkiye Points", seed: "4th", players: ["Rita", "Darkin", "Emre7", "Swajn"] },
-    { placement: 29, team: "Gaming Stars Esports", phase: "Group Stage - Group B", qualification: "Türkiye Points", seed: "2nd", players: ["Lation", "Mani4c", "Rolex20", "Yuseph", "Swash"] },
-    { placement: 30, team: "S2G Esports", phase: "Group Stage - Group B", qualification: "Türkiye Points", seed: "3rd", players: ["Solkay", "HamsiG", "Kamikaze", "Lost"] },
-    { placement: 31, team: "ULF Esports", phase: "Group Stage - Group B", qualification: "Türkiye Points", seed: "1st", players: ["Kecth", "Scarface", "Eren7", "Soulless", "Calse"] },
-    { placement: 32, team: "Hustler Crew", phase: "Group Stage - Group B", qualification: "Western Europe Points", seed: "1st", players: ["AaZzMmm", "Loco", "KAL3Y", "JMSON"] },
-  ],
-  rankings: [],
+  prize_breakdown: PMWC_2026_PRIZE_BREAKDOWN,
+  awards: PMWC_2026_AWARDS,
+  participants: PMWC_2026_PARTICIPANTS,
+  rankings: PMWC_2026_RANKINGS,
   stages: [
     {
       name: "Group Stage",
@@ -193,6 +146,8 @@ function getStandingsForStage(stageName) {
   return [];
 }
 
-importTournament({ tournament, articles });
+importTournament({ tournament, articles, postImport: postImportTournamentTransforms });
 
 console.log("Imported PUBG Mobile World Cup 2026 tournament.");
+
+
