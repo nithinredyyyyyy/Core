@@ -368,40 +368,6 @@ export function applyTournamentReadOverrides(tournament) {
     };
   }
 
-  if (tournament.name === "Battlegrounds Mobile India Pro Series 2026") {
-    const stages = Array.isArray(tournament.stages)
-      ? tournament.stages.map((stage) => {
-          return {
-            ...stage,
-            status: "completed",
-            standings:
-              stage?.name === "Grand Finals" && Array.isArray(stage.standings)
-                ? stage.standings.map((entry) =>
-                    normalizePlacement(entry?.placement) === 1
-                      ? { ...entry, team: "GodLike Esports", fullTeam: "GodLike Esports" }
-                      : entry,
-                  )
-                : stage.standings,
-          };
-        })
-      : tournament.stages;
-
-    return {
-      ...tournament,
-      status: "completed",
-      prize_pool: "₹40,000,000 INR (≃ $424,041 USD)",
-      prize_breakdown: BMPS_2026_PRIZE_BREAKDOWN,
-      awards: [
-        { title: "MVP", player: "ScaryJod", team: "Victores Sumus" },
-        { title: "FMVP", player: "Slug", team: "Divine Gaming" },
-        { title: "Best IGL", player: "Aadi", team: "Nebula Esports" },
-        { title: "Best Support", player: "Saumay", team: "Godlike Esports" },
-        { title: "Rookie of the Year", player: "Aimgodd", team: "iQOO Team Tamilas" },
-      ],
-      stages,
-    };
-  }
-
   if (tournament.name === "PUBG Mobile Global Championship 2025") {
     const pmgcPlayerToTeam = {};
     for (const participant of PMGC_2025_PARTICIPANTS) {

@@ -140,6 +140,12 @@ const tournament = {
   max_teams: 64,
   banner_url: "/images/bmps-2026.webp",
   prize_breakdown: BMPS_2026_PRIZE_BREAKDOWN,
+  awards: [
+    { title: "MVP", player: "ScaryJod", team: "Victores Sumus", inr: "4,00,000" },
+    { title: "Finals MVP", player: "Slug", team: "Divine Gaming", inr: "2,00,000" },
+    { title: "Best IGL", player: "Aadi", team: "Nebula Esports", inr: "2,50,000" },
+    { title: "Best Clutch", player: "ScaryJod", team: "Victores Sumus", inr: "1,00,000" },
+  ],
   format_overview:
     "BMPS 2026 is the fifth edition of the Battlegrounds Mobile India Pro Series. The tournament begins with a 64-team league phase using a four-group promotion and relegation system through Round 3. Round 4 then locks the groups and advances teams based on individual group standings into Grand Finals, Semi Finals, Survival Stage, or elimination before the Jaipur Grand Finals from June 19 to June 21, 2026.",
   calendar: [
@@ -740,7 +746,7 @@ const tournament = {
     {
       name: "Grand Finals",
       order: 8,
-      status: "upcoming",
+      status: "completed",
       teamCount: 16,
       summary:
         "June 19th - 21st, 2026 at Jaipur Convention Center, Jaipur, India. 16 teams compete across 3 matchdays and 18 matches: 8 direct qualifiers from Round 4 Group A, 6 teams from Semi Finals, and 2 teams from Last Chance Stage.",
