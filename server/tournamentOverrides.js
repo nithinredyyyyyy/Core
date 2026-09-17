@@ -5,11 +5,6 @@ const PMWC_2026_GROUP_B = "Group Stage - Group B";
 const PMGC_2025_GROUP_GREEN = "Group Stage - Green";
 const PMGC_2025_GROUP_RED = "Group Stage - Red";
 
-// PMWC 2024 Groups
-const PMWC_2024_GROUP_RED = "Group Stage - Group Red";
-const PMWC_2024_GROUP_GREEN = "Group Stage - Group Green";
-const PMWC_2024_GROUP_YELLOW = "Group Stage - Group Yellow";
-
 // PMWC 2025 Groups
 const PMWC_2025_GROUP_RED = "Group Stage - Group Red";
 const PMWC_2025_GROUP_GREEN = "Group Stage - Group Green";
@@ -175,43 +170,6 @@ export const PMWC_2026_AWARDS = [
   { title: "Field Medic", player: "MORMAN", team: "eArena", usd: "-" },
   { title: "Eagle Eye", player: "TernyK", team: "eArena", usd: "-" },
 ];
-
-export const PMWC_2024_PARTICIPANTS = [
-  // Group Red
-  [PMWC_2024_GROUP_RED, "Brute Force", "PMSL EMEA", "1st", ["PREPOD", "NEOZ", "4YDO", "FR1Z3R", "NALSON"]],
-  [PMWC_2024_GROUP_RED, "Tianba", "PEL Spring", "1st", ["Lyu", "Qzz", "GGbond", "Long", "Tianyu"]],
-  [PMWC_2024_GROUP_RED, "4Merical Vibes", "PMSL CSA", "1st", ["DOK", "REFUS", "AERO", "APEX", "B4RON"]],
-  [PMWC_2024_GROUP_RED, "REJECT", "PMGO Champion", "1st", ["ReijiOcO", "Duelo", "SaRa", "Devine"]],
-  [PMWC_2024_GROUP_RED, "Dplus", "Rivals Cup", "1st", ["chpz", "Kay", "Nolbu", "OSAL", "Porico"]],
-  [PMWC_2024_GROUP_RED, "D'Xavier", "PMSL Southeast Asia", "2nd", ["Lamborghini", "CHUA", "ShaDows", "ParaJin", "NadeTii"]],
-  [PMWC_2024_GROUP_RED, "Besiktas Black", "PMSL EMEA", "3rd", ["Kircali", "Tospik", "Poser", "Lewis"]],
-  [PMWC_2024_GROUP_RED, "Yoodo Alliance", "PMSL Southeast Asia", "3rd", ["KLuq", "Oliyo", "Jimmy99", "Flax", "LeonDZ"]],
-  // Group Green
-  [PMWC_2024_GROUP_GREEN, "Team Liquid", "PMSL Americas", "1st", ["CARDOZIN", "MYTHIC", "AYALAu", "CH1EFF"]],
-  [PMWC_2024_GROUP_GREEN, "Harame Bro", "Challengers League", "1st", ["RANGE", "Jappy", "FEDERALES", "EMAS", "PHEW"]],
-  [PMWC_2024_GROUP_GREEN, "Vampire Esports", "Special Invite", "1st", ["Stoned66", "Schwepds39", "TonyK", "Noozy639", "Fluketh", "Rvenclaw"]],
-  [PMWC_2024_GROUP_GREEN, "Tong Jia Bao Esports", "PEL Points", "2nd", ["Loongz", "Gk1st", "Onlys", "Flowerh", "SSS"]],
-  [PMWC_2024_GROUP_GREEN, "Falcons Force", "PMSL CSA", "2nd", ["TOP", "NIRZED", "Action", "ICY", "EAST"]],
-  [PMWC_2024_GROUP_GREEN, "MadBulls", "PMSL CSA", "3rd", ["ZERYCH", "FLYQE", "TUL1KA", "INGUSH"]],
-  [PMWC_2024_GROUP_GREEN, "Al Ula x IHC", "PMSL CSA", "4th", ["Godless", "Zyol", "DEMO", "ALEX", "ROGUE"]],
-  [PMWC_2024_GROUP_GREEN, "Talon Esports", "PMSL Southeast Asia", "4th", ["Miseryy", "Redface", "Linixx", "Yoruu", "AXEL"]],
-  // Group Yellow
-  [PMWC_2024_GROUP_YELLOW, "BOOM Esports", "PMSL Southeast Asia", "1st", ["FrenTzy", "Flyboy", "YummyMEI", "Ponbit56", "Reizyyy", "Rapshody"]],
-  [PMWC_2024_GROUP_YELLOW, "CAG OSAKA", "Japan League", "1st", ["Apollo", "Naoto", "Garnet", "Mattun"]],
-  [PMWC_2024_GROUP_YELLOW, "DRX", "Pro Series Korea", "1st", ["Cyxae", "Qx", "HYUNBIN", "SOEZ"]],
-  [PMWC_2024_GROUP_YELLOW, "IW NRX", "PMSL EMEA", "2nd", ["FROZENNX", "ZWOLF", "KEIN", "SWAIN"]],
-  [PMWC_2024_GROUP_YELLOW, "Alpha7 Esports", "PMSL Americas", "2nd", ["REVO77K", "MAFIOSO", "CARRILHO", "MAGRELIN"]],
-  [PMWC_2024_GROUP_YELLOW, "iNCO Gaming", "PMSL Americas", "3rd", ["Garryx", "NENEBETE", "Nunes", "Sev7n", "Vitali"]],
-  [PMWC_2024_GROUP_YELLOW, "Money Makers", "PMSL EMEA", "4th", ["OldBoy", "Icy", "Coa77", "BISKE", "Havlik", "A7MED"]],
-  [PMWC_2024_GROUP_YELLOW, "POWR eSports", "Host Country Invite", "1st", ["ALHAJE", "EASY", "FHIDAN", "KANTE", "SAAD", "SaTaN"]],
-].map(([phase, team, qualification, seed, players], index) => ({
-  placement: index + 1,
-  team,
-  phase,
-  qualification,
-  seed,
-  players,
-}));
 
 export const PMWC_2025_PARTICIPANTS = [
   // Group Red
@@ -576,7 +534,7 @@ export function applyTournamentReadOverrides(tournament) {
               let outcome = entry.outcome || entry.progression_status || null;
 
               if (stage.name === "Group Stage") {
-                const participant = PMWC_2024_PARTICIPANTS.find(p => p.team === entry.team || p.team === entry.fullTeam);
+                const participant = tournament.participants.find(p => p.team === entry.team || p.team === entry.fullTeam);
                 const group = participant ? participant.phase : (entry.grp || "Unknown");
 
                 // PMWC 2024: Combined standings, top 12 advance to Grand Finals, 13-24 to Survival Stage
@@ -602,14 +560,7 @@ export function applyTournamentReadOverrides(tournament) {
 
     return {
       ...tournament,
-      tier: tournament.tier || "S-Tier",
       prize_pool: "$3,000,000",
-      participants: PMWC_2024_PARTICIPANTS,
-      awards: [
-        { title: "FMVP", player: "MAFIOSO", team: "Alpha7 Esports" },
-        { title: "Grand Finals MVP", player: "ReijiOcO", team: "REJECT" },
-      ],
-      rankings: tournament.rankings ?? [],
       max_teams: 24,
       stages: pmwc2024Stages,
     };
