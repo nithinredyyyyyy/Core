@@ -211,7 +211,7 @@ const tournament = {
     },
     {
       placement: 14,
-      team: "Team iNSANE",
+      team: "TEAM iNSANE",
       phase: "Semi Finals 2",
       players: ["AFU", "ShaDow", "Evil", "SpyOp", "Kaalan"],
     },
@@ -543,7 +543,7 @@ const teams = [
     players: ["Wizard", "Tracegod", "CLUCTH", "HITMAN", "FaTe"],
   },
   {
-    name: "Team iNSANE",
+    name: "TEAM iNSANE",
     tag: "INSANE",
     players: ["AFU", "ShaDow", "Evil", "SpyOp", "Kaalan"],
   },
@@ -631,7 +631,7 @@ const aliasToTeamName = new Map([
   ["Team Tamilas", "Team Tamilas"],
   ["Raven Esports", "Raven Esports"],
   ["FS eSports", "FS Esports"],
-  ["Team Insane", "Team iNSANE"],
+  ["Team Insane", "TEAM iNSANE"],
   ["TEAM AARU", "Team Aaru"],
   ["Vasista Esports", "Vasista Esports"],
   ["MOGO ESPORTS", "MOGO Esports"],
