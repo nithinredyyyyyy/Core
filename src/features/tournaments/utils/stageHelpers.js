@@ -1,5 +1,5 @@
-import { normalizeOrganizationName } from "@/lib/organizationIdentity";
-import { HIDDEN_PARTICIPANT_PHASE_LABELS } from "@/features/tournaments/constants";
+import { normalizeOrganizationName } from "../../../lib/organizationIdentity.js";
+import { HIDDEN_PARTICIPANT_PHASE_LABELS } from "../constants.js";
 
 export function getCleanStageLabel(label) {
   const value = String(label || "").trim();

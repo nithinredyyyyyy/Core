@@ -1,9 +1,9 @@
-import { getOrganizationMeta, normalizeOrganizationName } from "@/lib/organizationIdentity";
-import { isBmps2026PromotionStage } from "@/lib/tournamentProgression";
-import { getPmwc2026MovementRule, isPmwcTournament } from "@/lib/pmwc2026Progression";
-import { getCleanStageLabel } from "@/features/tournaments/utils/stageHelpers";
+import { getOrganizationMeta, normalizeOrganizationName } from "../../../lib/organizationIdentity.js";
+import { isBmps2026PromotionStage } from "../../../lib/tournamentProgression.js";
+import { getPmwc2026MovementRule, isPmwcTournament } from "../../../lib/pmwc2026Progression.js";
+import { getCleanStageLabel } from "./stageHelpers.js";
 
-export { buildPhaseLabelFromEntry } from "@/features/tournaments/utils/stageHelpers";
+export { buildPhaseLabelFromEntry } from "./stageHelpers.js";
 
 export function buildTeamLink(teamName) {
   return `/teams?team=${encodeURIComponent(normalizeTeamName(teamName))}`;

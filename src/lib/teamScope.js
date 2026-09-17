@@ -1,4 +1,4 @@
-import { getGroupMovementRule } from "@/features/tournaments/utils/participantHelpers";
+import { getGroupMovementRule } from "../features/tournaments/utils/participantHelpers.js";
 
 const DEFAULT_NORMALIZE = (value) =>
   String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");

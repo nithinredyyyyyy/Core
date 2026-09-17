@@ -1,4 +1,4 @@
-import { normalizeOrganizationName } from "@/lib/organizationIdentity";
+import { normalizeOrganizationName } from "../../lib/organizationIdentity.js";
 
 export const BMPS_2026_STYLE_STAGE_TOURNAMENTS = new Set([
   "PUBG Mobile World Cup 2026",
