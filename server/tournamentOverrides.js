@@ -5,11 +5,6 @@ const PMWC_2026_GROUP_B = "Group Stage - Group B";
 const PMGC_2025_GROUP_GREEN = "Group Stage - Green";
 const PMGC_2025_GROUP_RED = "Group Stage - Red";
 
-// PMWC 2025 Groups
-const PMWC_2025_GROUP_RED = "Group Stage - Group Red";
-const PMWC_2025_GROUP_GREEN = "Group Stage - Group Green";
-const PMWC_2025_GROUP_YELLOW = "Group Stage - Group Yellow";
-
 export const BGMS_2026_PRIZE_BREAKDOWN = [
   { placement: "1st",  team: "Nebula Esports",       inr: "4,000,000" },
   { placement: "2nd",  team: "Gladiators Esports",   inr: "1,500,000" },
@@ -170,43 +165,6 @@ export const PMWC_2026_AWARDS = [
   { title: "Field Medic", player: "MORMAN", team: "eArena", usd: "-" },
   { title: "Eagle Eye", player: "TernyK", team: "eArena", usd: "-" },
 ];
-
-export const PMWC_2025_PARTICIPANTS = [
-  // Group Red
-  [PMWC_2025_GROUP_RED, "R8 Esports", "Host Country Invite", "1st", ["iD7", "PrEStlGe", "Marth", "SKTON", "Damar"]],
-  [PMWC_2025_GROUP_RED, "eArena", "PMSL Southeast Asia", "2nd", ["Jowker", "MORMAN", "SAKURA", "TernyK", "Nc2"]],
-  [PMWC_2025_GROUP_RED, "Alter Ego Ares", "PMSL Southeast Asia", "3rd", ["Alva", "Rosemary", "Moana", "Krypton", "DayboT"]],
-  [PMWC_2025_GROUP_RED, "Team Secret", "PMSL Southeast Asia", "4th", ["Franky", "Jikey", "TrangXIX", "Zerus"]],
-  [PMWC_2025_GROUP_RED, "Alpha Gaming", "PMSL CSA", "1st", ["Zyol", "DOK", "REFUS", "TOP", "B4RON"]],
-  [PMWC_2025_GROUP_RED, "Horaa Esports", "PMSL CSA", "2nd", ["JiGGL3", "SkY", "NoFear", "SleepY", "HaitDami", "MafiaNinja"]],
-  [PMWC_2025_GROUP_RED, "4Thrives Esports", "PMSL CSA", "3rd", ["IQQ", "FALAK", "T24OP", "Nocki", "CAIRO", "Shaheen"]],
-  [PMWC_2025_GROUP_RED, "Team Falcons", "PMSL Europe", "1st", ["Narvalow", "RAOUF", "REDOX", "Coa77", "Snowix"]],
-  // Group Green
-  [PMWC_2025_GROUP_GREEN, "Fire Flux Esports", "PMSL Europe", "2nd", ["Kecth", "Matkap", "Scarface", "Soulless"]],
-  [PMWC_2025_GROUP_GREEN, "IDA Esports", "PMSL Europe", "3rd", ["Darkin", "Emre7", "Eren7", "Rita"]],
-  [PMWC_2025_GROUP_GREEN, "Regnum Carya Esports", "PMGO Champ's Region", "1st", ["Loxy", "Sylas", "Tospik", "Wild"]],
-  [PMWC_2025_GROUP_GREEN, "Team Vision", "PMSL MENA", "1st", ["Marcelo", "Nawaf", "NvrAlone", "VOLT", "SPARK", "Bommpa"]],
-  [PMWC_2025_GROUP_GREEN, "POWR eSports", "PMSL MENA", "2nd", ["RAGNAR", "ALHAJE", "Fhidan", "Easy", "KANTE"]],
-  [PMWC_2025_GROUP_GREEN, "Team GAMAX", "PMSL MENA", "3rd", ["FAHiTA", "Apkrino", "ARTHUR", "CRONA9", "4YDO"]],
-  [PMWC_2025_GROUP_GREEN, "INTENSE GAME", "PMSL Americas", "1st", ["AdriaN", "Pedrinho", "Rafa", "Silenceee"]],
-  [PMWC_2025_GROUP_GREEN, "INFLUENCE RAGE", "PMSL Americas", "2nd", ["Diego", "Felipinho", "law", "LiLBOY", "Lorranzin"]],
-  // Group Yellow
-  [PMWC_2025_GROUP_YELLOW, "Alpha7 Esports", "PMSL Americas", "3rd", ["Carrilho", "Mafioso", "Revo", "Squash", "Senab"]],
-  [PMWC_2025_GROUP_YELLOW, "Yangon Galacticos", "PMCL Southeast Asia", "1st", ["Smile", "Marnett", "Romeo", "SAYCLOUD"]],
-  [PMWC_2025_GROUP_YELLOW, "Weibo Gaming", "PEL Points", "1st", ["Suk", "Order", "33z", "HECC", "HeRo", "Huai"]],
-  [PMWC_2025_GROUP_YELLOW, "ThunderTalk Gaming", "PEL Points", "2nd", ["King", "Ajay", "Xing", "SiTing", "TianYu"]],
-  [PMWC_2025_GROUP_YELLOW, "DRX", "Pro Series Korea", "1st", ["Cyxae", "HYUNBIN", "Qx", "SOEZ"]],
-  [PMWC_2025_GROUP_YELLOW, "KINOTROPE gaming", "Japan League", "1st", ["Mark", "FINALE", "OZISAN", "TAMR4", "p1r"]],
-  [PMWC_2025_GROUP_YELLOW, "Nongshim RedForce", "Rivals Cup", "1st", ["BINI", "DokC", "XZY", "TIZ1"]],
-  [PMWC_2025_GROUP_YELLOW, "Team Aryan", "Special Invite: BMPS", "1st", ["Aryan", "Syrax", "Devotee", "Henry", "Vishu"]],
-].map(([phase, team, qualification, seed, players], index) => ({
-  placement: index + 1,
-  team,
-  phase,
-  qualification,
-  seed,
-  players,
-}));
 
 export const PMGC_2025_PARTICIPANTS = [
   [PMGC_2025_GROUP_GREEN, "Alpha Gaming", "PMSL CSA", "1st", ["DOK", "Zyol", "TOP", "REFUS"]],
@@ -579,7 +537,7 @@ export function applyTournamentReadOverrides(tournament) {
               let outcome = entry.outcome || entry.progression_status || null;
 
               if (stage.name === "Group Stage") {
-                const participant = PMWC_2025_PARTICIPANTS.find(p => p.team === entry.team || p.team === entry.fullTeam);
+                const participant = tournament.participants.find(p => p.team === entry.team || p.team === entry.fullTeam);
                 const group = participant ? participant.phase : (entry.grp || "Unknown");
 
                 // PMWC 2025: Combined standings, top 12 advance to Grand Finals, 13-24 to Survival Stage
@@ -605,15 +563,6 @@ export function applyTournamentReadOverrides(tournament) {
 
     return {
       ...tournament,
-      tier: tournament.tier || "S-Tier",
-      prize_pool: "$3,000,000",
-      participants: PMWC_2025_PARTICIPANTS,
-      awards: [
-        { title: "Grand Finals MVP", player: "DOK", team: "Alpha Gaming" },
-        { title: "FMVP", player: "Smile", team: "Yangon Galacticos" },
-      ],
-      rankings: tournament.rankings ?? [],
-      max_teams: 24,
       stages: pmwc2025Stages,
     };
   }
