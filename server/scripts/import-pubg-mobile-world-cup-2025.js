@@ -5,7 +5,7 @@ const tournament = {
   game: "PUBG Mobile",
   tier: "S-Tier",
   status: "completed",
-  prize_pool: "$3,000,000",
+  prize_pool: "$3,050,000",
   start_date: "2025-07-25",
   end_date: "2025-08-03",
   max_teams: 24,
@@ -47,10 +47,13 @@ const tournament = {
     { placement: "23rd", team: "KINOTROPE gaming", usd: "33,500" },
     { placement: "24th", team: "Team GAMAX", usd: "32,000" },
   ],
-  awards: [
-    { title: "Grand Finals MVP", player: "DOK", team: "Alpha Gaming" },
-    { title: "FMVP", player: "Smile", team: "Yangon Galacticos" },
-  ],
+    awards: [
+      { title: "FMVP", player: "DOK", team: "Alpha Gaming", country: "Mongolia", usd: "50,000" },
+      { title: "Best IGL", player: "Smile", team: "Yangon Galacticos", country: "Myanmar", usd: "-" },
+      { title: "Grenade Master", player: "DOK", team: "Alpha Gaming", country: "Mongolia", usd: "-" },
+      { title: "Field Medic", player: "DOK", team: "Alpha Gaming", country: "Mongolia", usd: "-" },
+      { title: "Eagle Eye", player: "NoFear", team: "Horaa Esports", country: "Nepal", usd: "-" },
+    ],
   participants: [
     { placement: 1, team: "R8 Esports", phase: "Group Stage - Group Red", qualification: "Host Country Invite", seed: "1st", players: ["iD7", "PrEStlGe", "Marth", "SKTON", "Damar"] },
     { placement: 2, team: "eArena", phase: "Group Stage - Group Red", qualification: "PMSL Southeast Asia", seed: "2nd", players: ["Jowker", "MORMAN", "SAKURA", "TernyK", "Nc2"] },
