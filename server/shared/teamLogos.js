@@ -218,6 +218,10 @@ const THEME_AWARE_TEAM_LOGOS = [
     darkSrc: "/images/team-logos/dark-theme/riotnationz-dark.webp",
   },
   {
+    pattern: /^RSPT Official$/i,
+    src: "/images/team-logos/RSPT OFFICIAL.png",
+  },
+  {
     pattern: /^Santa Esports$|^Santa ESP$/i,
     lightSrc: "/images/team-logos/light-theme/santa-esports-light.webp",
     darkSrc: "/images/team-logos/dark-theme/santa-esports-dark.webp",
