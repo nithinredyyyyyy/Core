@@ -218,10 +218,6 @@ const THEME_AWARE_TEAM_LOGOS = [
     darkSrc: "/images/team-logos/dark-theme/riotnationz-dark.webp",
   },
   {
-    pattern: /^RSPT Official$/i,
-    src: "/images/team-logos/RSPT OFFICIAL.png",
-  },
-  {
     pattern: /^Santa Esports$|^Santa ESP$/i,
     lightSrc: "/images/team-logos/light-theme/santa-esports-light.webp",
     darkSrc: "/images/team-logos/dark-theme/santa-esports-dark.webp",
@@ -736,6 +732,7 @@ const TEAM_LOGOS = [
     pattern: /^(IQOO Reckoning Esports|Reckoning Esports)$/i,
     src: "/images/team-logos/reckoning.webp",
   },
+  { pattern: /^RSPT Official$/i, src: "/images/team-logos/RSPT OFFICIAL.png" },
   {
     pattern: /^(Team RedXRoss|TeamRedXross|RedXRoss|4EverxRedXRoss)$/i,
     src: "/images/team-logos/team-redxross.webp",
