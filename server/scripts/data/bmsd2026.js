@@ -18,7 +18,7 @@ export const BMSD_2026_GROUP_A = [
 ];
 
 export const BMSD_2026_GROUP_B = [
-  { placement: 1, team: "Blitz Esports", players: ["Areeb", "EGGY", "Lobster", "Ralphie", "FanOP"], captain: "Areeb" },
+  { placement: 1, team: "Blitz Epigrotive Gaming", players: ["Areeb", "EGGY", "Lobster", "Ralphie", "FanOP"], captain: "Areeb" },
   { placement: 2, team: "Rapid Chaos", players: ["FLASH", "Psycho", "Toxic", "DhruvOG", "fragger"], captain: "FLASH" },
   { placement: 3, team: "Zero Ark", players: ["Morty", "PainIsLive", "JatinOG", "ChandanOP", "SarwarOG"], captain: "Morty" },
   { placement: 4, team: "WindGod Esports", players: ["RyzeN", "InfinityOP", "Kyzer", "Probot", "RIOO"], captain: "RyzeN" },
@@ -41,7 +41,7 @@ export const BMSD_2026_GROUP_C = [
   { placement: 2, team: "K9 Esports", players: ["Saumraj", "SnowJOD", "Taurus06", "Stranger", "Smoker46"], captain: "Saumraj", note: "DNP" },
   { placement: 3, team: "4Ends Esports", players: [], captain: null },
   { placement: 4, team: "Learn From Past", players: ["Honey", "MAX", "JDGamingYT", "Ryu", "Yash18"], captain: "Honey" },
-  { placement: 5, team: "Raspator Esports", players: ["Ayden", "Maxioso", "Lens06", "Hesperos", "Jazzy"], captain: "Ayden" },
+  { placement: 5, team: "RSPT OFFICIAL", players: ["Ayden", "Maxioso", "Lens06", "Hesperos", "Jazzy"], captain: "Ayden" },
   { placement: 6, team: "Iris Esports", players: ["TapGod", "Arto", "Chokeboy", "YprBolte", "Harshu"], captain: "TapGod" },
   { placement: 7, team: "Team H4K", players: ["Sujal", "RageGod", "Wizard", "Mac", "Nodii"], captain: "Sujal" },
   { placement: 8, team: "Santa Esports", players: ["Alpha05", "ADONIS", "PUNISHER11", "CoFFIN", "BanditGod"], captain: "Alpha05" },
