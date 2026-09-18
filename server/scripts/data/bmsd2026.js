@@ -41,7 +41,7 @@ export const BMSD_2026_GROUP_C = [
   { placement: 2, team: "K9 Esports", players: ["Saumraj", "SnowJOD", "Taurus06", "Stranger", "Smoker46"], captain: "Saumraj", note: "DNP" },
   { placement: 3, team: "4Ends Esports", players: [], captain: null },
   { placement: 4, team: "Learn From Past", players: ["Honey", "MAX", "JDGamingYT", "Ryu", "Yash18"], captain: "Honey" },
-  { placement: 5, team: "RSPT OFFICIAL", players: ["Ayden", "Maxioso", "Lens06", "Hesperos", "Jazzy"], captain: "Ayden" },
+  { placement: 5, team: "RSPT Official", players: ["Ayden", "Maxioso", "Lens06", "Hesperos", "Jazzy"], captain: "Ayden" },
   { placement: 6, team: "Iris Esports", players: ["TapGod", "Arto", "Chokeboy", "YprBolte", "Harshu"], captain: "TapGod" },
   { placement: 7, team: "Team H4K", players: ["Sujal", "RageGod", "Wizard", "Mac", "Nodii"], captain: "Sujal" },
   { placement: 8, team: "Santa Esports", players: ["Alpha05", "ADONIS", "PUNISHER11", "CoFFIN", "BanditGod"], captain: "Alpha05" },
@@ -52,7 +52,7 @@ export const BMSD_2026_GROUP_C = [
   { placement: 13, team: "HyperCatz", players: [], captain: null },
   { placement: 14, team: "Carpe Diem", players: ["GamlaBoy", "Insidious", "PHANTOM", "K47", "FuZzy"], captain: "GamlaBoy" },
   { placement: 15, team: "Godsent Forever", players: [], captain: null },
-  { placement: 16, team: "STEP BY STEP ESPORTS", players: [], captain: null },
+  { placement: 16, team: "Step By Step Esports", players: [], captain: null },
 ];
 
 export const BMSD_2026_PRIZE_BREAKDOWN = [
