@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { safeInternalPath } from "@/lib/safeRedirect";
 
 const RESULT_ICONS = {
   tournament: Trophy,
@@ -89,7 +90,7 @@ export default function GlobalSearch({ open, onClose }) {
   );
 
   const go = (path) => {
-    navigate(path);
+    navigate(safeInternalPath(path));
     onClose();
   };
 

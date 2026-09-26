@@ -466,16 +466,28 @@ export function recomputeTeamStats() {
             SELECT SUM(mr.kill_points) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           total_points = COALESCE((
             SELECT SUM(mr.total_points) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           matches_played = COALESCE((
             SELECT SUM(COALESCE(mr.matches_count, 1)) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           wins = COALESCE((
             SELECT SUM(
@@ -487,6 +499,10 @@ export function recomputeTeamStats() {
             ) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           updated_date = ?
     `,

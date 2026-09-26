@@ -168,6 +168,17 @@ function serializeFilterValue(config, key, value) {
   return jsonFieldSet.has(key) ? JSON.stringify(value) : value;
 }
 
+// A draft match result must never reach anonymous clients. The whole match is
+// withheld, not just the draft row: a partially entered match would otherwise
+// produce incorrect public standings. Mirrors filterPublishedMatchResults().
+const MATCH_RESULT_PUBLIC_FILTER = `(
+  COALESCE(NULLIF(publication_status, ''), 'published') = 'published'
+  AND match_id NOT IN (
+    SELECT match_id FROM match_results
+    WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+  )
+)`;
+
 export function applyListQuery(entityName, config, query = {}, options = {}) {
   const whereClauses = [];
   const params = [];
@@ -179,6 +190,10 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
     "created_by",
     ...config.fields,
   ]);
+
+  if (entityName === "MatchResult" && options.includeUnpublished !== true) {
+    whereClauses.push(MATCH_RESULT_PUBLIC_FILTER);
+  }
 
   for (const [key, value] of Object.entries(query)) {
     if (!allowedFilterColumns.has(key)) {

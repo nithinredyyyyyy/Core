@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { entityConfigs } from "../db.js";
+import { db, entityConfigs } from "../db.js";
 import {
   ensureEntityWriteAccess,
   resolveRequestAuth,
@@ -28,17 +28,19 @@ const PUBLIC_ENTITY_GET = new Set([
   "TransferWindow",
 ]);
 
+function isAdminRequest(req) {
+  const auth = resolveRequestAuth(req);
+  return Boolean(auth.isAuthenticated && auth.user?.role === "admin");
+}
+
 entitiesRouter.get("/entities/:entity", (req, res) => {
   const entityName = req.params.entity;
   const config = entityConfigs[entityName];
   if (!config) {
     return res.status(404).json({ error: "Unknown entity" });
   }
-  if (!PUBLIC_ENTITY_GET.has(entityName)) {
-    const auth = resolveRequestAuth(req);
-    if (!auth.isAuthenticated || auth.user?.role !== "admin") {
-      return res.status(403).json({ error: "Admin access required" });
-    }
+  if (!PUBLIC_ENTITY_GET.has(entityName) && !isAdminRequest(req)) {
+    return res.status(403).json({ error: "Admin access required" });
   }
   let query = {};
   if (req.query.q) {
@@ -50,7 +52,10 @@ entitiesRouter.get("/entities/:entity", (req, res) => {
   }
 
   try {
-    const records = applyListQuery(entityName, config, query, req.query);
+    const records = applyListQuery(entityName, config, query, {
+      ...req.query,
+      includeUnpublished: isAdminRequest(req),
+    });
     return res.json(records);
   } catch (error) {
     return res
@@ -115,15 +120,30 @@ entitiesRouter.get("/entities/:entity/:id", (req, res) => {
   if (!entityConfigs[entityName]) {
     return res.status(404).json({ error: "Unknown entity" });
   }
-  if (!PUBLIC_ENTITY_GET.has(entityName)) {
-    const auth = resolveRequestAuth(req);
-    if (!auth.isAuthenticated || auth.user?.role !== "admin") {
-      return res.status(403).json({ error: "Admin access required" });
-    }
+  const admin = isAdminRequest(req);
+  if (!PUBLIC_ENTITY_GET.has(entityName) && !admin) {
+    return res.status(403).json({ error: "Admin access required" });
   }
-  const record = getRecord(req.params.entity, req.params.id);
+  const record = getRecord(entityName, req.params.id);
   if (!record) {
     return res.status(404).json({ error: "Not found" });
+  }
+  // A single draft match result must stay hidden from anonymous clients, and
+  // it must not reveal that a sibling result for the same match is a draft.
+  if (entityName === "MatchResult" && !admin) {
+    const siblingDrafts = db
+      .prepare(
+        `SELECT COUNT(*) AS count FROM match_results
+         WHERE match_id = ?
+           AND COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'`,
+      )
+      .get(record.match_id);
+    const isDraft =
+      String(record.publication_status || "published").trim().toLowerCase() !==
+      "published";
+    if (isDraft || siblingDrafts.count > 0) {
+      return res.status(404).json({ error: "Not found" });
+    }
   }
   return res.json(record);
 });

@@ -166,5 +166,130 @@ describe("auth session and access control", () => {
       });
       assert.equal(res.status, 403);
     });
+
+    test("per-route rate limits do not cap unrelated public endpoints", async () => {
+      // The auth limiter allows 20/min. Public reads must not be counted
+      // against it, so a 25-request burst on a public route must stay 200.
+      const statuses = [];
+      for (let i = 0; i < 25; i += 1) {
+        const res = await fetch(`${getBaseUrl()}/api/entities/Team?limit=1`);
+        statuses.push(res.status);
+      }
+      assert.equal(statuses.includes(429), false, `unexpected 429 in ${statuses.join(",")}`);
+      assert.equal(statuses.every((status) => status === 200), true);
+    });
+  });
+
+  describe("unpublished match result visibility", () => {
+    const unique = Date.now().toString(36);
+    let tournamentId;
+    let matchId;
+    let draftId;
+    let publishedSiblingId;
+
+    async function adminCreate(path, body) {
+      const res = await fetch(`${getBaseUrl()}${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieHeader(adminToken(), { csrf: "csrf" }),
+          "X-StageCore-CSRF": "csrf",
+        },
+        body: JSON.stringify(body),
+      });
+      const payload = await res.json().catch(() => null);
+      assert.ok(res.status === 201, `create ${path} failed: ${res.status} ${JSON.stringify(payload)}`);
+      return payload;
+    }
+
+    before(async () => {
+      const team = await adminCreate("/api/entities/Team", {
+        name: `Draft Test Team ${unique}`,
+        tag: `DT${unique.slice(-4)}`,
+      });
+      const tournament = await adminCreate("/api/entities/Tournament", {
+        name: `Draft Test Tour ${unique}`,
+        game: "BGMI",
+        status: "ongoing",
+      });
+      tournamentId = tournament.id;
+      const match = await adminCreate("/api/entities/Match", {
+        tournament_id: tournamentId,
+        stage: "Group",
+        match_number: 1,
+      });
+      matchId = match.id;
+      const draft = await adminCreate("/api/entities/MatchResult", {
+        match_id: matchId,
+        tournament_id: tournamentId,
+        team_id: team.id,
+        placement: 7,
+        total_points: 99,
+        publication_status: "draft",
+      });
+      draftId = draft.id;
+
+      // A published sibling on the same match: the whole match must be withheld
+      // so partially entered matches never produce public standings.
+      const publishedSibling = await adminCreate("/api/entities/MatchResult", {
+        match_id: matchId,
+        tournament_id: tournamentId,
+        team_id: (
+          await adminCreate("/api/entities/Team", {
+            name: `Draft Test Team B ${unique}`,
+            tag: `DB${unique.slice(-4)}`,
+          })
+        ).id,
+        placement: 3,
+        total_points: 55,
+        publication_status: "published",
+      });
+      publishedSiblingId = publishedSibling.id;
+    });
+
+    test("anonymous list hides draft match results", async () => {
+      const res = await fetch(`${getBaseUrl()}/api/entities/MatchResult?limit=5000`);
+      assert.equal(res.status, 200);
+      const rows = await res.json();
+      assert.equal(rows.some((row) => row.id === draftId), false);
+      assert.equal(rows.some((row) => row.publication_status === "draft"), false);
+    });
+
+    test("anonymous single read of a draft returns 404", async () => {
+      const res = await fetch(`${getBaseUrl()}/api/entities/MatchResult/${draftId}`);
+      assert.equal(res.status, 404);
+    });
+
+    test("admin list still includes draft match results", async () => {
+      const res = await fetch(`${getBaseUrl()}/api/entities/MatchResult?limit=5000`, {
+        headers: { Cookie: cookieHeader(adminToken()) },
+      });
+      assert.equal(res.status, 200);
+      const rows = await res.json();
+      assert.equal(rows.some((row) => row.id === draftId), true);
+    });
+
+    test("admin single read of a draft returns 200", async () => {
+      const res = await fetch(`${getBaseUrl()}/api/entities/MatchResult/${draftId}`, {
+        headers: { Cookie: cookieHeader(adminToken()) },
+      });
+      assert.equal(res.status, 200);
+    });
+
+    test("public page payloads do not expose draft match results", async () => {
+      const res = await fetch(`${getBaseUrl()}/api/pages/team-detail`);
+      assert.equal(res.status, 200);
+      const payload = await res.json();
+      const results = payload.results || [];
+      assert.equal(results.some((row) => row.id === draftId), false);
+      assert.equal(results.some((row) => row.publication_status === "draft"), false);
+    });
+
+    test("withholds published siblings of a partially entered match", async () => {
+      const res = await fetch(`${getBaseUrl()}/api/entities/MatchResult?limit=5000`);
+      const rows = await res.json();
+      assert.equal(rows.some((row) => row.id === publishedSiblingId), false);
+      assert.equal(rows.some((row) => row.match_id === matchId), false);
+    });
   });
 });

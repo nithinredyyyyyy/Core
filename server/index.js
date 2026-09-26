@@ -179,16 +179,30 @@ const publicLimiter = rateLimit({
   message: { error: "Too many requests, please try again later" },
 });
 
+// Scope each limiter to its own path prefix. Mounting them all on the shared
+// "/api" path would run every limiter for every API request, making the
+// strictest one (auth, 20/min) the effective cap for the whole API. Limiters
+// are mounted separately from routers so router-relative paths stay intact.
 app.use("/api", healthRouter);
-app.use("/api", authLimiter, authRouter);
-app.use("/api", publicLimiter, homeRouter);
-app.use("/api", publicLimiter, newsRouter);
-app.use("/api", searchLimiter, searchRouter);
-app.use("/api", publicLimiter, siteRouter);
-app.use("/api", publicLimiter, tournamentsRouter);
-app.use("/api", adminLimiter, adminRouter);
-app.use("/api", entityBulkLimiter, entitiesRouter);
-app.use("/api/pages", publicLimiter, pagesRouter);
+app.use("/api/auth", authLimiter);
+app.use("/api/admin", adminLimiter);
+app.use("/api/search", searchLimiter);
+app.use("/api/home", publicLimiter);
+app.use("/api/news", publicLimiter);
+app.use("/api/site", publicLimiter);
+app.use("/api/tournaments", publicLimiter);
+app.use("/api/entities", publicLimiter, entityBulkLimiter);
+app.use("/api/pages", publicLimiter);
+
+app.use("/api", authRouter);
+app.use("/api", homeRouter);
+app.use("/api", newsRouter);
+app.use("/api", searchRouter);
+app.use("/api", siteRouter);
+app.use("/api", tournamentsRouter);
+app.use("/api", adminRouter);
+app.use("/api", entitiesRouter);
+app.use("/api/pages", pagesRouter);
 
 function renderIndexHtml(nonce) {
   if (!indexHtmlTemplate) return "";
