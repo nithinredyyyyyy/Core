@@ -9,6 +9,7 @@ import LogoBlock from "@/components/shared/LogoBlock";
 import ProfilePanel from "@/components/shared/ProfilePanel";
 import ProfileStatGrid from "@/components/shared/ProfileStatGrid";
 import ResultsByYearTable from "@/components/shared/ResultsByYearTable";
+import ShareMenu from "@/components/shared/ShareMenu";
 import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import { decorateMatchesWithLiveStatus } from "@/lib/liveCalendar";
 import {
@@ -986,7 +987,10 @@ export default function PlayerProfile() {
 
   return (
     <div className="space-y-6">
-      <BackToTeamsLink teamName={teamName} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <BackToTeamsLink teamName={teamName} />
+        <ShareMenu title={`${displayIgn} — Player profile`} />
+      </div>
 
       <PlayerProfileHero
         displayIgn={displayIgn}

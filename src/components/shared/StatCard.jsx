@@ -1,42 +1,52 @@
 import React from "react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-const STAT_COLOR_CLASSES = {
-  primary: "text-primary bg-primary/10 border-primary/20",
-  green: "text-green-400 bg-green-400/10 border-green-400/20",
-  orange: "text-orange-400 bg-orange-400/10 border-orange-400/20",
-  purple: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+const TONE_CLASSES = {
+  primary: "border-primary/20 bg-primary/10 text-primary",
+  neutral: "border-border bg-muted text-muted-foreground",
+  live: "border-red-500/30 bg-red-500/10 text-red-500",
+  positive: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 
+/** Compact metric tile used by dashboards, profiles, and tournament overviews. */
 export default function StatCard({
   icon: Icon,
   label,
   value,
-  trend,
-  color = "primary",
+  hint = null,
+  tone = "primary",
+  className = "",
 }) {
   return (
-    <LazyMotion features={domAnimation}>
-      <m.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors"
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-              {label}
-            </p>
-            <p className="text-2xl font-bold font-heading mt-2 text-foreground">
-              {value}
-            </p>
-            {trend && <p className="text-xs text-green-400 mt-1">{trend}</p>}
-          </div>
-          <div className={`p-2.5 rounded-lg border ${STAT_COLOR_CLASSES[color]}`}>
-            <Icon className="size-5" />
-          </div>
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30",
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-2 font-heading text-2xl font-bold tabular-nums tracking-[-0.02em] text-foreground">
+            {value}
+          </p>
+          {hint ? (
+            <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+          ) : null}
         </div>
-      </m.div>
-    </LazyMotion>
+        {Icon ? (
+          <span
+            className={cn(
+              "flex size-9 shrink-0 items-center justify-center rounded-lg border",
+              TONE_CLASSES[tone] || TONE_CLASSES.primary,
+            )}
+          >
+            <Icon className="size-4" aria-hidden="true" />
+          </span>
+        ) : null}
+      </div>
+    </div>
   );
 }

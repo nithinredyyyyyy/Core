@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import { getNewsCategoryLabel } from "@/lib/newsCategories";
 import { decodeNewsText, getEditorialNewsSummary } from "@/lib/newsEditorial";
 import { formatDate } from "@/lib/dateUtils";
+import FilterTabs from "@/components/shared/FilterTabs";
 
 const FILTERS = ["all", "tournament", "announcement", "patch_update", "roster_change", "general"];
 
@@ -295,22 +296,15 @@ function CoverageFeedPanel({
       </div>
 
       <div className="space-y-3">
-        <div className="flex flex-wrap gap-1.5">
-          {FILTERS.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => onSetActiveFilter(filter)}
-              className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition ${
-                activeFilter === filter
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {getNewsCategoryLabel(filter)}
-            </button>
-          ))}
-        </div>
+        <FilterTabs
+          ariaLabel="News categories"
+          value={activeFilter}
+          onChange={onSetActiveFilter}
+          options={FILTERS.map((filter) => ({
+            value: filter,
+            label: getNewsCategoryLabel(filter),
+          }))}
+        />
 
         {tagOptions.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 pt-1">
@@ -319,7 +313,7 @@ function CoverageFeedPanel({
                 key={tag}
                 type="button"
                 onClick={() => onToggleTag(tag)}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs transition ${
+                className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-xs transition ${
                   selectedTag === tag
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-muted"

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   Newspaper,
   Search,
+  Swords,
   Trophy,
   Users,
   X,
@@ -16,12 +17,24 @@ const RESULT_ICONS = {
   tournament: Trophy,
   team: Users,
   player: UserCircle,
-  match: Trophy,
+  match: Swords,
+  news: Newspaper,
 };
+
+// Display order and headings for grouped results (spec: PLAYERS, TEAMS, ...).
+const RESULT_GROUPS = [
+  { type: "match", label: "Matches" },
+  { type: "tournament", label: "Tournaments" },
+  { type: "team", label: "Teams" },
+  { type: "player", label: "Players" },
+  { type: "news", label: "News" },
+];
 
 const SEARCH_SUGGESTIONS = [
   { icon: Trophy, label: "Tournaments", path: "/tournaments" },
+  { icon: Swords, label: "Matches", path: "/matches" },
   { icon: Users, label: "Teams", path: "/teams" },
+  { icon: UserCircle, label: "Players", path: "/players" },
   { icon: Newspaper, label: "News", path: "/news" },
 ];
 
@@ -57,13 +70,22 @@ export default function GlobalSearch({ open, onClose }) {
 
   const { data: rawResults = [] } = useQuery({
     queryKey: ["global-search", q],
-    queryFn: () => base44.search.global(q, 10),
+    queryFn: () => base44.search.global(q, 20),
     enabled: open && q.length >= 2,
     staleTime: 15_000,
   });
 
   const results = rawResults.filter(
     (result) => typeof result?.path === "string",
+  );
+
+  const groupedResults = useMemo(
+    () =>
+      RESULT_GROUPS.map((group) => ({
+        ...group,
+        results: results.filter((result) => result.type === group.type),
+      })).filter((group) => group.results.length > 0),
+    [results],
   );
 
   const go = (path) => {
@@ -115,35 +137,39 @@ export default function GlobalSearch({ open, onClose }) {
         </div>
 
         <div className="max-h-72 overflow-y-auto p-2">
-          {results.length > 0 ? (
-            results.map((result) => {
-              const Icon = RESULT_ICONS[result.type] || Search;
-              return (
-                <button
-                  type="button"
-                  key={`${result.type}-${result.path ?? result.label}-${result.sub ?? ""}`}
-                  onClick={() => go(result.path)}
-                  className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="size-3.5 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {result.label}
-                      </p>
-                      <p className="text-[11px] capitalize text-muted-foreground">
-                        {result.sub}
-                      </p>
-                    </div>
-                    <span className="rounded bg-secondary px-2 py-0.5 text-[10px] capitalize text-muted-foreground">
-                      {result.type}
-                    </span>
-                  </div>
-                </button>
-              );
-            })
+          {groupedResults.length > 0 ? (
+            groupedResults.map((group) => (
+              <div key={group.type} className="pb-1">
+                <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {group.label}
+                </p>
+                {group.results.map((result) => {
+                  const Icon = RESULT_ICONS[result.type] || Search;
+                  return (
+                    <button
+                      type="button"
+                      key={`${result.type}-${result.path ?? result.label}-${result.sub ?? ""}`}
+                      onClick={() => go(result.path)}
+                      className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-none"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                          <Icon className="size-3.5 text-primary" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {result.label}
+                          </p>
+                          <p className="truncate text-[11px] capitalize text-muted-foreground">
+                            {result.sub}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ))
           ) : query.length >= 2 ? (
             <p className="px-3 py-4 text-center text-sm text-muted-foreground">
               No results for "{query}"

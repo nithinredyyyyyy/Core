@@ -1,53 +1,11 @@
-/* src/styles/design-tokens.css */
+/* CORE design tokens — dark-first, premium esports.
+   Semantic HSL tokens live in src/index.css (:root / .dark) because Tailwind
+   consumes them. This file holds raw values referenced directly. */
+
 :root {
-  /* ── Primary palette ── */
-  --color-primary-hue: 24;
-  --color-primary-saturation: 95%;
-  --color-primary: hsl(24, 95%, 52%);        /* vibrant warm orange */
-  --color-primary-dark: hsl(24, 90%, 38%);
-  --color-primary-light: hsl(24, 100%, 88%);
-  --color-primary-hover: hsl(24, 95%, 45%);
-
-  /* ── Accent colors (triadic harmony) ── */
-  --color-accent-1: hsl(210, 92%, 56%);      /* electric blue */
-  --color-accent-1-light: hsl(210, 85%, 78%);
-  --color-accent-2: hsl(165, 78%, 42%);      /* teal-emerald */
-  --color-accent-2-light: hsl(165, 65%, 78%);
-  --color-accent-3: hsl(280, 68%, 58%);      /* vivid purple */
-
-  /* ── Semantic colors ── */
-  --color-success: hsl(152, 72%, 46%);
-  --color-warning: hsl(38, 92%, 54%);
-  --color-danger: hsl(0, 78%, 58%);
-  --color-info: hsl(210, 92%, 56%);
-
-  /* ── Grayscale ── */
-  --color-gray-50:  hsl(220, 14%, 97%);
-  --color-gray-100: hsl(220, 12%, 95%);
-  --color-gray-200: hsl(220, 10%, 85%);
-  --color-gray-300: hsl(218, 8%, 70%);
-  --color-gray-400: hsl(218, 7%, 55%);
-  --color-gray-500: hsl(218, 6%, 40%);
-  --color-gray-600: hsl(218, 8%, 30%);
-  --color-gray-700: hsl(218, 12%, 20%);
-  --color-gray-800: hsl(220, 18%, 10%);
-  --color-gray-900: hsl(222, 22%, 5%);
-
   /* ── Typography ── */
-  --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-family-display: 'Outfit', 'Inter', system-ui, sans-serif;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-black: 900;
+  --font-family-base: "Inter", system-ui, -apple-system, sans-serif;
+  --font-family-display: "Inter", system-ui, -apple-system, sans-serif;
 
   /* ── Spacing scale ── */
   --space-1: 0.25rem;
@@ -59,49 +17,74 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
-  /* ── Border radius ── */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
+  /* ── Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
   --radius-full: 9999px;
 
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.16);
-  --shadow-glow: 0 0 32px rgba(255, 106, 26, 0.18);
+  /* ── Elevation ── */
+  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.06);
+  --shadow-md: 0 6px 18px rgba(2, 6, 23, 0.08);
+  --shadow-lg: 0 16px 40px rgba(2, 6, 23, 0.12);
 
-  /* ── Glassmorphism ── */
-  --glass-bg: rgba(255, 255, 255, 0.10);
-  --glass-bg-strong: rgba(255, 255, 255, 0.18);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-blur: blur(12px);
+  /* ── Motion ── */
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ── Transitions ── */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-spring: 500ms cubic-bezier(0.22, 1, 0.36, 1);
-}
+  /* ── Layout ── */
+  --shell-max-width: 1320px;
+  --header-height: 4rem;
+  --bottom-nav-height: 4rem;
+  --touch-target: 2.75rem; /* 44px minimum touch target */
 
-.dark {
-  --color-primary: hsl(24, 90%, 55%);
-  --color-primary-hover: hsl(24, 88%, 48%);
-  --color-gray-50:  hsl(222, 22%, 8%);
-  --color-gray-100: hsl(220, 18%, 12%);
-  --color-gray-200: hsl(220, 14%, 22%);
-  --color-gray-300: hsl(218, 10%, 35%);
-  --color-gray-400: hsl(218, 8%, 48%);
-  --color-gray-500: hsl(218, 7%, 58%);
-  --color-gray-600: hsl(218, 8%, 68%);
-  --color-gray-700: hsl(218, 10%, 78%);
-  --color-gray-800: hsl(220, 12%, 88%);
-  --color-gray-900: hsl(220, 14%, 96%);
-  --glass-bg: rgba(0, 0, 0, 0.22);
-  --glass-bg-strong: rgba(0, 0, 0, 0.36);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --shadow-glow: 0 0 32px rgba(255, 106, 26, 0.12);
+  /* ── Brand accents (raw values referenced by posters + legacy surfaces) ── */
+  --brand-orange: #f97316;
+  --brand-orange-soft: #fb923c;
+  --brand-orange-soft-2: #fdba74;
+  --brand-amber: #f59e0b;
+  --brand-amber-deep: #b45309;
+  --brand-amber-soft: #fcd34d;
+  --brand-yellow: #facc15;
+  --brand-emerald: #10b981;
+  --brand-coral-deep: #ff6a1a;
+
+  --brand-ink-slate: #0f172a;
+  --brand-ink-slate-2: #111827;
+  --brand-ink-char: #1a1b1e;
+  --brand-ink-soft: #161616;
+  --brand-ink-soft-2: #1d1d1d;
+  --brand-ink-soft-3: #1c1c1c;
+  --brand-white: #ffffff;
+
+  --brand-navy-dark: #0e4d9f;
+  --brand-navy-deep: #1362c5;
+  --brand-navy-ink: #1562c4;
+  --brand-navy-mid: #1c66bc;
+  --brand-navy-royal: #1357b0;
+  --brand-navy-sky: #2e7bd2;
+  --brand-navy: #165ca8;
+  --brand-navy-midnight: #16263d;
+
+  --brand-sky-border: #5e9ae6;
+  --brand-sky-bright: #1a73e8;
+  --brand-sky-clear: #38bdf8;
+  --brand-sky-ink: #4b5f7d;
+  --brand-sky-link: #72adf1;
+  --brand-sky-mid: #467fca;
+  --brand-sky-royal: #3b82f6;
+  --brand-slate-400: #94a3b8;
+
+  --brand-cream-canvas: #f7f7f5;
+  --brand-cream-mist: #f4f4f2;
+  --brand-cream-paper: #fbfbfa;
+
+  --brand-mint-fog-2: #ebfaf6;
+  --brand-mint-mist: #dcfbf5;
+
+  --brand-rose-berry: #b9384f;
+  --brand-rose-bloom: #df6f85;
+  --brand-rose-wine: #d45c72;
 }

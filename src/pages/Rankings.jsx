@@ -18,7 +18,9 @@ import { base44 } from "@/api/base44Client";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import PageLoader from "@/components/shared/PageLoader";
 import QueryError from "@/components/shared/QueryError";
+import RankingMovement from "@/components/shared/RankingMovement";
 import { getTeamLogoByName } from "@/lib/teamLogos";
+import { formatDateTime } from "@/lib/formatting";
 
 const CLUB_SHORT_CODES = {
   "AG.AL International": "AGAL",
@@ -110,7 +112,7 @@ function ClubIdentity({ name }) {
   );
 }
 
-function RankingHeader({ activeTab, searchQuery, onSearchChange }) {
+function RankingHeader({ activeTab, searchQuery, onSearchChange, updatedAt }) {
   const copy = HEADER_COPY[activeTab] ?? HEADER_COPY.teams;
 
   return (
@@ -120,6 +122,11 @@ function RankingHeader({ activeTab, searchQuery, onSearchChange }) {
           {copy.title}
         </h1>
         <p className="mt-2 text-muted-foreground">{copy.description}</p>
+        {updatedAt ? (
+          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+            Last updated <time dateTime={updatedAt}>{formatDateTime(updatedAt)}</time>
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -316,6 +323,7 @@ function MobileRankingList({ data, type }) {
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Points
                   </p>
+                  <RankingMovement value={row.trend} className="mt-1 justify-end" />
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-2 text-xs text-muted-foreground">
@@ -459,6 +467,7 @@ function RankingTable({ data, type }) {
                   <th className="px-6 py-4 font-semibold">Prize</th>
                 </>
               )}
+              <th className="px-6 py-4 text-center font-semibold">Movement</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -552,6 +561,9 @@ function RankingTable({ data, type }) {
                     <td className="px-6 py-4 font-semibold text-green-500">{row.prize}</td>
                   </>
                 )}
+                <td className="px-6 py-4 text-center">
+                  <RankingMovement value={row.trend} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -728,6 +740,7 @@ export default function Rankings() {
             activeTab={activeTab}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            updatedAt={data.updatedAt}
           />
           <RankingTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 

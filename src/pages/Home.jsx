@@ -1,116 +1,96 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import HomeDesktop from "@/components/home/HomeDesktop";
-import {
-  HOME_STAGE_STATUS_STYLES,
-  buildTournamentStageLink,
-} from "@/lib/homeContent";
+import { Link } from "react-router-dom";
+import { useHomeData } from "@/hooks/useHomeData";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import QueryError from "@/components/shared/QueryError";
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import HomeHero from "@/components/home/sections/HomeHero";
+import NextMatch from "@/components/home/sections/NextMatch";
+import StandingsPreview from "@/components/home/sections/StandingsPreview";
+import RecentResults from "@/components/home/sections/RecentResults";
+import LatestNews from "@/components/home/sections/LatestNews";
+import UpcomingEvents from "@/components/home/sections/UpcomingEvents";
 
-const EMPTY_ARRAY = [];
-const EMPTY_BOARD = { standings: EMPTY_ARRAY, featuredStage: null };
-
-const STACKED_LINKS = [
-  {
-    title: "Tournaments",
-    desc: "Every major event, stage path, and prize chase in one bracket view.",
-    icon: "Trophy",
-    link: "/tournaments",
-    desktopPose: "xl:right-[19.5rem] xl:bottom-0 xl:-rotate-[14deg]",
-  },
-  {
-    title: "Teams",
-    desc: "Roster moves, title history, and organization profiles in one place.",
-    icon: "Users",
-    link: "/teams",
-    desktopPose: "xl:right-[13rem] xl:bottom-2 xl:-rotate-[9deg]",
-  },
-  {
-    title: "Rankings",
-    desc: "Global power rankings, regional leaderboards, and team statistics.",
-    icon: "TrendingUp",
-    link: "/rankings",
-    desktopPose: "xl:right-[6.5rem] xl:bottom-4 xl:-rotate-[2deg]",
-  },
-  {
-    title: "News",
-    desc: "Transfers, announcements, patch notes, and AI-assisted editorial coverage.",
-    icon: "Newspaper",
-    link: "/news",
-    desktopPose: "xl:right-0 xl:bottom-6 xl:rotate-[6deg]",
-  },
-];
-
+/**
+ * Home. A thin composition of section components, ordered by esports
+ * information hierarchy: live/next match, standings, results, news, events.
+ * All data flows from `useHomeData`; nothing is fabricated here.
+ */
 export default function Home() {
-  const { data: homeView, isLoading: loadHome } = useQuery({
-    queryKey: ["home-view", "desktop"],
-    queryFn: () => base44.home.view("desktop"),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-  const featuredTournament = homeView?.featuredTournament || null;
-  const featuredSpotlightStage = homeView?.featuredSpotlightStage || null;
-  const featuredTournamentBoard = homeView?.featuredTournamentBoard || EMPTY_BOARD;
-  const boardLink = homeView?.boardTournamentId
-    ? `/tournaments?id=${encodeURIComponent(homeView.boardTournamentId)}`
-    : "/tournaments";
-  const featuredTournamentLink = buildTournamentStageLink(
-    featuredTournament?.id,
-  );
-  const featuredCurrentStageLink = buildTournamentStageLink(
-    featuredTournament?.id,
-    homeView?.featuredSpotlightStage?.name || null,
-  );
+  const {
+    isLoading,
+    isError,
+    liveMatch,
+    nextMatch,
+    upcomingMatches,
+    recentMatches,
+    standings,
+    latestNews,
+    upcomingTournaments,
+    refetch,
+  } = useHomeData();
 
-  if (loadHome && !homeView) {
+  usePageMeta({
+    title: null,
+    description:
+      "Live BGMI match coverage, tournament standings, results, and esports news — all in one place.",
+    path: "/",
+  });
+
+  if (isError) {
+    return <QueryError onRetry={refetch} />;
+  }
+
+  if (isLoading) {
     return (
-      <div className="mx-auto flex min-h-[62vh] w-full max-w-6xl items-center justify-center">
-        <div className="w-full max-w-2xl rounded-lg border border-border bg-card p-6 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
-            Loading season hub
-          </p>
-          <div className="mt-5 space-y-3">
-            <div className="h-8 w-3/4 rounded-full bg-secondary" />
-            <div className="h-4 w-full rounded-full bg-secondary/70" />
-            <div className="h-4 w-2/3 rounded-full bg-secondary/70" />
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {[0, 1, 2].map((item) => (
-              <div key={item} className="h-24 rounded-lg border border-border bg-secondary/30" />
-            ))}
-          </div>
-        </div>
+      <div className="space-y-8">
+        <HomeHero isLoading />
+        <PageSkeleton rows={3} showHeader />
       </div>
     );
   }
 
   return (
-    <HomeDesktop
-      championLogo={homeView?.championLogo || null}
-      championLogoSurfaceTone={homeView?.championLogoSurfaceTone || "light"}
-      championTeam={homeView?.championTeam || null}
-      featuredCurrentStageLink={featuredCurrentStageLink}
-      featuredNews={homeView?.featuredNews || null}
-      featuredSpotlightStage={featuredSpotlightStage}
-      featuredStages={homeView?.featuredStages || EMPTY_ARRAY}
-      featuredTournament={featuredTournament}
-      featuredTournamentVisual={
-        homeView?.featuredTournamentVisual || "/images/bmps-2026.webp"
-      }
-      featuredTournamentFacts={homeView?.featuredTournamentFacts || EMPTY_ARRAY}
-      featuredTournamentLink={featuredTournamentLink}
-      heroMeta={homeView?.heroMeta || EMPTY_ARRAY}
-      homeBoard={homeView?.homeBoard || EMPTY_ARRAY}
-      boardEyebrow={homeView?.boardEyebrow || "Tournament board"}
-      boardHeadline={homeView?.boardHeadline || "Tournament board pending."}
-      boardLink={boardLink}
-      featuredTournamentBoard={featuredTournamentBoard}
-      tickerItems={homeView?.tickerItems || EMPTY_ARRAY}
-      stackedLinks={STACKED_LINKS}
-      buildTournamentStageLink={buildTournamentStageLink}
-      HOME_STAGE_STATUS_STYLES={HOME_STAGE_STATUS_STYLES}
-      lastTournament={homeView?.lastTournament || null}
-      upcomingMatches={homeView?.upcomingMatches || EMPTY_ARRAY}
-    />
+    <div className="space-y-10">
+      <h1 className="sr-only">CORE — BGMI Esports Hub</h1>
+      <HomeHero liveMatch={liveMatch} nextMatch={nextMatch} />
+
+      {liveMatch ? <NextMatch matches={upcomingMatches} /> : null}
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.35fr_0.65fr]">
+        <div className="space-y-10">
+          <RecentResults matches={recentMatches} />
+          <LatestNews articles={latestNews} />
+          <UpcomingEvents tournaments={upcomingTournaments} />
+        </div>
+        <div className="space-y-10">
+          <StandingsPreview standings={standings} />
+          <section className="rounded-xl border border-border bg-card p-5">
+            <h2 className="font-heading text-lg font-semibold text-foreground">
+              Follow the circuit
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Track every tournament, roster, and result across the BGMI season.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {[
+                { label: "Tournaments", to: "/tournaments" },
+                { label: "Teams", to: "/teams" },
+                { label: "Players", to: "/players" },
+                { label: "Rankings", to: "/rankings" },
+              ].map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="inline-flex min-h-11 items-center rounded-full border border-border px-4 text-xs font-bold uppercase tracking-[0.12em] text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -8,34 +8,35 @@
 
 @layer base {
   :root {
-    --font-heading: "Inter", sans-serif;
-    --font-body: "Inter", sans-serif;
+    color-scheme: light;
+    --font-heading: "Inter", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
 
-    --background: 0 0% 100%;
+    --background: 210 20% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 24 95% 52%;
+    --primary: 24 95% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 78 100% 67%;
+    --secondary: 215 20% 94%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 78 100% 67%;
+    --muted: 214 25% 95%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 214 25% 93%;
     --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 24 95% 52%;
-    --chart-1: 24 95% 52%;
-    --chart-2: 78 100% 67%;
+    --border: 214 24% 88%;
+    --input: 214 24% 88%;
+    --ring: 24 95% 48%;
+    --chart-1: 24 95% 48%;
+    --chart-2: 199 89% 48%;
     --chart-3: 215 16% 47%;
-    --chart-4: 0 84% 60%;
+    --chart-4: 0 72% 51%;
     --chart-5: 222 47% 11%;
-    --radius: 1.5rem;
+    --radius: 0.875rem;
 
     --brand-ink-deep: #050505;
     --brand-navy-darkest: #050f1e;
@@ -273,33 +274,34 @@
   }
 
   .dark {
-    --background: 222 47% 7%;
+    color-scheme: dark;
+    --background: 222 42% 6%;
     --foreground: 210 40% 98%;
-    --card: 222 40% 10%;
+    --card: 222 34% 9%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 40% 10%;
+    --popover: 222 36% 9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 24 90% 55%;
+    --primary: 24 95% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 78 100% 60%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 222 40% 15%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 78 100% 60%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 65%;
+    --secondary: 218 26% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 218 24% 15%;
+    --muted-foreground: 215 20% 66%;
+    --accent: 218 26% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 30% 20%;
-    --input: 222 30% 20%;
-    --ring: 24 90% 55%;
-    --sidebar-background: 222 40% 10%;
+    --border: 217 26% 18%;
+    --input: 217 26% 18%;
+    --ring: 24 95% 55%;
+    --sidebar-background: 222 34% 9%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 24 90% 55%;
+    --sidebar-primary: 24 95% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 15%;
+    --sidebar-accent: 218 26% 16%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 20%;
-    --sidebar-ring: 24 90% 55%;
+    --sidebar-border: 217 26% 18%;
+    --sidebar-ring: 24 95% 55%;
   }
 }
 
@@ -319,23 +321,11 @@
   body {
     @apply bg-background font-body text-foreground antialiased;
     letter-spacing: -0.01em;
-    background-image:
-      radial-gradient(circle at top, rgba(30, 136, 229, 0.08), transparent 28%),
-      linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.8),
-        rgba(255, 255, 255, 0.95)
-      );
+    background-image: none;
   }
 
   .dark body {
-    background-image:
-      radial-gradient(circle at top, rgba(30, 136, 229, 0.15), transparent 30%),
-      linear-gradient(
-        180deg,
-        rgba(10, 15, 22, 0.8),
-        rgba(10, 15, 22, 0.98)
-      );
+    background-image: none;
   }
 }
 

@@ -2,11 +2,14 @@
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Trophy } from "lucide-react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { Trophy } from "lucide-react";
 import EmptyState from "../components/shared/EmptyState";
-import LogoBlock from "../components/shared/LogoBlock";
-import { format } from "date-fns";
+import PageHeader from "../components/shared/PageHeader";
+import PageSkeleton from "../components/shared/PageSkeleton";
+import QueryError from "../components/shared/QueryError";
+import FilterTabs from "../components/shared/FilterTabs";
+import SectionHeader from "../components/shared/SectionHeader";
+import TournamentCard from "../components/shared/TournamentCard";
 import TournamentDetail from "../components/tournaments/TournamentDetail";
 import {
   Select,
@@ -15,19 +18,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { decorateTournamentsWithLiveStatus } from "@/lib/liveCalendar";
+import {
+  decorateMatchesWithLiveStatus,
+  decorateTournamentsWithLiveStatus,
+} from "@/lib/liveCalendar";
 import { filterPublishedMatchResults } from "@/lib/matchResultPublication";
 import { getOfficialParticipantCount } from "@/lib/tournamentParticipants";
 import { getTournamentLogo } from "@/lib/tournamentBranding";
+import { getFeaturedTournamentStage } from "@/lib/stageBoard";
+import { isSameDay } from "date-fns";
 
-const STATUS_BADGE_CLASSES = {
-  upcoming:
-    "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  ongoing:
-    "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  completed:
-    "border-zinc-500/20 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300",
-};
+const STATUS_TABS = [
+  { value: "all", label: "All" },
+  { value: "upcoming", label: "Upcoming" },
+  { value: "ongoing", label: "Ongoing" },
+  { value: "completed", label: "Completed" },
+];
 
 function safeDateMs(value) {
   if (!value || value === "0" || value === "null" || value === "undefined") return 0;
@@ -74,81 +80,26 @@ function compareTournaments(a, b) {
   return getTournamentSortValue(b) - getTournamentSortValue(a);
 }
 
-function formatTournamentWindow(startDate, endDate) {
-  if (!startDate) return "Dates pending";
-  const start = new Date(startDate);
-  if (Number.isNaN(start.getTime())) return "Dates pending";
-  const startLabel = format(start, "MMM d, yyyy");
-  if (!endDate) return startLabel;
-  const end = new Date(endDate);
-  if (Number.isNaN(end.getTime())) return startLabel;
-  return `${startLabel} - ${format(end, "MMM d, yyyy")}`;
-}
-
-function ordinalSuffix(n) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return s[(v - 20) % 10] || s[v] || s[0];
-}
-
-function formatTournamentCardDates(startDate, endDate) {
-  if (!startDate) return "TBA";
-  const start = new Date(startDate);
-  if (Number.isNaN(start.getTime())) return "TBA";
-  const startLabel = format(start, `d'${ordinalSuffix(start.getDate())}' MMM yyyy`);
-  if (!endDate) return startLabel;
-  const end = new Date(endDate);
-  if (Number.isNaN(end.getTime())) return startLabel;
-  return `${startLabel} to ${format(end, `d'${ordinalSuffix(end.getDate())}' MMM yyyy`)}`;
-}
-
-function TournamentsHeader() {
-  return (
-    <div className="space-y-2">
-      <div>
-        <p className="type-kicker text-primary">
-          Event control
-        </p>
-        <h1 className="type-title-xl mt-2">
-          TOURNAMENTS
-        </h1>
-        <p className="type-body-sm mt-1 text-muted-foreground">
-          Current events, completed runs, and the full tournament archive.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function TournamentFilters({
   filterStatus,
   setFilterStatus,
   activeFilterYear,
   setFilterYear,
   years,
+  statusTabs,
 }) {
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div className="flex flex-wrap gap-2">
-        {["all", "upcoming", "ongoing", "completed"].map((status) => (
-          <button
-            key={status}
-            type="button"
-            onClick={() => setFilterStatus(status)}
-            className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
-              filterStatus === status
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </button>
-        ))}
-      </div>
+      <FilterTabs
+        options={statusTabs}
+        value={filterStatus}
+        onChange={setFilterStatus}
+        ariaLabel="Tournament status"
+      />
 
       <div className="w-full md:w-[180px]">
         <Select value={activeFilterYear} onValueChange={setFilterYear}>
-          <SelectTrigger className="h-10 rounded-lg border-border bg-card text-sm text-foreground">
+          <SelectTrigger className="h-11 rounded-lg border-border bg-card text-sm text-foreground">
             <SelectValue placeholder="Filter by year" />
           </SelectTrigger>
           <SelectContent>
@@ -165,195 +116,6 @@ function TournamentFilters({
   );
 }
 
-function FeaturedTournamentCard({ tournament, onOpen, searchParams, setSearchParams }) {
-  if (!tournament) return null;
-
-  return (
-    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
-      <div className="grid gap-6 p-6 lg:grid-cols-[1.05fr_0.95fr] lg:p-7">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="type-kicker text-primary">
-              Featured event
-            </p>
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                STATUS_BADGE_CLASSES[tournament.status] ||
-                "border-zinc-500/20 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300"
-              }`}
-            >
-              {tournament.status}
-            </span>
-          </div>
-
-          <div>
-            <h2 className="type-display-section max-w-4xl uppercase text-foreground">
-              {tournament.name}
-            </h2>
-            <p className="type-body mt-3 max-w-3xl text-muted-foreground">
-              {tournament.description ||
-                "Open the event hub for stages, participants, rankings, and champion details."}
-            </p>
-          </div>
-
-          <div className="type-kicker flex flex-wrap gap-3 text-muted-foreground">
-            <span className="rounded-full border border-border bg-background/80 px-3 py-1.5">
-              {tournament.game || "BGMI"}
-            </span>
-            <span className="rounded-full border border-border bg-background/80 px-3 py-1.5">
-              {getOfficialParticipantCount(tournament) || 16} teams
-            </span>
-            <span className="rounded-full border border-border bg-background/80 px-3 py-1.5">
-              {tournament.prize_pool || "Prize TBA"}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-between gap-5 rounded-[24px] border border-border bg-secondary/20 p-5">
-          <div className="space-y-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-primary">
-                Event window
-              </p>
-              <p
-                className="mt-2 text-lg font-semibold uppercase tracking-[-0.03em] text-foreground"
-                suppressHydrationWarning
-              >
-                {formatTournamentWindow(
-                  tournament.start_date,
-                  tournament.end_date,
-                )}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-primary">
-                Archive state
-              </p>
-              <p className="type-body mt-2 text-muted-foreground">
-                {tournament.status === "completed"
-                  ? "This tournament is complete and ready for standings, champion, and award review."
-                  : tournament.status === "ongoing"
-                    ? "This tournament is currently active and should lead the competitive feed."
-                    : "This tournament is scheduled and ready for stage, match, and participant updates."}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (onOpen) return onOpen(tournament.id);
-              const nextParams = new URLSearchParams(searchParams);
-              nextParams.set("id", tournament.id);
-              setSearchParams(nextParams);
-            }}
-            className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground"
-          >
-            Open tournament
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TournamentArchiveGrid({ tournaments, onOpenTournament }) {
-  if (tournaments.length === 0) {
-    return (
-      <EmptyState
-        icon={Trophy}
-        title="No tournaments"
-        description="No tournaments found for this filter."
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
-          Archive list
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold uppercase tracking-[-0.04em] text-foreground">
-          All tournaments
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {tournaments.map((tournament, index) => (
-          <m.div
-            key={tournament.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            onClick={() => onOpenTournament(tournament.id)}
-            className="group self-start cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_18px_36px_rgba(15,23,42,0.08)]"
-          >
-            {getTournamentLogo(tournament) ? (
-              <div className="p-4 pb-3">
-                <LogoBlock
-                  src={getTournamentLogo(tournament)}
-                  alt={`${tournament.name} logo`}
-                  sizeClass="mx-auto size-28"
-                  roundedClass="rounded-2xl"
-                  paddingClass="p-4"
-                  className="bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.14),_rgba(255,255,255,0.95)_60%,_rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.2),_rgba(30,24,20,0.95)_60%,_rgba(15,23,42,0.98)_100%)]"
-                  imgClassName="transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-            ) : (
-              <div className="p-4 pb-3">
-                <LogoBlock
-                  sizeClass="mx-auto size-28"
-                  roundedClass="rounded-2xl"
-                  paddingClass="p-4"
-                  className="bg-gradient-to-br from-primary/10 to-secondary"
-                >
-                  <Trophy className="size-8 text-primary/30" />
-                </LogoBlock>
-              </div>
-            )}
-
-            <div className="space-y-4 px-4 pb-4">
-              <div className="space-y-2">
-                <h3 className="line-clamp-2 text-base font-semibold text-foreground">
-                  {tournament.name}
-                </h3>
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                    STATUS_BADGE_CLASSES[tournament.status] ||
-                    "border-zinc-500/20 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300"
-                  }`}
-                >
-                  {tournament.status}
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Dates</p>
-                {tournament.start_date ? (
-                  <p
-                    className="flex items-center gap-1.5 text-sm font-medium text-foreground"
-                    suppressHydrationWarning
-                  >
-                    <Calendar className="size-3.5 text-muted-foreground" />
-                    {formatTournamentCardDates(
-                      tournament.start_date,
-                      tournament.end_date,
-                    )}
-                  </p>
-                ) : (
-                  <p className="text-sm font-medium text-foreground">TBA</p>
-                )}
-              </div>
-            </div>
-          </m.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Tournaments() {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentYear = String(new Date().getFullYear());
@@ -361,7 +123,7 @@ export default function Tournaments() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterYear, setFilterYear] = useState(currentYear);
 
-  const { data: tournaments = [], isLoading } = useQuery({
+  const { data: tournaments = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 50),
     staleTime: 60_000,
@@ -415,26 +177,72 @@ export default function Tournaments() {
       return matchesStatus && matchesYear;
     })
     .sort(compareTournaments), [calendarTournaments, filterStatus, activeFilterYear]);
-  const featuredTournament = filtered[0] || null;
+
+  const decoratedMatches = useMemo(
+    () => decorateMatchesWithLiveStatus(matches, results),
+    [matches, results],
+  );
+
+  // Per-card facts (current stage, field size, today's schedule) derived from
+  // the same matches/results the detail hub uses, so list and detail agree.
+  const cardMeta = useMemo(() => {
+    const now = new Date();
+    const byTournament = new Map();
+    for (const match of decoratedMatches) {
+      const key = match.tournament_id;
+      if (!key) continue;
+      const entry = byTournament.get(key) || { matches: [], results: [] };
+      entry.matches.push(match);
+      byTournament.set(key, entry);
+    }
+    for (const result of results) {
+      const key = result.tournament_id;
+      if (!key || !byTournament.has(key)) continue;
+      byTournament.get(key).results.push(result);
+    }
+
+    const meta = new Map();
+    for (const tournament of calendarTournaments) {
+      const entry = byTournament.get(tournament.id);
+      const tournamentMatches = entry?.matches ?? [];
+      const tournamentResults = entry?.results ?? [];
+      meta.set(tournament.id, {
+        currentStage:
+          getFeaturedTournamentStage(tournament, tournamentMatches, tournamentResults) ||
+          null,
+        teamCount: getOfficialParticipantCount(tournament) || null,
+        matchesToday: tournamentMatches.filter(
+          (match) => match.scheduled_time && isSameDay(new Date(match.scheduled_time), now),
+        ).length,
+      });
+    }
+    return meta;
+  }, [calendarTournaments, decoratedMatches, results]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: calendarTournaments.length, upcoming: 0, ongoing: 0, completed: 0 };
+    for (const tournament of calendarTournaments) {
+      if (tournament.status in counts) counts[tournament.status] += 1;
+    }
+    return counts;
+  }, [calendarTournaments]);
+
+  const statusTabs = STATUS_TABS.map((tab) => ({
+    ...tab,
+    count: statusCounts[tab.value] ?? 0,
+  }));
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="type-kicker text-muted-foreground">
-          Loading tournaments
-        </p>
-      </div>
-    );
+    return <PageSkeleton label="Loading tournaments" rows={6} />;
+  }
+
+  if (isError) {
+    return <QueryError onRetry={refetch} />;
   }
 
   const selected = calendarTournaments.find(
     (tournament) => tournament.id === selectedId,
   );
-  const openTournament = (id) => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set("id", id);
-    setSearchParams(nextParams);
-  };
 
   if (selected) {
     return (
@@ -452,26 +260,56 @@ export default function Tournaments() {
   }
 
   return (
-    <LazyMotion features={domAnimation}>
-      <div className="space-y-6">
-        <TournamentsHeader />
-        <TournamentFilters
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
-          activeFilterYear={activeFilterYear}
-          setFilterYear={setFilterYear}
-          years={years}
+    <div className="space-y-6">
+      <PageHeader
+        kicker="Events"
+        title="Tournaments"
+        description="Every BGMI event on the circuit — live now, upcoming, and the full archive."
+      />
+
+      <TournamentFilters
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        activeFilterYear={activeFilterYear}
+        setFilterYear={setFilterYear}
+        years={years}
+        statusTabs={statusTabs}
+      />
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={Trophy}
+          title="No tournaments"
+          description="No tournaments match this filter. Try another status or year."
+          actionLabel="Reset filters"
+          onAction={() => {
+            setFilterStatus("all");
+            setFilterYear("all");
+          }}
         />
-        <FeaturedTournamentCard
-          tournament={featuredTournament}
-          searchParams={searchParams}
-          setSearchParams={setSearchParams}
-        />
-        <TournamentArchiveGrid
-          tournaments={filtered}
-          onOpenTournament={openTournament}
-        />
-      </div>
-    </LazyMotion>
+      ) : (
+        <section className="space-y-4">
+          <SectionHeader
+            title="All tournaments"
+            description={`${filtered.length} event${filtered.length === 1 ? "" : "s"}`}
+          />
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((tournament) => {
+              const meta = cardMeta.get(tournament.id) || {};
+              return (
+                <TournamentCard
+                  key={tournament.id}
+                  tournament={tournament}
+                  logo={getTournamentLogo(tournament)}
+                  currentStage={meta.currentStage}
+                  teamCount={meta.teamCount}
+                  matchesToday={meta.matchesToday || null}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }

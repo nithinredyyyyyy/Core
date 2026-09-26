@@ -15,6 +15,7 @@ import LogoBlock from "@/components/shared/LogoBlock";
 import ProfilePanel from "@/components/shared/ProfilePanel";
 import ProfileStatGrid from "@/components/shared/ProfileStatGrid";
 import ResultsByYearTable from "@/components/shared/ResultsByYearTable";
+import ShareMenu from "@/components/shared/ShareMenu";
 import {
   buildNormalizedTournamentResultMaps,
   getPrizeForOrganization,
@@ -244,9 +245,10 @@ function TeamDetailSideColumn({
         ) : (
           <div className="space-y-3 p-5">
             {recentMatches.map((match) => (
-              <div
+              <Link
                 key={match.id}
-                className="rounded-xl border border-border bg-secondary/20 p-4"
+                to={`/matches/${match.id}`}
+                className="block rounded-xl border border-border bg-secondary/20 p-4 transition-colors hover:border-primary/30"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -271,7 +273,7 @@ function TeamDetailSideColumn({
                     </p>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -568,13 +570,16 @@ export default function TeamDetail({ team, participant, onBack }) {
 
   return (
     <div className="space-y-6">
-      <Button
-        variant="ghost"
-        onClick={onBack}
-        className="text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-2 size-4" /> Back to Teams
-      </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 size-4" /> Back to Teams
+        </Button>
+        <ShareMenu title={team?.name || "Team"} />
+      </div>
 
       <TeamDetailHero
         team={team}

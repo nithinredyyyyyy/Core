@@ -254,11 +254,14 @@ export function getGlobalSearchResults(rawQuery, rawLimit = 10) {
       scoreTextMatch(`match ${match.match_number || ""}`, query),
     );
     if (score < 0) return;
+    const matchTitle = match.match_number
+      ? `Match ${match.match_number}${match.map ? ` · ${match.map}` : ""}`
+      : match.map || stageLabel || "Match";
     results.push({
       type: "match",
-      label: tournament?.name || "Match",
-      sub: `${stageLabel || "Stage pending"}${match.map ? ` · ${match.map}` : ""}${match.match_number ? ` · Match ${match.match_number}` : ""}`,
-      path: tournament ? `/tournaments?id=${tournament.id}` : "/tournaments",
+      label: matchTitle,
+      sub: [tournament?.name, stageLabel].filter(Boolean).join(" · ") || "Match",
+      path: `/matches/${match.id}`,
       score,
     });
   });

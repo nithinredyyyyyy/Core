@@ -62,16 +62,20 @@ import {
 import StageStandingsBoard from "@/features/tournaments/components/StageStandingsBoard";
 import ParticipantRosterCard from "@/features/tournaments/components/ParticipantRosterCard";
 import RankingTable from "@/features/tournaments/components/RankingTable";
+import ShareMenu from "@/components/shared/ShareMenu";
 
-function BackButton({ onBack }) {
+function BackButton({ onBack, tournamentName }) {
   return (
-    <Button
-      variant="ghost"
-      onClick={onBack}
-      className="text-muted-foreground hover:text-foreground"
-    >
-      <ArrowLeft className="mr-2 size-4" /> Back to Tournaments
-    </Button>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Button
+        variant="ghost"
+        onClick={onBack}
+        className="text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="mr-2 size-4" /> Back to Tournaments
+      </Button>
+      {tournamentName ? <ShareMenu title={tournamentName} /> : null}
+    </div>
   );
 }
 
@@ -1156,7 +1160,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
 
   return (
     <div className="space-y-6">
-      <BackButton onBack={onBack} />
+      <BackButton onBack={onBack} tournamentName={tournament.name} />
 
       <TournamentHero
         tournament={tournament}

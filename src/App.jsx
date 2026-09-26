@@ -17,8 +17,11 @@ const Home = lazy(() => import("./pages/Home"));
 const News = lazy(() => import("./pages/News"));
 const NewsArticle = lazy(() => import("./pages/NewsArticle"));
 const Tournaments = lazy(() => import("./pages/Tournaments"));
+const Matches = lazy(() => import("./pages/Matches"));
+const MatchDetail = lazy(() => import("./pages/MatchDetail"));
 const Teams = lazy(() => import("./pages/Teams"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+const Players = lazy(() => import("./pages/Players"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Rankings = lazy(() => import("./pages/Rankings"));
 const SignIn = lazy(() => import("./pages/SignIn"));
@@ -92,7 +95,10 @@ const RoutedApp = () => {
             <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
             <Route path="/app" element={<Navigate to="/" replace />} />
             <Route path="/tournaments" element={<ErrorBoundary><Tournaments /></ErrorBoundary>} />
+            <Route path="/matches" element={<ErrorBoundary><Matches /></ErrorBoundary>} />
+            <Route path="/matches/:id" element={<ErrorBoundary><MatchDetail /></ErrorBoundary>} />
             <Route path="/teams" element={<ErrorBoundary><Teams /></ErrorBoundary>} />
+            <Route path="/players" element={<ErrorBoundary><Players /></ErrorBoundary>} />
             <Route path="/players/:playerIgn" element={<ErrorBoundary><PlayerProfile /></ErrorBoundary>} />
             <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
             <Route path="/rankings" element={<ErrorBoundary><Rankings /></ErrorBoundary>} />

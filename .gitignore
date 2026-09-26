@@ -83,3 +83,6 @@ Crashpad/
 *.pma
 .aider*
 .artifacts/
+
+# Agent scratch space (verification scripts, screenshots, logs)
+.agent_tmp/

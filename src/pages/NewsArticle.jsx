@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
+  ExternalLink,
   Sparkles,
   Tag,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import {
   getEditorialNewsSummary,
 } from "@/lib/newsEditorial";
 import { formatDate } from "@/lib/dateUtils";
+import ShareMenu from "@/components/shared/ShareMenu";
 
 function ArticleHeader({ article, tags, tournaments }) {
   return (
@@ -87,9 +89,41 @@ function ArticleBodyColumn({ article, blocks }) {
   );
 }
 
-function ArticleSideColumn({ relatedArticles, tags, tournaments }) {
+function SourceCard({ article }) {
+  const sourceName = decodeNewsText(article.source_name || "");
+  const sourceUrl = article.source_url || "";
+  if (!sourceName && !sourceUrl) return null;
+
+  return (
+    <div className="rounded-[24px] border border-brand-border bg-card p-6 shadow-sm dark:border-white/10">
+      <p className="type-kicker text-brand-taupe">Source</p>
+      <p className="mt-4 text-sm font-semibold text-foreground">
+        {sourceName || "External report"}
+      </p>
+      {sourceUrl ? (
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          className="mt-3 inline-flex min-h-11 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition-colors hover:text-primary/80"
+        >
+          Read the original report
+          <ExternalLink className="size-3" aria-hidden="true" />
+        </a>
+      ) : null}
+      <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+        CORE aggregates this coverage from published reports. The headline and
+        source link point to the originating outlet.
+      </p>
+    </div>
+  );
+}
+
+function ArticleSideColumn({ article, relatedArticles, tags, tournaments }) {
   return (
     <div className="space-y-6">
+      <SourceCard article={article} />
+
       {tags.length > 0 ? (
         <div className="rounded-[24px] border border-brand-border bg-card p-6 shadow-sm dark:border-white/10">
           <p className="type-kicker text-brand-taupe">Tags</p>
@@ -203,12 +237,17 @@ export default function NewsArticle() {
           tournaments={tournaments}
         />
 
+        <div className="flex justify-end">
+          <ShareMenu title={decodeNewsText(article.title)} />
+        </div>
+
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <ArticleBodyColumn
             article={article}
             blocks={blocks}
           />
           <ArticleSideColumn
+            article={article}
             relatedArticles={relatedArticles}
             tags={tags}
             tournaments={tournaments}

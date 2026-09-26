@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Shield, Users } from "lucide-react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { m } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import EmptyState from "../components/shared/EmptyState";
 import LogoBlock from "../components/shared/LogoBlock";
 import TeamDetail from "../components/teams/TeamDetail";
+import PageHeader from "@/components/shared/PageHeader";
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import SearchInput from "@/components/shared/SearchInput";
+import StatCard from "@/components/shared/StatCard";
 import { base44 } from "@/api/base44Client";
 import {
   getTeamLogoByName,
@@ -22,16 +26,6 @@ import {
 } from "@/lib/normalizedIdentity";
 import { getPlayerDisplayName } from "@/lib/playerDisplayName";
 import { getOfficialParticipantEntries } from "@/lib/tournamentParticipants";
-
-function LightPanel({ className = "", children }) {
-  return (
-    <div
-      className={`rounded-lg border border-border/70 bg-card shadow-sm ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
 
 const BMPS_TOURNAMENT_NAME = "Battlegrounds Mobile India Pro Series 2026";
 const EMPTY_TEAMS_PAGE_ARRAY = [];
@@ -54,81 +48,50 @@ function getTeamsPageLogoPresentation(name) {
   };
 }
 
-function TeamsHero({ teamCount, rosterCount }) {
-  const stats = [
-    { icon: Shield, label: "Teams", value: teamCount },
-    { icon: Users, label: "Roster spots", value: rosterCount },
-    { icon: Search, label: "Search ready", value: "Live" },
-  ];
-
+function TeamsHero({ teamCount, rosterCount, matchesPlayed, eventName }) {
   return (
-    <m.section
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5"
+    <PageHeader
+      kicker={eventName}
+      title="Teams"
+      description={`Team directory for ${eventName}, with active rosters and career records.`}
+      className="rounded-xl border border-border bg-card p-4 md:p-5"
     >
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
-            BMPS 2026
-          </p>
-          <h1 className="mt-1 text-2xl font-heading font-semibold text-foreground md:text-3xl">
-            TEAMS
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Complete BMPS 2026 team directory with active roster visibility.
-          </p>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[440px]">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5"
-            >
-              <stat.icon className="size-4 shrink-0 text-primary" />
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                  {stat.label}
-                </p>
-                <p className="text-lg font-black uppercase text-foreground">
-                  {stat.value}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:max-w-[560px]">
+        <StatCard icon={Shield} label="Teams" value={teamCount} />
+        <StatCard icon={Users} label="Roster spots" value={rosterCount} tone="neutral" />
+        <StatCard
+          icon={Search}
+          label="Matches played"
+          value={matchesPlayed}
+          tone="neutral"
+          className="col-span-2 sm:col-span-1"
+        />
       </div>
-    </m.section>
+    </PageHeader>
   );
 }
 
 function TeamDirectoryHeader({ search, setSearch }) {
   return (
-    <LightPanel className="p-3 md:p-4">
+    <div className="rounded-xl border border-border bg-card p-3 md:p-4">
       <div className="grid gap-3 md:grid-cols-[1fr_minmax(280px,420px)] md:items-center">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
             Team directory
           </p>
           <h2 className="mt-1 text-xl font-semibold uppercase text-foreground">
-            BMPS 2026 roster list
+            Full roster list
           </h2>
         </div>
 
-        <div className="relative w-full">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by team, tag, or player"
-            aria-label="Search teams"
-            className="h-10 w-full rounded-md border border-border bg-background pl-10 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by team, tag, or player"
+          ariaLabel="Search teams"
+        />
       </div>
-    </LightPanel>
+    </div>
   );
 }
 
@@ -173,32 +136,54 @@ function TeamCard({ card, index, onOpenTeam }) {
               type="button"
               onClick={() => onOpenTeam(card.name)}
               title={card.name}
-              className="block max-w-full truncate text-left transition-colors hover:text-primary"
+              className="flex min-h-11 max-w-full items-center truncate text-left transition-colors hover:text-primary"
             >
               {card.name}
             </button>
           </h2>
           <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            {card.tag || "BMPS"} | India
+            {[card.tag, card.region].filter(Boolean).join(" · ") || "BGMI"}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 border-t border-border pt-3 md:mt-0 md:flex md:min-w-0 md:items-center md:gap-3 md:border-t-0 md:pt-0">
-        <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+      <div className="mt-3 border-t border-border pt-3 md:mt-0 md:min-w-0 md:border-t-0 md:pt-0">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+          {card.matches_played ? (
+            <span>
+              Matches <span className="font-semibold text-foreground">{card.matches_played}</span>
+            </span>
+          ) : null}
+          {card.total_points ? (
+            <span>
+              Points <span className="font-semibold text-foreground">{card.total_points}</span>
+            </span>
+          ) : null}
+          {card.total_kills ? (
+            <span>
+              Kills <span className="font-semibold text-foreground">{card.total_kills}</span>
+            </span>
+          ) : null}
+        </div>
+
+        <p className="mt-3 shrink-0 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
           Active roster
         </p>
-        <div className="mt-2 flex min-w-0 flex-wrap gap-x-4 gap-y-1.5 md:mt-0">
-          {card.roster.map((player) => (
-            <Link
-              key={`${card.key}-${player}`}
-              to={`/players/${encodeURIComponent(player)}?team=${encodeURIComponent(card.name)}`}
-              className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-foreground transition-colors hover:text-primary"
-            >
-              <span className="size-1 rounded-full bg-primary/60" />
-              <span className="truncate">{getPlayerDisplayName(player)}</span>
-            </Link>
-          ))}
+        <div className="mt-2 flex min-w-0 flex-wrap gap-x-4 gap-y-1.5">
+          {card.roster.length > 0 ? (
+            card.roster.map((player) => (
+              <Link
+                key={`${card.key}-${player}`}
+                to={`/players/${encodeURIComponent(player)}?team=${encodeURIComponent(card.name)}`}
+                className="inline-flex min-h-11 min-w-0 items-center gap-1.5 text-xs font-medium text-foreground transition-colors hover:text-primary"
+              >
+                <span className="size-1 rounded-full bg-primary/60" />
+                <span className="truncate">{getPlayerDisplayName(player)}</span>
+              </Link>
+            ))
+          ) : (
+            <span className="text-xs text-muted-foreground">Roster not published</span>
+          )}
         </div>
       </div>
     </m.div>
@@ -344,6 +329,14 @@ export default function Teams() {
         (sum, team) => sum + (Number(team.matches_played) || 0),
         0,
       );
+      const totalPoints = matchingTeams.reduce(
+        (sum, team) => sum + (Number(team.total_points) || 0),
+        0,
+      );
+      const totalKills = matchingTeams.reduce(
+        (sum, team) => sum + (Number(team.total_kills) || 0),
+        0,
+      );
 
       byKey.set(meta.key, {
         key: meta.key,
@@ -360,6 +353,9 @@ export default function Teams() {
           ]),
         ],
         matches_played: totalMatches,
+        total_points: totalPoints,
+        total_kills: totalKills,
+        region: representative?.region || null,
         roster:
           liveRoster.length > 0
             ? liveRoster
@@ -460,14 +456,13 @@ export default function Teams() {
     [teamCards],
   );
 
+  const matchesPlayed = useMemo(
+    () => teamCards.reduce((sum, card) => sum + (Number(card.matches_played) || 0), 0),
+    [teamCards],
+  );
+
   if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
-          Loading teams
-        </p>
-      </div>
-    );
+    return <PageSkeleton label="Loading teams" rows={6} />;
   }
 
   if (selectedTeam) {
@@ -489,12 +484,15 @@ export default function Teams() {
   }
 
   return (
-    <LazyMotion features={domAnimation}>
-      <div className="mx-auto w-full max-w-[1680px] space-y-4">
-        <TeamsHero teamCount={teamCards.length} rosterCount={rosterCount} />
-        <TeamDirectoryHeader search={search} setSearch={setSearch} />
-        <TeamCardGrid cards={filteredCards} onOpenTeam={openTeam} />
-      </div>
-    </LazyMotion>
+    <div className="mx-auto w-full max-w-[1680px] space-y-4">
+      <TeamsHero
+        teamCount={teamCards.length}
+        rosterCount={rosterCount}
+        matchesPlayed={matchesPlayed}
+        eventName={bmpsTournament?.name || "BGMI Circuit"}
+      />
+      <TeamDirectoryHeader search={search} setSearch={setSearch} />
+      <TeamCardGrid cards={filteredCards} onOpenTeam={openTeam} />
+    </div>
   );
 }
