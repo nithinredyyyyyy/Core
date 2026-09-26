@@ -20,8 +20,9 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "test:unit": "node --test \"tests/unit/*.test.js\"",
-    "test:integration": "node --test tests/api.test.js",
+    "test:integration": "node --test tests/api.test.js tests/auth.test.js",
     "test": "npm run test:unit && npm run test:integration",
+    "audit:high": "npm audit --audit-level=high",
     "preview": "vite preview"
   },
   "dependencies": {

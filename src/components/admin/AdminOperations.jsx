@@ -88,16 +88,8 @@ export default function AdminOperations({ onSelectTab }) {
     setCacheClearing(true);
     setCacheMsg("");
     try {
-      const authSession = base44.auth.getStoredSession();
-      const res = await fetch("/api/admin/cache/clear", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(authSession.token ? { "X-StageCore-Auth-Token": authSession.token } : {}),
-        },
-      });
-      const data = await res.json();
-      setCacheMsg(data.message || "Cache cleared!");
+      const data = await base44.admin.clearCache();
+      setCacheMsg(data?.message || "Cache cleared!");
     } catch {
       setCacheMsg("Failed to clear cache.");
     } finally {

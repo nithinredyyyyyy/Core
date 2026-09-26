@@ -2,6 +2,13 @@ import { randomUUID } from "node:crypto";
 import { db, entityConfigs, normalizeRecord, serializePayload } from "./db.js";
 import { NEWS_SOURCE_TYPES, getEnabledNewsSources } from "./newsSources.js";
 import { decodeNewsText, enrichImportedNewsArticle } from "./newsModel.js";
+import {
+  assertPublicHost,
+  readResponseTextWithLimit,
+} from "./services/outboundUrl.js";
+
+const FETCH_TIMEOUT_MS = 15_000;
+const MAX_FEED_BYTES = 5 * 1024 * 1024;
 
 const SOURCE_BRAND_LABELS = new Map([
   ["ign india", "IGN India"],
@@ -288,24 +295,42 @@ function deriveNormalizedDraftPatch(article) {
 }
 
 async function fetchSourceItems(source) {
-  const response = await fetch(source.url, {
-    headers: {
-      "User-Agent": "StageCoreNewsBot/1.0",
-      Accept:
-        source.type === "json"
-          ? "application/json,text/plain;q=0.9,*/*;q=0.8"
-          : "application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.8",
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Request failed with ${response.status}`);
-  }
+  const safeUrl = await assertPublicHost(source.url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  if (source.type === "json") {
-    return parseJsonFeed(await response.json());
-  }
+  let response;
+  try {
+    response = await fetch(safeUrl, {
+      signal: controller.signal,
+      redirect: "error",
+      headers: {
+        "User-Agent": "StageCoreNewsBot/1.0",
+        Accept:
+          source.type === "json"
+            ? "application/json,text/plain;q=0.9,*/*;q=0.8"
+            : "application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Request failed with ${response.status}`);
+    }
 
-  return parseRssFeed(await response.text());
+    const body = await readResponseTextWithLimit(response, MAX_FEED_BYTES);
+
+    if (source.type === "json") {
+      return parseJsonFeed(JSON.parse(body));
+    }
+
+    return parseRssFeed(body);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Feed request timed out");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function getExistingImportKeys() {

@@ -37,7 +37,11 @@ const AUTH_USER_EMAIL_KEY = "stagecore_auth_user_email";
 const AUTH_USER_NAME_KEY = "stagecore_auth_user_name";
 const AUTH_USER_ROLE_KEY = "stagecore_auth_user_role";
 const AUTH_USER_METHOD_KEY = "stagecore_auth_user_method";
-const AUTH_TOKEN_KEY = "stagecore_auth_token";
+const LEGACY_AUTH_TOKEN_KEY = "stagecore_auth_token";
+const CSRF_TOKEN_KEY = "stagecore_csrf_token";
+const CSRF_COOKIE_NAME = "stagecore_csrf";
+const CSRF_HEADER_NAME = "X-StageCore-CSRF";
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const GOOGLE_CLIENT_ID = String(
   SAFE_IMPORT_META_ENV.VITE_GOOGLE_CLIENT_ID || "",
 ).trim();
@@ -93,7 +97,9 @@ function getStoredAuthSession() {
   }
 
   try {
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+    // The bearer token now lives in an HttpOnly cookie; only non-sensitive
+    // display fields remain in localStorage for instant UI state.
+    window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
     const id = window.localStorage.getItem(AUTH_USER_ID_KEY) || "";
     const email = window.localStorage.getItem(AUTH_USER_EMAIL_KEY) || "";
     const fullName = window.localStorage.getItem(AUTH_USER_NAME_KEY) || "";
@@ -101,8 +107,8 @@ function getStoredAuthSession() {
     const authMethod = window.localStorage.getItem(AUTH_USER_METHOD_KEY) || "";
 
     return {
-      token,
-      user: token
+      token: "",
+      user: email
         ? {
             id,
             email,
@@ -120,30 +126,11 @@ function getStoredAuthSession() {
   }
 }
 
-function clearStoredAuthSession() {
-  if (typeof window === "undefined") {
-    return { user: null, token: "" };
-  }
-
-  try {
-    window.localStorage.removeItem(AUTH_USER_ID_KEY);
-    window.localStorage.removeItem(AUTH_USER_EMAIL_KEY);
-    window.localStorage.removeItem(AUTH_USER_NAME_KEY);
-    window.localStorage.removeItem(AUTH_USER_ROLE_KEY);
-    window.localStorage.removeItem(AUTH_USER_METHOD_KEY);
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
-  } catch {
-    // Ignore localStorage cleanup errors.
-  }
-
-  return { user: null, token: "" };
-}
-
 function persistAuthSession(session) {
   if (typeof window === "undefined") return session;
 
   try {
-    window.localStorage.setItem(AUTH_TOKEN_KEY, session?.token || "");
+    window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
     window.localStorage.setItem(AUTH_USER_ID_KEY, session?.user?.id || "");
     window.localStorage.setItem(AUTH_USER_EMAIL_KEY, session?.user?.email || "");
     window.localStorage.setItem(
@@ -155,11 +142,81 @@ function persistAuthSession(session) {
       AUTH_USER_METHOD_KEY,
       session?.user?.auth_method || "",
     );
+    // Double-submit CSRF token. It is not a credential on its own: the server
+    // also requires the HttpOnly session cookie, and a cross-origin attacker
+    // cannot read this value from storage.
+    window.localStorage.setItem(CSRF_TOKEN_KEY, session?.csrfToken || "");
   } catch {
     // Ignore localStorage write errors and still return the in-memory session.
   }
 
   return session;
+}
+
+function clearStoredAuthSession() {
+  if (typeof window === "undefined") {
+    return { user: null, token: "" };
+  }
+
+  try {
+    window.localStorage.removeItem(AUTH_USER_ID_KEY);
+    window.localStorage.removeItem(AUTH_USER_EMAIL_KEY);
+    window.localStorage.removeItem(AUTH_USER_NAME_KEY);
+    window.localStorage.removeItem(AUTH_USER_ROLE_KEY);
+    window.localStorage.removeItem(AUTH_USER_METHOD_KEY);
+    window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(CSRF_TOKEN_KEY);
+  } catch {
+    // Ignore localStorage cleanup errors.
+  }
+
+  return { user: null, token: "" };
+}
+
+function readCookie(name) {
+  if (typeof document === "undefined") return "";
+  const match = String(document.cookie || "").match(
+    new RegExp(`(?:^|;\\s*)${name}=([^;]*)`),
+  );
+  if (!match) return "";
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function getStoredCsrfToken() {
+  if (typeof window === "undefined") return "";
+  try {
+    // Cookie first (same-origin), then the value handed back at sign-in for
+    // cross-origin frontends that cannot read the API-domain cookie.
+    return (
+      readCookie(CSRF_COOKIE_NAME) ||
+      window.localStorage.getItem(CSRF_TOKEN_KEY) ||
+      ""
+    );
+  } catch {
+    return readCookie(CSRF_COOKIE_NAME) || "";
+  }
+}
+
+function buildRequestHeaders(method, requestHeaders = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...requestHeaders,
+  };
+
+  // Double-submit CSRF token: echoed back on state-changing requests so the
+  // server can match it against the cookie-bound value.
+  if (MUTATING_METHODS.has(String(method || "GET").toUpperCase())) {
+    const csrfToken = getStoredCsrfToken();
+    if (csrfToken) {
+      headers[CSRF_HEADER_NAME] = csrfToken;
+    }
+  }
+
+  return headers;
 }
 
 function buildApiUrl(path) {
@@ -179,16 +236,11 @@ function buildApiUrl(path) {
 
 async function request(path, options = {}) {
   const { headers: requestHeaders = {}, ...fetchOptions } = options;
-  const authSession = getStoredAuthSession();
+  const method = fetchOptions.method || "GET";
 
   const response = await fetch(buildApiUrl(path), {
-    headers: {
-      "Content-Type": "application/json",
-      ...(authSession.token
-        ? { "X-StageCore-Auth-Token": authSession.token }
-        : {}),
-      ...requestHeaders,
-    },
+    credentials: "include",
+    headers: buildRequestHeaders(method, requestHeaders),
     ...fetchOptions,
   });
 
@@ -338,6 +390,12 @@ export const base44 = {
     },
   },
   admin: {
+    overview() {
+      return request("/api/admin/overview");
+    },
+    clearCache() {
+      return request("/api/admin/cache/clear", { method: "POST" });
+    },
     saveBmps2026PlayerStats(payload) {
       return request("/api/admin/bmps-2026-player-stats", {
         method: "POST",
@@ -361,14 +419,9 @@ export const base44 = {
       return clearStoredAuthSession();
     },
     async me() {
-      const authSession = getStoredAuthSession();
       const response = await fetch(buildApiUrl("/api/auth/me"), {
-        headers: {
-          "Content-Type": "application/json",
-          ...(authSession.token
-            ? { "X-StageCore-Auth-Token": authSession.token }
-            : {}),
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
 
       if (response.status === 401) {
@@ -389,8 +442,13 @@ export const base44 = {
       });
       return persistAuthSession(session);
     },
-    logout() {
-      clearStoredAuthSession();
+    async logout() {
+      try {
+        await request("/api/auth/logout", { method: "POST" });
+      } catch {
+        // Even if the revoke call fails, clear local state.
+      }
+      return clearStoredAuthSession();
     },
   },
 };

@@ -2,11 +2,15 @@ import { Router } from "express";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import {
+  clearAuthSessionCookies,
   createAuthSession,
   GOOGLE_CLIENT_ID,
   isConfiguredAdminEmail,
+  issueAuthSessionCookies,
   resolveRequestAuth,
+  revokeRequestToken,
 } from "../services/auth.js";
+import { logger } from "../services/logger.js";
 
 export const authRouter = Router();
 
@@ -77,7 +81,9 @@ authRouter.post("/auth/google", async (req, res) => {
       auth_method: "google",
     });
 
-    return res.status(201).json(session);
+    const csrfToken = issueAuthSessionCookies(res, session.token);
+
+    return res.status(201).json({ user: session.user, csrfToken });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -86,11 +92,17 @@ authRouter.post("/auth/google", async (req, res) => {
       });
     }
 
-    console.error("Google sign-in error:", error);
+    logger.error("Google sign-in failed", { error: String(error?.message || error) });
 
     return res.status(500).json({
       error: error?.message || "Google sign-in failed",
       code: "google_signin_failed",
     });
   }
+});
+
+authRouter.post("/auth/logout", (req, res) => {
+  revokeRequestToken(req);
+  clearAuthSessionCookies(res);
+  return res.status(204).end();
 });
