@@ -371,14 +371,15 @@ export function getNormalizedTournament(id) {
         groups: groupedGroups.get(stage.id) || [],
         standings: {
           overall: mergedOverall,
-          by_group: hasDbStandings
-            ? Object.fromEntries(
-                (groupedGroups.get(stage.id) || []).map((group) => [
-                  group.group_name,
-                  groupedStandings.get(`${stage.id}::${group.id}`) || [],
-                ]),
-              )
-            : {},
+          // Always expose grouped boards: some stages (group stages,
+          // semi-finals) only have group-scoped standings and no overall board,
+          // so gating this on hasDbStandings dropped those rows entirely.
+          by_group: Object.fromEntries(
+            (groupedGroups.get(stage.id) || []).map((group) => [
+              group.group_name,
+              groupedStandings.get(`${stage.id}::${group.id}`) || [],
+            ]),
+          ),
         },
       };
     }),

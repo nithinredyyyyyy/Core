@@ -66,6 +66,50 @@ standings honestly. Never present cumulative rows as single-match results.
 Never fabricate teams, players, scores, rankings, tournaments, dates, prize
 pools, or news. Render an empty state when the backend has no data.
 
+### Tournament data repair (`server/services/tournamentDataRepair.js`)
+
+Runs once at startup, after `seedIfEmpty()` / `ensureLegacyTournaments()`.
+Repairs are idempotent — a second pass is a no-op, and each is individually
+safe to run on an already-clean database.
+
+The root cause it addresses: the import path re-inserts tournaments under fresh
+UUIDs and deletes the prior row, so child rows keep a stale, now-unowned
+`tournament_id`. Three distinct symptoms, all silent (no error, no orphan warning):
+
+1. **Detached child rows** — `tournament_stages`, `stage_standings`, and
+   `tournament_participants` pointing at a tournament id no live row owns.
+   Re-pointed at the live tournament carrying the same name (seed ids) or the
+   same stage signature (≥0.8 overlap). A stage snapshot nobody references
+   afterwards is pruned.
+2. **Missing canonical teams** — `tournament_participants` / `stage_standings`
+   reference a team id with no `teams` row, so `JOIN teams` silently drops the
+   row from every payload. The canonical `seed.json` team is restored (never
+   invented) so the existing references resolve.
+3. **Group-only standings** — `getNormalizedTournament` gated `by_group` on an
+   overall board existing. Stages that only ever have group-scoped standings
+   (group stages, semi-finals) returned nothing. Groups are now always exposed.
+
+Verify after any import or seed change:
+
+```bash
+python3 - <<'PY'
+import sqlite3
+c = sqlite3.connect("server/data/stagecore.sqlite")
+for t in ("tournament_stages", "stage_standings", "tournament_participants"):
+    print(t, "orphans:", c.execute(
+        f"SELECT COUNT(*) FROM {t} WHERE tournament_id NOT IN (SELECT id FROM tournaments)"
+    ).fetchone()[0])
+print("dangling team refs:", c.execute(
+    "SELECT COUNT(*) FROM stage_standings WHERE team_id NOT IN (SELECT id FROM teams)"
+).fetchone()[0])
+PY
+```
+
+All four must be `0`. Expected live totals: 19 tournaments, 111 stages (a
+correct edge dedupes), 709 standings, 469 participants, 287 teams.
+
+Do not add a fourth parallel repair path — extend `repairTournamentDataIntegrity`.
+
 ## Frontend polish program (audit + plan)
 
 Audit performed before changes; baseline was green (`lint`, `typecheck`,
