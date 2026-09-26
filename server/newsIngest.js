@@ -2,10 +2,7 @@ import { randomUUID } from "node:crypto";
 import { db, entityConfigs, normalizeRecord, serializePayload } from "./db.js";
 import { NEWS_SOURCE_TYPES, getEnabledNewsSources } from "./newsSources.js";
 import { decodeNewsText, enrichImportedNewsArticle } from "./newsModel.js";
-import {
-  assertPublicHost,
-  readResponseTextWithLimit,
-} from "./services/outboundUrl.js";
+import { fetchPublicText } from "./services/outboundUrl.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_FEED_BYTES = 5 * 1024 * 1024;
@@ -295,15 +292,11 @@ function deriveNormalizedDraftPatch(article) {
 }
 
 async function fetchSourceItems(source) {
-  const safeUrl = await assertPublicHost(source.url);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-  let response;
+  let result;
   try {
-    response = await fetch(safeUrl, {
-      signal: controller.signal,
-      redirect: "error",
+    result = await fetchPublicText(source.url, {
+      timeoutMs: FETCH_TIMEOUT_MS,
+      maxBytes: MAX_FEED_BYTES,
       headers: {
         "User-Agent": "StageCoreNewsBot/1.0",
         Accept:
@@ -312,25 +305,22 @@ async function fetchSourceItems(source) {
             : "application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.8",
       },
     });
-    if (!response.ok) {
-      throw new Error(`Request failed with ${response.status}`);
-    }
-
-    const body = await readResponseTextWithLimit(response, MAX_FEED_BYTES);
-
-    if (source.type === "json") {
-      return parseJsonFeed(JSON.parse(body));
-    }
-
-    return parseRssFeed(body);
   } catch (error) {
-    if (error?.name === "AbortError") {
+    if (error?.message === "Request timed out") {
       throw new Error("Feed request timed out");
     }
     throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`Request failed with ${result.status}`);
+  }
+
+  if (source.type === "json") {
+    return parseJsonFeed(JSON.parse(result.body));
+  }
+
+  return parseRssFeed(result.body);
 }
 
 function getExistingImportKeys() {

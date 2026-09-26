@@ -1,7 +1,12 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import http from "node:http";
+import https from "node:https";
 
 const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
+const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_MAX_BYTES = 5 * 1024 * 1024;
+const DEFAULT_MAX_REDIRECTS = 3;
 
 function parseIpv4(address) {
   const parts = String(address).split(".");
@@ -47,6 +52,10 @@ export function isPrivateAddress(address) {
   return false;
 }
 
+function stripBrackets(hostname) {
+  return String(hostname || "").replace(/^\[|\]$/g, "");
+}
+
 export function assertSafeOutboundUrl(rawUrl) {
   let url;
   try {
@@ -59,7 +68,7 @@ export function assertSafeOutboundUrl(rawUrl) {
     throw new Error(`Unsupported URL protocol: ${url.protocol}`);
   }
 
-  const hostname = url.hostname.replace(/^\[|\]$/g, "");
+  const hostname = stripBrackets(url.hostname);
   if (!hostname) {
     throw new Error("URL must include a hostname");
   }
@@ -71,12 +80,16 @@ export function assertSafeOutboundUrl(rawUrl) {
   return url;
 }
 
-export async function assertPublicHost(rawUrl) {
+// Resolves the hostname once and returns the exact address that must be
+// connected to. Callers must pin this address so a second, attacker-influenced
+// DNS lookup (DNS rebinding) cannot redirect the socket to an internal service
+// after validation has already passed.
+export async function resolvePublicAddress(rawUrl) {
   const url = assertSafeOutboundUrl(rawUrl);
-  const hostname = url.hostname.replace(/^\[|\]$/g, "");
+  const hostname = stripBrackets(url.hostname);
 
   if (isIP(hostname)) {
-    return url;
+    return { url, address: hostname, family: isIP(hostname) };
   }
 
   let addresses;
@@ -86,7 +99,7 @@ export async function assertPublicHost(rawUrl) {
     throw new Error("Unable to resolve URL hostname");
   }
 
-  if (addresses.length === 0) {
+  if (!addresses || addresses.length === 0) {
     throw new Error("Unable to resolve URL hostname");
   }
 
@@ -94,36 +107,167 @@ export async function assertPublicHost(rawUrl) {
     throw new Error("URL resolves to a private or reserved address");
   }
 
-  return url;
+  const chosen = addresses[0];
+  return {
+    url,
+    address: chosen.address,
+    family: Number(chosen.family) || isIP(chosen.address),
+  };
 }
 
-export async function readResponseTextWithLimit(response, maxBytes) {
-  if (!response.body?.getReader) {
-    const text = await response.text();
-    if (Buffer.byteLength(text, "utf8") > maxBytes) {
-      throw new Error("Response exceeded the maximum allowed size");
+// Custom `lookup` for http(s).request that always yields the pre-validated
+// address, ignoring whatever a fresh resolver call would return.
+export function createPinnedLookup(address, family) {
+  const resolvedFamily = Number(family) || isIP(address) || 4;
+  const entry = { address, family: resolvedFamily };
+  return (_hostname, options, callback) => {
+    // Node asks for all addresses when autoSelectFamily is enabled.
+    if (options && options.all) {
+      callback(null, [entry]);
+      return;
     }
-    return text;
-  }
+    callback(null, entry.address, entry.family);
+  };
+}
 
-  const reader = response.body.getReader();
-  const chunks = [];
-  let total = 0;
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
+export function readStreamWithLimit(stream, maxBytes) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    let settled = false;
+
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      stream.destroy?.();
+      reject(error);
+    };
+
+    stream.on("data", (chunk) => {
+      if (settled) return;
+      total += chunk.length;
       if (total > maxBytes) {
-        await reader.cancel().catch(() => {});
-        throw new Error("Response exceeded the maximum allowed size");
+        fail(new Error("Response exceeded the maximum allowed size"));
+        return;
       }
-      chunks.push(value);
+      chunks.push(chunk);
+    });
+    stream.on("end", () => {
+      if (settled) return;
+      settled = true;
+      resolve(Buffer.concat(chunks).toString("utf8"));
+    });
+    stream.on("error", (error) => fail(error));
+  });
+}
+
+// Issues a single request against an already-validated, pinned address. The
+// logical hostname is preserved for the Host header and TLS SNI, but the socket
+// can only ever reach `address`.
+export function requestPinnedAddress(pinned, options = {}) {
+  const {
+    method = "GET",
+    headers = {},
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    maxBytes = DEFAULT_MAX_BYTES,
+  } = options;
+
+  const { url, address, family } = pinned;
+  const isHttps = url.protocol === "https:";
+  const transport = isHttps ? https : http;
+  const hostname = stripBrackets(url.hostname);
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let timer = null;
+
+    const finish = (error, result) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    };
+
+    const request = transport.request(
+      {
+        protocol: url.protocol,
+        hostname,
+        port: url.port || (isHttps ? 443 : 80),
+        path: `${url.pathname}${url.search}`,
+        method,
+        headers: { Host: url.host, ...headers },
+        lookup: createPinnedLookup(address, family),
+      },
+      (response) => {
+        readStreamWithLimit(response, maxBytes).then(
+          (body) => {
+            finish(null, {
+              status: response.statusCode,
+              headers: response.headers,
+              body,
+            });
+          },
+          (error) => {
+            request.destroy();
+            finish(error);
+          },
+        );
+      },
+    );
+
+    timer = setTimeout(() => {
+      request.destroy(new Error("Request timed out"));
+    }, timeoutMs);
+
+    request.on("error", (error) => finish(error));
+    request.end();
+  });
+}
+
+// Validates and fetches a user-supplied URL, re-validating and re-pinning every
+// redirect hop so a hop can never land on a private address.
+export async function fetchPublicText(rawUrl, options = {}) {
+  const {
+    method = "GET",
+    headers = {},
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    maxBytes = DEFAULT_MAX_BYTES,
+    maxRedirects = DEFAULT_MAX_REDIRECTS,
+  } = options;
+
+  let currentUrl = String(rawUrl || "");
+  const deadline = Date.now() + timeoutMs;
+
+  for (let hop = 0; hop <= maxRedirects; hop += 1) {
+    const pinned = await resolvePublicAddress(currentUrl);
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      throw new Error("Request timed out");
     }
-  } finally {
-    reader.releaseLock?.();
+
+    const result = await requestPinnedAddress(pinned, {
+      method,
+      headers,
+      timeoutMs: remaining,
+      maxBytes,
+    });
+
+    const status = Number(result.status) || 0;
+    const location = result.headers?.location;
+    if (status >= 300 && status < 400 && location) {
+      if (hop === maxRedirects) {
+        throw new Error("Too many redirects");
+      }
+      currentUrl = new URL(String(location), pinned.url).toString();
+      continue;
+    }
+
+    return result;
   }
 
-  const merged = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
-  return merged.toString("utf8");
+  throw new Error("Too many redirects");
 }
