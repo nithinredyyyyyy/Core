@@ -8,9 +8,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "..", "data");
 const migrationDir = path.join(__dirname, "migrations");
-const dbPath = path.join(dataDir, "stagecore.sqlite");
+// CORE_DB_PATH lets tests and validation runs point at a throwaway database so
+// they never mutate the committed server/data/stagecore.sqlite.
+const dbPath = process.env.CORE_DB_PATH
+  ? path.resolve(process.env.CORE_DB_PATH)
+  : path.join(dataDir, "stagecore.sqlite");
 fs.mkdirSync(migrationDir, { recursive: true });
-fs.mkdirSync(dataDir, { recursive: true });
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");

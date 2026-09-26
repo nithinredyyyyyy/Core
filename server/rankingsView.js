@@ -82,6 +82,7 @@ function buildOrganizationRankings() {
 }
 
 function seasonPoints(entry) {
+  if (!entry) return 0;
   return (entry.pts26BGIS || 0) + (entry.pts26BMPS || 0);
 }
 

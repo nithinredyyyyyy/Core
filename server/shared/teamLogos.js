@@ -771,7 +771,7 @@ const TEAM_LOGOS = [
   },
   {
     pattern: /^(IQOO SouL|Team SouL|Team Soul|iQOO Soul)$/i,
-    src: "/images/team-logos/soul.webp",
+    src: "/images/team-logos/soul.png",
   },
   {
     pattern: /^(Hades H4K|TEAM H4K|H4K Esports)$/i,

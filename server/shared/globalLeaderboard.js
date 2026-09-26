@@ -3,7 +3,8 @@ import { GLOBAL_LEADERBOARD as HARDCODED_GLOBAL_LEADERBOARD, PLAYER_RANKINGS as 
 
 export const GLOBAL_LEADERBOARD = (() => {
   try {
-    return getTeamLeaderboard('2024');
+    const rows = getTeamLeaderboard('2024');
+    return rows.length ? rows : HARDCODED_GLOBAL_LEADERBOARD;
   } catch {
     return HARDCODED_GLOBAL_LEADERBOARD;
   }
@@ -11,7 +12,8 @@ export const GLOBAL_LEADERBOARD = (() => {
 
 export const PLAYER_RANKINGS = (() => {
   try {
-    return getPlayerLeaderboard('2024');
+    const rows = getPlayerLeaderboard('2024');
+    return rows.length ? rows : HARDCODED_PLAYER_RANKINGS;
   } catch {
     return HARDCODED_PLAYER_RANKINGS;
   }

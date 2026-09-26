@@ -1,7 +1,13 @@
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const { db: local } = await import("file:///C:/Users/surak/core/server/db.js");
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const publicDir = join(repoRoot, "public");
+
+// Import the real DB module (env-aware) so the audit runs against the same
+// connection the server uses rather than a hand-built path.
+const { db: local } = await import(new URL("../server/db.js", import.meta.url));
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -219,6 +225,94 @@ function buildAudit(db, label) {
     `SELECT tournament_id, name, COUNT(*) c FROM tournament_stages GROUP BY tournament_id, name HAVING c > 1`,
   );
   if (dupStageNames.length) add("duplicate stage names per tournament", dupStageNames, "grouped");
+
+  // ---- 7. match / tournament state consistency ----
+  // Aggregate rows (match_number = 0) summarise a stage; they legitimately have
+  // no schedule. Real matches must be numbered 1..N.
+  const badMatchNumbers = q(
+    `SELECT m.id, t.name, m.stage, m.match_number FROM matches m
+     JOIN tournaments t ON t.id = m.tournament_id
+     WHERE m.match_number IS NULL OR m.match_number < 0`,
+  );
+  if (badMatchNumbers.length) add("matches with NULL or negative match_number", badMatchNumbers);
+
+  const aggregateRows = q(
+    `SELECT m.id, t.name, m.stage FROM matches m
+     JOIN tournaments t ON t.id = m.tournament_id WHERE m.match_number = 0`,
+  );
+  if (aggregateRows.length) add("aggregate stage-summary match rows (match_number=0)", aggregateRows, "by design? verify consumers");
+
+  const completedUpcoming = q(
+    `SELECT m.id, t.name, m.status FROM matches m
+     JOIN tournaments t ON t.id = m.tournament_id
+     WHERE t.status = 'upcoming' AND m.status IN ('completed','live')`,
+  );
+  if (completedUpcoming.length) add("completed/live matches inside an 'upcoming' tournament", completedUpcoming);
+
+  const tournamentStatusDrift = q(
+    `SELECT t.id, t.name, t.status,
+            SUM(CASE WHEN m.status='completed' THEN 1 ELSE 0 END) completed,
+            COUNT(m.id) total
+     FROM tournaments t JOIN matches m ON m.tournament_id = t.id
+     GROUP BY t.id
+     HAVING (t.status = 'completed' AND completed < total)
+         OR (t.status = 'upcoming' AND completed > 0)`,
+  );
+  if (tournamentStatusDrift.length) add("tournament status disagrees with its matches", tournamentStatusDrift, "grouped");
+
+  const scheduledCompleted = q(
+    `SELECT m.id, m.scheduled_time FROM matches m
+     WHERE m.match_number > 0 AND m.status = 'completed' AND m.scheduled_time IS NULL`,
+  );
+  if (scheduledCompleted.length) add("completed matches with no scheduled_time", scheduledCompleted);
+
+  // ---- 8. asset / URL integrity ----
+  const localAsset = (v) => typeof v === "string" && v.startsWith("/");
+  const missingImages = [];
+  for (const row of q("SELECT id, name, logo_url FROM teams WHERE logo_url IS NOT NULL AND logo_url != ''")) {
+    if (localAsset(row.logo_url) && !existsSync(join(publicDir, row.logo_url.replace(/^\//, "")))) {
+      missingImages.push(`team ${row.name} -> ${row.logo_url}`);
+    }
+  }
+  for (const row of q("SELECT id, name, banner_url FROM tournaments WHERE banner_url IS NOT NULL AND banner_url != ''")) {
+    if (localAsset(row.banner_url) && !existsSync(join(publicDir, row.banner_url.replace(/^\//, "")))) {
+      missingImages.push(`tournament ${row.name} -> ${row.banner_url}`);
+    }
+  }
+  for (const row of q("SELECT id, title, thumbnail_url FROM news_articles WHERE thumbnail_url IS NOT NULL AND thumbnail_url != ''")) {
+    if (localAsset(row.thumbnail_url) && !existsSync(join(publicDir, row.thumbnail_url.replace(/^\//, "")))) {
+      missingImages.push(`news ${row.title} -> ${row.thumbnail_url}`);
+    }
+  }
+  if (missingImages.length) add("local image URLs that do not resolve to a file", missingImages);
+
+  const badSourceUrls = q(
+    `SELECT id, title, source_url FROM news_articles
+     WHERE source_url IS NOT NULL AND source_url != '' AND source_url NOT LIKE 'http%'`,
+  );
+  if (badSourceUrls.length) add("news source_url is not an absolute http(s) URL", badSourceUrls);
+
+  const attributionGaps = q(
+    `SELECT id, title FROM news_articles
+     WHERE (source_name IS NULL OR source_name = '') <> (source_url IS NULL OR source_url = '')`,
+  );
+  if (attributionGaps.length) add("news articles with only one of source_name/source_url", attributionGaps);
+
+  const nonPublishedWithoutFlag = q(
+    `SELECT id, title FROM news_articles
+     WHERE verification_status = 'verified' AND source_name IS NULL AND is_auto_ingested = 1`,
+  );
+  if (nonPublishedWithoutFlag.length) add("auto-ingested articles marked verified without attribution", nonPublishedWithoutFlag);
+
+  // ---- 9. provenance coverage (informational) ----
+  report.provenance = {
+    teamsMissingLogo: g("SELECT COUNT(*) c FROM teams WHERE logo_url IS NULL OR logo_url = ''").c,
+    teamsMissingRegion: g("SELECT COUNT(*) c FROM teams WHERE region IS NULL OR region = ''").c,
+    playersMissingPhoto: g("SELECT COUNT(*) c FROM players WHERE photo_url IS NULL OR photo_url = ''").c,
+    playersMissingRealName: g("SELECT COUNT(*) c FROM players WHERE real_name IS NULL OR real_name = ''").c,
+    newsMissingSource: g("SELECT COUNT(*) c FROM news_articles WHERE source_name IS NULL OR source_url IS NULL OR source_url = ''").c,
+    matchesMissingStream: g("SELECT COUNT(*) c FROM matches WHERE stream_url IS NULL OR stream_url = ''").c,
+  };
 
   report.checkCount = report.checks.reduce((n, c) => n + c.count, 0);
   return report;

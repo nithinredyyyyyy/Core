@@ -14,6 +14,7 @@ import { splitTrimmedValues } from "./services/schemas.js";
 import { logger } from "./services/logger.js";
 import { seedIfEmpty, ensureLegacyTournaments } from "./services/seed.js";
 import { repairTournamentDataIntegrity } from "./services/tournamentDataRepair.js";
+import { repairPlayerReferences } from "./services/playerReferenceRepair.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { entitiesRouter } from "./routes/entities.js";
@@ -69,6 +70,7 @@ if (isProduction) {
 seedIfEmpty();
 ensureLegacyTournaments();
 repairTournamentDataIntegrity();
+repairPlayerReferences();
 
 app.set("trust proxy", isProduction ? 1 : false);
 

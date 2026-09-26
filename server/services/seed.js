@@ -13,6 +13,7 @@ const SEED_TABLES = [
   "tournament_participant_players", "tournament_participant_stage_entries",
   "stage_standings", "player_team_history", "transfer_windows",
   "team_aliases", "player_aliases", "news_articles",
+  "team_season_ratings", "player_season_ratings",
 ];
 
 export function seedIfEmpty() {
