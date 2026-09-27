@@ -13,6 +13,7 @@ import { backfillImportedNewsMetadata } from "./newsIngest.js";
 import { splitTrimmedValues } from "./services/schemas.js";
 import { logger } from "./services/logger.js";
 import { seedIfEmpty, ensureLegacyTournaments } from "./services/seed.js";
+import { assertDatabaseUsable } from "./services/dbIntegrity.js";
 import { repairTournamentDataIntegrity } from "./services/tournamentDataRepair.js";
 import { repairPlayerReferences } from "./services/playerReferenceRepair.js";
 import { adminRouter } from "./routes/admin.js";
@@ -67,6 +68,12 @@ if (isProduction) {
   }
 }
 
+// The database is the primary source of truth on the persistent disk. Verify it
+// before any write path runs so a corrupt file can never be silently reset to
+// seed data or overwritten by a backup.
+if (!assertDatabaseUsable()) {
+  process.exit(1);
+}
 seedIfEmpty();
 ensureLegacyTournaments();
 repairTournamentDataIntegrity();

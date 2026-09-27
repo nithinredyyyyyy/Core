@@ -2,13 +2,24 @@ services:
   - type: web
     name: core-esports
     runtime: docker
-    plan: free
+    # The smallest paid instance type. Persistent disks are not supported on the
+    # Free instance type, and SQLite requires a single instance (a disk can only
+    # attach to one instance and blocks horizontal scaling).
+    plan: starter
     healthCheckPath: /api/health
+    disk:
+      name: core-data
+      # Mount the disk over the directory the app already treats as its data dir,
+      # so the SQLite database (and its WAL sidecars) persist across deploys.
+      mountPath: /app/server/data
+      sizeGB: 1
     dockerBuildArgs:
       - VITE_GOOGLE_CLIENT_ID=13045307296-v52idel7q4medhlhedjciv4qeq0e964e.apps.googleusercontent.com
     envVars:
       - key: NODE_ENV
         value: production
+      - key: CORE_DB_PATH
+        value: /app/server/data/stagecore.sqlite
       - key: CORE_AUTH_SESSION_SECRET
         generateValue: true
       - key: CORE_ADMIN_EMAILS
@@ -17,3 +28,11 @@ services:
         value: 13045307296-v52idel7q4medhlhedjciv4qeq0e964e.apps.googleusercontent.com
       - key: FRONTEND_ORIGIN
         value: https://core-esports-1ibg.onrender.com
+      # Secondary (off-box) backup. Leave unset to disable backups entirely;
+      # when set, the periodic backup loop runs. Values are dashboard-synced and
+      # never committed. GITHUB_BACKUP_TOKEN must be a minimal-scope, dedicated
+      # token (contents:write on a single private repo).
+      - key: GITHUB_BACKUP_TOKEN
+        sync: false
+      - key: GITHUB_BACKUP_REPO
+        sync: false

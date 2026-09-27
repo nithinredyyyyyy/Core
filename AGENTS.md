@@ -198,3 +198,43 @@ scripted sweeps means the rate limiter is working, not that the page is broken
 - Secrets and admin identity live in env vars/dashboard secrets, not in committed config (`render.yaml` uses `sync: false` for `CORE_ADMIN_EMAILS`).
 - Rate limiters in `server/index.js` are mounted on their **own path prefix** (`/api/auth`, `/api/admin`, ...) separately from the routers. Do not mount them on the shared `/api` path — that runs every limiter for every API request and makes the strictest one (auth, 20/min) the effective cap for the whole API.
 - Any redirect target derived from untrusted input (query params, API responses) must pass through `safeInternalPath` (`src/lib/safeRedirect.js`) before `navigate()`/`<Navigate>`. A leading `\` is treated as `/` by browsers, so `/\evil.com` is an off-origin open redirect even though it passes a naive `startsWith("/")` check.
+
+## Production persistence (Render + SQLite + GitHub backup)
+
+Approved architecture: a Render **Persistent Disk** is the PRIMARY runtime store,
+a single Render instance is both a disk requirement and a SQLite requirement, a
+private GitHub repo is the SECONDARY off-box backup, and
+`server/seed/canonical.export.json` is the reproducible bootstrap baseline.
+
+- `render.yaml` sets `plan: starter` (Free does not support disks), a 1 GB disk
+  named `core-data` mounted at `/app/server/data`, and `CORE_DB_PATH`. A Render
+  disk attaches to exactly one instance and blocks scaling out.
+- The disk mount **shadows** the `stagecore.sqlite` baked into the image by
+  `COPY --from=build /app/server ./server`. On first boot the disk is empty, the
+  app boots from the canonical export, and the baked copy becomes irrelevant.
+- `run.sh` never overwrites a populated database from the backup repo. Restore
+  only runs when the DB is absent/empty AND `CORE_ALLOW_GITHUB_RESTORE=1`
+  (explicit disaster recovery). Otherwise an empty disk bootstraps from canonical.
+- `run.sh` passes `GITHUB_BACKUP_TOKEN` through git's environment-based
+  `http.extraheader`, never a URL, argv, or log line. Do not reintroduce
+  `https://oauth2:${TOKEN}@...`.
+- `run.sh` fails fast if the disk mount is not writable by the container user
+  (`appuser`). A root-owned Render disk mount cannot be fixed from inside the
+  container; it must be resolved in the Render dashboard.
+- `server/services/dbIntegrity.js` runs before any write on boot: a corrupt,
+  non-empty database exits non-zero and is left byte-identical. It is never
+  silently reset to seed. Foreign-key drift is reported, then repaired by the
+  existing repair routines.
+- `server/scripts/github-backup.js` snapshots via the SQLite backup API (source
+  opened read-only), keeps `stagecore.sqlite` plus the newest
+  `BACKUP_RETENTION` (default 7) timestamped copies under `snapshots/`, and
+  force-pushes a single commit so repository history cannot grow. Worst-case
+  repo size is bounded at ~`BACKUP_RETENTION x DB size`.
+- `tests/unit/authCookie.test.js` spawns probes that import `server/db.js`. It
+  must set `CORE_DB_PATH` to a temp file; without it the probes run migrations
+  against the committed `server/data/stagecore.sqlite` and mutate it.
+
+Verification after any persistence change: fresh-disk bootstrap, restart (skips
+seed), write persists across redeploy, restore gate (populated DB untouched),
+corrupt DB fails fast, backup retention + restore, token-leak E2E, and a check
+that the committed `server/data/stagecore.sqlite` hash is unchanged.
