@@ -187,6 +187,7 @@ const payload = parser.buildCanonicalPayload({
   source: SOURCE,
   reconciledRows: reconciliation,
   identityUnresolved: missingIdentity,
+  disputePolicy: "PRESERVE_DISPUTE_V1",
 });
 const arithmeticErrors = parser.validateArithmetic(payload);
 
@@ -274,6 +275,8 @@ function runApply(dbPath, mode, twice = false) {
     validator_stdout: validator.stdout,
     validator_stderr: validator.stderr,
     classification: (validator.stdout.match(/classification=(\w+)/) || [null, null])[1],
+    canonical_rows_consistent: applied.canonical_rows_consistent,
+    inconsistent_canonical_rows: applied.inconsistent_canonical_rows,
   };
 }
 
@@ -324,10 +327,13 @@ const report = {
     match_numbers: payload.matches.map((m) => m.match_number),
     all_matches_have_provenance: payload.matches.every((m) => m.source_slug && m.source_url && m.source_name),
     all_results_have_provenance: payload.match_results.every((r) => r.source_ref && r.source_url),
+    canonical_rows_consistent: payload.validation.canonical_rows_consistent,
+    canonical_consistency_errors: payload.validation.canonical_consistency_errors,
     player_match_stats: payload.match_results.length === 0 ? 0 : 0,
     player_match_stats_status: "SOURCE_NOT_AVAILABLE",
     player_match_stats_reason: "Liquipedia source does not publish per-match player statistics for this stage.",
   },
+  dispute_policy: payload.dispute_policy,
   reconciliation: {
     field_exact: fieldExact.length,
     disputed_split_total_agrees: disputed.length,
@@ -385,11 +391,16 @@ for (const d of disputed) {
 console.log("");
 console.log(`player_match_stats: 0 (SOURCE_NOT_AVAILABLE)`);
 console.log("");
+console.log(`Dispute policy: ${payload.dispute_policy.policy_version} canonical_value_source=${payload.dispute_policy.policy.canonical_value_source} adjudicated=${payload.dispute_policy.policy.adjudicated} overwrite=${payload.dispute_policy.policy.overwrite_existing}`);
+console.log(`  canonical rows internally consistent: ${payload.validation.canonical_rows_consistent}`);
+console.log(`  disputes carried: ${payload.dispute_policy.disputes.length} (existing CORE value preserved, not overwritten)`);
+console.log("");
 console.log("State A (enrichStage, synthetic retained): validator exit", results.stateA_enrichStage_synthetic_retained.validator_code, `classification=${results.stateA_enrichStage_synthetic_retained.classification}`);
 console.log("  ", results.stateA_enrichStage_synthetic_retained.validator_failure);
 console.log("State B (replaceSyntheticSnapshot): validator exit", results.stateB_replaceSynthetic.validator_code, `classification=${results.stateB_replaceSynthetic.classification}`);
 console.log("  ", (results.stateB_replaceSynthetic.validator_stdout.match(/real_match_count=\d+ synthetic_match_count=\d+ real_matches_with_results=\d+ real_result_rows=\d+ synthetic_result_rows=\d+ classification=\w+/) || ["(no line)"])[0]);
 console.log(`State B apply summary: ${JSON.stringify(results.stateB_replaceSynthetic.apply_summary)}`);
+console.log(`State B canonical rows consistent in DB: ${results.stateB_replaceSynthetic.canonical_rows_consistent} (${results.stateB_replaceSynthetic.inconsistent_canonical_rows} inconsistent)`);
 console.log(`Idempotency converged: ${results.idempotency.converged}`);
 console.log("");
 console.log(`PRODUCTION MODIFIED: ${productionUnchanged ? "NO" : "YES"}`);

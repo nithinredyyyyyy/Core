@@ -69,6 +69,15 @@ const counts = () => ({
 const before = counts();
 const summary = run(args);
 const afterFirst = counts();
+// The schema derives standings from these rows, so imported canonical rows must
+// stay internally consistent even when a split is disputed.
+const inconsistent = db
+  .prepare(
+    `SELECT COUNT(*) c FROM match_results
+      WHERE tournament_id = ? AND stage = ?
+        AND total_points <> kill_points + placement_points`,
+  )
+  .get(args.tournamentId, args.stage).c;
 let second = null;
 let afterSecond = null;
 if (twice) {
@@ -82,6 +91,8 @@ process.stdout.write("__APPLY_JSON__" + JSON.stringify({
   applied: summary,
   before,
   afterFirst,
+  inconsistent_canonical_rows: inconsistent,
+  canonical_rows_consistent: inconsistent === 0,
   second,
   afterSecond,
   converged: afterSecond ? JSON.stringify(afterFirst) === JSON.stringify(afterSecond) : null,

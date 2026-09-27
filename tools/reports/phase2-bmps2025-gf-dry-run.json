@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-27T18:49:44.834Z",
+  "generated_at": "2026-09-27T19:10:50.541Z",
   "parser_version": "1.0.0",
   "target": {
     "tournamentId": "843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c",
@@ -67,9 +67,89 @@
     ],
     "all_matches_have_provenance": true,
     "all_results_have_provenance": true,
+    "canonical_rows_consistent": true,
+    "canonical_consistency_errors": [],
     "player_match_stats": 0,
     "player_match_stats_status": "SOURCE_NOT_AVAILABLE",
     "player_match_stats_reason": "Liquipedia source does not publish per-match player statistics for this stage."
+  },
+  "dispute_policy": {
+    "policy_version": "PRESERVE_DISPUTE_V1",
+    "policy": {
+      "canonical_value_source": "source",
+      "adjudicated": false,
+      "overwrite_existing": false,
+      "preserve_existing_in_metadata": true,
+      "blocks_apply": false,
+      "resolution": "PENDING_EXPLICIT_DECISION",
+      "description": "Import the source-derived canonical row, retain the existing CORE value in reconciliation metadata, flag the team aggregate as DISPUTED_SPLIT_TOTAL_AGREES. No adjudication, no overwrite."
+    },
+    "counts": {
+      "field_exact": 14,
+      "disputed_split_total_agrees": 2,
+      "totals_only_agree": 0,
+      "identity_unresolved": 0
+    },
+    "canonical_rows_consistent": true,
+    "canonical_consistency_errors": [],
+    "disputes": [
+      {
+        "team": "los hermanos esports",
+        "team_match_key": "loshermanosesports",
+        "core_team": "Los Hermanos Esports",
+        "dispute_status": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED",
+        "resolution": "PENDING_EXPLICIT_DECISION",
+        "canonical_value_source": "source",
+        "source_value": {
+          "kills": 77,
+          "placement_points": 49,
+          "total_points": 126,
+          "wins": 1,
+          "matches": 18
+        },
+        "existing_core_value": {
+          "kill_points": 78,
+          "placement_points": 48,
+          "total_points": 126,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "existing_core_preserved": true,
+        "overwritten": false,
+        "total_agrees": true,
+        "total_comparison": "126 vs 126",
+        "scope": "aggregate over 18 matches"
+      },
+      {
+        "team": "team insane",
+        "team_match_key": "teaminsane",
+        "core_team": "TEAM iNSANE",
+        "dispute_status": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED",
+        "resolution": "PENDING_EXPLICIT_DECISION",
+        "canonical_value_source": "source",
+        "source_value": {
+          "kills": 41,
+          "placement_points": 17,
+          "total_points": 58,
+          "wins": 0,
+          "matches": 18
+        },
+        "existing_core_value": {
+          "kill_points": 40,
+          "placement_points": 18,
+          "total_points": 58,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "existing_core_preserved": true,
+        "overwritten": false,
+        "total_agrees": true,
+        "total_comparison": "58 vs 58",
+        "scope": "aggregate over 18 matches"
+      }
+    ]
   },
   "reconciliation": {
     "field_exact": 14,
@@ -861,9 +941,11 @@
       "match_sources": 1
     },
     "validator_code": 0,
-    "validator_stdout": "Database: /tmp/phase2-bmps2025-qVtUgO/stateB/stagecore.sqlite\nStages checked: 1\n  843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c / Grand Finals: real_match_count=18 synthetic_match_count=0 real_matches_with_results=18 real_result_rows=288 synthetic_result_rows=0 classification=REAL_COMPLETE\n\nClassification summary:\n  REAL_COMPLETE: 1\n\nNotes (non-fatal):\n  - 843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c/Grand Finals: V2 result cardinality 16 != participant count 32 (may be legitimate if rosters differ)\n\nintegrity_check: ok\nforeign_key_check: 0 violations\n\nAll completeness gates passed.\n",
+    "validator_stdout": "Database: /tmp/phase2-bmps2025-hUnzXk/stateB/stagecore.sqlite\nStages checked: 1\n  843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c / Grand Finals: real_match_count=18 synthetic_match_count=0 real_matches_with_results=18 real_result_rows=288 synthetic_result_rows=0 classification=REAL_COMPLETE\n\nClassification summary:\n  REAL_COMPLETE: 1\n\nNotes (non-fatal):\n  - 843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c/Grand Finals: V2 result cardinality 16 != participant count 32 (may be legitimate if rosters differ)\n\nintegrity_check: ok\nforeign_key_check: 0 violations\n\nAll completeness gates passed.\n",
     "validator_stderr": "",
-    "classification": "REAL_COMPLETE"
+    "classification": "REAL_COMPLETE",
+    "canonical_rows_consistent": true,
+    "inconsistent_canonical_rows": 0
   },
   "idempotency": {
     "first": {

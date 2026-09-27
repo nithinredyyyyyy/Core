@@ -150,6 +150,40 @@ disagreement can be traced to specific matches at the decision gate.
 The parser does not normalise, average, or otherwise reconcile these. They pass
 through the pipeline as-is and are reported.
 
+## Disputed-split representation policy — `PRESERVE_DISPUTE_V1`
+
+Settled policy for this pilot, implemented in `tools/liquipedia/dispute-policy.mjs`
+and applied by `buildCanonicalPayload`. The policy is versioned so a later change
+is an explicit, reviewable decision rather than an edit to parser logic.
+
+| Aspect | Behaviour |
+|---|---|
+| Canonical imported row | carries the **source-derived** values |
+| Existing CORE value | retained in reconciliation metadata |
+| Team aggregate flag | `DISPUTED_SPLIT_TOTAL_AGREES` |
+| Adjudicated | **no** — `adjudication_status = UNRESOLVED` |
+| Overwrite existing | **no** |
+| Resolution | `PENDING_EXPLICIT_DECISION` |
+
+Two properties are asserted rather than assumed:
+
+1. **Canonical rows remain internally consistent.**
+   `total_points = kill_points + placement_points` holds for every imported row
+   even though the split is disputed — a dispute about the split must never make
+   the row the schema derives standings from inconsistent. Verified both in the
+   payload (`validation.canonical_rows_consistent: true`) and directly in the
+   materialised copy (0 inconsistent rows in `match_results`).
+
+2. **The disagreement is attached at team level, not stamped on every match row.**
+   The discrepancy is a property of the team's 18-match sum vs the existing
+   cumulative snapshot, not of any individual match. Marking all 288 per-match rows
+   as disputed would misrepresent what actually disagrees. Per-match rows are
+   `dispute_status = NONE`; `team_aggregates[key].dispute_status = DISPUTED`
+   carries the flag, and `dispute_policy.disputes[]` records both sides.
+
+This gives a clean audit trail without pretending a one-point kill/placement
+discrepancy has been independently adjudicated.
+
 ## Player statistics
 
 ```
@@ -200,20 +234,27 @@ authoritative content — were byte-identical.
 ## Recommendation / next decision gate
 
 The parser → canonical payload → validation path is proven end-to-end on a copy,
-including the atomic synthetic replacement and its idempotency. The pipeline is
-ready for an apply decision on this single stage.
+including the atomic synthetic replacement, its idempotency, and canonical-row
+consistency under the dispute policy. The pipeline is ready for an apply decision
+on this single stage.
 
-Before any apply, decide the two disputed splits:
+Proposed production gate (unchanged in shape):
 
-1. accept Liquipedia's split,
-2. use a second source,
-3. use VOD evidence, or
-4. preserve the discrepancy (e.g. record CORE's value and log the source value as
-   provenance).
+```
+DRY RUN ✅ → REVIEW DISPUTES → EXPLICIT APPLY → POST-APPLY VALIDATION
+```
 
-Option 4 is the only one that does not require new evidence and is consistent with
-"do not adjudicate without instruction"; options 1–3 need explicit direction.
+The dispute review has now been answered for this pilot: disputes are **represented
+under `PRESERVE_DISPUTE_V1`**, not adjudicated, and do not block the match/result
+pipeline. That leaves the explicit apply as the remaining gate. If the operator
+accepts `PRESERVE_DISPUTE_V1` as the representation policy, the apply can be
+reviewed on that basis; the policy version is recorded in the payload so the choice
+is auditable.
 
-Also outstanding independently of this pilot: the four stages whose source
-coverage is still unresolved (BMIS 2023, BMPS 2023, BMPS 2024,
-India-Korea Invitational) — see `tools/reports/phase2-source-recon.md`.
+The synthetic snapshot must **not** be deleted manually. `replaceSyntheticSnapshot`
+removes it atomically as part of the approved enrichment — confirmed in State B
+(`removedSyntheticMatches: 1`, `synthetic_matches: 0`).
+
+The four stages whose source coverage is still unresolved (BMIS 2023, BMPS 2023,
+BMPS 2024, India-Korea Invitational) remain **separate** from this pilot and are not
+pulled into the BMPS 2025 decision — see `tools/reports/phase2-source-recon.md`.

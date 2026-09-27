@@ -13,6 +13,12 @@
 //     absent it is recorded as absent (0 with starting_points_available=false)
 //     and never invented.
 
+import {
+  resolveDisputePolicy,
+  assertCanonicalConsistency,
+  buildDisputeMetadata,
+} from "./dispute-policy.mjs";
+
 export const PARSER_VERSION = "1.0.0";
 
 export const SOURCE_NAME = "Liquipedia";
@@ -366,9 +372,22 @@ export function buildCanonicalPayload({
   source,
   reconciledRows = [],
   identityUnresolved = [],
+  disputePolicy = "PRESERVE_DISPUTE_V1",
 }) {
   const rows = buildResultRows({ parsed, teamIdByKey });
   const stageSlug = String(stage).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+  // A stage whose teams disagree with the existing aggregate is imported under a
+  // dispute policy: the canonical row carries the source values (internally
+  // consistent), the existing CORE value is retained in metadata, and the team
+  // aggregate is flagged. Nothing is adjudicated.
+  const policy = resolveDisputePolicy(disputePolicy);
+  const disputeMetadata = buildDisputeMetadata({ reconciledRows, policy });
+  const consistencyErrors = [
+    ...assertCanonicalConsistency(rows),
+    ...disputeMetadata.canonical_consistency_errors,
+  ];
+  const disputedKeys = new Set(disputeMetadata.disputes.map((d) => d.team_match_key));
 
   const matches = parsed.matches.map((match) => {
     const sourceSlug = `${source.slug_prefix}:${stageSlug}:m${match.match_number}`;
@@ -398,10 +417,37 @@ export function buildCanonicalPayload({
       source_ref: `${sourceSlug}#${row.team_match_key}`,
       source_url: `${source.page_url}#${stageSlug}-m${row.match_number}`,
       publication_status: "published",
+      // Per-match rows are only marked when the match itself disagrees. The
+      // aggregate disputes are attached at team level below, because the
+      // discrepancy is a property of the team's sum, not of each match.
+      dispute_status: "NONE",
     };
     (resultsByMatch[sourceSlug] ||= []).push(enriched);
     return enriched;
   });
+
+  // Team-level aggregate view: which teams carry a dispute, and the values on
+  // both sides. This is the audit trail for the disagreement.
+  const teamAggregates = {};
+  for (const row of rows) {
+    const agg = (teamAggregates[row.team_match_key] ||= {
+      team: row.team_name,
+      team_match_key: row.team_match_key,
+      matches: 0,
+      kills: 0,
+      kill_points: 0,
+      placement_points: 0,
+      total_points: 0,
+      wins: 0,
+      dispute_status: disputedKeys.has(row.team_match_key) ? "DISPUTED" : "NONE",
+    });
+    agg.matches += 1;
+    agg.kills += row.kills;
+    agg.kill_points += row.kill_points;
+    agg.placement_points += row.placement_points;
+    agg.total_points += row.total_points;
+    agg.wins += row.wins_count;
+  }
 
   return {
     tournament,
@@ -409,7 +455,9 @@ export function buildCanonicalPayload({
     matches,
     match_results: matchResults,
     resultsByMatch,
+    team_aggregates: teamAggregates,
     playerStats: [],
+    dispute_policy: disputeMetadata,
     source: {
       source_name: source.source_name,
       source_url: source.page_url,
@@ -432,6 +480,8 @@ export function buildCanonicalPayload({
       expected_result_rows: 288,
       extracted_matches: matches.length,
       extracted_result_rows: matchResults.length,
+      canonical_rows_consistent: consistencyErrors.length === 0,
+      canonical_consistency_errors: consistencyErrors,
       player_match_stats: 0,
       player_match_stats_status: "SOURCE_NOT_AVAILABLE",
       player_match_stats_reason:

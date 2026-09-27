@@ -23,6 +23,12 @@ import {
   IDENTITY_UNRESOLVED,
   TOTALS_ONLY_AGREE,
 } from "../../tools/liquipedia/parser.mjs";
+import {
+  DISPUTE_POLICY_VERSION,
+  resolveDisputePolicy,
+  assertCanonicalConsistency,
+  buildDisputeMetadata,
+} from "../../tools/liquipedia/dispute-policy.mjs";
 
 // Captured from the validated BMPS 2025 Grand Finals source. No live requests are
 // made anywhere in this suite.
@@ -429,5 +435,157 @@ describe("canonical payload validation", () => {
         assert.ok(Number.isFinite(row.kill_points));
       }
     }
+  });
+});
+
+describe("disputed-split representation policy", () => {
+  // A reconciled-row fixture with one exact team and one disputed team, so both
+  // branches of the policy are exercised without touching the database.
+  const exactRow = {
+    team: "nonx esports",
+    team_match_key: "nonxesports",
+    core_team: "NoNx Esports",
+    source_value: "50/40/90",
+    source_detail: { kills: 50, placement_points: 40, total_points: 90, wins: 1, matches: 18 },
+    core_value: "50/40/90",
+    core_detail: { kill_points: 50, placement_points: 40, total_points: 90, wins_count: 1, matches_count: 18 },
+    total_agrees: true,
+    total_comparison: "90 vs 90",
+    discrepancy_classification: FIELD_EXACT,
+    adjudication_status: "NOT_REQUIRED",
+    scope: "aggregate over 18 matches",
+  };
+  const disputedRow = {
+    team: "los hermanos esports",
+    team_match_key: "loshermanosesports",
+    core_team: "Los Hermanos Esports",
+    source_value: "77/49/126",
+    source_detail: { kills: 77, placement_points: 49, total_points: 126, wins: 1, matches: 18 },
+    core_value: "78/48/126",
+    core_detail: { kill_points: 78, placement_points: 48, total_points: 126, wins_count: 1, matches_count: 18 },
+    total_agrees: true,
+    total_comparison: "126 vs 126",
+    discrepancy_classification: DISPUTED_SPLIT_TOTAL_AGREES,
+    adjudication_status: "UNRESOLVED",
+    scope: "aggregate over 18 matches",
+  };
+  const reconciled = [exactRow, disputedRow];
+  const disputedPayload = buildCanonicalPayload({
+    tournament: { id: "probe-tour", name: "BMPS 2025" },
+    stage: "Grand Finals",
+    parsed,
+    teamIdByKey,
+    source: SOURCE,
+    reconciledRows: reconciled,
+  });
+
+  test("a single default policy version is exported and resolvable", () => {
+    assert.equal(DISPUTE_POLICY_VERSION, "PRESERVE_DISPUTE_V1");
+    const policy = resolveDisputePolicy();
+    assert.equal(policy.canonical_value_source, "source");
+    assert.equal(policy.adjudicated, false);
+    assert.equal(policy.overwrite_existing, false);
+    assert.equal(policy.preserve_existing_in_metadata, true);
+    assert.equal(policy.blocks_apply, false);
+  });
+
+  test("an unknown policy version is rejected rather than silently defaulted", () => {
+    assert.throws(() => resolveDisputePolicy("NO_SUCH_POLICY"), /Unknown dispute policy/);
+  });
+
+  test("the canonical imported row carries the SOURCE values, not the existing CORE values", () => {
+    const rows = disputedPayload.match_results.filter((r) => r.team_match_key === "loshermanosesports");
+    const kills = rows.reduce((n, r) => n + r.kills, 0);
+    const placement = rows.reduce((n, r) => n + r.placement_points, 0);
+    assert.equal(kills, 77, "canonical kills must be the source value");
+    assert.equal(placement, 49, "canonical placement points must be the source value");
+  });
+
+  test("the canonical row stays internally consistent despite the dispute", () => {
+    assert.equal(disputedPayload.validation.canonical_rows_consistent, true);
+    assert.deepEqual(disputedPayload.validation.canonical_consistency_errors, []);
+    for (const row of disputedPayload.match_results) {
+      assert.equal(row.total_points, row.kill_points + row.placement_points);
+    }
+  });
+
+  test("the existing CORE value is preserved in metadata and marked not overwritten", () => {
+    const dispute = disputedPayload.dispute_policy.disputes.find((d) => d.team_match_key === "loshermanosesports");
+    assert.equal(dispute.existing_core_value.kill_points, 78);
+    assert.equal(dispute.existing_core_value.placement_points, 48);
+    assert.equal(dispute.existing_core_value.total_points, 126);
+    assert.equal(dispute.existing_core_preserved, true);
+    assert.equal(dispute.overwritten, false);
+  });
+
+  test("the disputed aggregate is flagged and unresolved, with both sides recorded", () => {
+    const dispute = disputedPayload.dispute_policy.disputes.find((d) => d.team_match_key === "loshermanosesports");
+    assert.equal(dispute.dispute_status, DISPUTED_SPLIT_TOTAL_AGREES);
+    assert.equal(dispute.adjudication_status, "UNRESOLVED");
+    assert.equal(dispute.canonical_value_source, "source");
+    assert.equal(dispute.total_agrees, true);
+  });
+
+  test("an exact team produces no dispute entry", () => {
+    assert.equal(disputedPayload.dispute_policy.disputes.some((d) => d.team_match_key === "nonxesports"), false);
+  });
+
+  test("dispute counts match the reconciliation classification", () => {
+    assert.deepEqual(disputedPayload.dispute_policy.counts, {
+      field_exact: 1,
+      disputed_split_total_agrees: 1,
+      totals_only_agree: 0,
+      identity_unresolved: 0,
+    });
+  });
+
+  test("the discrepancy is attached at team level, not stamped on every match row", () => {
+    // The disagreement is about the team's 18-match sum, so per-match rows are
+    // unmarked and the team aggregate carries the flag.
+    assert.deepEqual([...new Set(disputedPayload.match_results.map((r) => r.dispute_status))], ["NONE"]);
+    assert.equal(disputedPayload.team_aggregates.loshermanosesports.dispute_status, "DISPUTED");
+    assert.equal(disputedPayload.team_aggregates.nonxesports.dispute_status, "NONE");
+  });
+
+  test("team aggregates sum the canonical rows", () => {
+    const agg = disputedPayload.team_aggregates.loshermanosesports;
+    assert.equal(agg.matches, 18);
+    assert.equal(agg.kills, 77);
+    assert.equal(agg.placement_points, 49);
+    assert.equal(agg.total_points, 126);
+  });
+
+  test("the policy block is versioned and documents its own semantics", () => {
+    const block = disputedPayload.dispute_policy;
+    assert.equal(block.policy_version, DISPUTE_POLICY_VERSION);
+    assert.equal(block.policy.resolution, "PENDING_EXPLICIT_DECISION");
+    assert.equal(block.policy.adjudicated, false);
+    assert.match(block.policy.description, /No adjudication/);
+  });
+
+  test("assertCanonicalConsistency detects an inconsistent canonical row", () => {
+    const errors = assertCanonicalConsistency([
+      { match_number: 1, team_name: "x", kill_points: 5, placement_points: 3, total_points: 9 },
+    ]);
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].code, "CANONICAL_TOTAL_INCONSISTENT");
+  });
+
+  test("the disputed payload records both sides of the disagreement", () => {
+    assert.equal(disputedPayload.dispute_policy.disputes.length, 1);
+    for (const dispute of disputedPayload.dispute_policy.disputes) {
+      assert.ok(dispute.source_value, "source side missing");
+      assert.ok(dispute.existing_core_value, "existing CORE side missing");
+    }
+  });
+
+  test("an empty reconciliation yields no disputes and no consistency errors", () => {
+    const clean = buildCanonicalPayload({
+      tournament: { id: "probe-tour", name: "BMPS 2025" }, stage: "Grand Finals",
+      parsed, teamIdByKey, source: SOURCE,
+    });
+    assert.equal(clean.dispute_policy.disputes.length, 0);
+    assert.equal(clean.validation.canonical_rows_consistent, true);
+    assert.deepEqual(clean.dispute_policy.canonical_consistency_errors, []);
   });
 });
