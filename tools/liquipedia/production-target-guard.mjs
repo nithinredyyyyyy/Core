@@ -36,10 +36,13 @@ export class ProductionTargetError extends Error {
  * @param {string} [opts.expectedMount]  mount the disk must live under
  * @param {boolean} [opts.allowRehearsal] permit a non-production target (explicit opt-in)
  * @param {string} [opts.rehearsalReason] why the override is acceptable
+ * @param {string[]} [opts.forbiddenPrefixes] never-production prefixes; a test seam,
+ *   production always uses the default
  * @returns {{ ok: boolean, production: boolean, detail: object }}
  */
 export function checkProductionTarget(dbPath, opts = {}) {
   const expectedMount = opts.expectedMount ?? process.env.CORE_EXPECTED_DISK_MOUNT ?? EXPECTED_DISK_MOUNT;
+  const forbiddenPrefixes = opts.forbiddenPrefixes ?? FORBIDDEN_PREFIXES;
   const resolved = path.resolve(dbPath);
   const filename = path.basename(resolved);
 
@@ -49,7 +52,7 @@ export function checkProductionTarget(dbPath, opts = {}) {
   const underMount =
     resolved === path.join(expectedMount, EXPECTED_DB_FILENAME) ||
     resolved.startsWith(`${expectedMount}${path.sep}`);
-  const forbidden = FORBIDDEN_PREFIXES.some((p) => resolved.startsWith(p));
+  const forbidden = forbiddenPrefixes.some((p) => resolved.startsWith(p));
   const filenameOk = filename === EXPECTED_DB_FILENAME;
   const exists = fs.existsSync(resolved);
 

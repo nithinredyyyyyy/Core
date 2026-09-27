@@ -1,7 +1,9 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+// Use /tmp explicitly: it exists on Linux CI and is the guard's real forbidden
+// prefix, so the default-rule tests are deterministic regardless of TMPDIR.
+const TMP = "/tmp";
 import { join } from "node:path";
 
 import {
@@ -15,12 +17,6 @@ import {
 
 const EXPECTED_DB = `${EXPECTED_DISK_MOUNT}/${EXPECTED_DB_FILENAME}`;
 
-// The guard hard-codes /tmp as a never-production location, so tests that need to
-// simulate a production-shaped mount must use a neutral base, not os.tmpdir().
-const NEUTRAL_BASE = "/workspace";
-function neutralDir(prefix) {
-  return mkdtempSync(join(NEUTRAL_BASE, prefix));
-}
 function withDir(dir, fn) {
   try {
     return fn(dir);
@@ -29,12 +25,20 @@ function withDir(dir, fn) {
   }
 }
 
+// Tests create temp dirs under /tmp, which the guard treats as never-production by
+// default. The mount-simulation tests pass the forbidden-prefix test seam so a
+// temp dir can stand in for a real mount. The default guard behaviour, including
+// the real /tmp rule, is exercised by the stale-path and override tests below.
+function mountOpts(mount) {
+  return { expectedMount: mount, forbiddenPrefixes: [] };
+}
+
 describe("production target guard", () => {
   test("accepts the expected persistent-disk path when the file exists", () => {
-    withDir(neutralDir("guard-mount-"), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-mount-")), (dir) => {
       const dbFile = join(dir, EXPECTED_DB_FILENAME);
       writeFileSync(dbFile, "");
-      const result = checkProductionTarget(dbFile, { expectedMount: dir });
+      const result = checkProductionTarget(dbFile, mountOpts(dir));
       assert.equal(result.ok, true);
       assert.equal(result.production, true);
       assert.equal(result.detail.under_mount, true);
@@ -42,7 +46,7 @@ describe("production target guard", () => {
   });
 
   test("refuses a stale /tmp CORE_DB_PATH when no rehearsal flag is given", () => {
-    withDir(mkdtempSync(join(tmpdir(), "guard-stale-")), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-stale-")), (dir) => {
       const stale = join(dir, "f.sqlite");
       writeFileSync(stale, "");
       const result = checkProductionTarget(stale);
@@ -53,7 +57,7 @@ describe("production target guard", () => {
   });
 
   test("refuses a /tmp target that even looks production-shaped, without the flag", () => {
-    withDir(mkdtempSync(join(tmpdir(), "guard-shaped-")), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-shaped-")), (dir) => {
       const dbFile = join(dir, EXPECTED_DB_FILENAME);
       writeFileSync(dbFile, "");
       const result = checkProductionTarget(dbFile);
@@ -63,7 +67,7 @@ describe("production target guard", () => {
   });
 
   test("permits a /tmp target only with an explicit rehearsal override", () => {
-    withDir(mkdtempSync(join(tmpdir(), "guard-rehearse-")), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-rehearse-")), (dir) => {
       const copy = join(dir, EXPECTED_DB_FILENAME);
       writeFileSync(copy, "");
       const result = checkProductionTarget(copy, { allowRehearsal: true });
@@ -74,11 +78,11 @@ describe("production target guard", () => {
   });
 
   test("refuses a path outside the expected mount that is not a throwaway location", () => {
-    withDir(neutralDir("guard-other-"), (dir) => {
-      withDir(neutralDir("guard-mount2-"), (otherMount) => {
+    withDir(mkdtempSync(join(TMP, "guard-other-")), (dir) => {
+      withDir(mkdtempSync(join(TMP, "guard-mount2-")), (otherMount) => {
         const dbFile = join(dir, EXPECTED_DB_FILENAME);
         writeFileSync(dbFile, "");
-        const result = checkProductionTarget(dbFile, { expectedMount: otherMount });
+        const result = checkProductionTarget(dbFile, mountOpts(otherMount));
         assert.equal(result.ok, false);
         assert.match(result.detail.reason, /does not resolve to the expected persistent-disk location/);
       });
@@ -86,9 +90,9 @@ describe("production target guard", () => {
   });
 
   test("refuses a production-mounted path when the file is missing", () => {
-    withDir(neutralDir("guard-missing-"), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-missing-")), (dir) => {
       const missing = join(dir, EXPECTED_DB_FILENAME);
-      const result = checkProductionTarget(missing, { expectedMount: dir });
+      const result = checkProductionTarget(missing, mountOpts(dir));
       assert.equal(result.ok, false);
       assert.equal(result.production, true);
       assert.match(result.detail.reason, /does not exist/);
@@ -96,10 +100,10 @@ describe("production target guard", () => {
   });
 
   test("refuses a wrong filename inside the expected mount", () => {
-    withDir(neutralDir("guard-name-"), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-name-")), (dir) => {
       const wrong = join(dir, "other.sqlite");
       writeFileSync(wrong, "");
-      const result = checkProductionTarget(wrong, { expectedMount: dir });
+      const result = checkProductionTarget(wrong, mountOpts(dir));
       assert.equal(result.ok, false);
       assert.equal(result.production, true);
       assert.match(result.detail.reason, /expected filename/);
@@ -107,7 +111,7 @@ describe("production target guard", () => {
   });
 
   test("assertProductionTarget throws with an actionable message", () => {
-    withDir(mkdtempSync(join(tmpdir(), "guard-throw-")), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-throw-")), (dir) => {
       const stale = join(dir, "f.sqlite");
       writeFileSync(stale, "");
       assert.throws(
@@ -123,10 +127,10 @@ describe("production target guard", () => {
   });
 
   test("describeTarget distinguishes production from rehearsal", () => {
-    withDir(neutralDir("guard-desc-"), (dir) => {
+    withDir(mkdtempSync(join(TMP, "guard-desc-")), (dir) => {
       const dbFile = join(dir, EXPECTED_DB_FILENAME);
       writeFileSync(dbFile, "");
-      assert.match(describeTarget(checkProductionTarget(dbFile, { expectedMount: dir })), /^production/);
+      assert.match(describeTarget(checkProductionTarget(dbFile, mountOpts(dir))), /^production/);
       assert.match(describeTarget(checkProductionTarget(dbFile, { allowRehearsal: true })), /non-production/);
     });
   });
