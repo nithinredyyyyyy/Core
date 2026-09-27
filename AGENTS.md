@@ -177,3 +177,24 @@ The 401 on `/api/auth/me` for anonymous visitors is expected. A 429 during
 scripted sweeps means the rate limiter is working, not that the page is broken
 — pace the requests and re-check.
 
+
+## Auth model (important)
+
+- Sessions are a self-contained HMAC-signed token (`server/services/auth.js`), signed with `CORE_AUTH_SESSION_SECRET`.
+- The token travels in an **HttpOnly cookie** (`stagecore_auth_token`), never in JS-readable storage or a custom header.
+- State-changing requests require a **double-submit CSRF token**: the server sets a readable `stagecore_csrf` cookie and also returns `csrfToken` from `POST /api/auth/google` (cross-origin frontends cannot read the API-domain cookie). The client echoes it in `X-StageCore-CSRF`.
+- `POST /api/auth/logout` revokes the token server-side (`revokeToken`) and clears cookies. Revocation is in-memory, so it does not survive a restart or span instances.
+- Cookie `SameSite` is `lax` by default and `none` in production (cross-site Vercel frontend). Override with `CORE_AUTH_COOKIE_SAMESITE`.
+- Production **fails fast** if `CORE_AUTH_SESSION_SECRET` is missing.
+- CORS uses an explicit origin allowlist with `credentials: true`; never replace the allowlist with a wildcard.
+
+## Security invariants to preserve
+
+- All SQL is parameterized; table names come from the hardcoded `entityConfigs` map and column identifiers from per-entity allowlists.
+- Every create/update payload is validated with Zod (`server/services/schemas.js`).
+- Admin-only routes call `requireAdminAccess` / `ensureEntityWriteAccess`.
+- Outbound fetches of admin-supplied URLs must go through `server/services/outboundUrl.js`. `fetchPublicText` resolves the hostname **once**, rejects private/loopback/link-local/ULA/metadata addresses and non-http(s) schemes, then pins the validated IP for the actual socket via a custom `lookup` (defeating DNS rebinding). Every redirect hop is re-validated and re-pinned. A 15s timeout and response size cap apply. Never pass a raw user URL to `fetch`, `http.request`, or `https.request` — that would re-resolve the hostname and reopen the rebinding gap.
+- The CSP `script-src` uses a per-request nonce plus a SHA-256 hash for the inline bootstrap script in `index.html`. Inline scripts added to `index.html` must be hashed (the server hashes every `<script>...</script>` block automatically) and never re-enable `'unsafe-inline'` for scripts.
+- Secrets and admin identity live in env vars/dashboard secrets, not in committed config (`render.yaml` uses `sync: false` for `CORE_ADMIN_EMAILS`).
+- Rate limiters in `server/index.js` are mounted on their **own path prefix** (`/api/auth`, `/api/admin`, ...) separately from the routers. Do not mount them on the shared `/api` path — that runs every limiter for every API request and makes the strictest one (auth, 20/min) the effective cap for the whole API.
+- Any redirect target derived from untrusted input (query params, API responses) must pass through `safeInternalPath` (`src/lib/safeRedirect.js`) before `navigate()`/`<Navigate>`. A leading `\` is treated as `/` by browsers, so `/\evil.com` is an off-origin open redirect even though it passes a naive `startsWith("/")` check.

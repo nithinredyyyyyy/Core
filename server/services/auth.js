@@ -11,7 +11,10 @@ export const AUTH_SESSION_SECRET = String(
   process.env.CORE_AUTH_SESSION_SECRET || "",
 );
 if (isProduction && !AUTH_SESSION_SECRET) {
-  logger.warn("CORE_AUTH_SESSION_SECRET is not set. Using random secret — sessions will not persist across restarts.");
+  logger.error(
+    "CORE_AUTH_SESSION_SECRET is not set. Refusing to start in production — set it to a stable 32+ byte secret.",
+  );
+  throw new Error("CORE_AUTH_SESSION_SECRET is required in production");
 }
 const EFFECTIVE_SECRET = AUTH_SESSION_SECRET || randomBytes(32).toString("hex");
 
@@ -31,6 +34,12 @@ const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 const revokedTokens = new Set();
 
+export const AUTH_COOKIE_NAME = "stagecore_auth_token";
+export const CSRF_COOKIE_NAME = "stagecore_csrf";
+export const CSRF_HEADER_NAME = "x-stagecore-csrf";
+
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
 export function revokeToken(tokenHash) {
   revokedTokens.add(tokenHash);
   if (revokedTokens.size > 10000) {
@@ -41,6 +50,111 @@ export function revokeToken(tokenHash) {
 
 export function isTokenRevoked(tokenHash) {
   return revokedTokens.has(tokenHash);
+}
+
+function hashToken(token) {
+  return createHash("sha256").update(String(token)).digest("hex");
+}
+
+function parseCookies(req) {
+  const header = req?.headers?.cookie;
+  if (!header) return {};
+  const cookies = {};
+  for (const part of String(header).split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) continue;
+    const key = part.slice(0, separator).trim();
+    if (!key) continue;
+    const value = part.slice(separator + 1).trim();
+    try {
+      cookies[key] = decodeURIComponent(value);
+    } catch {
+      cookies[key] = value;
+    }
+  }
+  return cookies;
+}
+
+function constantTimeEqual(left, right) {
+  const leftBuffer = Buffer.from(String(left), "utf8");
+  const rightBuffer = Buffer.from(String(right), "utf8");
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function getSessionToken(req) {
+  const cookies = parseCookies(req);
+  const cookieToken = cookies[AUTH_COOKIE_NAME];
+  return cookieToken ? String(cookieToken).trim() : "";
+}
+
+// Same-origin deploys (Express serving the built SPA) work with "lax"; the
+// Vercel preview frontend calls the API cross-site, which requires "none"
+// (browser-enforced Secure) and leans on the double-submit CSRF token.
+const AUTH_COOKIE_SAMESITE = String(
+  process.env.CORE_AUTH_COOKIE_SAMESITE || (isProduction ? "none" : "lax"),
+).toLowerCase();
+
+const AUTH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: isProduction || AUTH_COOKIE_SAMESITE === "none",
+  sameSite: AUTH_COOKIE_SAMESITE,
+  path: "/",
+};
+
+const CSRF_COOKIE_OPTIONS = {
+  httpOnly: false,
+  secure: isProduction || AUTH_COOKIE_SAMESITE === "none",
+  sameSite: AUTH_COOKIE_SAMESITE,
+  path: "/",
+};
+
+export function issueAuthSessionCookies(res, token) {
+  const csrfToken = randomBytes(32).toString("base64url");
+  res.cookie(AUTH_COOKIE_NAME, token, {
+    ...AUTH_COOKIE_OPTIONS,
+    maxAge: TOKEN_EXPIRY_MS,
+  });
+  res.cookie(CSRF_COOKIE_NAME, csrfToken, {
+    ...CSRF_COOKIE_OPTIONS,
+    maxAge: TOKEN_EXPIRY_MS,
+  });
+  return csrfToken;
+}
+
+export function clearAuthSessionCookies(res) {
+  res.clearCookie(AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS);
+  res.clearCookie(CSRF_COOKIE_NAME, CSRF_COOKIE_OPTIONS);
+}
+
+export function revokeRequestToken(req) {
+  const token = getSessionToken(req);
+  if (!token) return false;
+  revokeToken(hashToken(token));
+  return true;
+}
+
+export function enforceCsrfProtection(req, res, next) {
+  if (!MUTATING_METHODS.has(req.method)) {
+    return next();
+  }
+
+  const cookies = parseCookies(req);
+  const sessionToken = cookies[AUTH_COOKIE_NAME];
+  if (!sessionToken) {
+    return next();
+  }
+
+  const csrfCookie = cookies[CSRF_COOKIE_NAME] || "";
+  const csrfHeader = String(req.headers[CSRF_HEADER_NAME] || "");
+  if (!csrfCookie || !csrfHeader || !constantTimeEqual(csrfCookie, csrfHeader)) {
+    return res.status(403).json({
+      error: "Invalid CSRF token",
+      code: "csrf_invalid",
+    });
+  }
+
+  return next();
 }
 
 function encodeTokenSegment(value) {
@@ -82,21 +196,14 @@ export function createAuthSession(user) {
 }
 
 function resolveAppAuthSession(req) {
-  const rawToken = String(req.headers["x-stagecore-auth-token"] || "").trim();
+  const rawToken = getSessionToken(req);
   if (!rawToken) return null;
 
   const [encodedPayload, providedSignature] = rawToken.split(".");
   if (!encodedPayload || !providedSignature) return null;
 
   const expectedSignature = signAuthSessionPayload(encodedPayload);
-  const providedBuffer = Buffer.from(providedSignature, "utf8");
-  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
-
-  if (providedBuffer.length !== expectedBuffer.length) {
-    return null;
-  }
-
-  if (!timingSafeEqual(providedBuffer, expectedBuffer)) {
+  if (!constantTimeEqual(providedSignature, expectedSignature)) {
     return null;
   }
 
@@ -110,8 +217,7 @@ function resolveAppAuthSession(req) {
       return null;
     }
 
-    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-    if (revokedTokens.has(tokenHash)) {
+    if (isTokenRevoked(hashToken(rawToken))) {
       return null;
     }
 

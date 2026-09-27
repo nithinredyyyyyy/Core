@@ -5,12 +5,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { GOOGLE_CLIENT_ID, base44 } from "@/api/base44Client";
 import { BrandMark } from "@/components/shared/BrandMark";
 import { useToast } from "@/components/ui/use-toast";
+import { safeInternalPath } from "@/lib/safeRedirect";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const rawReturnTo = searchParams.get("returnTo") || "/";
-  const returnTo = rawReturnTo.startsWith("/") && !rawReturnTo.startsWith("//") ? rawReturnTo : "/";
+  const returnTo = safeInternalPath(searchParams.get("returnTo"));
   const qc = useQueryClient();
   const { toast } = useToast();
   const [googleReady, setGoogleReady] = useState(false);

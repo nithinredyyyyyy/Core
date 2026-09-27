@@ -29,6 +29,10 @@ function deriveStandingsFromMatchResults(tournamentId, stages, stageGroups) {
       JOIN teams tm ON tm.id = mr.team_id
       WHERE mr.tournament_id = ?
         AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+        AND mr.match_id NOT IN (
+          SELECT match_id FROM match_results
+          WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+        )
     `,
     )
     .all(tournamentId);

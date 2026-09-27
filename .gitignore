@@ -48,6 +48,7 @@ tmp-*.json
 auth
 auth-wal
 *.sql
+!server/db/migrations/*.sql
 *.cjs
 !server/scripts/*.cjs
 test-*.mjs

@@ -8,9 +8,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "..", "data");
 const migrationDir = path.join(__dirname, "migrations");
-const dbPath = path.join(dataDir, "stagecore.sqlite");
+// CORE_DB_PATH lets tests and validation runs point at a throwaway database so
+// they never mutate the committed server/data/stagecore.sqlite.
+const dbPath = process.env.CORE_DB_PATH
+  ? path.resolve(process.env.CORE_DB_PATH)
+  : path.join(dataDir, "stagecore.sqlite");
 fs.mkdirSync(migrationDir, { recursive: true });
-fs.mkdirSync(dataDir, { recursive: true });
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
@@ -466,16 +470,28 @@ export function recomputeTeamStats() {
             SELECT SUM(mr.kill_points) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           total_points = COALESCE((
             SELECT SUM(mr.total_points) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           matches_played = COALESCE((
             SELECT SUM(COALESCE(mr.matches_count, 1)) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           wins = COALESCE((
             SELECT SUM(
@@ -487,6 +503,10 @@ export function recomputeTeamStats() {
             ) FROM match_results mr
             WHERE mr.team_id = teams.id
               AND COALESCE(NULLIF(mr.publication_status, ''), 'published') = 'published'
+              AND mr.match_id NOT IN (
+                SELECT match_id FROM match_results
+                WHERE COALESCE(NULLIF(publication_status, ''), 'published') <> 'published'
+              )
           ), 0),
           updated_date = ?
     `,

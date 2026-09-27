@@ -71,19 +71,7 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("operations");
   const { data: overview = null, isError: overviewError } = useQuery({
     queryKey: ["admin-overview"],
-    queryFn: async () => {
-      const authSession = base44.auth.getStoredSession();
-      const response = await fetch("/api/admin/overview", {
-        headers: {
-          "Content-Type": "application/json",
-          ...(authSession.token ? { "X-StageCore-Auth-Token": authSession.token } : {}),
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to load admin overview: ${response.status}`);
-      }
-      return response.json();
-    },
+    queryFn: () => base44.admin.overview(),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
