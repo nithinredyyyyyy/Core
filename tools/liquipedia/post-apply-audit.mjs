@@ -34,13 +34,27 @@ function arg(name, fallback) {
 const dbPath = arg("db", process.env.CORE_DB_PATH);
 const jsonPath = arg("json");
 const baselinePath = arg("baseline");
+const rehearsal = process.argv.includes("--rehearsal");
 if (!dbPath) {
-  console.error("Usage: node tools/liquipedia/post-apply-audit.mjs --db <path> [--json <out>] [--baseline <pre-apply-db>]");
+  console.error("Usage: node tools/liquipedia/post-apply-audit.mjs --db <path> [--json <out>] [--baseline <pre-apply-db>] [--rehearsal]");
   process.exit(2);
 }
 if (!fs.existsSync(dbPath)) {
   console.error(`Database not found: ${dbPath}`);
   process.exit(2);
+}
+
+// The audit must also prove it is looking at the intended target. Reading the
+// wrong database would report a clean pass over data nobody changed.
+const guard = await import("./production-target-guard.mjs");
+try {
+  guard.assertProductionTarget(dbPath, {
+    allowRehearsal: rehearsal,
+    rehearsalReason: rehearsal ? "operator passed --rehearsal" : undefined,
+  });
+} catch (error) {
+  console.error(error.message);
+  process.exit(3);
 }
 
 const Database = (await import("better-sqlite3")).default;

@@ -238,11 +238,27 @@ including the atomic synthetic replacement, its idempotency, and canonical-row
 consistency under the dispute policy. The pipeline is ready for an apply decision
 on this single stage.
 
-Proposed production gate (unchanged in shape):
+Proposed production gate (decided, 2026-09-26):
 
 ```
-DRY RUN ✅ → REVIEW DISPUTES → EXPLICIT APPLY → POST-APPLY VALIDATION
+SOURCE EXTRACTION
+  -> MAP RECONCILIATION APPROVED
+  -> DRY RUN
+  -> BACKUP
+  -> PRODUCTION APPLY
+  -> POST-APPLY AUDIT
 ```
+
+The apply must run against the actual Render Persistent Disk, not the repository
+DB. Both the emitter and the post-apply audit refuse a target that does not resolve
+to `/app/server/data/stagecore.sqlite` unless `--rehearsal` is passed explicitly.
+
+A third decision is recorded alongside the dispute policy: the per-match map
+identity on `m4`/`m10`/`m16` (CORE `Erangel` vs source `Sanhok`) is corrected to the
+source value under `PRESERVE_SOURCE_V1`. This is a per-pilot decision record naming
+exactly `m4:map`, `m10:map`, `m16:map` - it is not a general "source always wins"
+rule. Any other difference is reported as `UNAPPROVED_SOURCE_DIFFERS` and refuses
+the apply. See `tools/liquipedia/source-correction-policy.mjs`.
 
 The dispute review has now been answered for this pilot: disputes are **represented
 under `PRESERVE_DISPUTE_V1`**, not adjudicated, and do not block the match/result

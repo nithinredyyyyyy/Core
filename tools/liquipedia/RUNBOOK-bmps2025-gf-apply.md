@@ -27,20 +27,41 @@ One stage: **Battlegrounds Mobile India Pro Series 2025 → Grand Finals**.
 
 ## Prerequisites
 
-- The real production database path. Do **not** point `--db` at the committed
-  `server/data/stagecore.sqlite`; that blob is not the runtime store and predates
-  the provenance migrations.
+- The real production database path. It must resolve to the Render Persistent
+  Disk mount: `/app/server/data/stagecore.sqlite`. Do **not** point `--db` at the
+  committed `server/data/stagecore.sqlite`; that blob is not the runtime store and
+  predates the provenance migrations.
 - A byte-exact pre-apply copy of the live database, kept as the rollback and as
   the `--baseline` for the audit.
 - `CORE_AUTH_SESSION_SECRET` and other production env present for the app, though
   the apply itself is a standalone script.
+
+### Target guard (abort condition)
+
+Both `emit-payload.mjs` and `post-apply-audit.mjs` refuse to run unless `--db`
+resolves to `/app/server/data/stagecore.sqlite`, or unless an explicit
+`--rehearsal` override is passed. A stale or exported `CORE_DB_PATH` — for example
+a leftover `/tmp/tmp.*/f.sqlite` — is refused hard:
+
+```
+Refusing to operate on an unexpected database target: /tmp/tmp.I83UrALzaG/f.sqlite
+  reason: target is in a throwaway location, never production; pass --rehearsal for an intentional copy
+  expected: /app/server/data/stagecore.sqlite
+  observed: CORE_DB_PATH=/tmp/tmp.I83UrALzaG/f.sqlite
+```
+
+Exit code `3` on refusal. This is intentional: an apply that silently lands in a
+throwaway file reports success against the wrong database, which is worse than a
+hard stop. On the production host, `--db /app/server/data/stagecore.sqlite` (or
+`CORE_DB_PATH` already pointing there) is the expected invocation, with no
+`--rehearsal`.
 
 ## Procedure
 
 ### 1. Back up the live database
 
 ```bash
-cp <live>/stagecore.sqlite <backup-dir>/stagecore.pre-apply.sqlite
+cp /app/server/data/stagecore.sqlite <backup-dir>/stagecore.pre-apply.sqlite
 sha256sum <backup-dir>/stagecore.pre-apply.sqlite
 ```
 
@@ -60,14 +81,17 @@ not apply over a failing backup.
 
 ### 3. Emit the payload
 
+On the production host (no `--rehearsal`):
+
 ```bash
 node tools/liquipedia/emit-payload.mjs \
-  --db <live>/stagecore.sqlite \
+  --db /app/server/data/stagecore.sqlite \
   --out tools/reports/phase2-bmps2025-gf-payload.json
 ```
 
-The emitter reads team identity read-only, reconciles the source aggregate against
-the existing CORE snapshot, and writes the payload in the exact shape
+The emitter reads team identity and existing match rows read-only, reconciles the
+source aggregate against the existing CORE snapshot, classifies map differences
+against the approved decision record, and writes the payload in the exact shape
 `enrich-stage.mjs` consumes. Expect:
 
 ```
@@ -76,28 +100,40 @@ Results:     288
 Player rows: 0 (SOURCE_NOT_AVAILABLE)
 Consistent:  true
 Disputes:    2 under PRESERVE_DISPUTE_V1
+
+Map reconciliation (PRESERVE_SOURCE_V1): 3 approved correction(s)
+  SOURCE_CORRECTION  m4 map: Erangel -> Sanhok  [PRESERVE_SOURCE_V1]
+  SOURCE_CORRECTION  m10 map: Erangel -> Sanhok  [PRESERVE_SOURCE_V1]
+  SOURCE_CORRECTION  m16 map: Erangel -> Sanhok  [PRESERVE_SOURCE_V1]
+  (15 match maps unchanged)
 ```
+
+**Review the map reconciliation before continuing.** If it reports
+`UNAPPROVED source differences`, the emitter exits non-zero: a difference exists
+that the decision record does not cover. Stop and get an explicit decision; do not
+apply.
 
 ### 4. Dry run
 
 ```bash
-CORE_DB_PATH=<live>/stagecore.sqlite \
-  node tools/enrich-stage.mjs --file tools/reports/phase2-bmps2025-gf-payload.json
+node tools/enrich-stage.mjs \
+  --file tools/reports/phase2-bmps2025-gf-payload.json
 ```
 
-Expect `Dry run validated the payload; rolled back with no writes.` A non-zero exit
-or a thrown error stops the procedure.
+`CORE_DB_PATH` must already point at the persistent disk. Expect
+`Dry run validated the payload; rolled back with no writes.` A non-zero exit or a
+thrown error stops the procedure.
 
 ### 5. Apply
 
 ```bash
-CORE_DB_PATH=<live>/stagecore.sqlite \
-  node tools/enrich-stage.mjs \
-    --file tools/reports/phase2-bmps2025-gf-payload.json \
-    --apply --replace-synthetic
+node tools/enrich-stage.mjs \
+  --file tools/reports/phase2-bmps2025-gf-payload.json \
+  --apply --replace-synthetic
 ```
 
-Expect `removedSyntheticMatches: 1`, `matches: 18`, `results: 288`,
+`CORE_DB_PATH` must already point at the persistent disk (the guard applies here
+too). Expect `removedSyntheticMatches: 1`, `matches: 18`, `results: 288`,
 `playerStats: 0`. The replacement is one transaction: either all of it lands or
 none of it does.
 
@@ -105,7 +141,7 @@ none of it does.
 
 ```bash
 node tools/liquipedia/post-apply-audit.mjs \
-  --db <live>/stagecore.sqlite \
+  --db /app/server/data/stagecore.sqlite \
   --baseline <backup-dir>/stagecore.pre-apply.sqlite \
   --json tools/reports/phase2-bmps2025-gf-post-apply-audit.json
 ```
@@ -120,12 +156,32 @@ Re-run step 5 and confirm the second apply reports `removedSyntheticMatches: 0` 
 that the stage signature is unchanged:
 
 ```bash
-python3 tools/liquipedia/stage-signature.py <live>/stagecore.sqlite   # before
+python3 tools/liquipedia/stage-signature.py /app/server/data/stagecore.sqlite   # before
 node tools/enrich-stage.mjs ... --apply --replace-synthetic
-python3 tools/liquipedia/stage-signature.py <live>/stagecore.sqlite   # after — must match
+python3 tools/liquipedia/stage-signature.py /app/server/data/stagecore.sqlite   # after: must match
 ```
 
 If the signature changed, stop and roll back from the step 1 backup.
+
+## Production gate
+
+The approved order of operations. Each step must complete cleanly before the next:
+
+```
+source extraction
+  -> map reconciliation approved   (emit-payload.mjs: 3 SOURCE_CORRECTION, 0 UNAPPROVED)
+  -> dry run                       (enrich-stage.mjs, rolls back)
+  -> backup                        (byte-identical copy, verified)
+  -> production apply              (enrich-stage.mjs --apply --replace-synthetic, on the Render disk)
+  -> post-apply audit              (exit 0)
+```
+
+The production operation happens against the actual Render Persistent Disk, never
+the repository DB, and never a `/tmp` copy except under an explicit `--rehearsal`.
+
+Structural result: **19 pre-apply matches -> 18 real matches + 1 synthetic
+aggregate -> remove only the synthetic aggregate -> 18 populated real matches /
+288 results.** Net match-count change is `-1`, not `-19`.
 
 ## Acceptance criteria
 
@@ -156,16 +212,21 @@ carries the same tournament id and the same pre-apply shape as production.
 
 | Check | Result |
 |---|---|
+| Emit + map reconciliation | 3 `SOURCE_CORRECTION`, 0 `UNAPPROVED` |
 | Dry run (no writes) | pass |
 | Apply summary | `removedSyntheticMatches: 1`, 18 matches, 288 results, 0 player stats |
-| Post-apply audit, no baseline | 17/17 |
 | Post-apply audit with baseline | 21/21 |
 | Second apply | `removedSyntheticMatches: 0`, signature unchanged |
+| m4/m10/m16 after apply | Sanhok (source correction applied) |
 | Matches outside the stage | 221 → 221 (untouched) |
 | `integrity_check` / FK | `ok` / 0 violations |
 
 Stage signature before second apply = after second apply
 (`7b477b813ba2d4d459ed486556b8a38add759da57c42191b284939d27c64577c`).
+
+The unapproved-difference tripwire was also exercised: tampering a non-approved
+match map in the copy caused the emitter to print `UNAPPROVED_SOURCE_DIFFERS` and
+exit `3`, refusing to produce a safe payload.
 
 ## Things the operator must know before applying
 
@@ -183,23 +244,29 @@ Net match-count movement is therefore `-1`, not `-19`. The audit expects exactly
 that (`stage_match_delta_expected`). The 18 placeholder rows are pre-existing
 CORE data, not something this import creates.
 
-### 2. The apply changes three map values on existing rows
+### 2. The apply changes three map values on existing rows (decided)
 
-| Match | CORE placeholder | Source (Liquipedia) |
-|---|---|---|
-| 4 | Erangel | **Sanhok** |
-| 10 | Erangel | **Sanhok** |
-| 16 | Erangel | **Sanhok** |
+| Match | CORE placeholder | Source (Liquipedia) | Decision |
+|---|---|---|---|
+| 4 | Erangel | **Sanhok** | accept source |
+| 10 | Erangel | **Sanhok** | accept source |
+| 16 | Erangel | **Sanhok** | accept source |
 
-The source explicitly publishes Sanhok for these three
-(`|map4={{Map|...|map=Sanhok}}` etc. in the fixture), so the source values are the
-better-evidenced ones. But this is an **overwrite of existing CORE values that the
-dispute policy does not cover**: `PRESERVE_DISPUTE_V1` classifies team-aggregate
-kill/placement splits, not per-match map identity. Decide explicitly whether the
-apply should correct maps before running it. If maps must be preserved, do not
-apply — the enrichment service has no per-field "source wins except maps" mode.
+**Decision (operator, 2026-09-26): preserve the source correction.** The CORE rows
+are pre-extraction placeholders carrying Erangel; the source explicitly publishes
+Sanhok for these matches; the extraction replaces the placeholder representation
+with source-backed match data, so the source-backed value belongs in the canonical
+record.
 
-### 3. Dispute metadata is an artifact, not a database column
+This is **not a general "Liquipedia always wins" rule.** It is a per-pilot decision
+record in `tools/liquipedia/source-correction-policy.mjs`
+(`PRESERVE_SOURCE_V1`), naming exactly `m4:map`, `m10:map`, `m16:map`. Anything
+not on that list is surfaced as `UNAPPROVED_SOURCE_DIFFERS` and refuses the apply.
+The three changes are printed by the emitter before any apply
+(`SOURCE_CORRECTION m4 map: Erangel -> Sanhok [PRESERVE_SOURCE_V1]`, etc.), so they
+are auditable rather than silent.
+
+### 3. Dispute metadata stays an artifact for this pilot (decided)
 
 `enrichStage`/`replaceSyntheticSnapshot` persist matches, results, and
 `match_sources` provenance. They do **not** persist `dispute_policy`,
@@ -209,8 +276,19 @@ payload JSON, because `matches` and `match_results` have no columns for them.
 So "team-level `PRESERVE_DISPUTE_V1` metadata retained" cannot be satisfied as a
 database property today. It is satisfied as **retained in the committed payload
 artifact** (`tools/reports/phase2-bmps2025-gf-payload.json`, `_metadata.dispute_policy`).
-If it must live in the database, that needs a schema migration and an enrichment
-change — out of scope for this pilot and not something to fake.
+
+**Decision (operator, 2026-09-26): keep it as an artifact for this pilot.** Do not
+add a migration solely to persist dispute metadata. The existing schema is not
+designed to hold `team_aggregates`/policy metadata, and a migration now would
+expand the pilot's scope. The committed artifact retains the canonical source
+values in `match_results` (the DB), plus `DISPUTED_SPLIT_TOTAL_AGREES`,
+`PRESERVE_DISPUTE_V1`, the existing CORE values, and the adjudication state (the
+artifact). The database itself holds the canonical imported match/result data and
+normal provenance fields, not an improvised metadata structure.
+
+If reconciliation history later needs to be queryable from CORE, design a
+dedicated provenance/reconciliation schema separately rather than squeezing it
+into the current tables.
 
 ### 4. `player_match_stats` absence is implicit, not recorded
 

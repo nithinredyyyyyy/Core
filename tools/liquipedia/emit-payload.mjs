@@ -47,11 +47,27 @@ if (!dbPath) {
   console.error("Point --db at the database whose team identity should be used.");
   process.exit(2);
 }
+// Never target a throwaway database by accident. A rehearsal against a copy needs
+// the explicit --rehearsal flag; production needs no flag and must resolve to the
+// mounted persistent disk.
+const guard = await import("./production-target-guard.mjs");
+const rehearsal = has("rehearsal");
+let target;
+try {
+  target = guard.assertProductionTarget(dbPath, {
+    allowRehearsal: rehearsal,
+    rehearsalReason: rehearsal ? "operator passed --rehearsal" : undefined,
+  });
+} catch (error) {
+  console.error(error.message);
+  process.exit(3);
+}
 if (!fs.existsSync(dbPath)) {
   console.error(`Database not found: ${dbPath}`);
   process.exit(2);
 }
 const outPath = arg("out", path.join(REPO_ROOT, "tools", "reports", "phase2-bmps2025-gf-payload.json"));
+console.log(`Target: ${guard.describeTarget(target)}`);
 
 const parser = await import("./parser.mjs");
 const Database = (await import("better-sqlite3")).default;
@@ -77,6 +93,16 @@ const existingTeams = db
        JOIN teams tm ON tm.id = mr.team_id
       WHERE m.tournament_id = ? AND m.stage = ?
         AND (m.match_number = 0 OR m.match_number IS NULL)`,
+  )
+  .all(TARGET.tournamentId, TARGET.stage);
+
+// Existing per-match placeholders, so a map change on an existing row is
+// classified against the approved decision record rather than applied silently.
+const existingMatches = db
+  .prepare(
+    `SELECT match_number, map FROM matches
+      WHERE tournament_id = ? AND stage = ? AND match_number IS NOT NULL AND match_number >= 1
+      ORDER BY match_number`,
   )
   .all(TARGET.tournamentId, TARGET.stage);
 db.close();
@@ -153,6 +179,15 @@ const canonical = parser.buildCanonicalPayload({
   disputePolicy: "PRESERVE_DISPUTE_V1",
 });
 
+// Classify map differences against the approved, per-pilot decision record. This
+// is what makes the m4/m10/m16 change auditable instead of silent: every observed
+// difference is either an approved SOURCE_CORRECTION or an UNAPPROVED tripwire.
+const sourceCorrection = await import("./source-correction-policy.mjs");
+const mapReconciliation = sourceCorrection.buildMapReconciliation(
+  existingMatches,
+  canonical.matches,
+);
+
 const payload = {
   tournamentId: TARGET.tournamentId,
   stage: TARGET.stage,
@@ -179,6 +214,7 @@ const payload = {
     player_match_stats_status: "SOURCE_NOT_AVAILABLE",
     player_match_stats_reason: canonical.validation.player_match_stats_reason,
     dispute_policy: canonical.dispute_policy,
+    map_reconciliation: mapReconciliation,
     reconciliation: {
       field_exact: reconciliation.filter((r) => r.discrepancy_classification === parser.FIELD_EXACT).length,
       disputed_split_total_agrees: reconciliation.filter(
@@ -205,6 +241,27 @@ console.log(
 console.log(`Player rows: ${payload.playerStats.length} (SOURCE_NOT_AVAILABLE)`);
 console.log(`Consistent:  ${payload._metadata.canonical_rows_consistent}`);
 console.log(`Disputes:    ${payload._metadata.dispute_policy.disputes.length} under ${payload._metadata.dispute_policy.policy_version}`);
+console.log("");
+console.log(`Map reconciliation (${mapReconciliation.policy_version}): ${mapReconciliation.corrections.length} approved correction(s)`);
+for (const c of mapReconciliation.corrections) {
+  console.log(`  ${c.status}  m${c.match_number} ${c.field}: ${c.existing_core} -> ${c.source}  [${c.policy}]`);
+}
+console.log(`  (${mapReconciliation.unchanged_count} match maps unchanged)`);
+if (mapReconciliation.unapproved.length > 0) {
+  console.log("");
+  console.log("UNAPPROVED source differences — refusing to emit a safe payload:");
+  for (const u of mapReconciliation.unapproved) {
+    console.log(`  m${u.match_number} ${u.field}: core=${u.existing_core} source=${u.source} — ${u.detail}`);
+  }
+}
+if (!mapReconciliation.approved_all_exercised) {
+  console.log("");
+  console.log("WARNING: approved corrections not exercised by the data:");
+  for (const m of mapReconciliation.approved_not_exercised) {
+    console.log(`  m${m.match_number} ${m.field} (approved ${m.existing_core} -> ${m.source})`);
+  }
+}
+console.log("");
 console.log(`Wrote:       ${outPath}`);
 console.log("");
 console.log("Dry run:  node tools/enrich-stage.mjs --file <payload>");
@@ -212,4 +269,12 @@ console.log("Apply:    node tools/enrich-stage.mjs --file <payload> --apply --re
 if (has("apply")) {
   console.log("");
   console.log("NOTE: --apply is not performed by this emitter. Use enrich-stage.mjs above.");
+}
+
+// A difference nobody approved must not reach an apply. The payload is still
+// written for review, but the emitter exits non-zero so a pipeline stops here.
+if (!mapReconciliation.safe_to_apply) {
+  console.error("");
+  console.error(`FAIL: ${mapReconciliation.unapproved.length} unapproved source difference(s). Review before applying.`);
+  process.exit(1);
 }
