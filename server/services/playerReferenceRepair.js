@@ -57,6 +57,17 @@ function getOrphanIds() {
   return orphans;
 }
 
+// Rows scanned in the referencing tables. Reported so an operator can tell
+// "nothing to do" apart from "the repair did not run".
+function countScannedReferenceRows() {
+  let total = 0;
+  for (const { table } of REFERENCING_TABLES) {
+    if (!tableExists(table)) continue;
+    total += db.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c;
+  }
+  return total;
+}
+
 // Candidate IGNs for an orphan id: the names recorded on its rows and aliases.
 function candidateNames(orphanId) {
   const counts = new Map();
@@ -123,25 +134,42 @@ function adoptOrphanPlayers(orphans) {
 }
 
 export function repairPlayerReferences() {
+  const startedAt = Date.now();
+  const examined = countScannedReferenceRows();
   const orphans = getOrphanIds();
-  if (orphans.size === 0) return { orphans: 0, repointed: 0, cleared: 0, removed: 0, unresolved: 0 };
+
+  // Healthy startup must be observable as a zero-write operation, not silence.
+  if (orphans.size === 0) {
+    const clean = {
+      examined,
+      orphans: 0,
+      repointed: 0,
+      cleared: 0,
+      removed: 0,
+      adopted: 0,
+      unresolved: 0,
+      durationMs: Date.now() - startedAt,
+    };
+    logger.info("playerReferenceRepair", clean);
+    return clean;
+  }
 
   const index = buildLiveIndex();
   const mapping = new Map();
-  let unresolved = 0;
   for (const orphanId of orphans) {
     const target = resolveTarget(orphanId, index);
     if (target) mapping.set(orphanId, target);
-    else unresolved += 1;
   }
 
   const stats = {
+    examined,
     orphans: orphans.size,
     repointed: 0,
     cleared: 0,
     removed: 0,
     adopted: 0,
     unresolved: 0,
+    durationMs: Date.now() - startedAt,
   };
 
   runInTransaction(() => {
@@ -178,8 +206,9 @@ export function repairPlayerReferences() {
     dedupe("player_season_ratings", "player_id, season", stats);
   });
 
-  logger.info("Player reference repair complete", stats);
   stats.unresolved = [...orphans].filter((id) => !mapping.has(id)).length;
+  stats.durationMs = Date.now() - startedAt;
+  logger.info("playerReferenceRepair", stats);
   return stats;
 }
 

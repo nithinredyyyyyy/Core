@@ -3,11 +3,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "../services/logger.js";
+import { applySqlMigrations } from "./migrate.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "..", "data");
-const migrationDir = path.join(__dirname, "migrations");
+// The migration directory is the committed set. Tests may point it elsewhere via
+// CORE_MIGRATION_DIR, but only under NODE_ENV=test, so no production deploy can
+// redirect (or empty) the migration source.
+const migrationDir =
+  process.env.NODE_ENV === "test" && process.env.CORE_MIGRATION_DIR
+    ? path.resolve(process.env.CORE_MIGRATION_DIR)
+    : path.join(__dirname, "migrations");
 // CORE_DB_PATH lets tests and validation runs point at a throwaway database so
 // they never mutate the committed server/data/stagecore.sqlite.
 const dbPath = process.env.CORE_DB_PATH
@@ -190,34 +197,22 @@ db.exec(`
   )
 `);
 
-function applySqlMigrations() {
-  const files = fs
-    .readdirSync(migrationDir)
-    .filter((file) => file.endsWith(".sql"))
-    .sort((a, b) => a.localeCompare(b));
-
-  for (const file of files) {
-    const alreadyApplied = db
-      .prepare("SELECT 1 FROM schema_migrations WHERE id = ?")
-      .get(file);
-    if (alreadyApplied) continue;
-
-    const sql = fs.readFileSync(path.join(migrationDir, file), "utf8").trim();
-    if (!sql) continue;
-
-    runInTransaction(() => {
-      db.exec(sql);
-      db.prepare(
-        "INSERT INTO schema_migrations (id, applied_date) VALUES (?, ?)",
-      ).run(file, new Date().toISOString());
-    });
-  }
-}
-
+// A migration failure must be fatal. Continuing would run the application against
+// a schema that may be half-migrated, and nothing downstream may silently mark the
+// failed migration as applied or reseed the database. Callers of this module
+// (server/index.js) exit non-zero on the thrown error. The transaction in
+// applySqlMigrations() has already rolled the failed migration back by this point.
 try {
-  applySqlMigrations();
+  const { applied } = applySqlMigrations(db, migrationDir);
+  if (applied.length > 0) {
+    logger.info("Applied SQL migrations", { count: applied.length, migrations: applied });
+  }
 } catch (migrationError) {
-  logger.error("Migration warning (non-fatal)", { error: migrationError?.message || migrationError });
+  logger.error("Database migration failed — refusing to start", {
+    error: migrationError?.message || String(migrationError),
+    stack: migrationError?.stack,
+  });
+  throw migrationError;
 }
 
 const ensureColumn = (table, column, definition) => {

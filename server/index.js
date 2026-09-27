@@ -11,8 +11,10 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { z } from "zod";
 import { backfillImportedNewsMetadata } from "./newsIngest.js";
 import { splitTrimmedValues } from "./services/schemas.js";
+import { buildAllowedOrigins, corsOriginCallback } from "./services/corsOrigins.js";
 import { logger } from "./services/logger.js";
 import { seedIfEmpty, ensureLegacyTournaments } from "./services/seed.js";
+import { assertDatabaseUsable } from "./services/dbIntegrity.js";
 import { repairTournamentDataIntegrity } from "./services/tournamentDataRepair.js";
 import { repairPlayerReferences } from "./services/playerReferenceRepair.js";
 import { adminRouter } from "./routes/admin.js";
@@ -67,6 +69,12 @@ if (isProduction) {
   }
 }
 
+// The database is the primary source of truth on the persistent disk. Verify it
+// before any write path runs so a corrupt file can never be silently reset to
+// seed data or overwritten by a backup.
+if (!assertDatabaseUsable()) {
+  process.exit(1);
+}
 seedIfEmpty();
 ensureLegacyTournaments();
 repairTournamentDataIntegrity();
@@ -100,22 +108,14 @@ const CONFIGURED_CORS_ORIGINS = [
   ...splitTrimmedValues(process.env.FRONTEND_ORIGIN || ""),
   ...splitTrimmedValues(process.env.CORS_ORIGIN || ""),
 ];
-const ALLOWED_CORS_ORIGINS = new Set([
-  ...CONFIGURED_CORS_ORIGINS,
-  "https://core-esports-1ibg.onrender.com",
-  "https://core-ten-rouge.vercel.app",
-  "https://core-git-main-nithin-surkantis-projects.vercel.app",
-  ...(!isProduction ? [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://localhost:5173",
-    "https://127.0.0.1:5173",
-    "http://localhost:4000",
-    "http://127.0.0.1:4000",
-    "https://localhost:4000",
-    "https://127.0.0.1:4000",
-  ] : []),
-]);
+const ALLOWED_CORS_ORIGINS = buildAllowedOrigins(process.env, { isProduction });
+
+if (CONFIGURED_CORS_ORIGINS.length === 0) {
+  logger.warn(
+    "No FRONTEND_ORIGIN/CORS_ORIGIN configured. Only local development origins " +
+      "are allowed; a cross-origin production frontend will be rejected.",
+  );
+}
 
 if (process.env.CORE_BACKFILL_NEWS_ON_STARTUP === "1") {
   backfillImportedNewsMetadata();
@@ -127,15 +127,7 @@ app.use("/api", (req, res, next) => {
     // receive the HttpOnly session cookie. Safe because the origin is an
     // explicit allowlist, never a wildcard.
     credentials: true,
-    origin(origin, callback) {
-      if (!origin) {
-        return callback(null, true);
-      }
-      if (ALLOWED_CORS_ORIGINS.has(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS origin not allowed: ${origin}`));
-    },
+    origin: corsOriginCallback(ALLOWED_CORS_ORIGINS),
   })(req, res, next);
 });
 app.use("/api", express.json({ limit: "2mb" }));

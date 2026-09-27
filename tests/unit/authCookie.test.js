@@ -3,11 +3,20 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const authModuleUrl = new URL("../../server/services/auth.js", import.meta.url).href;
+
+// The probe imports server/services/auth.js, which imports server/db.js and runs
+// migrations. Give every probe its own throwaway database so the committed
+// server/data/stagecore.sqlite is never opened (and never mutated) by tests.
+const probeDbDir = mkdtempSync(path.join(tmpdir(), "stagecore-authcookie-"));
+const probeDbPath = path.join(probeDbDir, "stagecore.sqlite");
+process.on("exit", () => rmSync(probeDbDir, { recursive: true, force: true }));
 
 // The cookie module reads its SameSite/Secure policy from env at import time,
 // so each deployment shape needs its own process to exercise the real code.
@@ -37,12 +46,16 @@ async function probeCookies(env) {
       cwd: repoRoot,
       env: {
         ...process.env,
+        CORE_DB_PATH: probeDbPath,
         CORE_AUTH_SESSION_SECRET: "cookie-policy-probe-secret",
         ...env,
       },
     },
   );
-  return JSON.parse(stdout);
+  // Startup logs (migrations, seeding) may precede the probe's JSON on stdout, so
+  // read the last non-empty line — the probe writes its result last.
+  const lastLine = stdout.trim().split("\n").filter(Boolean).pop();
+  return JSON.parse(lastLine);
 }
 
 function findCookie(cookies, name) {

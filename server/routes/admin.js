@@ -8,6 +8,7 @@ import {
   importNewsFromSources,
 } from "../newsIngest.js";
 import { requireAdminAccess } from "../services/auth.js";
+import { getBackupHealth } from "../services/backupState.js";
 import { deriveBmps2026OverviewEntries } from "../services/bmps2026.js";
 import {
   BMPS_2026_PLAYER_STATS_SETTINGS_KEY,
@@ -133,6 +134,24 @@ adminRouter.get("/admin/news/sources", (req, res) => {
       priority: source.priority || "routine",
     })),
   );
+});
+
+// Operational health for the secondary (GitHub) backup. Admin-only: it reports
+// backup recency and failure counts, which are operational details that must not
+// be public. It never exposes the token, the remote URL, or filesystem paths —
+// separately from /api/health, which stays a public liveness probe.
+adminRouter.get("/admin/backup-status", (req, res) => {
+  if (!requireAdminAccess(req, res)) {
+    return;
+  }
+
+  try {
+    return res.json({ backup: getBackupHealth() });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to read backup status" });
+  }
 });
 
 adminRouter.post("/admin/news/import", async (req, res) => {

@@ -5,12 +5,14 @@ import { db } from "../db.js";
 import { logger } from "./logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// CORE_SEED_PATH lets a validation/export run point the seeder at an alternative
-// dataset (e.g. server/seed/canonical.export.json) without touching the shipped
-// seed.json. Defaults to seed.json so production behaviour is unchanged.
+// The canonical export is the intentional, reproducible bootstrap baseline: it is
+// byte-for-byte equivalent to the verified dataset. CORE_SEED_PATH can still point
+// at an alternative dataset for validation/export runs, but the safe default is
+// canonical, so no deploy step has to remember to set and then unset a variable.
+const CANONICAL_SEED_PATH = join(__dirname, "..", "seed", "canonical.export.json");
 const SEED_PATH = process.env.CORE_SEED_PATH
   ? join(process.cwd(), process.env.CORE_SEED_PATH)
-  : join(__dirname, "..", "seed", "seed.json");
+  : CANONICAL_SEED_PATH;
 
 const SEED_TABLES = [
   "tournaments", "teams", "players", "matches", "match_results",
@@ -20,6 +22,13 @@ const SEED_TABLES = [
   "team_aliases", "player_aliases", "news_articles",
   "team_season_ratings", "player_season_ratings",
 ];
+
+// A database is considered populated if it holds at least one tournament. Seed
+// data must never overwrite a populated persistent DB, so this is the single
+// gate used by every write path.
+export function databaseHasData() {
+  return db.prepare("SELECT count(*) as c FROM tournaments").get().c > 0;
+}
 
 export function seedIfEmpty() {
   const total = db.prepare("SELECT count(*) as c FROM tournaments").get().c;
@@ -36,7 +45,7 @@ export function seedIfEmpty() {
     return;
   }
 
-  logger.info("Database is empty — seeding from seed.json...");
+  logger.info(`Database is empty — bootstrapping from ${SEED_PATH}...`);
   const insert = db.transaction(() => {
     for (const table of SEED_TABLES) {
       const rows = seedData[table];
