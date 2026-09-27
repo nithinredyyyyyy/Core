@@ -271,3 +271,24 @@ failure fatal, `0` treated as off), corrupt DB fails fast, backup retention +
 restore, token-leak E2E, and a check that the committed
 `server/data/stagecore.sqlite` hash is unchanged. Run `npm run verify` for the
 full gate.
+
+- `tools/verify-stage-completeness.mjs` is a read-only gate (`query_only = ON`)
+  over stage/result/stat integrity. Point it at a database copy, not the
+  committed blob: `--db <path>` (or `CORE_DB_PATH`). A fresh DB built from
+  `schema.js` plus the migrations carries provenance columns; the committed
+  `server/data/stagecore.sqlite` predates them, so V6 provenance is reported as
+  a note there instead of a failure. Hard failures are V1 (a stage with no
+  matches and no synthetic placeholder), V2 (per-match result cardinality
+  disagrees across matches of one stage), V3 (a synthetic aggregate snapshot
+  still coexists with real per-match rows - this double-counts in standings),
+  V5 (stats pointing at a missing player/match), and V7 (duplicate stage slug,
+  match identity, or source_slug).
+- `tools/enrich-stage.mjs` is the only supported way to run enrichment. It is a
+  dry run unless `--apply` is passed, and `--replace-synthetic` requires
+  `--apply`. Enrichment is never invoked at server startup; importing data is
+  always an explicit operator action.
+- Pre-extraction stages legitimately have synthetic aggregate snapshots
+  (`match_number` `0`/`NULL`). The extraction step must replace them via
+  `enrichStage`/`replaceSyntheticSnapshot` in one transaction, not append beside
+  them.
+

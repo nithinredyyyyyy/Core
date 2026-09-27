@@ -198,6 +198,26 @@ const createSchemas = {
     kills: intField().optional(),
     total_points: intField().optional(),
   }),
+  PlayerMatchStat: z.object({
+    match_id: stringField(),
+    // player_id stays optional: historical sources cannot always resolve a
+    // player to an existing Player row, and player_name is the stable fallback
+    // (it is also part of the table's unique key).
+    player_id: z.string().optional().nullable(),
+    player_name: stringField(),
+    team_id: stringField(),
+    matches_played: intField().optional(),
+    kills: intField().optional(),
+    finishes: intField().optional(),
+    knocks: intField().optional(),
+    deaths: intField().optional(),
+    direct_kills: intField().optional(),
+    grenade_kills: intField().optional(),
+    vehicle_kills: intField().optional(),
+    zone_kills: intField().optional(),
+    source: z.string().optional(),
+    created_by: z.string().optional(),
+  }),
 };
 
 const updateSchemas = Object.fromEntries(
