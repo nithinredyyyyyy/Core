@@ -1,13 +1,49 @@
-import { existsSync } from "node:fs";
+import { existsSync, statSync, unlinkSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import Database from "better-sqlite3";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(repoRoot, "public");
 
-// Import the real DB module (env-aware) so the audit runs against the same
-// connection the server uses rather than a hand-built path.
-const { db: local } = await import(new URL("../server/db.js", import.meta.url));
+// Open the database strictly read-only. Importing server/db.js would run the
+// migration runner on import and insert schema_migrations rows, so the audit
+// must not use that initialisation path. Opening SQLite directly with readonly
+// semantics guarantees SELECT/PRAGMA-only access: any write attempt fails with
+// "attempt to write a readonly database". query_only is an extra API-level guard.
+const dbPath = resolve(
+  process.env.CORE_DB_PATH || join(repoRoot, "server", "data", "stagecore.sqlite"),
+);
+
+// Opening a WAL-mode database read-only still creates empty -wal/-shm sidecars
+// in the database directory. Remember which already existed so we remove only
+// the ones this run created and leave a concurrently running server's sidecars
+// untouched.
+const sidecars = [`${dbPath}-wal`, `${dbPath}-shm`].map((p) => ({
+  path: p,
+  existed: existsSync(p),
+}));
+
+const local = new Database(dbPath, { readonly: true, fileMustExist: true });
+local.pragma("query_only = ON");
+
+const closeReadOnly = () => {
+  try {
+    local.close();
+  } catch {
+    /* already closed */
+  }
+  for (const s of sidecars) {
+    if (s.existed || !existsSync(s.path)) continue;
+    // Only discard an artifact we created: a read-only connection never writes,
+    // so any -wal we caused is empty. A non-empty file would mean real data.
+    try {
+      if (!s.path.endsWith("-wal") || statSync(s.path).size === 0) unlinkSync(s.path);
+    } catch {
+      /* best effort */
+    }
+  }
+};
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -332,4 +368,5 @@ function printReport(report) {
 }
 
 const localReport = buildAudit(local, "LOCAL (server/data/stagecore.sqlite)");
+closeReadOnly();
 printReport(localReport);

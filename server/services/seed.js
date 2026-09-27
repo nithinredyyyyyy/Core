@@ -5,7 +5,12 @@ import { db } from "../db.js";
 import { logger } from "./logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SEED_PATH = join(__dirname, "..", "seed", "seed.json");
+// CORE_SEED_PATH lets a validation/export run point the seeder at an alternative
+// dataset (e.g. server/seed/canonical.export.json) without touching the shipped
+// seed.json. Defaults to seed.json so production behaviour is unchanged.
+const SEED_PATH = process.env.CORE_SEED_PATH
+  ? join(process.cwd(), process.env.CORE_SEED_PATH)
+  : join(__dirname, "..", "seed", "seed.json");
 
 const SEED_TABLES = [
   "tournaments", "teams", "players", "matches", "match_results",
