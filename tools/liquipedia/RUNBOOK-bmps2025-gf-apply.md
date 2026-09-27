@@ -228,6 +228,29 @@ The unapproved-difference tripwire was also exercised: tampering a non-approved
 match map in the copy caused the emitter to print `UNAPPROVED_SOURCE_DIFFERS` and
 exit `3`, refusing to produce a safe payload.
 
+### Guard verified against the CI environment, not only the dev container
+
+The guard tests initially passed locally but failed in CI (5 tests, exit 1) because
+they created temp dirs under `/workspace`, which exists in the dev container but not
+on the GitHub runner. That is a real finding: a guard tested only where it happens
+to be convenient is not tested. The fix moved the tests onto `/tmp` and added an
+explicit forbidden-prefix seam, and the default `/tmp` rule is still exercised
+directly by the stale-path and override tests. CI is now green on the guard:
+
+```
+secret-scan -> success
+build       -> success
+```
+
+The guard was additionally confirmed to refuse a production attempt from an
+environment where `/app/server/data/stagecore.sqlite` does not exist:
+
+```
+Refusing to operate on an unexpected database target: /app/server/data/stagecore.sqlite
+  reason: database file does not exist
+  expected: /app/server/data/stagecore.sqlite
+```
+
 ## Things the operator must know before applying
 
 These surfaced during rehearsal and are not obvious from the acceptance criteria.
@@ -297,6 +320,26 @@ Nothing in the database records "absent" versus "not yet imported" — the
 distinction lives only in the payload metadata
 (`player_match_stats_status: SOURCE_NOT_AVAILABLE`). The audit checks the count is
 zero; it cannot check provenance of the absence.
+
+## Do not do these things
+
+- Do not manually delete the synthetic row. `replaceSyntheticSnapshot` removes it
+  atomically as part of the apply; deleting it by hand leaves the stage in a state
+  the completeness gate (V3) flags.
+- Do not apply against the committed `server/data/stagecore.sqlite`. It is not the
+  runtime store and predates the provenance migrations.
+- Do not bypass the target guard.
+- Do not use `--rehearsal` as a way around the production-target check. It exists
+  only for an intentional copy, never for the real disk.
+- Do not add player statistics from inference. The source publishes none; the
+  absence is recorded, not filled.
+- Do not resolve the disputed kill/placement splits (los hermanos esports, team
+  insane) without new evidence. `PRESERVE_DISPUTE_V1` leaves them unresolved by
+  design.
+- Do not process the four unresolved stages (BMIS 2023, BMPS 2023, BMPS 2024,
+  India-Korea Invitational) as part of this operation.
+- Do not merge PR #3 before the production result has been reviewed.
+
 
 ## Rollback
 
