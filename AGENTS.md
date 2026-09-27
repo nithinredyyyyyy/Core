@@ -292,3 +292,41 @@ full gate.
   `enrichStage`/`replaceSyntheticSnapshot` in one transaction, not append beside
   them.
 
+
+## Phase 2 pilot operator tooling (`tools/liquipedia/`)
+
+The BMPS 2025 Grand Finals enrichment is a single-stage pilot. Operator tooling
+lives under `tools/liquipedia/`; the procedure is
+`tools/liquipedia/RUNBOOK-bmps2025-gf-apply.md`.
+
+- The production store is the Render Persistent Disk at
+  `/app/server/data/stagecore.sqlite` (see `render.yaml`). The tracked
+  `server/data/stagecore.sqlite` is NOT the runtime store and predates the
+  provenance migrations; never point an apply at it.
+- `emit-payload.mjs` produces the payload `enrich-stage.mjs --file` consumes and
+  is the only supported way to build it. It is read-only against the source DB.
+- `post-apply-audit.mjs` is read-only (`readonly: true` + `PRAGMA query_only =
+  ON`) and implements the acceptance criteria as named checks; `--baseline`
+  additionally proves the change was confined to the stage.
+- `production-target-guard.mjs` (wired into both tools above) refuses any target
+  that does not resolve to the expected Render disk unless `--rehearsal` is
+  passed explicitly. A stale/exported `CORE_DB_PATH` (e.g. `/tmp/tmp.*/f.sqlite`)
+  exits `3`. Never bypass this without an explicit `--rehearsal`.
+- Two policies govern this pilot. `PRESERVE_DISPUTE_V1`
+  (`dispute-policy.mjs`): team-aggregate splits that disagree are represented
+  (canonical row carries source values; existing CORE value retained in
+  metadata), never adjudicated. `PRESERVE_SOURCE_V1`
+  (`source-correction-policy.mjs`): a per-pilot decision record naming exact
+  field corrections (currently `m4/m10/m16` map `Erangel -> Sanhok`). It is NOT a
+  general "source wins" rule; any unapproved difference refuses the apply.
+- Dispute metadata and map-reconciliation metadata live in the committed payload
+  artifact, not the database. There are no columns for them and no migration is
+  planned for this pilot; do not fake them into existing tables.
+- Pre-apply the stage has 19 matches: one synthetic aggregate plus 18 real
+  placeholder rows with zero results. `replaceSyntheticSnapshot` removes only the
+  aggregate and updates the 18 real rows in place, so net match delta is `-1`,
+  not `-19`.
+- `player_match_stats` has no published source data for this stage; the absence
+  is recorded explicitly (`SOURCE_NOT_AVAILABLE`) in the payload, and zero rows
+  are written.
+
