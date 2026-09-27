@@ -1,0 +1,108 @@
+
+{{Bracket|Bracket/2|id=BMPS2025GF
+|R1M1header=Grand Finals
+|R1M1={{Match|finished=true|mvp=Levi (Indian player){{!}}Levi
+    |p_kill=1 |p1=10 |p2=6 |p3=5 |p4=4 |p5=3 |p6=2 |p7=1 |p8=1 |bg=1=up
+    |youtube=KRAFTON INDIA ESPORTS
+    |map1={{Map|date=2025-07-04 13:10 {{Abbr/IST}}|finished=true|map=Erangel|mvp=Kaalan   |vod=https://www.youtube.com/live/g7awtTST_vE}}
+    |map2={{Map|date=2025-07-04 13:55 {{Abbr/IST}}|finished=true|map=Miramar|mvp=Mafia36  |vod=https://www.youtube.com/live/g7awtTST_vE}}
+    |map3={{Map|date=2025-07-04 14:40 {{Abbr/IST}}|finished=true|map=Sanhok |mvp=Yash     |vod=https://www.youtube.com/live/g7awtTST_vE}}
+    |map4={{Map|date=2025-07-04 15:30 {{Abbr/IST}}|finished=true|map=Sanhok |mvp=Devotee  |vod=https://www.youtube.com/live/g7awtTST_vE}}
+    |map5={{Map|date=2025-07-04 16:15 {{Abbr/IST}}|finished=true|map=Miramar|mvp=NinjaBoi |vod=https://www.youtube.com/live/g7awtTST_vE}}
+    |map6={{Map|date=2025-07-04 17:05 {{Abbr/IST}}|finished=true|map=Erangel|mvp=BeardBaba|vod=https://www.youtube.com/live/g7awtTST_vE}}
+    |map7={{Map|date=2025-07-05 13:40 {{Abbr/IST}}|finished=true|map=Erangel|mvp=Beast (Indian Player){{!}}Beast|vod=https://www.youtube.com/live/UG_vsb4xWuo}}
+    |map8={{Map|date=2025-07-05 14:30 {{Abbr/IST}}|finished=true|map=Miramar|mvp=NinjaBoi |vod=https://www.youtube.com/live/UG_vsb4xWuo}}
+    |map9={{Map|date=2025-07-05 15:20 {{Abbr/IST}}|finished=true|map=Sanhok |mvp=Levi (Indian player){{!}}Levi|vod=https://www.youtube.com/live/UG_vsb4xWuo}}
+    |map10={{Map|date=2025-07-05 16:10 {{Abbr/IST}}|finished=true|map=Sanhok |mvp=Mernox  |vod=https://www.youtube.com/live/UG_vsb4xWuo}}
+    |map11={{Map|date=2025-07-05 17:00 {{Abbr/IST}}|finished=true|map=Miramar|mvp=Levi (Indian player){{!}}Levi|vod=https://www.youtube.com/live/UG_vsb4xWuo}}
+    |map12={{Map|date=2025-07-05 17:50 {{Abbr/IST}}|finished=true|map=Erangel|mvp=Levi (Indian player){{!}}Levi|vod=https://www.youtube.com/live/UG_vsb4xWuo}}
+    |map13={{Map|date=2025-07-06 13:40 {{Abbr/IST}}|finished=true|map=Erangel|mvp=Kaalan  |vod=https://www.youtube.com/live/E14HLlBsYb4}}
+    |map14={{Map|date=2025-07-06 14:30 {{Abbr/IST}}|finished=true|map=Miramar|mvp=Goten   |vod=https://www.youtube.com/live/E14HLlBsYb4}}
+    |map15={{Map|date=2025-07-06 15:20 {{Abbr/IST}}|finished=true|map=Sanhok |mvp=Goten   |vod=https://www.youtube.com/live/E14HLlBsYb4}}
+    |map16={{Map|date=2025-07-06 16:10 {{Abbr/IST}}|finished=true|map=Sanhok |mvp=Devotee |vod=https://www.youtube.com/live/E14HLlBsYb4}}
+    |map17={{Map|date=2025-07-06 17:00 {{Abbr/IST}}|finished=true|map=Miramar|mvp=InfGod  |vod=https://www.youtube.com/live/E14HLlBsYb4}}
+    |map18={{Map|date=2025-07-06 17:50 {{Abbr/IST}}|finished=true|map=Erangel|mvp=|vod=https://www.youtube.com/live/E14HLlBsYb4}}
+    |opponent1={{TeamOpponent|nonx esports
+		|m1={{MS|6|3}}	|m2={{MS|12|1}}	|m3={{MS|11|3}}	|m4={{MS|15|0}}	|m5={{MS|3|6}}	|m6={{MS|6|10}}
+		|m7={{MS|10|4}}	|m8={{MS|12|1}}	|m9={{MS|2|9}}	|m10={{MS|7|0}}	|m11={{MS|1|10}}	|m12={{MS|1|20}}
+		|m13={{MS|15|0}}	|m14={{MS|12|1}}	|m15={{MS|2|5}}	|m16={{MS|14|1}}	|m17={{MS|2|6}}	|m18={{MS|10|4}}
+		}}
+    |opponent2={{TeamOpponent|aryan x tmg gaming
+		|m1={{MS|10|2}}	|m2={{MS|2|5}}	|m3={{MS|8|0}}	|m4={{MS|1|15}}	|m5={{MS|12|2}}	|m6={{MS|12|0}}
+		|m7={{MS|16|0}}	|m8={{MS|5|8}}	|m9={{MS|1|7}}	|m10={{MS|5|4}}	|m11={{MS|5|6}}	|m12={{MS|12|2}}
+		|m13={{MS|6|4}}	|m14={{MS|3|2}}	|m15={{MS|4|4}}	|m16={{MS|1|16}}	|m17={{MS|13|0}}	|m18={{MS|14|2}}
+		}}
+    |opponent3={{TeamOpponent|genesis esports (indian team)
+		|m1={{MS|13|0}}	|m2={{MS|11|7}}	|m3={{MS|9|6}}	|m4={{MS|7|0}}	|m5={{MS|7|4}}	|m6={{MS|2|8}}
+		|m7={{MS|1|11}}	|m8={{MS|11|2}}	|m9={{MS|16|3}}	|m10={{MS|13|0}}	|m11={{MS|7|2}}	|m12={{MS|11|1}}
+		|m13={{MS|7|4}}	|m14={{MS|7|9}}	|m15={{MS|12|0}}	|m16={{MS|10|2}}	|m17={{MS|6|7}}	|m18={{MS|12|2}}
+		}}
+    |opponent4={{TeamOpponent|los hermanos esports
+		|m1={{MS|1|16}}	|m2={{MS|6|3}}	|m3={{MS|7|3}}	|m4={{MS|9|2}}	|m5={{MS|4|2}}	|m6={{MS|8|1}}
+		|m7={{MS|14|0}}	|m8={{MS|3|2}}	|m9={{MS|4|6}}	|m10={{MS|16|2}}	|m11={{MS|2|6}}	|m12={{MS|10|6}}
+		|m13={{MS|3|12}}	|m14={{MS|5|5}}	|m15={{MS|6|1}}	|m16={{MS|4|3}}	|m17={{MS|12|2}}	|m18={{MS|6|5}}
+		}}
+    |opponent5={{TeamOpponent|team eggy
+		|m1={{MS|16|0}}	|m2={{MS|8|1}}	|m3={{MS|3|7}}	|m4={{MS|5|6}}	|m5={{MS|15|4}}	|m6={{MS|14|7}}
+		|m7={{MS|6|7}}	|m8={{MS|6|3}}	|m9={{MS|9|2}}	|m10={{MS|9|10}}	|m11={{MS|3|7}}	|m12={{MS|7|0}}
+		|m13={{MS|5|4}}	|m14={{MS|6|3}}	|m15={{MS|16|2}}	|m16={{MS|12|0}}	|m17={{MS|11|0}}	|m18={{MS|16|1}}
+		}}
+    |opponent6={{TeamOpponent|team forever
+		|m1={{MS|7|4}}	|m2={{MS|10|7}}	|m3={{MS|14|1}}	|m4={{MS|6|4}}	|m5={{MS|9|1}}	|m6={{MS|13|3}}
+		|m7={{MS|2|10}}	|m8={{MS|16|0}}	|m9={{MS|10|2}}	|m10={{MS|10|1}}	|m11={{MS|14|0}}	|m12={{MS|9|3}}
+		|m13={{MS|1|13}}	|m14={{MS|11|1}}	|m15={{MS|5|6}}	|m16={{MS|6|4}}	|m17={{MS|14|0}}	|m18={{MS|2|11}}
+		}}
+    |opponent7={{TeamOpponent|twob
+		|m1={{MS|12|2}}	|m2={{MS|16|0}}	|m3={{MS|5|7}}	|m4={{MS|3|6}}	|m5={{MS|16|1}}	|m6={{MS|4|3}}
+		|m7={{MS|15|3}}	|m8={{MS|2|2}}	|m9={{MS|8|4}}	|m10={{MS|14|0}}	|m11={{MS|4|10}}	|m12={{MS|6|4}}
+		|m13={{MS|8|3}}	|m14={{MS|2|5}}	|m15={{MS|10|2}}	|m16={{MS|7|2}}	|m17={{MS|3|9}}	|m18={{MS|4|4}}
+		}}
+    |opponent8={{TeamOpponent|k9 esports (indian team)
+		|m1={{MS|5|4}}	|m2={{MS|14|0}}	|m3={{MS|16|1}}	|m4={{MS|12|1}}	|m5={{MS|2|11}}	|m6={{MS|9|1}}
+		|m7={{MS|11|9}}	|m8={{MS|9|12}}	|m9={{MS|3|1}}	|m10={{MS|1|9}}	|m11={{MS|12|1}}	|m12={{MS|14|1}}
+		|m13={{MS|2|9}}	|m14={{MS|14|0}}	|m15={{MS|11|3}}	|m16={{MS|8|0}}	|m17={{MS|16|2}}	|m18={{MS|5|3}}
+		}}
+    |opponent9={{TeamOpponent|gods omen
+		|m1={{MS|3|5}}	|m2={{MS|3|7}}	|m3={{MS|15|0}}	|m4={{MS|2|9}}	|m5={{MS|8|7}}	|m6={{MS|15|1}}
+		|m7={{MS|7|4}}	|m8={{MS|10|4}}	|m9={{MS|6|8}}	|m10={{MS|3|2}}	|m11={{MS|9|5}}	|m12={{MS|8|4}}
+		|m13={{MS|4|2}}	|m14={{MS|15|0}}	|m15={{MS|9|1}}	|m16={{MS|13|1}}	|m17={{MS|1|10}}	|m18={{MS|11|4}}
+		}}
+    |opponent10={{TeamOpponent|gods reign
+		|m1={{MS|11|0}}	|m2={{MS|4|9}}	|m3={{MS|4|2}}	|m4={{MS|4|4}}	|m5={{MS|5|4}}	|m6={{MS|7|6}}
+		|m7={{MS|9|1}}	|m8={{MS|14|3}}	|m9={{MS|11|2}}	|m10={{MS|4|7}}	|m11={{MS|10|0}}	|m12={{MS|5|1}}
+		|m13={{MS|11|2}}	|m14={{MS|10|2}}	|m15={{MS|14|2}}	|m16={{MS|11|4}}	|m17={{MS|4|11}}	|m18={{MS|3|12}}
+		}}
+    |opponent11={{TeamOpponent|8bit
+		|m1={{MS|9|7}}	|m2={{MS|9|5}}	|m3={{MS|10|4}}	|m4={{MS|8|1}}	|m5={{MS|13|1}}	|m6={{MS|3|7}}
+		|m7={{MS|3|4}}	|m8={{MS|15|2}}	|m9={{MS|12|0}}	|m10={{MS|11|4}}	|m11={{MS|13|0}}	|m12={{MS|2|11}}
+		|m13={{MS|9|3}}	|m14={{MS|4|8}}	|m15={{MS|8|4}}	|m16={{MS|3|10}}	|m17={{MS|8|0}}	|m18={{MS|1|7}}
+		}}
+    |opponent12={{TeamOpponent|team insane
+		|m1={{MS|14|1}}	|m2={{MS|15|3}}	|m3={{MS|6|5}}	|m4={{MS|16|0}}	|m5={{MS|10|0}}	|m6={{MS|11|2}}
+		|m7={{MS|8|2}}	|m8={{MS|4|6}}	|m9={{MS|13|5}}	|m10={{MS|8|4}}	|m11={{MS|6|3}}	|m12={{MS|4|2}}
+		|m13={{MS|13|0}}	|m14={{MS|9|0}}	|m15={{MS|13|1}}	|m16={{MS|5|6}}	|m17={{MS|10|0}}	|m18={{MS|13|1}}
+		}}
+    |opponent13={{TeamOpponent|inferno squad
+		|m1={{MS|4|10}}	|m2={{MS|5|4}}	|m3={{MS|13|4}}	|m4={{MS|13|2}}	|m5={{MS|6|5}}	|m6={{MS|16|1}}
+		|m7={{MS|13|0}}	|m8={{MS|8|1}}	|m9={{MS|5|3}}	|m10={{MS|12|1}}	|m11={{MS|15|2}}	|m12={{MS|16|1}}
+		|m13={{MS|12|1}}	|m14={{MS|1|10}}	|m15={{MS|3|15}}	|m16={{MS|16|3}}	|m17={{MS|7|2}}	|m18={{MS|15|0}}
+		}}
+    |opponent14={{TeamOpponent|4tr official
+		|m1={{MS|2|5}}	|m2={{MS|7|1}}	|m3={{MS|2|6}}	|m4={{MS|14|0}}	|m5={{MS|1|10}}	|m6={{MS|5|1}}
+		|m7={{MS|12|1}}	|m8={{MS|13|2}}	|m9={{MS|14|1}}	|m10={{MS|2|6}}	|m11={{MS|11|2}}	|m12={{MS|15|1}}
+		|m13={{MS|14|0}}	|m14={{MS|13|3}}	|m15={{MS|1|9}}	|m16={{MS|9|4}}	|m17={{MS|5|8}}	|m18={{MS|9|4}}
+		}}
+    |opponent15={{TeamOpponent|4merical esports in
+		|m1={{MS|8|0}}	|m2={{MS|1|5}}	|m3={{MS|1|10}}	|m4={{MS|11|4}}	|m5={{MS|14|0}}	|m6={{MS|1|10}}
+		|m7={{MS|4|5}}	|m8={{MS|7|4}}	|m9={{MS|7|4}}	|m10={{MS|6|4}}	|m11={{MS|8|6}}	|m12={{MS|3|2}}
+		|m13={{MS|10|1}}	|m14={{MS|8|8}}	|m15={{MS|7|2}}	|m16={{MS|2|3}}	|m17={{MS|9|2}}	|m18={{MS|8|1}}
+		}}
+    |opponent16={{TeamOpponent|2op official
+		|m1={{MS|15|0}}	|m2={{MS|13|0}}	|m3={{MS|12|0}}	|m4={{MS|10|2}}	|m5={{MS|11|0}}	|m6={{MS|10|0}}
+		|m7={{MS|5|1}}	|m8={{MS|1|8}}	|m9={{MS|15|3}}	|m10={{MS|15|1}}	|m11={{MS|16|0}}	|m12={{MS|13|1}}
+		|m13={{MS|16|2}}	|m14={{MS|16|1}}	|m15={{MS|15|4}}	|m16={{MS|15|1}}	|m17={{MS|15|1}}	|m18={{MS|7|1}}
+		}}
+	}}
+}}
+{{Legend|up=y|margin-top=10|uptitle=Qualified for {{LeagueIconSmall/pubg mobile world cup|}} '''[[PUBG_Mobile_World_Cup/2025|2025 PMWC]]'''}}
+
