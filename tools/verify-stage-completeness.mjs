@@ -96,9 +96,8 @@ function verifyStage(stage) {
   const { tournament_id: tournamentId, name: stageName } = stage;
   const gate = (id, message) => fail(`${id} ${tournamentId}/${stageName}`, message);
 
-  // V1 — matches exist. A stage with no real matches but with synthetic
-  // placeholders is simply awaiting extraction (note); a stage with nothing at
-  // all is a genuine gap (failure).
+  // A synthetic snapshot row (match_number = 0 or NULL) is an aggregate standing,
+  // not a match. It must never contribute to real_match_count in any gate.
   const matchCount = db
     .prepare(
       "SELECT COUNT(*) AS c FROM matches WHERE tournament_id = ? AND stage = ? AND match_number >= 1",
@@ -109,6 +108,55 @@ function verifyStage(stage) {
       "SELECT COUNT(*) AS c FROM matches WHERE tournament_id = ? AND stage = ? AND (match_number = 0 OR match_number IS NULL)",
     )
     .get(tournamentId, stageName).c;
+
+  // Result rows partitioned by whether they hang off a real match or the snapshot.
+  const realResultRows = db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM match_results mr
+       JOIN matches m ON m.id = mr.match_id
+       WHERE mr.tournament_id = ? AND mr.stage = ? AND m.match_number >= 1`,
+    )
+    .get(tournamentId, stageName).c;
+  const syntheticResultRows = db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM match_results mr
+       JOIN matches m ON m.id = mr.match_id
+       WHERE mr.tournament_id = ? AND mr.stage = ?
+         AND (m.match_number = 0 OR m.match_number IS NULL)`,
+    )
+    .get(tournamentId, stageName).c;
+  const realMatchesWithResults = db
+    .prepare(
+      `SELECT COUNT(DISTINCT m.id) AS c FROM matches m
+       JOIN match_results mr ON mr.match_id = m.id
+       WHERE m.tournament_id = ? AND m.stage = ? AND m.match_number >= 1`,
+    )
+    .get(tournamentId, stageName).c;
+  const playerMatchStatRows = db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM player_match_stats pms
+       JOIN matches m ON m.id = pms.match_id
+       WHERE m.tournament_id = ? AND m.stage = ?`,
+    )
+    .get(tournamentId, stageName).c;
+
+  // Single classification per stage, derived from the counts above.
+  let classification;
+  if (matchCount === 0 && synthetic === 0) {
+    classification = "EMPTY_STAGE";
+  } else if (matchCount === 0) {
+    classification = "SYNTHETIC_ONLY";
+  } else if (synthetic === 0) {
+    classification = realMatchesWithResults > 0 ? "REAL_COMPLETE" : "REAL_MATCHES_NO_RESULTS";
+  } else if (realMatchesWithResults > 0 || realResultRows > 0) {
+    classification = "SYNTHETIC_PLUS_REAL_RESULTS";
+  } else {
+    classification = "SYNTHETIC_PLUS_EMPTY_SHELLS";
+  }
+
+  // V1 — matches exist. A stage with no real matches but with synthetic
+  // placeholders is simply awaiting extraction (note); a stage with nothing at
+  // all is a genuine gap (failure).
   if (matchCount === 0) {
     if (synthetic > 0) {
       notes.push(
@@ -119,9 +167,10 @@ function verifyStage(stage) {
     }
   }
 
-  // V2 — per-match result cardinality is uniform and matches the roster size.
-  // Cardinality is only meaningful for per-match rows (match_number >= 1); the
-  // synthetic aggregate row carries one row per team, which is not a result set.
+  // V2 — per-match result cardinality is uniform and complete. Synthetic
+  // snapshot rows are excluded by the `match_number >= 1` join, so a stage with
+  // only an aggregate snapshot can never satisfy V2 by counting its own
+  // placeholder — that was the pre-fix bug.
   const cardinalities = db
     .prepare(
       `SELECT mr.match_id AS match_id, COUNT(*) AS c
@@ -143,7 +192,7 @@ function verifyStage(stage) {
   if (matchCount > 0 && cardinalities.length !== matchCount) {
     gate(
       "V2",
-      `${matchCount} matches but results present for only ${cardinalities.length}`,
+      `${matchCount} real match(es) but results present for only ${cardinalities.length}`,
     );
   }
   if (expectedTeams > 0 && distinctCounts.size === 1) {
@@ -155,13 +204,22 @@ function verifyStage(stage) {
     }
   }
 
-  // V3 — synthetic snapshots. Expected before extraction; a failure only when
-  // real matches exist alongside leftovers, which means a replacement was partial.
-  if (synthetic > 0 && matchCount > 0) {
-    gate("V3", `${synthetic} synthetic placeholder match(es) remain alongside ${matchCount} real match(es)`);
-  } else if (synthetic > 0) {
+  // V3 — synthetic snapshots. An aggregate snapshot beside real match shells is
+  // only a defect once the real matches actually carry results, because that is
+  // when a standings read can double-count. A snapshot beside *empty* shells is
+  // pre-extraction debt and is reported as a note, not a failure.
+  if (classification === "SYNTHETIC_PLUS_REAL_RESULTS") {
+    gate(
+      "V3",
+      `SYNTHETIC_PLUS_REAL_RESULTS: ${synthetic} synthetic snapshot(s) coexist with ${realMatchesWithResults} real match(es) carrying ${realResultRows} result row(s); standings computed over both sources would double-count`,
+    );
+  } else if (classification === "SYNTHETIC_PLUS_EMPTY_SHELLS") {
     notes.push(
-      `${tournamentId}/${stageName}: V3 ${synthetic} synthetic placeholder match(es) still present (pre-extraction state)`,
+      `${tournamentId}/${stageName}: SYNTHETIC_PLUS_EMPTY_SHELLS ${synthetic} synthetic snapshot(s) beside ${matchCount} empty real shell(s) (pre-extraction debt, no double-count yet)`,
+    );
+  } else if (classification === "SYNTHETIC_ONLY") {
+    notes.push(
+      `${tournamentId}/${stageName}: SYNTHETIC_ONLY ${synthetic} synthetic snapshot(s), no real matches (pre-extraction state)`,
     );
   }
 
@@ -267,7 +325,18 @@ function verifyStage(stage) {
     );
   }
 
-  return { tournamentId, stageName, matchCount, totalResults, derivedTeams: derived.length };
+  return {
+    tournamentId,
+    stageName,
+    realMatchCount: matchCount,
+    syntheticMatchCount: synthetic,
+    realMatchesWithResults,
+    realResultRows,
+    syntheticResultRows,
+    playerMatchStatRows,
+    derivedTeams: derived.length,
+    classification,
+  };
 }
 
 // V7 — stage integrity (global, reported once).
@@ -343,9 +412,25 @@ console.log(`Database: ${dbPath}`);
 console.log(`Stages checked: ${results.length}`);
 for (const row of results) {
   console.log(
-    `  ${row.tournamentId} / ${row.stageName}: matches=${row.matchCount} results=${row.totalResults} teams=${row.derivedTeams}`,
+    `  ${row.tournamentId} / ${row.stageName}: ` +
+      `real_match_count=${row.realMatchCount} ` +
+      `synthetic_match_count=${row.syntheticMatchCount} ` +
+      `real_matches_with_results=${row.realMatchesWithResults} ` +
+      `real_result_rows=${row.realResultRows} ` +
+      `synthetic_result_rows=${row.syntheticResultRows} ` +
+      `classification=${row.classification}`,
   );
 }
+
+const byClassification = new Map();
+for (const row of results) {
+  byClassification.set(row.classification, (byClassification.get(row.classification) || 0) + 1);
+}
+console.log("\nClassification summary:");
+for (const [name, count] of [...byClassification].sort()) {
+  console.log(`  ${name}: ${count}`);
+}
+
 if (notes.length > 0) {
   console.log("\nNotes (non-fatal):");
   for (const note of notes) console.log(`  - ${note}`);
