@@ -1,13 +1,31 @@
 name: CI
 on:
+  # Every push to main is a production gate.
   push:
     branches: [main]
+  # Run on every pull request regardless of base branch. Stacked PRs (e.g. a
+  # persistence change based on a hardening branch) must be verified too; keying
+  # the trigger to a branch name silently skipped them. Required checks are
+  # configured on the protected branch, not here.
   pull_request:
-    branches: [main]
+
+# Least privilege by default; jobs opt in to anything extra they need.
+permissions:
+  contents: read
+
+# Supersede in-flight runs for the same ref so a fast push does not race an
+# older, stale run to the finish line.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   secret-scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # gitleaks-action annotates the PR it is scanning; it needs to write here.
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,9 +43,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run audit:high
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
-      - run: npm run test
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency audit (high and above)
+        run: npm run audit:high
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Tests (unit + integration)
+        run: npm run test

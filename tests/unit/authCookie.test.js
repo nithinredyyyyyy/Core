@@ -52,7 +52,10 @@ async function probeCookies(env) {
       },
     },
   );
-  return JSON.parse(stdout);
+  // Startup logs (migrations, seeding) may precede the probe's JSON on stdout, so
+  // read the last non-empty line — the probe writes its result last.
+  const lastLine = stdout.trim().split("\n").filter(Boolean).pop();
+  return JSON.parse(lastLine);
 }
 
 function findCookie(cookies, name) {

@@ -332,13 +332,27 @@ function restoreMissingSeedTeams() {
 }
 
 export function repairTournamentDataIntegrity() {
+  const startedAt = Date.now();
+  const examined = countScannedChildRows();
   const restoredTeams = restoreMissingSeedTeams();
   const seedNameById = loadSeedTournamentIdsByName();
 
   const liveTournaments = db
     .prepare("SELECT id, name FROM tournaments")
     .all();
-  if (liveTournaments.length === 0) return { groups: 0, moved: 0 };
+  if (liveTournaments.length === 0) {
+    const empty = {
+      examined,
+      groups: 0,
+      moved: 0,
+      prunedStages: 0,
+      restoredTeams,
+      unresolved: 0,
+      durationMs: Date.now() - startedAt,
+    };
+    logger.info("tournamentDataRepair", empty);
+    return empty;
+  }
 
   const signatures = new Map(
     liveTournaments.map((t) => [
@@ -348,7 +362,20 @@ export function repairTournamentDataIntegrity() {
   );
 
   const orphanIds = getOrphanTournamentIds();
-  if (orphanIds.size === 0) return { groups: 0, moved: 0 };
+  // Healthy startup: nothing detached, so report explicitly that zero rows moved.
+  if (orphanIds.size === 0) {
+    const clean = {
+      examined,
+      groups: 0,
+      moved: 0,
+      prunedStages: 0,
+      restoredTeams,
+      unresolved: 0,
+      durationMs: Date.now() - startedAt,
+    };
+    logger.info("tournamentDataRepair", clean);
+    return clean;
+  }
 
   // Choose, per target tournament, only the single richest orphan group. The
   // orphan pool can hold several snapshots of the same event (older imports and
@@ -394,21 +421,34 @@ export function repairTournamentDataIntegrity() {
     prunedStages = pruneUnreferencedOrphanStages();
   });
 
+  const summary = {
+    examined,
+    groups: applied.length,
+    moved,
+    prunedStages,
+    restoredTeams,
+    unresolved: pending.length,
+    durationMs: Date.now() - startedAt,
+  };
+
   if (applied.length > 0) {
-    logger.info("Tournament data repair: re-pointed detached child rows", {
-      groups: applied.length,
-      rows: moved,
-      prunedStages,
-      details: applied,
-      unresolved: pending.length,
-    });
-  } else if (pending.length > 0) {
-    logger.warn("Tournament data repair: orphaned child rows could not be resolved", {
-      unresolved: pending.length,
-    });
+    logger.info("tournamentDataRepair", { ...summary, details: applied });
+  } else {
+    logger.warn("tournamentDataRepair", summary);
   }
 
-  return { groups: applied.length, moved, prunedStages, restoredTeams };
+  return summary;
+}
+
+// Child rows scanned across the tables this repair can re-point. Reported so an
+// operator can distinguish "nothing to do" from "the repair did not run".
+function countScannedChildRows() {
+  let total = 0;
+  for (const table of CHILD_TABLES) {
+    if (!tableExists(table)) continue;
+    total += db.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c;
+  }
+  return total;
 }
 
 if (process.env.CORE_REPAIR_TOURNAMENT_DATA === "1") {

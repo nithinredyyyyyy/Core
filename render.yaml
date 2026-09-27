@@ -28,6 +28,11 @@ services:
         value: 13045307296-v52idel7q4medhlhedjciv4qeq0e964e.apps.googleusercontent.com
       - key: FRONTEND_ORIGIN
         value: https://core-esports-1ibg.onrender.com
+      # Disaster recovery is OFF by default. Only set this to 1 (in the dashboard,
+      # for a single boot) when intentionally restoring an empty disk from the
+      # backup repo. See docs/DEPLOYMENT.md.
+      - key: CORE_ALLOW_GITHUB_RESTORE
+        value: "0"
       # Secondary (off-box) backup. Leave unset to disable backups entirely;
       # when set, the periodic backup loop runs. Values are dashboard-synced and
       # never committed. GITHUB_BACKUP_TOKEN must be a minimal-scope, dedicated

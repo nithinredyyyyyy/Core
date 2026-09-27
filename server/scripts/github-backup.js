@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import fs from "node:fs";
+import { recordBackupFailure, recordBackupSuccess } from "../services/backupState.js";
 
 const localDbPath = path.resolve(process.cwd(), "server/data/stagecore.sqlite");
 const dockerDbPath = "/app/server/data/stagecore.sqlite";
@@ -53,7 +54,8 @@ try {
   await src.backup(backupDbPath);
   src.close();
 } catch (err) {
-  console.error("[Backup] SQLite backup API failed:", err);
+  console.error("[Backup] SQLite backup API failed:", err.message);
+  recordBackupFailure({ repo, stage: "sqlite-backup", error: err.message });
   process.exit(1);
 }
 
@@ -80,6 +82,7 @@ try {
   fs.copyFileSync(backupDbPath, snapshotPath);
 } catch (err) {
   console.error("[Backup] Failed to write timestamped snapshot:", err.message);
+  recordBackupFailure({ repo, stage: "snapshot", error: err.message });
   process.exit(1);
 }
 
@@ -145,7 +148,9 @@ try {
   console.log(
     `[Backup] Successfully force-pushed to ${repo} at ${new Date().toISOString()} (retention=${RETENTION}).`,
   );
+  recordBackupSuccess({ repo, retention: RETENTION });
 } catch (err) {
   console.error("[Backup] Git push failed:", err.message);
+  recordBackupFailure({ repo, stage: "git-push", error: err.message });
   process.exit(1);
 }

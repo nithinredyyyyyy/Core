@@ -214,7 +214,10 @@ private GitHub repo is the SECONDARY off-box backup, and
   app boots from the canonical export, and the baked copy becomes irrelevant.
 - `run.sh` never overwrites a populated database from the backup repo. Restore
   only runs when the DB is absent/empty AND `CORE_ALLOW_GITHUB_RESTORE=1`
-  (explicit disaster recovery). Otherwise an empty disk bootstraps from canonical.
+  (explicit disaster recovery, `1`/`true`/`yes` only — `0` is off). Otherwise an
+  empty disk bootstraps from canonical. If a requested restore fails, `run.sh`
+  exits non-zero rather than falling back to canonical seed, so a failed recovery
+  is never mistaken for a successful one.
 - `run.sh` passes `GITHUB_BACKUP_TOKEN` through git's environment-based
   `http.extraheader`, never a URL, argv, or log line. Do not reintroduce
   `https://oauth2:${TOKEN}@...`.
@@ -233,8 +236,38 @@ private GitHub repo is the SECONDARY off-box backup, and
 - `tests/unit/authCookie.test.js` spawns probes that import `server/db.js`. It
   must set `CORE_DB_PATH` to a temp file; without it the probes run migrations
   against the committed `server/data/stagecore.sqlite` and mutate it.
+- SQL migrations run through `server/db/migrate.js` and are FATAL: a failure
+  throws, `server/index.js` exits non-zero, and the database is never reseeded.
+  Each migration commits with its ledger row in one transaction, so a failure
+  leaves neither partial schema nor a ledger entry. Never reintroduce a
+  swallow-and-continue `catch` around migrations.
+- `schema.js` reads `CORE_MIGRATION_DIR` only when `NODE_ENV=test`, so tests can
+  exercise a broken migration set without touching the committed one.
+- Restore gate in `run.sh`: `CORE_ALLOW_GITHUB_RESTORE` accepts only
+  `1`/`true`/`yes` (a bare `-n` check treats `0` as enabled). A requested restore
+  that fails exits non-zero instead of falling back to canonical seed.
+- `server/services/backupState.js` is the shared health surface: the backup
+  script writes `backup-status.json` (token/URL/path-free) and
+  `GET /api/admin/backup-status` (admin only) reads it. Backup failure never
+  takes the app down.
+- `server/services/corsOrigins.js` builds the credentialed CORS allowlist from
+  `FRONTEND_ORIGIN`/`CORS_ORIGIN` plus loopback origins outside production.
+  Production origins are configuration, not hardcoded.
+- Startup repairs (`playerReferenceRepair`, `tournamentDataRepair`) always log a
+  structured summary including explicit zero counts and `durationMs`, so a
+  healthy no-op startup is distinguishable from a repair that never ran.
+- The committed `server/data/stagecore.sqlite` is NOT a runtime or bootstrap
+  dependency: `server/seed/canonical.export.json` is the baseline, and a fresh
+  disk is built by `schema.js` plus the committed migrations. The committed DB's
+  `schema_migrations` ledger still names historical migrations (`005`, `006`,
+  `008`, `20260524`) whose files were removed and lacks `009`; that is expected
+  and harmless because the blob is shadowed by the disk mount and never used to
+  seed. Treat the migrations directory, not the committed DB, as the schema
+  source of truth (a fresh DB is verified to have all tables and zero FK issues).
 
 Verification after any persistence change: fresh-disk bootstrap, restart (skips
-seed), write persists across redeploy, restore gate (populated DB untouched),
-corrupt DB fails fast, backup retention + restore, token-leak E2E, and a check
-that the committed `server/data/stagecore.sqlite` hash is unchanged.
+seed), write persists across redeploy, restore gate (populated DB untouched,
+failure fatal, `0` treated as off), corrupt DB fails fast, backup retention +
+restore, token-leak E2E, and a check that the committed
+`server/data/stagecore.sqlite` hash is unchanged. Run `npm run verify` for the
+full gate.
