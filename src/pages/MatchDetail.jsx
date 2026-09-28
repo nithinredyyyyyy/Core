@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarClock, MapPin, Swords, Trophy } from "lucide-react";
 import { useMatches } from "@/hooks/useMatches";
+import { useMatchPlayerStats } from "@/hooks/useMatchPlayerStats";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import ShareMenu from "@/components/shared/ShareMenu";
 import PageSkeleton from "@/components/shared/PageSkeleton";
@@ -73,9 +74,85 @@ const SCOREBOARD_COLUMNS = [
   },
 ];
 
+// Columns for the optional per-player statistics table. Any field the source did
+// not provide renders as an em dash, never a fabricated zero.
+const PLAYER_STAT_COLUMNS = [
+  {
+    key: "playerName",
+    label: "Player",
+    render: (row) => (
+      <span className="font-medium text-foreground">{row.playerName}</span>
+    ),
+  },
+  {
+    key: "team",
+    label: "Team",
+    render: (row) => (
+      <span className="text-muted-foreground">{row.teamName || "—"}</span>
+    ),
+  },
+  {
+    key: "kills",
+    label: "Kills",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.kills ?? "—"}</span>,
+  },
+  {
+    key: "finishes",
+    label: "Finishes",
+    align: "right",
+    width: "90px",
+    render: (row) => <span className="tabular-nums">{row.finishes ?? "—"}</span>,
+  },
+  {
+    key: "knocks",
+    label: "Knocks",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.knocks ?? "—"}</span>,
+  },
+  {
+    key: "deaths",
+    label: "Deaths",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.deaths ?? "—"}</span>,
+  },
+  {
+    key: "directKills",
+    label: "Direct",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.directKills ?? "—"}</span>,
+  },
+  {
+    key: "grenadeKills",
+    label: "Grenade",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.grenadeKills ?? "—"}</span>,
+  },
+  {
+    key: "vehicleKills",
+    label: "Vehicle",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.vehicleKills ?? "—"}</span>,
+  },
+  {
+    key: "zoneKills",
+    label: "Zone",
+    align: "right",
+    width: "80px",
+    render: (row) => <span className="tabular-nums">{row.zoneKills ?? "—"}</span>,
+  },
+];
+
 export default function MatchDetail() {
   const { id } = useParams();
   const { matchViewModels, isLoading, isError, refetch } = useMatches();
+  const playerStats = useMatchPlayerStats(id);
 
   const match = useMemo(
     () => matchViewModels.find((entry) => entry.id === id) || null,
@@ -212,6 +289,42 @@ export default function MatchDetail() {
             description="Placements and eliminations will appear here once this match is played and published."
             actionLabel="View upcoming matches"
             actionTo="/matches?view=upcoming"
+          />
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+          <div>
+            <h2 className="font-heading text-lg font-semibold text-foreground">
+              Player statistics
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {playerStats.rows.length > 0
+                ? `Per-player performance for ${match.matchNumberLabel}.`
+                : "Per-player statistics are not available for this match."}
+            </p>
+          </div>
+          {playerStats.rows.length > 0 ? (
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              {playerStats.rows.length} players
+            </span>
+          ) : null}
+        </div>
+
+        {playerStats.isLoading ? (
+          <PageSkeleton label="Loading player statistics" rows={3} />
+        ) : playerStats.rows.length > 0 ? (
+          <DataTable
+            columns={PLAYER_STAT_COLUMNS}
+            rows={playerStats.rows}
+            caption={`Player statistics for ${match.matchNumberLabel} at ${match.tournamentName}`}
+          />
+        ) : (
+          <EmptyState
+            icon={Swords}
+            title="No player statistics"
+            description="Per-player statistics will appear here when the source data includes them."
           />
         )}
       </section>

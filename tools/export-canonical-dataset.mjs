@@ -26,6 +26,7 @@ const outPath = resolve(arg("out", join(repoRoot, "server", "seed", "canonical.e
 // used by server/services/seed.js.
 const SEED_TABLES = [
   "tournaments", "teams", "players", "matches", "match_results",
+  "player_match_stats",
   "tournament_stages", "tournament_stage_groups", "tournament_participants",
   "tournament_participant_players", "tournament_participant_stage_entries",
   "stage_standings", "player_team_history", "transfer_windows",
@@ -41,6 +42,7 @@ const ORDER_BY = {
   players: "lower(ign), id",
   matches: "tournament_id, COALESCE(match_number, 0), COALESCE(scheduled_time, ''), id",
   match_results: "tournament_id, stage, COALESCE(placement, 0), team_id, id",
+  player_match_stats: "match_id, team_id, lower(player_name), id",
   tournament_stages: "tournament_id, stage_order, id",
   tournament_stage_groups: "stage_id, group_name, id",
   tournament_participants: "tournament_id, COALESCE(seed, 9999), team_id, id",
@@ -59,7 +61,7 @@ const ORDER_BY = {
 // Columns that must never leave the production database even if a future schema
 // adds them. Guards against exporting auth/session/secret/runtime material.
 const DENY_COLUMN = /(secret|token|password|passwd|api[_-]?key|apikey|credential|private[_-]?key|session|jwt|refresh|otp|salt|hash_secret)/i;
-const DENY_TABLE = /^(schema_migrations|stream_sessions|stream_frame_jobs|stream_ocr_results|stream_match_stats|player_match_stats|stage_match_breakdown|site_settings)$/;
+const DENY_TABLE = /^(schema_migrations|stream_sessions|stream_frame_jobs|stream_ocr_results|stream_match_stats|stage_match_breakdown|site_settings|match_sources)$/;
 
 const db = new Database(dbPath, { readonly: true, fileMustExist: true });
 

@@ -271,3 +271,108 @@ failure fatal, `0` treated as off), corrupt DB fails fast, backup retention +
 restore, token-leak E2E, and a check that the committed
 `server/data/stagecore.sqlite` hash is unchanged. Run `npm run verify` for the
 full gate.
+
+- `tools/verify-stage-completeness.mjs` is a read-only gate (`query_only = ON`)
+  over stage/result/stat integrity. Point it at a database copy, not the
+  committed blob: `--db <path>` (or `CORE_DB_PATH`). A fresh DB built from
+  `schema.js` plus the migrations carries provenance columns; the committed
+  `server/data/stagecore.sqlite` predates them, so V6 provenance is reported as
+  a note there instead of a failure. Hard failures are V1 (a stage with no
+  matches and no synthetic placeholder), V2 (per-match result cardinality
+  disagrees across matches of one stage), V3 (a synthetic aggregate snapshot
+  still coexists with real per-match rows - this double-counts in standings),
+  V5 (stats pointing at a missing player/match), and V7 (duplicate stage slug,
+  match identity, or source_slug).
+- `tools/enrich-stage.mjs` is the only supported way to run enrichment. It is a
+  dry run unless `--apply` is passed, and `--replace-synthetic` requires
+  `--apply`. Enrichment is never invoked at server startup; importing data is
+  always an explicit operator action.
+- Pre-extraction stages legitimately have synthetic aggregate snapshots
+  (`match_number` `0`/`NULL`). The extraction step must replace them via
+  `enrichStage`/`replaceSyntheticSnapshot` in one transaction, not append beside
+  them.
+
+
+## Phase 2 pilot operator tooling (`tools/liquipedia/`)
+
+The BMPS 2025 Grand Finals enrichment is a single-stage pilot. Operator tooling
+lives under `tools/liquipedia/`; the procedure is
+`tools/liquipedia/RUNBOOK-bmps2025-gf-apply.md`.
+
+- The production store is the Render Persistent Disk at
+  `/app/server/data/stagecore.sqlite` (see `render.yaml`). The tracked
+  `server/data/stagecore.sqlite` is NOT the runtime store and predates the
+  provenance migrations; never point an apply at it.
+- `emit-payload.mjs` produces the payload `enrich-stage.mjs --file` consumes and
+  is the only supported way to build it. It is read-only against the source DB.
+- `post-apply-audit.mjs` is read-only (`readonly: true` + `PRAGMA query_only =
+  ON`) and implements the acceptance criteria as named checks; `--baseline`
+  additionally proves the change was confined to the stage.
+- `production-target-guard.mjs` (wired into both tools above) refuses any target
+  that does not resolve to the expected Render disk unless `--rehearsal` is
+  passed explicitly. A stale/exported `CORE_DB_PATH` (e.g. `/tmp/tmp.*/f.sqlite`)
+  exits `3`. Never bypass this without an explicit `--rehearsal`.
+- Two policies govern this pilot. `PRESERVE_DISPUTE_V1`
+  (`dispute-policy.mjs`): team-aggregate splits that disagree are represented
+  (canonical row carries source values; existing CORE value retained in
+  metadata), never adjudicated. `PRESERVE_SOURCE_V1`
+  (`source-correction-policy.mjs`): a per-pilot decision record naming exact
+  field corrections (currently `m4/m10/m16` map `Erangel -> Sanhok`). It is NOT a
+  general "source wins" rule; any unapproved difference refuses the apply.
+- Dispute metadata and map-reconciliation metadata live in the committed payload
+  artifact, not the database. There are no columns for them and no migration is
+  planned for this pilot; do not fake them into existing tables.
+- Pre-apply the stage has 19 matches: one synthetic aggregate plus 18 real
+  placeholder rows with zero results. `replaceSyntheticSnapshot` removes only the
+  aggregate and updates the 18 real rows in place, so net match delta is `-1`,
+  not `-19`.
+- `player_match_stats` has no published source data for this stage; the absence
+  is recorded explicitly (`SOURCE_NOT_AVAILABLE`) in the payload, and zero rows
+  are written.
+
+## Stage standings reconstruction (`tools/liquipedia/audit-stage-standings.mjs`)
+
+Read-only coverage audit of `stage_standings` across every tournament and stage.
+Opens the target with `readOnly: true` + `PRAGMA query_only = ON`; the production
+target guard applies exactly as in the Phase 2 tooling, so a non-persistent-disk
+target needs an explicit `--rehearsal`. Run:
+
+```
+node tools/liquipedia/audit-stage-standings.mjs --db <path> --rehearsal --json <out.json>
+```
+
+Baseline on the committed dataset (md5 `85ab7f583faea808bff3e80ff4617120`):
+19 tournaments, 111 stages, 709 standing rows across 40 stages, and
+`stage_match_breakdown` **empty**. Four classifications, and the distinction
+matters:
+
+- `RECONSTRUCTABLE` (5) - published per-match results exist. Only PEL 2026 Summer
+  Grand Finals has a full board (19 matches x 16 teams).
+- `AGGREGATE_ONLY` (18) - only a synthetic cumulative snapshot. Do not treat this
+  as reconstructable; a snapshot is the placeholder a real extraction replaces.
+- `SOURCE_ONLY` (17) - standings with no results at all; needs an external
+  authoritative source.
+- `EMPTY` (71).
+
+### Two things to know before touching standings
+
+**Synthetic detection has two different definitions, and the delete path uses the
+broader one.** `replaceSyntheticSnapshot` (`server/services/enrichment.js`)
+matches `match_number = 0 OR match_number IS NULL` with no `map` condition, but
+the true synthetic shape used elsewhere is `(0 OR NULL) AND map = 'Other'`. 19
+PEL 2026 GF matches and 5 GPC 2025 matches are `match_number IS NULL` with real
+maps and real results, so a future `--replace-synthetic` apply on those stages
+would delete real data. Tighten the predicate before any future stage apply. The
+BMPS 2025 GF gate is unaffected (its 18 real rows are `match_number >= 1`).
+
+**Stored and derived standings can disagree on totals while agreeing on
+components.** On PEL 2026 GF, `place_points` and `elim_points` match the derived
+values exactly and wins match, but stored `total_points` exceeds derived by a
+non-negative gap that `place + elim` does not explain. This is not a sum bug or a
+stale board. It is recorded as a dispute and left unresolved; adjudicating needs
+the official tournament scoring rules, not inference from CORE. Follow
+`PRESERVE_DISPUTE_V1` - represent, never adjudicate.
+
+The audit reports disputes; it never corrects them. Identity is clean (0 broken
+references, 0 duplicates, 0 cross-wiring); all defects found are in values.
+

@@ -9,6 +9,7 @@ import {
   getTournamentFullPayload,
   getTournamentPagePayload,
 } from "../services/pagePayloads.js";
+import { getStageStandingsFromResults } from "../services/stageStandings.js";
 
 export const pagesRouter = Router();
 
@@ -51,6 +52,26 @@ pagesRouter.get("/tournament/:id", (req, res) => {
     );
   } catch (error) {
     return res.status(500).json({ error: error.message || "Failed to load tournament payload" });
+  }
+});
+
+// Canonical standings read path for stages backed by per-match results. Computed
+// from match_results with the app's publication rules; does not read or write the
+// legacy stage_standings table.
+pagesRouter.get("/tournament/:id/stage/:stageId/standings", (req, res) => {
+  try {
+    const tournamentId = String(req.params.id || "").trim();
+    const stageId = String(req.params.stageId || "").trim();
+    if (!tournamentId || !stageId) {
+      return res.status(400).json({ error: "Tournament id and stage id are required" });
+    }
+    const payload = getStageStandingsFromResults(tournamentId, stageId);
+    if (!payload) {
+      return res.status(404).json({ error: "Stage not found for tournament" });
+    }
+    return res.json(payload);
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Failed to load stage standings" });
   }
 });
 

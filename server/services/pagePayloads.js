@@ -2,6 +2,7 @@ import { entityConfigs } from "../db.js";
 import {
   applyListQuery,
   getPublishedNewsArticles,
+  listAllEntities,
   listEntity,
 } from "./listQuery.js";
 import {
@@ -76,15 +77,15 @@ function getFeaturedTournament(tournaments) {
 
 export function getTournamentCorePayload(tournamentId) {
   return {
-    matches: listEntity(
+    matches: listAllEntities(
       "Match",
       { tournament_id: tournamentId },
-      { sort_by: "-scheduled_time", limit: 300 },
+      { sort_by: "-scheduled_time", pageSize: 1000 },
     ).map(slimMatchRecord),
-    matchResults: listEntity(
+    matchResults: listAllEntities(
       "MatchResult",
       { tournament_id: tournamentId },
-      { sort_by: "-created_date", limit: 5000 },
+      { sort_by: "-created_date", pageSize: 5000 },
     ).map(slimMatchResultRecord),
     normalizedTournamentData: stripPageAuditFields(
       getNormalizedTournamentSafe(tournamentId),
@@ -97,9 +98,11 @@ export function getTournamentFullPayload(tournamentId) {
     teams: listEntity("Team", {}, { sort_by: "-total_points", limit: 300 }).map(
       slimTeamRecord,
     ),
-    players: listEntity("Player", {}, { sort_by: "-total_kills", limit: 500 }).map(
-      slimPlayerRecord,
-    ),
+    players: listAllEntities(
+      "Player",
+      {},
+      { sort_by: "-total_kills", pageSize: 500 },
+    ).map(slimPlayerRecord),
     transfers: listEntity("TransferWindow", {}, { sort_by: "-date", limit: 500 }),
   };
 }

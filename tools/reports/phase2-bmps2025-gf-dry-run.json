@@ -1,0 +1,1013 @@
+{
+  "generated_at": "2026-09-27T19:10:50.541Z",
+  "parser_version": "1.0.0",
+  "target": {
+    "tournamentId": "843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c",
+    "tournamentName": "Battlegrounds Mobile India Pro Series 2025",
+    "stage": "Grand Finals",
+    "expectedMatches": 18,
+    "expectedTeamsPerMatch": 16,
+    "expectedResultRows": 288
+  },
+  "source": {
+    "source_name": "Liquipedia",
+    "page_name": "Battlegrounds_Mobile_India_Pro_Series/2025",
+    "page_url": "https://liquipedia.net/pubgmobile/Battlegrounds_Mobile_India_Pro_Series/2025",
+    "slug_prefix": "liquipedia:bmps2025",
+    "retrieved_at": "2026-09-26",
+    "checksum": "sha256:aab3c517a66af9ea5926932ae762a3d40f8db82b108aca6e5ca9a731a37034fb",
+    "license": "CC BY-SA 3.0"
+  },
+  "coverage": {
+    "expected_matches": 18,
+    "extracted_matches": 18,
+    "expected_teams_per_match": 16,
+    "extracted_teams": 16,
+    "expected_result_rows": 288,
+    "extracted_result_rows": 288,
+    "teams_per_match": [
+      16
+    ],
+    "missing_fields": {
+      "team_identity_unresolved": []
+    }
+  },
+  "validation": {
+    "parser_issues": [],
+    "arithmetic_errors": [],
+    "points_table": {
+      "1": 10,
+      "2": 6,
+      "3": 5,
+      "4": 4,
+      "5": 3,
+      "6": 2,
+      "7": 1,
+      "8": 1
+    },
+    "match_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "all_matches_have_provenance": true,
+    "all_results_have_provenance": true,
+    "canonical_rows_consistent": true,
+    "canonical_consistency_errors": [],
+    "player_match_stats": 0,
+    "player_match_stats_status": "SOURCE_NOT_AVAILABLE",
+    "player_match_stats_reason": "Liquipedia source does not publish per-match player statistics for this stage."
+  },
+  "dispute_policy": {
+    "policy_version": "PRESERVE_DISPUTE_V1",
+    "policy": {
+      "canonical_value_source": "source",
+      "adjudicated": false,
+      "overwrite_existing": false,
+      "preserve_existing_in_metadata": true,
+      "blocks_apply": false,
+      "resolution": "PENDING_EXPLICIT_DECISION",
+      "description": "Import the source-derived canonical row, retain the existing CORE value in reconciliation metadata, flag the team aggregate as DISPUTED_SPLIT_TOTAL_AGREES. No adjudication, no overwrite."
+    },
+    "counts": {
+      "field_exact": 14,
+      "disputed_split_total_agrees": 2,
+      "totals_only_agree": 0,
+      "identity_unresolved": 0
+    },
+    "canonical_rows_consistent": true,
+    "canonical_consistency_errors": [],
+    "disputes": [
+      {
+        "team": "los hermanos esports",
+        "team_match_key": "loshermanosesports",
+        "core_team": "Los Hermanos Esports",
+        "dispute_status": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED",
+        "resolution": "PENDING_EXPLICIT_DECISION",
+        "canonical_value_source": "source",
+        "source_value": {
+          "kills": 77,
+          "placement_points": 49,
+          "total_points": 126,
+          "wins": 1,
+          "matches": 18
+        },
+        "existing_core_value": {
+          "kill_points": 78,
+          "placement_points": 48,
+          "total_points": 126,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "existing_core_preserved": true,
+        "overwritten": false,
+        "total_agrees": true,
+        "total_comparison": "126 vs 126",
+        "scope": "aggregate over 18 matches"
+      },
+      {
+        "team": "team insane",
+        "team_match_key": "teaminsane",
+        "core_team": "TEAM iNSANE",
+        "dispute_status": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED",
+        "resolution": "PENDING_EXPLICIT_DECISION",
+        "canonical_value_source": "source",
+        "source_value": {
+          "kills": 41,
+          "placement_points": 17,
+          "total_points": 58,
+          "wins": 0,
+          "matches": 18
+        },
+        "existing_core_value": {
+          "kill_points": 40,
+          "placement_points": 18,
+          "total_points": 58,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "existing_core_preserved": true,
+        "overwritten": false,
+        "total_agrees": true,
+        "total_comparison": "58 vs 58",
+        "scope": "aggregate over 18 matches"
+      }
+    ]
+  },
+  "reconciliation": {
+    "field_exact": 14,
+    "disputed_split_total_agrees": 2,
+    "totals_only_agree": 0,
+    "identity_unresolved": 0,
+    "rows": [
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "nonx esports",
+        "team_match_key": "nonxesports",
+        "core_team": "NoNx Esports",
+        "source_value": "84/48/132",
+        "source_detail": {
+          "kills": 84,
+          "placement_points": 48,
+          "total_points": 132,
+          "wins": 2,
+          "matches": 18
+        },
+        "core_value": "84/48/132",
+        "core_detail": {
+          "kill_points": 84,
+          "placement_points": 48,
+          "total_points": 132,
+          "wins_count": 2,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "132 vs 132",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "aryan x tmg gaming",
+        "team_match_key": "aryanxtmggaming",
+        "core_team": "Aryan x TMG Gaming",
+        "source_value": "79/57/136",
+        "source_detail": {
+          "kills": 79,
+          "placement_points": 57,
+          "total_points": 136,
+          "wins": 3,
+          "matches": 18
+        },
+        "core_value": "79/57/136",
+        "core_detail": {
+          "kill_points": 79,
+          "placement_points": 57,
+          "total_points": 136,
+          "wins_count": 3,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "136 vs 136",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "genesis esports (indian team)",
+        "team_match_key": "genesisesports",
+        "core_team": "Genesis Esports",
+        "source_value": "68/23/91",
+        "source_detail": {
+          "kills": 68,
+          "placement_points": 23,
+          "total_points": 91,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "68/23/91",
+        "core_detail": {
+          "kill_points": 68,
+          "placement_points": 23,
+          "total_points": 91,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "91 vs 91",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "los hermanos esports",
+        "team_match_key": "loshermanosesports",
+        "core_team": "Los Hermanos Esports",
+        "source_value": "77/49/126",
+        "source_detail": {
+          "kills": 77,
+          "placement_points": 49,
+          "total_points": 126,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "78/48/126",
+        "core_detail": {
+          "kill_points": 78,
+          "placement_points": 48,
+          "total_points": 126,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "126 vs 126",
+        "discrepancy_classification": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "team eggy",
+        "team_match_key": "teameggy",
+        "core_team": "Team Eggy",
+        "source_value": "64/24/88",
+        "source_detail": {
+          "kills": 64,
+          "placement_points": 24,
+          "total_points": 88,
+          "wins": 0,
+          "matches": 18
+        },
+        "core_value": "64/24/88",
+        "core_detail": {
+          "kill_points": 64,
+          "placement_points": 24,
+          "total_points": 88,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "88 vs 88",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "team forever",
+        "team_match_key": "teamforever",
+        "core_team": "Team Forever",
+        "source_value": "71/30/101",
+        "source_detail": {
+          "kills": 71,
+          "placement_points": 30,
+          "total_points": 101,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "71/30/101",
+        "core_detail": {
+          "kill_points": 71,
+          "placement_points": 30,
+          "total_points": 101,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "101 vs 101",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "twob",
+        "team_match_key": "twob",
+        "core_team": "TWOB",
+        "source_value": "67/42/109",
+        "source_detail": {
+          "kills": 67,
+          "placement_points": 42,
+          "total_points": 109,
+          "wins": 0,
+          "matches": 18
+        },
+        "core_value": "67/42/109",
+        "core_detail": {
+          "kill_points": 67,
+          "placement_points": 42,
+          "total_points": 109,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "109 vs 109",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "k9 esports (indian team)",
+        "team_match_key": "k9esports",
+        "core_team": "K9 Esports",
+        "source_value": "68/34/102",
+        "source_detail": {
+          "kills": 68,
+          "placement_points": 34,
+          "total_points": 102,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "68/34/102",
+        "core_detail": {
+          "kill_points": 68,
+          "placement_points": 34,
+          "total_points": 102,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "102 vs 102",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "gods omen",
+        "team_match_key": "godsomen",
+        "core_team": "Gods Omen",
+        "source_value": "74/40/114",
+        "source_detail": {
+          "kills": 74,
+          "placement_points": 40,
+          "total_points": 114,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "74/40/114",
+        "core_detail": {
+          "kill_points": 74,
+          "placement_points": 40,
+          "total_points": 114,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "114 vs 114",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "gods reign",
+        "team_match_key": "godsreign",
+        "core_team": "Gods Reign",
+        "source_value": "72/32/104",
+        "source_detail": {
+          "kills": 72,
+          "placement_points": 32,
+          "total_points": 104,
+          "wins": 0,
+          "matches": 18
+        },
+        "core_value": "72/32/104",
+        "core_detail": {
+          "kill_points": 72,
+          "placement_points": 32,
+          "total_points": 104,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "104 vs 104",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "8bit",
+        "team_match_key": "8bit",
+        "core_team": "8Bit",
+        "source_value": "78/38/116",
+        "source_detail": {
+          "kills": 78,
+          "placement_points": 38,
+          "total_points": 116,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "78/38/116",
+        "core_detail": {
+          "kill_points": 78,
+          "placement_points": 38,
+          "total_points": 116,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "116 vs 116",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "team insane",
+        "team_match_key": "teaminsane",
+        "core_team": "TEAM iNSANE",
+        "source_value": "41/17/58",
+        "source_detail": {
+          "kills": 41,
+          "placement_points": 17,
+          "total_points": 58,
+          "wins": 0,
+          "matches": 18
+        },
+        "core_value": "40/18/58",
+        "core_detail": {
+          "kill_points": 40,
+          "placement_points": 18,
+          "total_points": 58,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "58 vs 58",
+        "discrepancy_classification": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "inferno squad",
+        "team_match_key": "infernosquad",
+        "core_team": "Inferno Squad",
+        "source_value": "65/29/94",
+        "source_detail": {
+          "kills": 65,
+          "placement_points": 29,
+          "total_points": 94,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "65/29/94",
+        "core_detail": {
+          "kill_points": 65,
+          "placement_points": 29,
+          "total_points": 94,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "94 vs 94",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "4tr official",
+        "team_match_key": "4trofficial",
+        "core_team": "4TR Official",
+        "source_value": "64/45/109",
+        "source_detail": {
+          "kills": 64,
+          "placement_points": 45,
+          "total_points": 109,
+          "wins": 2,
+          "matches": 18
+        },
+        "core_value": "64/45/109",
+        "core_detail": {
+          "kill_points": 64,
+          "placement_points": 45,
+          "total_points": 109,
+          "wins_count": 2,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "109 vs 109",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "4merical esports in",
+        "team_match_key": "4mericalesports",
+        "core_team": "4Merical Esports",
+        "source_value": "71/54/125",
+        "source_detail": {
+          "kills": 71,
+          "placement_points": 54,
+          "total_points": 125,
+          "wins": 3,
+          "matches": 18
+        },
+        "core_value": "71/54/125",
+        "core_detail": {
+          "kill_points": 71,
+          "placement_points": 54,
+          "total_points": 125,
+          "wins_count": 3,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "125 vs 125",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "2op official",
+        "team_match_key": "2opofficial",
+        "core_team": "2OP Official",
+        "source_value": "26/14/40",
+        "source_detail": {
+          "kills": 26,
+          "placement_points": 14,
+          "total_points": 40,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "26/14/40",
+        "core_detail": {
+          "kill_points": 26,
+          "placement_points": 14,
+          "total_points": 40,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "40 vs 40",
+        "discrepancy_classification": "FIELD_EXACT",
+        "adjudication_status": "NOT_REQUIRED"
+      }
+    ],
+    "disputed_rows": [
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "los hermanos esports",
+        "team_match_key": "loshermanosesports",
+        "core_team": "Los Hermanos Esports",
+        "source_value": "77/49/126",
+        "source_detail": {
+          "kills": 77,
+          "placement_points": 49,
+          "total_points": 126,
+          "wins": 1,
+          "matches": 18
+        },
+        "core_value": "78/48/126",
+        "core_detail": {
+          "kill_points": 78,
+          "placement_points": 48,
+          "total_points": 126,
+          "wins_count": 1,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "126 vs 126",
+        "discrepancy_classification": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED",
+        "source_per_match": [
+          {
+            "match_number": 1,
+            "placement": 1,
+            "kills": 16,
+            "placement_points": 10,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 2,
+            "placement": 6,
+            "kills": 3,
+            "placement_points": 2,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 3,
+            "placement": 7,
+            "kills": 3,
+            "placement_points": 1,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 4,
+            "placement": 9,
+            "kills": 2,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 5,
+            "placement": 4,
+            "kills": 2,
+            "placement_points": 4,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 6,
+            "placement": 8,
+            "kills": 1,
+            "placement_points": 1,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 7,
+            "placement": 14,
+            "kills": 0,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 8,
+            "placement": 3,
+            "kills": 2,
+            "placement_points": 5,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 9,
+            "placement": 4,
+            "kills": 6,
+            "placement_points": 4,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 10,
+            "placement": 16,
+            "kills": 2,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 11,
+            "placement": 2,
+            "kills": 6,
+            "placement_points": 6,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 12,
+            "placement": 10,
+            "kills": 6,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 13,
+            "placement": 3,
+            "kills": 12,
+            "placement_points": 5,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 14,
+            "placement": 5,
+            "kills": 5,
+            "placement_points": 3,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 15,
+            "placement": 6,
+            "kills": 1,
+            "placement_points": 2,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 16,
+            "placement": 4,
+            "kills": 3,
+            "placement_points": 4,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 17,
+            "placement": 12,
+            "kills": 2,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 18,
+            "placement": 6,
+            "kills": 5,
+            "placement_points": 2,
+            "placement_points_source": "source_points_table"
+          }
+        ]
+      },
+      {
+        "scope": "aggregate over 18 matches",
+        "match_number": null,
+        "team": "team insane",
+        "team_match_key": "teaminsane",
+        "core_team": "TEAM iNSANE",
+        "source_value": "41/17/58",
+        "source_detail": {
+          "kills": 41,
+          "placement_points": 17,
+          "total_points": 58,
+          "wins": 0,
+          "matches": 18
+        },
+        "core_value": "40/18/58",
+        "core_detail": {
+          "kill_points": 40,
+          "placement_points": 18,
+          "total_points": 58,
+          "wins_count": 0,
+          "matches_count": 18
+        },
+        "total_agrees": true,
+        "total_comparison": "58 vs 58",
+        "discrepancy_classification": "DISPUTED_SPLIT_TOTAL_AGREES",
+        "adjudication_status": "UNRESOLVED",
+        "source_per_match": [
+          {
+            "match_number": 1,
+            "placement": 14,
+            "kills": 1,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 2,
+            "placement": 15,
+            "kills": 3,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 3,
+            "placement": 6,
+            "kills": 5,
+            "placement_points": 2,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 4,
+            "placement": 16,
+            "kills": 0,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 5,
+            "placement": 10,
+            "kills": 0,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 6,
+            "placement": 11,
+            "kills": 2,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 7,
+            "placement": 8,
+            "kills": 2,
+            "placement_points": 1,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 8,
+            "placement": 4,
+            "kills": 6,
+            "placement_points": 4,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 9,
+            "placement": 13,
+            "kills": 5,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 10,
+            "placement": 8,
+            "kills": 4,
+            "placement_points": 1,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 11,
+            "placement": 6,
+            "kills": 3,
+            "placement_points": 2,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 12,
+            "placement": 4,
+            "kills": 2,
+            "placement_points": 4,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 13,
+            "placement": 13,
+            "kills": 0,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 14,
+            "placement": 9,
+            "kills": 0,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 15,
+            "placement": 13,
+            "kills": 1,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 16,
+            "placement": 5,
+            "kills": 6,
+            "placement_points": 3,
+            "placement_points_source": "source_points_table"
+          },
+          {
+            "match_number": 17,
+            "placement": 10,
+            "kills": 0,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          },
+          {
+            "match_number": 18,
+            "placement": 13,
+            "kills": 1,
+            "placement_points": 0,
+            "placement_points_source": "outside_points_table"
+          }
+        ]
+      }
+    ],
+    "disputed_per_match_note": "Per-match source rows are shown for review only. No adjudication is performed: the split is presented as-is for a later decision gate."
+  },
+  "dry_run_state_A_enrichStage": {
+    "apply_summary": {
+      "stageId": "ea1d78cc-2091-40d2-bfc2-dc39b8670b25",
+      "matches": 18,
+      "results": 288,
+      "playerStats": 0
+    },
+    "counts": {
+      "matches_total": 19,
+      "real_matches": 18,
+      "synthetic_matches": 1,
+      "results_total": 304,
+      "player_match_stats": 0,
+      "match_sources": 1
+    },
+    "copy_hash_changed": true,
+    "validator_code": 1,
+    "validator_failure": "[V3 843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c/Grand Finals] SYNTHETIC_PLUS_REAL_RESULTS: 1 synthetic snapshot(s) coexist with 18 real match(es) carrying 288 result row(s); standings computed over both sources would double-count",
+    "classification": "SYNTHETIC_PLUS_REAL_RESULTS"
+  },
+  "dry_run_state_B_replaceSynthetic": {
+    "apply_summary": {
+      "stageId": "ea1d78cc-2091-40d2-bfc2-dc39b8670b25",
+      "removedSyntheticMatches": 1,
+      "matches": 18,
+      "results": 288,
+      "playerStats": 0
+    },
+    "counts": {
+      "matches_total": 18,
+      "real_matches": 18,
+      "synthetic_matches": 0,
+      "results_total": 288,
+      "player_match_stats": 0,
+      "match_sources": 1
+    },
+    "validator_code": 0,
+    "validator_stdout": "Database: /tmp/phase2-bmps2025-hUnzXk/stateB/stagecore.sqlite\nStages checked: 1\n  843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c / Grand Finals: real_match_count=18 synthetic_match_count=0 real_matches_with_results=18 real_result_rows=288 synthetic_result_rows=0 classification=REAL_COMPLETE\n\nClassification summary:\n  REAL_COMPLETE: 1\n\nNotes (non-fatal):\n  - 843e95ec-51ab-4cff-8b1d-ceb5ebfcce1c/Grand Finals: V2 result cardinality 16 != participant count 32 (may be legitimate if rosters differ)\n\nintegrity_check: ok\nforeign_key_check: 0 violations\n\nAll completeness gates passed.\n",
+    "validator_stderr": "",
+    "classification": "REAL_COMPLETE",
+    "canonical_rows_consistent": true,
+    "inconsistent_canonical_rows": 0
+  },
+  "idempotency": {
+    "first": {
+      "stageId": "ea1d78cc-2091-40d2-bfc2-dc39b8670b25",
+      "removedSyntheticMatches": 1,
+      "matches": 18,
+      "results": 288,
+      "playerStats": 0
+    },
+    "second": {
+      "stageId": "ea1d78cc-2091-40d2-bfc2-dc39b8670b25",
+      "removedSyntheticMatches": 0,
+      "matches": 18,
+      "results": 288,
+      "playerStats": 0
+    },
+    "afterFirst": {
+      "matches_total": 18,
+      "real_matches": 18,
+      "synthetic_matches": 0,
+      "results_total": 288,
+      "player_match_stats": 0,
+      "match_sources": 1
+    },
+    "afterSecond": {
+      "matches_total": 18,
+      "real_matches": 18,
+      "synthetic_matches": 0,
+      "results_total": 288,
+      "player_match_stats": 0,
+      "match_sources": 1
+    },
+    "converged": true
+  },
+  "production_safety": {
+    "production_path": "/workspace/project/Core/server/data/stagecore.sqlite",
+    "before": {
+      "main_sha256": "c0f73bc771f432c51d75ac7d3a12ec0d3789ee677eb95c2400e04b97d8252ddf",
+      "main_bytes": 7237632,
+      "wal_present": true,
+      "wal_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wal_bytes": 0,
+      "shm_present": true,
+      "shm_sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    "after": {
+      "main_sha256": "c0f73bc771f432c51d75ac7d3a12ec0d3789ee677eb95c2400e04b97d8252ddf",
+      "main_bytes": 7237632,
+      "wal_present": true,
+      "wal_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wal_bytes": 0,
+      "shm_present": true,
+      "shm_sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    "production_main_sha256_unchanged": true,
+    "production_wal_content_unchanged": true,
+    "production_shm_unchanged": true,
+    "sidecar_files_created_by_readonly_open": false,
+    "production_modified": false,
+    "synthetic_snapshot_deleted": false,
+    "enrichment_applied": false,
+    "historical_extraction_applied": false,
+    "production_opened_readonly_only": true
+  }
+}
