@@ -1,0 +1,1341 @@
+{
+  "generatedAt": "2026-09-28T07:36:35.457Z",
+  "productionDatabase": "/workspace/project/Core/server/data/stagecore.sqlite",
+  "productionMd5Before": "85ab7f583faea808bff3e80ff4617120",
+  "productionMd5After": "85ab7f583faea808bff3e80ff4617120",
+  "productionTouched": false,
+  "workingDatabase": "/tmp/phase3-standings-04l86A/stagecore.copy.sqlite",
+  "pmwc2024": {
+    "before": 0,
+    "after": 0,
+    "expected": 0,
+    "removed": true
+  },
+  "pmwc2025": {
+    "before": 1,
+    "after": 1,
+    "preserved": true
+  },
+  "pmwc2026": {
+    "before": 1,
+    "after": 1,
+    "preserved": true
+  },
+  "tournamentCountAfter": 18,
+  "integrityCheck": "ok",
+  "foreignKeyIssues": 0,
+  "idempotent": true,
+  "canonicalExportRefreshed": true,
+  "applied": [
+    {
+      "tournament": "PUBG Mobile World Cup 2025",
+      "stage": "Group Stage",
+      "group": null,
+      "scope": "existing-rows",
+      "before": 0,
+      "expected": 21,
+      "after": 0,
+      "inserted": 0,
+      "verified": 21,
+      "notPlaced": [],
+      "source": "USER_SUPPLIED_SOURCE",
+      "sourceRef": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok",
+      "rows": [
+        {
+          "rank": 1,
+          "team": "Alter Ego Ares",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 35,
+          "elim_points": 86,
+          "total_points": 121,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 3,
+          "team": "DRX",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 38,
+          "elim_points": 51,
+          "total_points": 89,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 4,
+          "team": "Weibo Gaming",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 31,
+          "elim_points": 58,
+          "total_points": 89,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 5,
+          "team": "Alpha Gaming",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 26,
+          "elim_points": 60,
+          "total_points": 86,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 6,
+          "team": "Team Secret",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 40,
+          "elim_points": 46,
+          "total_points": 86,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 7,
+          "team": "ThunderTalk Gaming",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 21,
+          "elim_points": 62,
+          "total_points": 83,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 8,
+          "team": "IDA Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 29,
+          "elim_points": 54,
+          "total_points": 83,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 10,
+          "team": "Nongshim RedForce",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 30,
+          "elim_points": 46,
+          "total_points": 76,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 11,
+          "team": "Yangon Galacticos",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 26,
+          "elim_points": 49,
+          "total_points": 75,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 13,
+          "team": "Horaa Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 21,
+          "elim_points": 49,
+          "total_points": 70,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 14,
+          "team": "POWR Esports",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 23,
+          "elim_points": 40,
+          "total_points": 63,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 15,
+          "team": "Team AxTMG",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 29,
+          "elim_points": 33,
+          "total_points": 62,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 16,
+          "team": "Team Vision",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 18,
+          "elim_points": 41,
+          "total_points": 59,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 17,
+          "team": "eArena",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 20,
+          "elim_points": 38,
+          "total_points": 58,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 18,
+          "team": "INFLUENCE RAGE",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 13,
+          "elim_points": 41,
+          "total_points": 54,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 19,
+          "team": "R8 Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 11,
+          "elim_points": 39,
+          "total_points": 50,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 20,
+          "team": "INTENSE GAME",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 18,
+          "elim_points": 27,
+          "total_points": 45,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 21,
+          "team": "Fire Flux Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 19,
+          "elim_points": 19,
+          "total_points": 38,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 22,
+          "team": "Team Falcons",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 11,
+          "elim_points": 26,
+          "total_points": 37,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 23,
+          "team": "KINOTROPE",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 5,
+          "elim_points": 31,
+          "total_points": 36,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 24,
+          "team": "Team GAMAX",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 9,
+          "elim_points": 17,
+          "total_points": 26,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        }
+      ]
+    },
+    {
+      "tournament": "PUBG Mobile World Cup 2025",
+      "stage": "Survival Stage",
+      "group": null,
+      "scope": "overall",
+      "before": 14,
+      "expected": 16,
+      "after": 16,
+      "inserted": 2,
+      "verified": 14,
+      "notPlaced": [],
+      "source": "USER_SUPPLIED_SOURCE",
+      "sourceRef": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok",
+      "rows": [
+        {
+          "rank": 1,
+          "team": "Horaa Esports",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 36,
+          "elim_points": 72,
+          "total_points": 108,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 2,
+          "team": "Fire Flux Esports",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 40,
+          "elim_points": 64,
+          "total_points": 104,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 3,
+          "team": "POWR Esports",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 32,
+          "elim_points": 72,
+          "total_points": 104,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 4,
+          "team": "Regnum Carya Esports",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 36,
+          "elim_points": 64,
+          "total_points": 100,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 5,
+          "team": "eArena",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 36,
+          "elim_points": 56,
+          "total_points": 92,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 6,
+          "team": "Nongshim RedForce",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 27,
+          "elim_points": 65,
+          "total_points": 92,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 7,
+          "team": "Team Falcons",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 29,
+          "elim_points": 42,
+          "total_points": 71,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 8,
+          "team": "Yangon Galacticos",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 31,
+          "elim_points": 39,
+          "total_points": 70,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 9,
+          "team": "INFLUENCE RAGE",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 22,
+          "elim_points": 47,
+          "total_points": 69,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 10,
+          "team": "R8 Esports",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 20,
+          "elim_points": 35,
+          "total_points": 55,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 11,
+          "team": "Team Vision",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 14,
+          "elim_points": 36,
+          "total_points": 50,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 12,
+          "team": "INTENSE GAME",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 10,
+          "elim_points": 38,
+          "total_points": 48,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 13,
+          "team": "Alpha7 Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 19,
+          "elim_points": 26,
+          "total_points": 45,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 14,
+          "team": "Team AxTMG",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 9,
+          "elim_points": 28,
+          "total_points": 37,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 15,
+          "team": "KINOTROPE",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 12,
+          "elim_points": 18,
+          "total_points": 30,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 16,
+          "team": "Team GAMAX",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 11,
+          "elim_points": 16,
+          "total_points": 27,
+          "progression_status": null,
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        }
+      ]
+    },
+    {
+      "tournament": "PUBG Mobile Global Championship 2025",
+      "stage": "Group Stage",
+      "group": "Group Green",
+      "scope": "group",
+      "before": 16,
+      "expected": 16,
+      "after": 16,
+      "inserted": 0,
+      "verified": 16,
+      "notPlaced": [],
+      "source": "PUBLISHED_STANDINGS",
+      "sourceRef": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok",
+      "rows": [
+        {
+          "rank": 1,
+          "team": "Alpha Gaming",
+          "matches_played": 18,
+          "wins": 4,
+          "place_points": 61,
+          "elim_points": 113,
+          "total_points": 174,
+          "progression_status": "Qualified for Grand Finals",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 2,
+          "team": "Dplus",
+          "matches_played": 18,
+          "wins": 2,
+          "place_points": 48,
+          "elim_points": 101,
+          "total_points": 149,
+          "progression_status": "Qualified for Grand Finals",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 3,
+          "team": "GOAT Team",
+          "matches_played": 18,
+          "wins": 3,
+          "place_points": 57,
+          "elim_points": 76,
+          "total_points": 133,
+          "progression_status": "Qualified for Grand Finals",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 4,
+          "team": "Wolves Esports",
+          "matches_played": 18,
+          "wins": 0,
+          "place_points": 37,
+          "elim_points": 78,
+          "total_points": 115,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 5,
+          "team": "Inner Circle Esports",
+          "matches_played": 18,
+          "wins": 1,
+          "place_points": 38,
+          "elim_points": 76,
+          "total_points": 114,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 6,
+          "team": "Gen.G Esports MENA",
+          "matches_played": 18,
+          "wins": 2,
+          "place_points": 39,
+          "elim_points": 69,
+          "total_points": 108,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 7,
+          "team": "Loops Esports",
+          "matches_played": 18,
+          "wins": 0,
+          "place_points": 25,
+          "elim_points": 81,
+          "total_points": 106,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 8,
+          "team": "Alter Ego Ares",
+          "matches_played": 18,
+          "wins": 1,
+          "place_points": 25,
+          "elim_points": 80,
+          "total_points": 105,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 9,
+          "team": "Team Falcons",
+          "matches_played": 18,
+          "wins": 1,
+          "place_points": 36,
+          "elim_points": 68,
+          "total_points": 104,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 10,
+          "team": "Papara SuperMassive",
+          "matches_played": 18,
+          "wins": 0,
+          "place_points": 28,
+          "elim_points": 76,
+          "total_points": 104,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 11,
+          "team": "9z Team",
+          "matches_played": 18,
+          "wins": 2,
+          "place_points": 44,
+          "elim_points": 54,
+          "total_points": 98,
+          "progression_status": "Qualified for Last Chance",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 12,
+          "team": "Tianba",
+          "matches_played": 18,
+          "wins": 1,
+          "place_points": 31,
+          "elim_points": 67,
+          "total_points": 98,
+          "progression_status": "Eliminated",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 13,
+          "team": "GS Team",
+          "matches_played": 18,
+          "wins": 0,
+          "place_points": 30,
+          "elim_points": 68,
+          "total_points": 98,
+          "progression_status": "Eliminated",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 14,
+          "team": "Orangutan",
+          "matches_played": 18,
+          "wins": 1,
+          "place_points": 35,
+          "elim_points": 56,
+          "total_points": 91,
+          "progression_status": "Eliminated",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 15,
+          "team": "REJECT",
+          "matches_played": 18,
+          "wins": 0,
+          "place_points": 31,
+          "elim_points": 47,
+          "total_points": 78,
+          "progression_status": "Eliminated",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 16,
+          "team": "Team Secret",
+          "matches_played": 18,
+          "wins": 0,
+          "place_points": 11,
+          "elim_points": 21,
+          "total_points": 32,
+          "progression_status": "Eliminated",
+          "source_name": "PUBLISHED_STANDINGS",
+          "source_url": null,
+          "source_ref": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total"
+        }
+      ]
+    },
+    {
+      "tournament": "PUBG Mobile World Cup 2026",
+      "stage": "Survival Stage",
+      "group": null,
+      "scope": "overall",
+      "before": 0,
+      "expected": 16,
+      "after": 16,
+      "inserted": 16,
+      "verified": 0,
+      "notPlaced": [],
+      "source": "USER_SUPPLIED_SOURCE",
+      "sourceRef": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok",
+      "rows": [
+        {
+          "rank": 1,
+          "team": "Tianba",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 39,
+          "elim_points": 70,
+          "total_points": 109,
+          "progression_status": "Qualified to Grand Finals",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 2,
+          "team": "AlUla Club Esports",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 29,
+          "elim_points": 62,
+          "total_points": 91,
+          "progression_status": "Qualified to Grand Finals",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 3,
+          "team": "Nongshim RedForce",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 30,
+          "elim_points": 59,
+          "total_points": 89,
+          "progression_status": "Qualified to Grand Finals",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 4,
+          "team": "FURIA Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 24,
+          "elim_points": 61,
+          "total_points": 85,
+          "progression_status": "Qualified to Grand Finals",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 5,
+          "team": "ULF Esports",
+          "matches_played": 12,
+          "wins": 2,
+          "place_points": 36,
+          "elim_points": 48,
+          "total_points": 84,
+          "progression_status": "Qualified to Grand Finals",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 6,
+          "team": "eArena",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 33,
+          "elim_points": 46,
+          "total_points": 79,
+          "progression_status": "Qualified to Grand Finals",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 7,
+          "team": "Wolves Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 24,
+          "elim_points": 55,
+          "total_points": 79,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 8,
+          "team": "GOAT Team",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 18,
+          "elim_points": 60,
+          "total_points": 78,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 9,
+          "team": "Alpha7 Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 23,
+          "elim_points": 49,
+          "total_points": 72,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 10,
+          "team": "AG.AL International",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 23,
+          "elim_points": 47,
+          "total_points": 70,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 11,
+          "team": "DOPENESS",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 23,
+          "elim_points": 43,
+          "total_points": 66,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 12,
+          "team": "Geekay Esports",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 20,
+          "elim_points": 45,
+          "total_points": 65,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 13,
+          "team": "RRQ RYU",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 16,
+          "elim_points": 47,
+          "total_points": 63,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 14,
+          "team": "Yangon Galacticos",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 19,
+          "elim_points": 34,
+          "total_points": 53,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 15,
+          "team": "Kiwoom DRX",
+          "matches_played": 12,
+          "wins": 1,
+          "place_points": 16,
+          "elim_points": 31,
+          "total_points": 47,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        },
+        {
+          "rank": 16,
+          "team": "721 Esports",
+          "matches_played": 12,
+          "wins": 0,
+          "place_points": 11,
+          "elim_points": 34,
+          "total_points": 45,
+          "progression_status": "Eliminated",
+          "source_name": "USER_SUPPLIED_SOURCE",
+          "source_url": null,
+          "source_ref": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total"
+        }
+      ]
+    }
+  ],
+  "disputes": [
+    {
+      "team": "Weibo Gaming",
+      "field": "rank",
+      "stored": 4,
+      "supplied": 3
+    },
+    {
+      "team": "DRX",
+      "field": "rank",
+      "stored": 3,
+      "supplied": 4
+    },
+    {
+      "team": "Team Secret",
+      "field": "rank",
+      "stored": 6,
+      "supplied": 5
+    },
+    {
+      "team": "Alpha Gaming",
+      "field": "rank",
+      "stored": 5,
+      "supplied": 6
+    },
+    {
+      "team": "POWR Esports",
+      "field": "place_points",
+      "stored": 32,
+      "supplied": 31
+    },
+    {
+      "team": "POWR Esports",
+      "field": "elim_points",
+      "stored": 72,
+      "supplied": 73
+    },
+    {
+      "team": "Nongshim RedForce",
+      "field": "place_points",
+      "stored": 27,
+      "supplied": 28
+    },
+    {
+      "team": "Nongshim RedForce",
+      "field": "elim_points",
+      "stored": 65,
+      "supplied": 64
+    },
+    {
+      "team": "Alpha Gaming",
+      "field": "place_points",
+      "stored": 61,
+      "supplied": 66
+    },
+    {
+      "team": "Alpha Gaming",
+      "field": "elim_points",
+      "stored": 113,
+      "supplied": 108
+    },
+    {
+      "team": "Dplus",
+      "field": "place_points",
+      "stored": 48,
+      "supplied": 52
+    },
+    {
+      "team": "Dplus",
+      "field": "elim_points",
+      "stored": 101,
+      "supplied": 97
+    },
+    {
+      "team": "GOAT Team",
+      "field": "place_points",
+      "stored": 57,
+      "supplied": 43
+    },
+    {
+      "team": "GOAT Team",
+      "field": "elim_points",
+      "stored": 76,
+      "supplied": 90
+    },
+    {
+      "team": "Wolves Esports",
+      "field": "place_points",
+      "stored": 37,
+      "supplied": 33
+    },
+    {
+      "team": "Wolves Esports",
+      "field": "elim_points",
+      "stored": 78,
+      "supplied": 82
+    },
+    {
+      "team": "Inner Circle Esports",
+      "field": "place_points",
+      "stored": 38,
+      "supplied": 27
+    },
+    {
+      "team": "Inner Circle Esports",
+      "field": "elim_points",
+      "stored": 76,
+      "supplied": 87
+    },
+    {
+      "team": "Gen.G MENA",
+      "field": "place_points",
+      "stored": 39,
+      "supplied": 34
+    },
+    {
+      "team": "Gen.G MENA",
+      "field": "elim_points",
+      "stored": 69,
+      "supplied": 74
+    },
+    {
+      "team": "Loops Esports",
+      "field": "place_points",
+      "stored": 25,
+      "supplied": 22
+    },
+    {
+      "team": "Loops Esports",
+      "field": "elim_points",
+      "stored": 81,
+      "supplied": 84
+    },
+    {
+      "team": "Alter Ego Ares",
+      "field": "place_points",
+      "stored": 25,
+      "supplied": 30
+    },
+    {
+      "team": "Alter Ego Ares",
+      "field": "elim_points",
+      "stored": 80,
+      "supplied": 75
+    },
+    {
+      "team": "Team Falcons",
+      "field": "place_points",
+      "stored": 36,
+      "supplied": 25
+    },
+    {
+      "team": "Team Falcons",
+      "field": "elim_points",
+      "stored": 68,
+      "supplied": 79
+    },
+    {
+      "team": "Papara Supermassive",
+      "field": "place_points",
+      "stored": 28,
+      "supplied": 26
+    },
+    {
+      "team": "Papara Supermassive",
+      "field": "elim_points",
+      "stored": 76,
+      "supplied": 78
+    },
+    {
+      "team": "9z",
+      "field": "place_points",
+      "stored": 44,
+      "supplied": 27
+    },
+    {
+      "team": "9z",
+      "field": "elim_points",
+      "stored": 54,
+      "supplied": 71
+    },
+    {
+      "team": "Tianba",
+      "field": "place_points",
+      "stored": 31,
+      "supplied": 20
+    },
+    {
+      "team": "Tianba",
+      "field": "elim_points",
+      "stored": 67,
+      "supplied": 78
+    },
+    {
+      "team": "Gs Team",
+      "field": "place_points",
+      "stored": 30,
+      "supplied": 18
+    },
+    {
+      "team": "Gs Team",
+      "field": "elim_points",
+      "stored": 68,
+      "supplied": 80
+    },
+    {
+      "team": "Orangutan",
+      "field": "place_points",
+      "stored": 35,
+      "supplied": 21
+    },
+    {
+      "team": "Orangutan",
+      "field": "elim_points",
+      "stored": 56,
+      "supplied": 70
+    },
+    {
+      "team": "REJECT",
+      "field": "place_points",
+      "stored": 31,
+      "supplied": 15
+    },
+    {
+      "team": "REJECT",
+      "field": "elim_points",
+      "stored": 47,
+      "supplied": 63
+    },
+    {
+      "team": "Team Secret",
+      "field": "place_points",
+      "stored": 11,
+      "supplied": 7
+    },
+    {
+      "team": "Team Secret",
+      "field": "elim_points",
+      "stored": 21,
+      "supplied": 25
+    }
+  ],
+  "deferred": [
+    {
+      "tournament": "Battlegrounds Mobile India Pro Series 2024",
+      "stage": "Semi Finals",
+      "reason": "SOURCE_NOT_AVAILABLE",
+      "unresolvedTeams": [],
+      "detail": "The instruction assumes a supplied per-round P/K board (24 teams x 16 matches). No such board exists in the repository, in CORE, or in the task text. The 24-team Semi Finals field is not the 16-team Finalist list in import-bmps-2024.js, and that list carries no per-round placements or kills.",
+      "requiredToProceed": "Provide the 24-team x 16-match P/K board (or any per-round placement/kill table) for BMPS 2024 Semi Finals. Reconstructing the agreed place/elim/total invariants without it would invent roughly 768 cells."
+    },
+    {
+      "tournament": "PUBG Mobile World Cup 2025",
+      "stage": "Grand Finals",
+      "reason": "TEAM_IDENTITY_UNRESOLVED",
+      "unresolvedTeams": [
+        "TT Global"
+      ],
+      "detail": "Rank 16 of the supplied 16-team board is 'TT Global'. No CORE team or alias matches it, and it is not an unambiguous variant of an existing team. CORE's own Grand Finals row at rank 16 is 'ThunderTalk Gaming' with identical supplied values (18/0/14/40/54), but CORE also holds a separate 'TT Global'-shaped ambiguity risk, so the identity is not asserted here.",
+      "requiredToProceed": "Confirm the canonical identity for 'TT Global' (or supply its CORE team id). Confirm whether it is CORE's rank-16 'ThunderTalk Gaming' row."
+    },
+    {
+      "tournament": "PUBG Mobile Global Championship 2025",
+      "stage": "Group Stage",
+      "group": "Group Red",
+      "reason": "TEAM_IDENTITY_UNRESOLVED",
+      "unresolvedTeams": [
+        "Alliance My"
+      ],
+      "detail": "Rank 9 of the supplied Group Red board is 'Alliance My'. CORE holds both 'Alliance' and 'Yoodo Alliance', so the intended organisation cannot be chosen without guessing.",
+      "requiredToProceed": "Confirm whether 'Alliance My' is CORE's 'Alliance' or 'Yoodo Alliance' (or another team). CORE's existing Group Red rank 9 is 'Alliance' with identical supplied values (18/0/39/62/101)."
+    },
+    {
+      "tournament": "Battlegrounds Mobile India Pro Series 2025",
+      "stage": "Survival Stage",
+      "reason": "TOURNAMENT_YEAR_UNCERTAIN",
+      "unresolvedTeams": [
+        "Santa Esp"
+      ],
+      "detail": "Two independent problems. (1) CORE's BMPS 2025 defines no Survival stage at all; its stages are League Stage, Rounds 1-3, Semi Finals Week 1, Semi Finals Week 2 and Grand Finals. (2) The supplied 32-team board's composition, including its 32-team group split, matches the BMPS 2026 Survival Stage, but BMPS 2026's Survival Stage is empty in CORE and 3 resolvable supplied teams (DCxSCR Esports, Esport Social, Likitha Esports) are not BMPS 2026 participants. Writing it under either year would attach correct-looking rows to the wrong event.",
+      "requiredToProceed": "Confirm which edition this Survival Stage belongs to (2025 or 2026), the correct stage name, and the canonical identity of 'Santa Esp' (CORE holds 'Santa Esports')."
+    }
+  ],
+  "secondRun": [
+    {
+      "tournament": "PUBG Mobile World Cup 2025",
+      "stage": "Group Stage",
+      "group": null,
+      "scope": "existing-rows",
+      "before": 0,
+      "expected": 21,
+      "after": 0,
+      "inserted": 0,
+      "verified": 21,
+      "notPlaced": [],
+      "source": "USER_SUPPLIED_SOURCE",
+      "sourceRef": "PMWC 2025 Group Stage standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok"
+    },
+    {
+      "tournament": "PUBG Mobile World Cup 2025",
+      "stage": "Survival Stage",
+      "group": null,
+      "scope": "overall",
+      "before": 16,
+      "expected": 16,
+      "after": 16,
+      "inserted": 0,
+      "verified": 16,
+      "notPlaced": [],
+      "source": "USER_SUPPLIED_SOURCE",
+      "sourceRef": "PMWC 2025 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok"
+    },
+    {
+      "tournament": "PUBG Mobile Global Championship 2025",
+      "stage": "Group Stage",
+      "group": "Group Green",
+      "scope": "group",
+      "before": 16,
+      "expected": 16,
+      "after": 16,
+      "inserted": 0,
+      "verified": 16,
+      "notPlaced": [],
+      "source": "PUBLISHED_STANDINGS",
+      "sourceRef": "PMGC 2025 Group Green standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok"
+    },
+    {
+      "tournament": "PUBG Mobile World Cup 2026",
+      "stage": "Survival Stage",
+      "group": null,
+      "scope": "overall",
+      "before": 16,
+      "expected": 16,
+      "after": 16,
+      "inserted": 0,
+      "verified": 16,
+      "notPlaced": [],
+      "source": "USER_SUPPLIED_SOURCE",
+      "sourceRef": "PMWC 2026 Survival Stage standings, order Matches/Wins/Placement/Finishes/Total",
+      "validation": "ok"
+    }
+  ]
+}

@@ -3,7 +3,6 @@ import { normalizeOrganizationName } from "../../lib/organizationIdentity.js";
 export const BMPS_2026_STYLE_STAGE_TOURNAMENTS = new Set([
   "PUBG Mobile World Cup 2026",
   "PUBG Mobile World Cup 2025",
-  "PUBG Mobile World Cup 2024",
   "Battlegrounds Mobile India Series 2026",
   "BGMI Masters Series Season 5",
   "Battlegrounds Mobile India International Cup 2025",

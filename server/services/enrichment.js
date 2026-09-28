@@ -19,6 +19,30 @@ import { logger } from "./logger.js";
 
 const ALLOWED_MAPS = new Set(["Erangel", "Miramar", "Sanhok", "Rondo", "Other"]);
 
+// The one authoritative definition of a synthetic cumulative snapshot.
+//
+// A snapshot is a stage total stored as a single placeholder match. It is
+// identified by BOTH a placeholder match number AND the placeholder map:
+//
+//   (match_number = 0 OR match_number IS NULL) AND map = 'Other'
+//
+// The `map = 'Other'` half is load-bearing. Real matches can legitimately have
+// match_number = NULL (imported feeds without numbering), and those carry real
+// maps and real results. Matching on match_number alone deletes them. Every
+// synthetic-detection site must use this predicate so the definition cannot
+// drift between the reader and the delete path.
+export const SYNTHETIC_MATCH_PREDICATE = `(match_number = 0 OR match_number IS NULL) AND map = 'Other'`;
+
+/**
+ * Row-level form of {@link SYNTHETIC_MATCH_PREDICATE} for a plain match object.
+ * Used to reason about a match before it reaches the database.
+ */
+export function isSyntheticMatchShape(match) {
+  const number = match?.match_number;
+  const placeholderNumber = number === 0 || number === null || number === undefined;
+  return placeholderNumber && match?.map === "Other";
+}
+
 export function slugifyStageName(value) {
   return (
     String(value || "")
@@ -337,12 +361,14 @@ export function enrichStage({ tournamentId, stage, matches = [], resultsByMatch 
 }
 
 /**
- * Replace a stage's synthetic cumulative snapshot (match_number = 0 / NULL,
- * map = Other) with real per-match rows. Atomic: validation failure rolls back
- * every delete and insert, so the stage is never partially replaced.
+ * Replace a stage's synthetic cumulative snapshot with real per-match rows.
+ * Atomic: validation failure rolls back every delete and insert, so the stage is
+ * never partially replaced.
  *
- * NOT executed against production data by this task — historical extraction is a
- * separate, later step.
+ * Only rows matching SYNTHETIC_MATCH_PREDICATE are removed. Real matches with
+ * match_number = NULL but a real map are preserved: they are data, not
+ * placeholders. Before this predicate was shared, the delete matched on
+ * match_number alone and would have destroyed such rows.
  */
 export function replaceSyntheticSnapshot({ tournamentId, stage, matches, resultsByMatch, playerStats = [], source = {}, validate } = {}) {
   if (!tournamentId) throw new Error("tournamentId is required");
@@ -352,11 +378,12 @@ export function replaceSyntheticSnapshot({ tournamentId, stage, matches, results
   return runInTransaction(() => {
     const stageRow = resolveStage(tournamentId, stageName);
 
-    // 1+2. Remove synthetic result rows, then their placeholder matches.
+    // 1+2. Remove synthetic result rows, then their placeholder matches. The
+    // predicate is the shared one, so a real match can never be swept up here.
     const syntheticIds = db
       .prepare(
         `SELECT id FROM matches
-         WHERE tournament_id = ? AND stage = ? AND (match_number = 0 OR match_number IS NULL)`,
+         WHERE tournament_id = ? AND stage = ? AND ${SYNTHETIC_MATCH_PREDICATE}`,
       )
       .all(tournamentId, stageRow.name)
       .map((row) => row.id);
