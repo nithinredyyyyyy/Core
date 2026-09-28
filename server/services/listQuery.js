@@ -146,6 +146,20 @@ const ORDERABLE_COLUMNS = {
     "kills",
     "total_points",
   ]),
+  PlayerMatchStat: new Set([
+    "created_date",
+    "updated_date",
+    "player_name",
+    "kills",
+    "finishes",
+    "knocks",
+    "deaths",
+    "direct_kills",
+    "grenade_kills",
+    "vehicle_kills",
+    "zone_kills",
+    "matches_played",
+  ]),
 };
 
 function getAllowedFilterColumns(config) {
@@ -203,7 +217,16 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
     params.push(serializeFilterValue(config, key, value));
   }
 
-  const maxListLimit = entityName === "MatchResult" ? 5000 : 500;
+  // Per-entity caps sized for the eventual historical dataset. Match and
+  // PlayerMatchStat counts grow with seasons/maps/players, so they need more
+  // headroom than the default. Callers still page via `skip` for the largest sets.
+  const LIST_LIMITS = {
+    MatchResult: 5000,
+    PlayerMatchStat: 5000,
+    StageStanding: 5000,
+    Match: 3000,
+  };
+  const maxListLimit = LIST_LIMITS[entityName] ?? 500;
   const safeLimit = Number.isFinite(Number(options.limit))
     ? Math.min(Number(options.limit), maxListLimit)
     : null;
@@ -253,6 +276,35 @@ export function listEntity(entityName, query = {}, options = {}) {
     throw new Error(`Unknown entity: ${entityName}`);
   }
   return applyListQuery(entityName, config, query, options);
+}
+
+/**
+ * Walk every page of an entity list instead of assuming one response holds the
+ * whole set. `applyListQuery` clamps `limit` to a per-entity cap, so callers that
+ * need more than the cap (e.g. every historical player) must page through it.
+ *
+ * Pages advance by the number of rows actually returned, mirroring the client
+ * helper in src/services/pagination.js.
+ */
+export function listAllEntities(entityName, query = {}, options = {}) {
+  const config = entityConfigs[entityName];
+  if (!config) {
+    throw new Error(`Unknown entity: ${entityName}`);
+  }
+  const pageSize = Number(options.pageSize) > 0 ? Number(options.pageSize) : 500;
+  const maxPages = Number(options.maxPages) > 0 ? Number(options.maxPages) : 200;
+  const rows = [];
+  for (let page = 0; page < maxPages; page += 1) {
+    const batch = applyListQuery(entityName, config, query, {
+      ...options,
+      limit: pageSize,
+      skip: page * pageSize,
+    });
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    rows.push(...batch);
+    if (batch.length < pageSize) break;
+  }
+  return rows;
 }
 
 export function getPublishedNewsArticles(options = {}) {

@@ -238,6 +238,13 @@ ensureColumn("tournaments", "participants", "TEXT");
 ensureColumn("tournaments", "rankings", "TEXT");
 ensureColumn("tournaments", "tier", "TEXT");
 ensureColumn("matches", "group_name", "TEXT");
+// Provenance for imported historical data (migration 010). ensureColumn keeps
+// databases that predate the migration usable without re-running it.
+ensureColumn("matches", "source_slug", "TEXT");
+ensureColumn("matches", "source_url", "TEXT");
+ensureColumn("matches", "source_name", "TEXT");
+ensureColumn("match_results", "source_ref", "TEXT");
+ensureColumn("match_results", "source_url", "TEXT");
 ensureColumn("match_results", "matches_count", "INTEGER DEFAULT 1");
 ensureColumn("match_results", "wins_count", "INTEGER DEFAULT 0");
 ensureColumn("match_results", "publication_status", "TEXT DEFAULT 'published'");
@@ -388,6 +395,15 @@ export const entityConfigs = {
   StageMatchBreakdown: {
     table: "stage_match_breakdown",
     fields: ["standing_id", "match_id", "placement", "kills", "total_points"],
+    jsonFields: [],
+  },
+  PlayerMatchStat: {
+    table: "player_match_stats",
+    fields: [
+      "match_id", "player_id", "player_name", "team_id", "matches_played",
+      "kills", "finishes", "knocks", "deaths", "direct_kills",
+      "grenade_kills", "vehicle_kills", "zone_kills", "source", "created_by",
+    ],
     jsonFields: [],
   },
   TeamSeasonRating: {

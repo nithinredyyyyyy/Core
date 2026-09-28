@@ -74,7 +74,7 @@ export function getGrandFinalsPlacementTone(stageName, placement) {
 export function getGroupMovementRule(tournamentName, stageName, group, position, totalTeams) {
   const normalizedStage = String(stageName || "").trim().toLowerCase();
 
-  // PMWC 2024/2025/2026: Use unified movement rule
+  // PMWC 2025/2026: Use unified movement rule
   if (tournamentName?.startsWith("PUBG Mobile World Cup")) {
     return getPmwc2026MovementRule(stageName, group, position, tournamentName);
   }

@@ -2,7 +2,6 @@ import { db, entityConfigs, normalizeRecord } from "../server/db.js";
 import { applyTournamentImportTransforms } from "../server/scripts/postImportTransforms.js";
 
 const TARGET_TOURNAMENTS = [
-  "PUBG Mobile World Cup 2024",
   "PUBG Mobile World Cup 2025",
   "PUBG Mobile World Cup 2026",
   "PUBG Mobile Global Championship 2025",

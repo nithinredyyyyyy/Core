@@ -8,7 +8,6 @@ const TOURNAMENT_LOGOS = {
   "Battlegrounds Mobile India Showdown 2026": "/images/bmsd-2025.png",
   "Battlegrounds Mobile India International Cup 2025": "/images/bmic-2025.webp",
   "Battlegrounds Mobile India International Cup 2026": "/images/bmic-2025.png",
-  "PUBG Mobile World Cup 2024": "/images/pubg-mobile-world-cup-2024.webp",
   "PUBG Mobile World Cup 2025": "/images/pubg-mobile-world-cup-2024.webp",
   "PUBG Mobile World Cup 2026": "/images/pubg-mobile-world-cup-2026.webp",
   "BGMI Masters Series Season 5": "/images/BGMS.png",

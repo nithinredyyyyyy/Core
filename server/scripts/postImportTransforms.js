@@ -276,15 +276,6 @@ export function applyTournamentImportTransforms(tournament) {
     };
   }
 
-  if (tournament.name === "PUBG Mobile World Cup 2024") {
-    return {
-      ...tournament,
-      prize_pool: "$3,000,000",
-      max_teams: 24,
-      stages: transformPmwStages(tournament, 4, "Main Tournament"),
-    };
-  }
-
   if (tournament.name === "PUBG Mobile World Cup 2025") {
     return {
       ...tournament,

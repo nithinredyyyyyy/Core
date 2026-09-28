@@ -16,6 +16,7 @@ const ENTITY_NAMES = [
   "TournamentParticipantPlayer",
   "StageStanding",
   "StageMatchBreakdown",
+  "PlayerMatchStat",
 ];
 const TOURNAMENT_JSON_FIELDS = [
   "stages",

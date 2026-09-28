@@ -16,6 +16,7 @@ const SEED_PATH = process.env.CORE_SEED_PATH
 
 const SEED_TABLES = [
   "tournaments", "teams", "players", "matches", "match_results",
+  "player_match_stats",
   "tournament_stages", "tournament_stage_groups", "tournament_participants",
   "tournament_participant_players", "tournament_participant_stage_entries",
   "stage_standings", "player_team_history", "transfer_windows",

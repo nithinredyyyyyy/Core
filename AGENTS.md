@@ -271,3 +271,123 @@ failure fatal, `0` treated as off), corrupt DB fails fast, backup retention +
 restore, token-leak E2E, and a check that the committed
 `server/data/stagecore.sqlite` hash is unchanged. Run `npm run verify` for the
 full gate.
+
+- `tools/verify-stage-completeness.mjs` is a read-only gate (`query_only = ON`)
+  over stage/result/stat integrity. Point it at a database copy, not the
+  committed blob: `--db <path>` (or `CORE_DB_PATH`). A fresh DB built from
+  `schema.js` plus the migrations carries provenance columns; the committed
+  `server/data/stagecore.sqlite` predates them, so V6 provenance is reported as
+  a note there instead of a failure. Hard failures are V1 (a stage with no
+  matches and no synthetic placeholder), V2 (per-match result cardinality
+  disagrees across matches of one stage), V3 (a synthetic aggregate snapshot
+  still coexists with real per-match rows - this double-counts in standings),
+  V5 (stats pointing at a missing player/match), and V7 (duplicate stage slug,
+  match identity, or source_slug).
+- `tools/enrich-stage.mjs` is the only supported way to run enrichment. It is a
+  dry run unless `--apply` is passed, and `--replace-synthetic` requires
+  `--apply`. Enrichment is never invoked at server startup; importing data is
+  always an explicit operator action.
+- Pre-extraction stages legitimately have synthetic aggregate snapshots
+  (`match_number` `0`/`NULL`). The extraction step must replace them via
+  `enrichStage`/`replaceSyntheticSnapshot` in one transaction, not append beside
+  them.
+
+
+## Phase 2 pilot operator tooling (`tools/liquipedia/`)
+
+The BMPS 2025 Grand Finals enrichment is a single-stage pilot. Operator tooling
+lives under `tools/liquipedia/`; the procedure is
+`tools/liquipedia/RUNBOOK-bmps2025-gf-apply.md`.
+
+- The production store is the Render Persistent Disk at
+  `/app/server/data/stagecore.sqlite` (see `render.yaml`). The tracked
+  `server/data/stagecore.sqlite` is NOT the runtime store and predates the
+  provenance migrations; never point an apply at it.
+- `emit-payload.mjs` produces the payload `enrich-stage.mjs --file` consumes and
+  is the only supported way to build it. It is read-only against the source DB.
+- `post-apply-audit.mjs` is read-only (`readonly: true` + `PRAGMA query_only =
+  ON`) and implements the acceptance criteria as named checks; `--baseline`
+  additionally proves the change was confined to the stage.
+- `production-target-guard.mjs` (wired into both tools above) refuses any target
+  that does not resolve to the expected Render disk unless `--rehearsal` is
+  passed explicitly. A stale/exported `CORE_DB_PATH` (e.g. `/tmp/tmp.*/f.sqlite`)
+  exits `3`. Never bypass this without an explicit `--rehearsal`.
+- Two policies govern this pilot. `PRESERVE_DISPUTE_V1`
+  (`dispute-policy.mjs`): team-aggregate splits that disagree are represented
+  (canonical row carries source values; existing CORE value retained in
+  metadata), never adjudicated. `PRESERVE_SOURCE_V1`
+  (`source-correction-policy.mjs`): a per-pilot decision record naming exact
+  field corrections (currently `m4/m10/m16` map `Erangel -> Sanhok`). It is NOT a
+  general "source wins" rule; any unapproved difference refuses the apply.
+- Dispute metadata and map-reconciliation metadata live in the committed payload
+  artifact, not the database. There are no columns for them and no migration is
+  planned for this pilot; do not fake them into existing tables.
+- Pre-apply the stage has 19 matches: one synthetic aggregate plus 18 real
+  placeholder rows with zero results. `replaceSyntheticSnapshot` removes only the
+  aggregate and updates the 18 real rows in place, so net match delta is `-1`,
+  not `-19`.
+- `player_match_stats` has no published source data for this stage; the absence
+  is recorded explicitly (`SOURCE_NOT_AVAILABLE`) in the payload, and zero rows
+  are written.
+
+
+## Phase 3 standings fixation (`feat/phase3-standings-fixation`)
+
+Baseline commit `65c6afa1385e368d09ca0a949219c5f065698653`. The tracked
+`server/data/stagecore.sqlite` (md5 `85ab7f583faea808bff3e80ff4617120`) is the
+dev shadow copy, NOT the runtime store (`/app/server/data/stagecore.sqlite`). It
+is tracked and tests copy it, but no task step may write to it. Uncommitted work
+from earlier on this branch included the `enrichment.js` predicate hardening,
+committed here.
+
+- `tools/phase3-apply-standings.mjs` is the only supported way to run the
+  fixation. It copies the database to a temp path first and exits `3` on the
+  production path, because importing `server/db.js` runs migrations 012/013 as a
+  side effect - pointing that module at the live file would delete PMWC 2024 from
+  production as a side effect of a report run.
+- Migrations run before seeding on a fresh database, so a removal migration alone
+  can never reach the committed seed. PMWC 2024 was therefore removed from BOTH
+  `canonical.export.json`/`seed.json` and migration `012`, otherwise the first
+  boot reseeds it or an already-booted disk keeps it.
+- PMWC 2024 is removed by `012_remove_pmwc_2024.sql`, keyed on the tournament
+  NAME, not its id (`seed.json` and `canonical.export.json` disagree on the UUID).
+  A regression test asserts PMWC 2024 is gone and PMWC 2025/2026 survive.
+- `013_stage_standings_provenance.sql` adds `source_name`/`source_url`/
+  `source_ref` to `stage_standings` (migration 010 added them to `matches` and
+  `match_results` but missed this table). `source_url` stays NULL: hand-supplied
+  boards have no single canonical URL and inventing one is a false provenance
+  claim.
+- `server/scripts/phase3StandingsFixation.js` writes the source values as
+  canonical and retains the prior CORE value as metadata (`PRESERVE_DISPUTE_V1`).
+  When a supplied field differs from the stored one, the row keeps its id and is
+  updated to the source value; the prior CORE value is recorded as a dispute in
+  the report, which is the record of the disagreement. Disagreement is
+  represented, not adjudicated. Each supplied `total_points` is checked against
+  its own `place_points + elim_points` before the write, so the apply can never
+  leave a row whose components disagree with its total.
+- Boards are scoped explicitly (`scope`: `overall` | `group` | `existing-rows`).
+  PMWC 2025 Group Stage stores its ranking as Green/Red/Yellow group boards, so
+  its supplied ranking is matched to the group row each team already occupies
+  and updated in place; a team with no stored row (for PMWC 2025: `4Thrives`,
+  `Regnum Carya`, `Alpha7 Esports`) is reported in `notPlaced`, not put into a
+  guessed group. An `overall` write there would put the same team in the stage
+  twice. The unique key is `(stage_id, COALESCE(group_id,''), team_id)`.
+- Team identity reuses an existing CORE team id and never creates a team.
+  Supplied labels that CORE spells differently resolve through `TEAM_ALIASES`
+  (`TT Global` -> `ThunderTalk Gaming`, `Alliance My` -> `Alliance`, ...). CORE
+  holds two rows for `Rising Esports` and for `RiotNations` (a pre-existing
+  duplicate-team issue, reported not fixed); `TEAM_ID_PINS` names the row that
+  is a BMPS 2026 participant with existing standings, so resolution is never a
+  coin flip. Every applied row's supplied label is kept in the report's
+  `sourceLabels` audit trail next to the canonical team and id it resolved to.
+- `player_match_stats` records source absence explicitly
+  (`SOURCE_NOT_AVAILABLE`); no stats are invented.
+- Deferred, not written: BMPS 2024 Semi Finals (`SOURCE_NOT_AVAILABLE` - no P/K
+  board exists anywhere). The earlier deferrals are resolved: PMWC 2025 Grand
+  Finals (`TT Global` -> `ThunderTalk Gaming`), PMGC 2025 Group Red (`Alliance
+  My` -> `Alliance`, decided by stored-value equality), and BMPS 2026 Survival
+  Stage (the 32-team board is BMPS 2026, not BMPS 2025 - CORE has no BMPS 2025
+  Survival Stage and none may be created). See `tools/reports/phase3-disputes.md`.
+- Findings live in `tools/reports/phase3-standings-fixation.{json,md}` and
+  `tools/reports/phase3-disputes.md`, regenerated by the apply tool.
+

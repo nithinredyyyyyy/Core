@@ -17,7 +17,6 @@ export function getTournamentLogo(tournament) {
     "Battlegrounds Mobile India Pro Series 2026": "/images/bmps-2026.webp",
     "PUBG Mobile World Cup 2026": "/images/pubg-mobile-world-cup-2026.webp",
     "PUBG Mobile World Cup 2025": "/images/pubg-mobile-world-cup-2024.webp",
-    "PUBG Mobile World Cup 2024": "/images/pubg-mobile-world-cup-2024.webp",
     "Peacekeeper Elite League 2026 Summer": "/images/PEL.png",
     "BGMI Masters Series Season 5": "/images/BGMS.png",
     "PUBG Mobile Global Championship 2025": "/images/gc.png",
