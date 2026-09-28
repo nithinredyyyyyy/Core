@@ -330,3 +330,49 @@ lives under `tools/liquipedia/`; the procedure is
   is recorded explicitly (`SOURCE_NOT_AVAILABLE`) in the payload, and zero rows
   are written.
 
+## Stage standings reconstruction (`tools/liquipedia/audit-stage-standings.mjs`)
+
+Read-only coverage audit of `stage_standings` across every tournament and stage.
+Opens the target with `readOnly: true` + `PRAGMA query_only = ON`; the production
+target guard applies exactly as in the Phase 2 tooling, so a non-persistent-disk
+target needs an explicit `--rehearsal`. Run:
+
+```
+node tools/liquipedia/audit-stage-standings.mjs --db <path> --rehearsal --json <out.json>
+```
+
+Baseline on the committed dataset (md5 `85ab7f583faea808bff3e80ff4617120`):
+19 tournaments, 111 stages, 709 standing rows across 40 stages, and
+`stage_match_breakdown` **empty**. Four classifications, and the distinction
+matters:
+
+- `RECONSTRUCTABLE` (5) - published per-match results exist. Only PEL 2026 Summer
+  Grand Finals has a full board (19 matches x 16 teams).
+- `AGGREGATE_ONLY` (18) - only a synthetic cumulative snapshot. Do not treat this
+  as reconstructable; a snapshot is the placeholder a real extraction replaces.
+- `SOURCE_ONLY` (17) - standings with no results at all; needs an external
+  authoritative source.
+- `EMPTY` (71).
+
+### Two things to know before touching standings
+
+**Synthetic detection has two different definitions, and the delete path uses the
+broader one.** `replaceSyntheticSnapshot` (`server/services/enrichment.js`)
+matches `match_number = 0 OR match_number IS NULL` with no `map` condition, but
+the true synthetic shape used elsewhere is `(0 OR NULL) AND map = 'Other'`. 19
+PEL 2026 GF matches and 5 GPC 2025 matches are `match_number IS NULL` with real
+maps and real results, so a future `--replace-synthetic` apply on those stages
+would delete real data. Tighten the predicate before any future stage apply. The
+BMPS 2025 GF gate is unaffected (its 18 real rows are `match_number >= 1`).
+
+**Stored and derived standings can disagree on totals while agreeing on
+components.** On PEL 2026 GF, `place_points` and `elim_points` match the derived
+values exactly and wins match, but stored `total_points` exceeds derived by a
+non-negative gap that `place + elim` does not explain. This is not a sum bug or a
+stale board. It is recorded as a dispute and left unresolved; adjudicating needs
+the official tournament scoring rules, not inference from CORE. Follow
+`PRESERVE_DISPUTE_V1` - represent, never adjudicate.
+
+The audit reports disputes; it never corrects them. Identity is clean (0 broken
+references, 0 duplicates, 0 cross-wiring); all defects found are in values.
+
