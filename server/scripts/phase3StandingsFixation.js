@@ -1,8 +1,9 @@
 // Apply the Phase 3 stage-standings fixation to a database.
 //
 // Safety properties this module is responsible for:
-//   - idempotent: upsert is keyed on (stage_id, COALESCE(group_id,''), team_id),
-//     the existing unique index, so a second run changes nothing and adds no rows;
+//   - idempotent: rows are keyed on (stage_id, COALESCE(group_id,''), team_id),
+//     the existing unique index, so a second run produces no new rows and no new
+//     disputes;
 //   - no invented data: every row must resolve to an existing CORE team, every
 //     supplied total must equal place_points + elim_points, and ranks must be
 //     unique. A violation throws and the caller's transaction rolls back;
@@ -11,19 +12,29 @@
 //   - identity preserved: existing standings rows keep their id, so anything that
 //     references a standing (stage_match_breakdown) stays intact.
 //
+// PRESERVE_DISPUTE_V1 governs what happens when the supplied value differs from
+// the stored one: the canonical row carries the source values and the prior CORE
+// value is kept as a dispute record in the report. The disagreement is
+// represented, not adjudicated, and the report is the record of it.
+//
 // It never creates a team, never creates a stage, and never deletes a standings
-// row. A target whose board cannot be fully resolved is reported as deferred
-// rather than applied partially.
+// row. A target whose board cannot be fully resolved throws rather than applying
+// partially.
 
 import { randomUUID } from "node:crypto";
 import { db, runInTransaction } from "../db.js";
 import { logger } from "../services/logger.js";
-import { TEAM_ALIASES, STANDINGS_TARGETS, DEFERRED_TARGETS } from "./data/phase3Standings.js";
+import { TEAM_ALIASES, TEAM_ID_PINS, STANDINGS_TARGETS, DEFERRED_TARGETS } from "./data/phase3Standings.js";
 
 function indexTeamsByName() {
   const byName = new Map();
   for (const row of db.prepare("SELECT id, name FROM teams").all()) {
-    byName.set(row.name.trim().toLowerCase(), row);
+    const key = row.name.trim().toLowerCase();
+    const existing = byName.get(key);
+    // Keep the first row, not the last: a duplicate name must not silently
+    // change which team an unpinned alias resolves to. Duplicates are flagged
+    // (see validateTeamIndex) and the two known cases carry explicit id pins.
+    if (!existing) byName.set(key, row);
   }
   for (const row of db.prepare("SELECT alias, team_id FROM team_aliases").all()) {
     const key = String(row.alias || "").trim().toLowerCase();
@@ -36,11 +47,16 @@ function indexTeamsByName() {
 
 /**
  * Resolve a supplied display name to an existing CORE team.
+ *
  * Returns null when nothing matches; the caller treats that as a hard stop.
+ * When a canonical name is one CORE holds more than once, TEAM_ID_PINS names the
+ * row to use; without a pin the caller must not guess.
  */
 export function resolveTeamId(displayName, teamIndex) {
   const raw = String(displayName || "").trim();
   const canonical = TEAM_ALIASES[raw] || raw;
+  const pinned = TEAM_ID_PINS[canonical];
+  if (pinned) return pinned;
   return teamIndex.get(canonical.trim().toLowerCase())?.id || null;
 }
 
@@ -89,8 +105,11 @@ function validateBoard(target, teamIndex) {
     resolved.push({ ...entry, teamId });
   }
 
-  if (target.expectRows !== undefined && resolved.length !== target.expectRows) {
-    problems.push(`expected ${target.expectRows} rows, resolved ${resolved.length}`);
+  // Every supplied row must resolve: a board is applied whole or not at all.
+  // (For "existing-rows", resolved rows may still turn out to be not-placed when
+  // the stage holds no row for that team; that is reported separately.)
+  if (resolved.length !== target.rows.length) {
+    problems.push(`expected ${target.rows.length} resolvable rows, resolved ${resolved.length}`);
   }
 
   return { resolved, problems };
@@ -118,18 +137,21 @@ function findExistingRowsForTeam(stageId, teamId) {
 }
 
 /**
- * Reconcile one supplied row against stored state, without ever overwriting a
- * value.
+ * Reconcile one supplied row against stored state under PRESERVE_DISPUTE_V1.
  *
- * The policy is PRESERVE_DISPUTE_V1: disagreement is represented, not
- * adjudicated. So this function:
- *   - inserts a row only when the stage has no row for that team at all;
- *   - when a row exists, never changes rank/matches/wins/place/elim/total. It
- *     records every field that differs as a dispute and leaves the stored value
- *     alone;
- *   - always attaches provenance and, when supplied, progression_status.
+ * The policy (see AGENTS.md) is that a disagreement is *represented*, never
+ * adjudicated: the canonical row carries the source values, and the prior CORE
+ * value is retained as metadata in the dispute record. So this function:
+ *   - inserts a row when the stage has no row for that team;
+ *   - when a row exists, writes the supplied rank/matches/wins/place/elim/total
+ *     and records each field that changed as a dispute (stored = prior CORE
+ *     value, supplied = new value);
+ *   - attaches provenance, and progression_status when the source supplies one.
  *
- * Returns { action, disputes } where action is "inserted" | "provenance-only".
+ * The supplied total is already validated against place_points + elim_points, so a
+ * change here can never leave a row whose components do not sum to its total.
+ *
+ * Returns { action, id, disputes } where action is "inserted" | "updated".
  */
 function reconcileRow({ target, tournamentId, stageId, groupId, entry, existing, now }) {
   if (!existing) {
@@ -163,11 +185,16 @@ function reconcileRow({ target, tournamentId, stageId, groupId, entry, existing,
 
   db.prepare(
     `UPDATE stage_standings
-       SET progression_status = COALESCE(?, progression_status),
+       SET rank = ?, matches_played = ?, wins = ?, place_points = ?, elim_points = ?,
+           total_points = ?, progression_status = COALESCE(?, progression_status),
            source_name = ?, source_url = ?, source_ref = ?, updated_date = ?
      WHERE id = ?`,
-  ).run(entry.progression_status, target.source.name, target.source.url, target.source.ref, now, existing.id);
-  return { action: "provenance-only", id: existing.id, disputes };
+  ).run(
+    entry.rank, entry.matches_played, entry.wins, entry.place_points, entry.elim_points,
+    entry.total_points, entry.progression_status, target.source.name, target.source.url,
+    target.source.ref, now, existing.id,
+  );
+  return { action: "updated", id: existing.id, disputes };
 }
 
 /**
@@ -202,30 +229,40 @@ export function applyStandingsFixation({ targets = STANDINGS_TARGETS, deferred =
       }
 
       const scope = target.scope || (target.group ? "group" : "overall");
-      const before = boardCount(stage.id, groupId);
+      // For "existing-rows" the board is the whole partitioned stage; counting a
+      // single (null) group would always read 0.
+      const before =
+        scope === "existing-rows"
+          ? db.prepare("SELECT COUNT(*) AS c FROM stage_standings WHERE stage_id = ?").get(stage.id).c
+          : boardCount(stage.id, groupId);
       const now = new Date().toISOString();
       let inserted = 0;
-      let verified = 0;
+      let updated = 0;
+      // A stage whose ranking is stored per group cannot take a stage-wide
+      // board: the supplied ranking names teams but not their groups, so a new
+      // team has no board to join and writing one overall would duplicate every
+      // team already grouped. Such teams are reported, not guessed.
       const notPlaced = [];
+      // The supplied display label is preserved for every row the source spells
+      // differently from CORE's canonical name, so the audit trail keeps the
+      // source's own wording ("TT Global", "Alliance My") next to the team id it
+      // resolved to. The row's team_id points at the canonical team; the label is
+      // recorded here rather than renamed away.
+      const sourceLabels = [];
 
       for (const entry of resolved) {
-        const sameBoard = db
-          .prepare(
-            "SELECT id, rank, matches_played, wins, place_points, elim_points, total_points FROM stage_standings WHERE stage_id = ? AND COALESCE(group_id, '') = COALESCE(?, '') AND team_id = ?",
-          )
-          .get(stage.id, groupId, entry.teamId);
-        const stageWide = scope === "existing-rows" ? findExistingRowsForTeam(stage.id, entry.teamId) : [];
+        if (TEAM_ALIASES[entry.team]) {
+          sourceLabels.push({ supplied: entry.team, canonical: TEAM_ALIASES[entry.team], teamId: entry.teamId });
+        }
+
+        const stageWide = findExistingRowsForTeam(stage.id, entry.teamId);
         if (stageWide.length > 1) {
           throw new Error(
-            `${target.tournament} / ${target.stage}: "${entry.team}" already appears ${stageWide.length} times in this stage; refusing to add another row`,
+            `${target.tournament} / ${target.stage}: "${entry.team}" already appears ${stageWide.length} times in this stage; refusing to touch an ambiguous row`,
           );
         }
 
         if (scope === "existing-rows") {
-          // This stage's ranking is stored per group. A row can only be verified,
-          // never added: the supplied board does not say which group a new team
-          // belongs to, and an overall board here would duplicate teams already
-          // present. A team with no stored row is reported, not guessed.
           if (stageWide.length === 0) {
             notPlaced.push(entry.team);
             continue;
@@ -234,33 +271,42 @@ export function applyStandingsFixation({ targets = STANDINGS_TARGETS, deferred =
             target, tournamentId, stageId: stage.id, groupId: stageWide[0].group_id,
             entry, existing: stageWide[0], now,
           });
-          verified += 1;
+          updated += 1;
           allDisputes.push(...disputes);
           continue;
+        }
+
+        const sameBoard = db
+          .prepare(
+            "SELECT id, rank, matches_played, wins, place_points, elim_points, total_points FROM stage_standings WHERE stage_id = ? AND COALESCE(group_id, '') = COALESCE(?, '') AND team_id = ?",
+          )
+          .get(stage.id, groupId, entry.teamId);
+
+        // A team may only appear once in a stage. The unique index covers
+        // (stage, group, team); this guard covers the cross-board case, which
+        // would otherwise slip a second row into the stage under another group.
+        if (stageWide.length === 1 && stageWide[0].id !== sameBoard?.id) {
+          throw new Error(
+            `${target.tournament} / ${target.stage}: "${entry.team}" already appears on another board in this stage; refusing to add a duplicate row`,
+          );
         }
 
         const { action, disputes } = reconcileRow({
           target, tournamentId, stageId: stage.id, groupId, entry, existing: sameBoard, now,
         });
         if (action === "inserted") inserted += 1;
-        else verified += 1;
+        else updated += 1;
         allDisputes.push(...disputes);
       }
 
-      const after = boardCount(stage.id, groupId);
-      if (target.expectRows !== undefined) {
-        // For a per-group scope, expectRows is the group board size. For a
-        // stage-wide scope it is the stage total. For "existing-rows" the stage is
-        // partitioned, so the expectation is the number of rows in the stage.
-        const actual =
-          scope === "existing-rows"
-            ? db.prepare("SELECT COUNT(*) AS c FROM stage_standings WHERE stage_id = ?").get(stage.id).c
-            : after;
-        if (actual !== target.expectRows) {
-          throw new Error(
-            `Post-condition failed for ${target.tournament} / ${target.stage}: expected ${target.expectRows} rows, found ${actual}`,
-          );
-        }
+      const after =
+        scope === "existing-rows"
+          ? db.prepare("SELECT COUNT(*) AS c FROM stage_standings WHERE stage_id = ?").get(stage.id).c
+          : boardCount(stage.id, groupId);
+      if (target.expectRows !== undefined && after !== target.expectRows) {
+        throw new Error(
+          `Post-condition failed for ${target.tournament} / ${target.stage}: expected ${target.expectRows} rows, found ${after}`,
+        );
       }
 
       report.push({
@@ -272,15 +318,16 @@ export function applyStandingsFixation({ targets = STANDINGS_TARGETS, deferred =
         expected: target.expectRows,
         after,
         inserted,
-        verified,
+        updated,
         notPlaced,
+        sourceLabels,
         source: target.source.name,
         sourceRef: target.source.ref,
         validation: "ok",
       });
       logger.info("phase3.standingsFixation.applied", {
         tournament: target.tournament, stage: target.stage, group: target.group,
-        before, after, inserted, verified, notPlaced: notPlaced.length,
+        before, after, inserted, updated, notPlaced: notPlaced.length,
       });
     }
 

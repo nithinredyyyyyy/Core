@@ -54,6 +54,22 @@ if (workDb) {
   fs.copyFileSync(PROD_DB, workDb);
 }
 
+// Read the pre-migration state of the working copy directly, before importing
+// server/db.js (whose import runs migrations 012/013). Without this the report
+// would show PMWC 2024 as already absent, because the removal migration would
+// have run before the first count.
+const { default: Database } = await import("better-sqlite3");
+const preDb = new Database(workDb, { readonly: true });
+const preCount = (name) =>
+  preDb.prepare("SELECT COUNT(*) AS c FROM tournaments WHERE name = ?").get(name).c;
+const preState = {
+  pmwc2024: preCount("PUBG Mobile World Cup 2024"),
+  pmwc2025: preCount("PUBG Mobile World Cup 2025"),
+  pmwc2026: preCount("PUBG Mobile World Cup 2026"),
+  tournaments: preDb.prepare("SELECT COUNT(*) AS c FROM tournaments").get().c,
+};
+preDb.close();
+
 // server/db.js opens whatever CORE_DB_PATH names, so this must be set before the
 // first import of that module.
 process.env.CORE_DB_PATH = workDb;
@@ -64,7 +80,7 @@ const { applyStandingsFixation } = await import(`${REPO_ROOT}/server/scripts/pha
 
 const prodMd5 = fs.existsSync(PROD_DB) ? md5(PROD_DB) : null;
 
-// ── pre-state ────────────────────────────────────────────────────────────────
+// ── pre-state (after migrations have run) ────────────────────────────────────
 const pmwc2024Before = db
   .prepare("SELECT COUNT(*) AS c FROM tournaments WHERE name = 'PUBG Mobile World Cup 2024'")
   .get().c;
@@ -82,7 +98,7 @@ const second = applyStandingsFixation();
 const secondRunClean =
   second.applied.every((t) => t.inserted === 0) &&
   second.applied.every((t) => t.before === t.after) &&
-  second.disputes.length === first.disputes.length;
+  second.disputes.length === 0;
 
 // ── post-state ───────────────────────────────────────────────────────────────
 const pmwc2024After = db
@@ -113,8 +129,8 @@ for (const target of first.applied) {
         )
         .get(target.group, target.tournament, target.stage)?.id
     : null;
-  // "existing-rows" stages are partitioned, so read the whole stage; the other
-  // scopes read the one board they own.
+  // "existing-rows" stages are partitioned across groups, so the board is the
+  // whole stage; every other scope reads the single board it owns.
   const whereBoard =
     target.scope === "existing-rows"
       ? "tn.name = ? AND ts.name = ?"
@@ -125,19 +141,53 @@ for (const target of first.applied) {
       : [target.tournament, target.stage, groupId];
   const stageRow = db
     .prepare(
-      `SELECT ss.rank, t.name AS team, ss.matches_played, ss.wins, ss.place_points,
-              ss.elim_points, ss.total_points, ss.progression_status,
+      `SELECT ss.rank, ssg.group_name, t.name AS team, ss.matches_played, ss.wins,
+              ss.place_points, ss.elim_points, ss.total_points, ss.progression_status,
               ss.source_name, ss.source_url, ss.source_ref
          FROM stage_standings ss
          JOIN teams t ON t.id = ss.team_id
          JOIN tournament_stages ts ON ts.id = ss.stage_id
          JOIN tournaments tn ON tn.id = ss.tournament_id
+         LEFT JOIN tournament_stage_groups ssg ON ssg.id = ss.group_id
         WHERE ${whereBoard}
         ORDER BY ss.rank`,
     )
     .all(...params);
   storedBoards.push({ ...target, rows: stageRow });
 }
+
+// Prove the write landed by asserting a couple of values that must have changed,
+// straight from the working copy. This is a guard against a silently-skipped
+// apply, not a substitute for the read-back table above.
+function assertStored({ tournament, stage, group = null, team, field, value }) {
+  const groupId = group
+    ? db
+        .prepare("SELECT id FROM tournament_stage_groups WHERE group_name = ? AND stage_id = (SELECT id FROM tournament_stages WHERE tournament_id = (SELECT id FROM tournaments WHERE name = ?) AND name = ?)")
+        .get(group, tournament, stage)?.id
+    : null;
+  const row = db
+    .prepare(
+      `SELECT ss.${field} AS v FROM stage_standings ss
+         JOIN teams tm ON tm.id = ss.team_id
+         JOIN tournament_stages ts ON ts.id = ss.stage_id
+         JOIN tournaments tn ON tn.id = ss.tournament_id
+        WHERE tn.name = ? AND ts.name = ? AND tm.name = ? AND COALESCE(ss.group_id,'') = COALESCE(?,'')`,
+    )
+    .get(tournament, stage, team, groupId);
+  if (!row) throw new Error(`assertStored: no row for ${tournament} / ${stage} / ${team}`);
+  if (row.v !== value) {
+    throw new Error(`assertStored: ${team} ${field} is ${row.v}, expected ${value}`);
+  }
+}
+
+// PMWC 2025: the supplied Grand Finals board differs from CORE's stored split for
+// several teams; these two must now carry the source values.
+assertStored({ tournament: "PUBG Mobile World Cup 2025", stage: "Grand Finals", team: "POWR Esports", field: "place_points", value: 28 });
+assertStored({ tournament: "PUBG Mobile World Cup 2025", stage: "Grand Finals", team: "POWR Esports", field: "elim_points", value: 61 });
+// PMGC 2025 Group Green: "9z" must have resolved with its source split.
+assertStored({ tournament: "PUBG Mobile Global Championship 2025", stage: "Group Stage", group: "Group Green", team: "9z Team", field: "place_points", value: 27 });
+// BMPS 2026 Survival Stage was empty; its winner must now be stored with provenance.
+assertStored({ tournament: "Battlegrounds Mobile India Pro Series 2026", stage: "Survival Stage", team: "Team Apex Gaming", field: "total_points", value: 137 });
 
 db.close();
 
@@ -161,11 +211,14 @@ const report = {
   productionTouched: false,
   workingDatabase: workDb,
   pmwc2024: {
-    before: pmwc2024Before,
+    preMigration: preState.pmwc2024,
+    afterMigrations: pmwc2024Before,
     after: pmwc2024After,
     expected: 0,
     removed: pmwc2024After === 0,
+    removedByMigration: preState.pmwc2024 > 0 && pmwc2024Before === 0,
   },
+  tournamentCountBefore: preState.tournaments,
   pmwc2025: { before: pmwc2025Before, after: pmwc2025After, preserved: pmwc2025After > 0 },
   pmwc2026: { before: pmwc2026Before, after: pmwc2026After, preserved: pmwc2026After > 0 },
   tournamentCountAfter: tournamentCount,
@@ -248,34 +301,53 @@ function renderFixationMarkdown(r) {
   lines.push(`- Idempotent second apply: ${r.idempotent ? "yes" : "NO"}`);
   lines.push(`- Canonical bootstrap refreshed: ${r.canonicalExportRefreshed ? "yes" : "no"}`, "");
   lines.push("## PMWC 2024 removal", "");
-  lines.push(`- Before: ${r.pmwc2024.before}`);
-  lines.push(`- After: ${r.pmwc2024.after} (expected ${r.pmwc2024.expected})`);
+  lines.push(`- Present in the starting database: ${r.pmwc2024.preMigration}`);
+  lines.push(`- After migrations 009-013: ${r.pmwc2024.afterMigrations}`);
+  lines.push(`- After apply: ${r.pmwc2024.after} (expected ${r.pmwc2024.expected})`);
+  lines.push(`- Removed by the migration path: ${r.pmwc2024.removedByMigration}`);
+  lines.push(`- Tournaments: ${r.tournamentCountBefore} -> ${r.tournamentCountAfter}`);
   lines.push(`- PMWC 2025 preserved: ${r.pmwc2025.preserved}`);
   lines.push(`- PMWC 2026 preserved: ${r.pmwc2026.preserved}`, "");
   lines.push("## Applied standings", "");
-  lines.push("| Tournament | Stage | Group | Scope | Before | Expected | After | Inserted | Verified | Source |");
+  lines.push("| Tournament | Stage | Group | Scope | Before | Expected | After | Inserted | Updated | Source |");
   lines.push("|---|---|---|---|---|---|---|---|---|---|");
   for (const t of r.applied) {
     lines.push(
-      `| ${t.tournament} | ${t.stage} | ${t.group || "—"} | ${t.scope} | ${t.before} | ${t.expected} | ${t.after} | ${t.inserted} | ${t.verified} | ${t.source} |`,
+      `| ${t.tournament} | ${t.stage} | ${t.group || "—"} | ${t.scope} | ${t.before} | ${t.expected} | ${t.after} | ${t.inserted} | ${t.updated} | ${t.source} |`,
     );
-    if (t.notPlaced?.length) {
-      lines.push(`|   |   |   |   |   |   |   |   |   | not placed (no room without duplicating): ${t.notPlaced.join(", ")} |`);
-    }
   }
-  lines.push("", "## Disputes (stored value preserved, supplied value recorded)", "");
+  lines.push("", "## Source labels resolved to canonical teams", "");
+  lines.push(
+    "Every supplied label below resolved to an existing CORE team, so no team was",
+    "created. The row's `team_id` points at the canonical team; the source's own",
+    "wording is preserved here as the audit trail.", "",
+  );
+  const labelRows = [];
+  for (const t of r.applied) {
+    for (const l of t.sourceLabels || []) labelRows.push({ ...l, stage: `${t.tournament} / ${t.stage}` });
+  }
+  if (!labelRows.length) {
+    lines.push("None — every supplied label already matched a canonical name.", "");
+  } else {
+    lines.push("| Stage | Supplied label | Canonical team | Team id |", "|---|---|---|---|");
+    for (const l of labelRows) lines.push(`| ${l.stage} | ${l.supplied} | ${l.canonical} | \`${l.teamId}\` |`);
+    lines.push("");
+  }
+  lines.push("", "## Disputes (prior CORE value retained; source value now canonical)", "");
   if (!r.disputes.length) {
     lines.push("None. Every supplied value matched stored state or was a clean insert.", "");
   } else {
-    lines.push("| Team | Field | Stored | Supplied |", "|---|---|---|---|");
+    lines.push("| Team | Field | Prior CORE value | Source value |", "|---|---|---|---|");
     for (const d of r.disputes) {
       lines.push(`| ${d.team} | ${d.field} | ${d.stored} | ${d.supplied} |`);
     }
     lines.push("");
     lines.push(
-      "Per `PRESERVE_DISPUTE_V1` these are reported, not resolved. Each is a",
-      "placement/elimination component split — the stored total is untouched and",
-      "matches the supplied total, so no ranking changed.",
+      "Per `PRESERVE_DISPUTE_V1` the disagreement is represented, not adjudicated:",
+      "the canonical row now carries the source value and the prior CORE value is",
+      "kept here. The supplied total was validated against its own components",
+      "before the write, so no stored row has components that disagree with its",
+      "total.",
       "",
     );
   }
@@ -315,6 +387,14 @@ function renderDisputesMarkdown(r) {
     "  map = 'Other'`. Real NULL-numbered matches (19 PEL 2026 GF, 5 PMGC 2025) are",
     "  no longer in the delete path.",
     "- PMGC player statistics from the supplied elimination table were NOT imported.",
+    "- CORE holds duplicate team rows for `Rising Esports` (`27fc2f1f` and",
+    "  `02dd4d30`) and for `RiotNations` (`04780409`) vs `RiotNationZ` (`cb5e47df`).",
+    "  This is a pre-existing data-integrity issue, reported here and NOT fixed:",
+    "  the fixation pins the BMPS 2026 participant row for each name rather than",
+    "  merging, renaming, or deleting a team.",
+    "- BMPS 2025 Survival Stage was NOT created. The 32-team Survival board is",
+    "  BMPS 2026's composition and CORE has no BMPS 2025 Survival Stage; the board",
+    "  is written to `Battlegrounds Mobile India Pro Series 2026 / Survival Stage`.",
   );
   return lines.join("\n");
 }
