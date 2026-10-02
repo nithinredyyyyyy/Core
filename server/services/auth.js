@@ -2,11 +2,14 @@ import { createHmac, randomBytes, randomUUID, timingSafeEqual, createHash } from
 import { db, entityConfigs } from "../db.js";
 import { splitTrimmedValues } from "./schemas.js";
 import { logger } from "./logger.js";
+import { startupWarnings } from "./startupWarnings.js";
 import { createSessionRevocationStore } from "./sessionRevocations.js";
 
 const ADMIN_WRITE_ENTITIES = new Set(Object.keys(entityConfigs));
 
 const isProduction = process.env.NODE_ENV === "production";
+
+for (const warning of startupWarnings()) logger.warn(warning);
 
 export const AUTH_SESSION_SECRET = String(
   process.env.CORE_AUTH_SESSION_SECRET || "",
