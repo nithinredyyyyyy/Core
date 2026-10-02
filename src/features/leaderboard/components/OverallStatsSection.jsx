@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { m } from "framer-motion";
 import {
   LeaderboardTeamLink,
   MapAverageCell,

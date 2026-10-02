@@ -61,9 +61,6 @@ function PlayerLinkCell({ teamName, playerName }) {
 }
 
 function EliminatorStatistics({
-  categories,
-  currentCategory,
-  onSelectCategory,
   subStages,
   currentSubStage,
   onSelectSubStage,

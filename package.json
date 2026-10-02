@@ -16,7 +16,7 @@
     "local": "node tools/launch-local.cjs",
     "local:restart": "node tools/launch-local.cjs --restart",
     "local:sqlite": "node tools/launch-local.cjs --sqlite",
-    "lint": "eslint . --quiet",
+    "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "test:unit": "node --test \"tests/unit/*.test.js\"",

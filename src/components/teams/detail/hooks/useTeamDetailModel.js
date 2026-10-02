@@ -72,16 +72,7 @@ export function useTeamDetailModel({ team, participant }) {
     [normalizedParticipants, normalizedStages, normalizedStandings],
   );
 
-  const siteTournamentNames = useMemo(
-    () =>
-      new Set(
-        (tournaments || []).flatMap((entry) => {
-          const name = String(entry?.name || "").trim();
-          return name ? [name] : [];
-        }),
-      ),
-    [tournaments],
-  );
+  
 
   const achievementHistory = useMemo(() => {
     return tournaments

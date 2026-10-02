@@ -118,10 +118,7 @@ export function usePlayerProfileData() {
       }),
     [normalizedParticipants, normalizedStages, normalizedStandings],
   );
-  const isNormalizedLoading =
-    normalizedStagesLoading ||
-    normalizedParticipantsLoading ||
-    normalizedStandingsLoading;
+  
   const decoratedMatches = useMemo(
     () => decorateMatchesWithLiveStatus(matches, results),
     [matches, results],

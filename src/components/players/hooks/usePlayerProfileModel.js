@@ -11,7 +11,6 @@ export function usePlayerProfileModel() {
     resultYears,
     primaryStats,
     secondaryStats,
-    searchParams,
     teamLogo,
     teamLogoSurfaceTone,
     teamName,

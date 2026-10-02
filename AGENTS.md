@@ -5,7 +5,7 @@ Repository-specific knowledge for the CORE BGMI esports platform.
 ## Commands
 
 ```bash
-npm run lint        # eslint . --quiet
+npm run lint        # eslint . --max-warnings=0
 npm run typecheck   # tsc -p ./jsconfig.json
 npm run build       # node tools/build.js
 npm test            # node test runner; API integration tests

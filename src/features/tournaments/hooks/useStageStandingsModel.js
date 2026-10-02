@@ -90,10 +90,7 @@ export function useStageStandingsModel({
     },
     [bmps2026StatisticsRowCount, hasBmps2026Statistics, rankings.length, resolvedParticipantEntries, stages, matches, tournamentId, tournamentName]
   );
-  const stageOptionsKey = useMemo(
-    () => stageOptions.map((stage) => `${stage.name}:${stage.standings?.length || 0}`).join("|"),
-    [stageOptions]
-  );
+  
   const defaultStageName = useMemo(() => {
     if (requestedStage && stageOptions.some((stage) => stage.name === requestedStage)) {
       return requestedStage;
@@ -570,14 +567,12 @@ export function useStageStandingsModel({
       if (!seen.has(tone.label)) seen.set(tone.label, tone.dot);
     }
     return [...seen.entries()];
-  }, [activeStage, currentSelectedGroup, filteredStandings.length, groupParticipants.length, isStatisticsStage, usesBmpsKnockoutMovement, usesPromotionGroups]);
+  }, [tournamentName, activeStage, currentSelectedGroup, filteredStandings.length, groupParticipants.length, isStatisticsStage, usesBmpsKnockoutMovement, usesPromotionGroups]);
   const {
     currentStatisticsCategory,
     currentStatisticsSubStage,
-    statisticsTableRows,
     statisticsTableKey,
     sortedStatisticsTableRows,
-    statisticsPanelTitle,
     selectedMvpStats,
   } = useStatisticsRows({
     statisticsCategories,

@@ -1,6 +1,6 @@
 import { getOrganizationMeta, normalizeOrganizationName } from "../../../lib/organizationIdentity.js";
 import { isBmps2026PromotionStage } from "../../../lib/tournamentProgression.js";
-import { getPmwc2026MovementRule, isPmwcTournament } from "../../../lib/pmwc2026Progression.js";
+import { getPmwc2026MovementRule } from "../../../lib/pmwc2026Progression.js";
 import { getCleanStageLabel } from "./stageHelpers.js";
 
 export { buildPhaseLabelFromEntry } from "./stageHelpers.js";

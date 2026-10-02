@@ -101,17 +101,11 @@ export function getStandingPoints(row) {
   );
 }
 
-function getStandingFinishes(row) {
-  return row?.finishes ?? row?.kills ?? row?.kill_points ?? row?.totalKills ?? 0;
-}
 
-function getStandingWins(row) {
-  return row?.wins ?? row?.wwcd ?? row?.wins_count ?? 0;
-}
 
-function getStandingMatches(row) {
-  return row?.matches ?? row?.matchesPlayed ?? row?.matches_played ?? row?.played ?? 0;
-}
+
+
+
 
 export function formatDate(value) {
   if (!value) return "";

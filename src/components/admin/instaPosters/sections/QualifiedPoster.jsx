@@ -3,7 +3,7 @@ import { SF, CF, getTeamName } from "@/components/admin/instaPosters/utils/poste
 import { TeamLogo } from "@/components/admin/instaPosters/sections/TeamLogo";
 
 /* â”€â”€â”€ QUALIFIED â€” q2 floating cards + q3 massive headline â”€â”€â”€ */
-export function QualifiedPoster({ tournament, stageName, rows, manual, brandLogo, brandText }) {
+export function QualifiedPoster({ stageName, rows, manual, brandLogo, brandText }) {
   const shown = rows.slice(0, 16);
   return (
     <div className="insta-poster-export" style={{ width: 1080, height: 1350, borderRadius: 28, overflow: "hidden", position: "relative", background: "#f5f5f7", color: "#111", fontFamily: SF }}>

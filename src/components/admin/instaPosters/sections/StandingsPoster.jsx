@@ -3,7 +3,7 @@ import { SF, CF, getTeamName, getStandingPoints } from "@/components/admin/insta
 import { TeamLogo } from "@/components/admin/instaPosters/sections/TeamLogo";
 
 /* â”€â”€â”€ STANDINGS â€” q2 clean white card + q3 massive headline â”€â”€â”€ */
-export function StandingsPoster({ tournament, stageName, rows, manual, brandLogo, brandText }) {
+export function StandingsPoster({ tournament, stageName, rows, manual }) {
   const shown = rows.slice(0, 16);
   const title = manual.headline || stageName || "STANDINGS";
   const isBgms = /bgms|masters\s*series/i.test(tournament?.name);

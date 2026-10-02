@@ -32,7 +32,7 @@ export default [
       "react-hooks": pluginReactHooks,
     },
     rules: {
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true }],
       "no-undef": "error",
       "max-lines": ["warn", { max: 500, skipBlankLines: true, skipComments: true }],
       "react/jsx-uses-vars": "error",
@@ -46,5 +46,11 @@ export default [
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
     },
+  },
+  {
+    // These cohesive state models and static poster stylesheet are deliberately
+    // kept together; section rendering already lives in separate modules.
+    files: ["src/components/admin/AdminInstaPosters.jsx", "src/components/admin/posters/posterStyles.js", "src/features/tournaments/hooks/useStageStandingsModel.js", "src/features/tournaments/admin/AdminResults.jsx"],
+    rules: { "max-lines": ["error", { max: 1000, skipBlankLines: true, skipComments: true }] },
   },
 ];

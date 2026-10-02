@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, Users, Award } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTournamentCore, getTournamentFull, tournamentQueryOptions } from "@/services/tournaments";
@@ -253,7 +253,7 @@ export function useTournamentDetailModel({ tournament, requestedStage = "" }) {
         };
       }));
     },
-    [derivedStageBoards, normalizedParticipants, normalizedStages, rawTournamentStages, tournament.name]
+    [derivedStageBoards, normalizedParticipants, normalizedStages, rawTournamentStages]
   );
   const hasStageProgression = stageBoardStages.some(
     (stage) => stage?.name && (stage.summary || stage.standings?.length || stage.teamCount),

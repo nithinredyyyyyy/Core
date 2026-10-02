@@ -1,6 +1,9 @@
+// @ts-check
+/** @param {Partial<import("../../../types/tournaments").Tournament>} tournament */
 export function getTournamentLogo(tournament) {
   if (!tournament?.name) return null;
 
+  /** @type {Record<string, string>} */
   const logoByName = {
     "Battlegrounds Mobile India Series 2026": "/images/bgis-logo.webp",
     "Battlegrounds Mobile India Series 2023": "/images/bgis-2023.webp",
@@ -26,6 +29,7 @@ export function getTournamentLogo(tournament) {
   return logoByName[tournament.name] || tournament.banner_url || null;
 }
 
+/** @param {Partial<import("../../../types/tournaments").Tournament>} tournament */
 export function getTournamentBanner(tournament) {
   return tournament?.banner_url || getTournamentLogo(tournament) || "/images/core-logo.svg";
 }

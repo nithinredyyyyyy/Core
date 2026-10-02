@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import TeamIdentity from "@/components/shared/TeamIdentity";
-import { normalizeOrganizationName } from "@/lib/organizationIdentity";
-import { buildTeamLink, getDisplayTeamName, getGroupMovementRule, getGrandFinalsPlacementTone, getOutcomeTone, getGroupMovementAccent, shouldOpenBmps2026GroupsByDefault } from "@/features/tournaments/utils/participantHelpers";
-import { compareStageBoardStandings } from "@/lib/stageBoard";
 
-export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBoardUi, tournamentName, groups, showsGroupedDrawTab, hideOverallGroupOption, currentSelectedGroup, visibleGroupOptions }) {
+import { buildTeamLink, getDisplayTeamName, getGroupMovementRule, getGrandFinalsPlacementTone, getOutcomeTone, getGroupMovementAccent, shouldOpenBmps2026GroupsByDefault } from "@/features/tournaments/utils/participantHelpers";
+
+
+export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBoardUi, tournamentName, groups, showsGroupedDrawTab, currentSelectedGroup, visibleGroupOptions }) {
   return (
     <div className="space-y-3">
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
@@ -81,10 +81,10 @@ export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBo
   );
 }
 
-export function MobileStandingsCard({ entry, index, activeStage, currentSelectedGroup, tournamentName, showMovementColumn, isPmwcMovementStage, usesPromotionGroups }) {
+export function MobileStandingsCard({ entry, index, activeStage, currentSelectedGroup, tournamentName, showMovementColumn, isPmwcMovementStage }) {
   const position = showMovementColumn ? index + 1 : entry.placement;
   const podiumTone = getGrandFinalsPlacementTone(activeStage.name, entry.placement);
-  const movementRows = usesPromotionGroups ? undefined : undefined;
+  
   const movement = showMovementColumn
     ? getGroupMovementRule(tournamentName, activeStage?.name, currentSelectedGroup, index + 1, (showMovementColumn ? index + 1 : 0))
     : null;

@@ -1,6 +1,6 @@
 import React from "react";
 import { getTeamLogoByName } from "@/lib/teamLogos";
-import { getMedalIcon } from "./posterStandingsHelpers";
+
 
 const STARS = [
   { top: "250px", left: "26px", size: "24px" },
@@ -11,13 +11,7 @@ const STARS = [
   { top: "715px", right: "50px", size: "24px" },
 ];
 
-const IG_SOCIAL = [
-  { label: "Instagram", handle: "/coreesports", color: "#E1306C", iconChar: "◎" },
-  { label: "X", handle: "/coreesports", color: "#000000", iconChar: "𝕏" },
-  { label: "Facebook", handle: "/coreesports", color: "#1877F2", iconChar: "f" },
-  { label: "Thread", handle: "/coreesports", color: "#000000", iconChar: "↻" },
-  { label: "Website", handle: "www.coreesports.com", color: "#6B7280", iconChar: "🌐" },
-];
+
 
 function TeamRow({ row, index, isIg }) {
   const logo = getTeamLogoByName(row.logoName || row.teamName);
@@ -59,7 +53,7 @@ function TeamRow({ row, index, isIg }) {
   );
 }
 
-export default function StandingsPoster({ activeOption, standingsRows, tournament, tournamentLogo, posterFormat, slide = 0 }) {
+export default function StandingsPoster({ activeOption, standingsRows, tournament, posterFormat, slide = 0 }) {
   const isGrandFinals = String(activeOption?.stage || "").toLowerCase() === "grand finals";
   const isBgms = /bgms|masters\s*series/i.test(tournament?.name);
   const seriesLabel = isBgms ? "BGMI MASTERS SERIES" : tournament?.name || "TOURNAMENT";

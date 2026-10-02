@@ -4,7 +4,7 @@ import { SF, CF } from "@/components/admin/instaPosters/utils/posterHelpers";
 import { TeamLogo } from "@/components/admin/instaPosters/sections/TeamLogo";
 
 /* â”€â”€â”€ TRANSFER â€” q1-style player photo bg + fromâ†’to with team logos â”€â”€â”€ */
-export function TransferPoster({ tournament, manual, brandLogo, brandText }) {
+export function TransferPoster({ manual, brandLogo, brandText }) {
   const pn = manual.playerName || "PLAYER NAME";
   const from = manual.teamName || "FORMER TEAM";
   const to = manual.subhead || "NEW TEAM";

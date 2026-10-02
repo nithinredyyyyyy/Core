@@ -1,4 +1,4 @@
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { LazyMotion, domAnimation } from "framer-motion";
 import { useLeaderboardData } from "@/features/leaderboard/hooks/useLeaderboardData";
 import { LeaderboardPageHeader } from "@/features/leaderboard/components/LeaderboardPageHeader";
 import FeaturedStandingsSection from "@/features/leaderboard/components/FeaturedStandingsSection";
@@ -15,7 +15,6 @@ export default function LeaderboardPage() {
     nextUpcomingTournament,
     teamMapStats,
     calendarMatches,
-    stageMaps,
   } = useLeaderboardData();
 
   if (isLoading) {

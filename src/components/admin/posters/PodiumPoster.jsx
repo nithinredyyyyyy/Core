@@ -21,7 +21,7 @@ function getPublisherLogo(game, tournamentName) {
   return PUBLISHER_LOGOS.BGMI;
 }
 
-export default function PodiumPoster({ standingsRows, tournament, tournamentLogo, teams, playerTeamMap = {} }) {
+export default function PodiumPoster({ standingsRows, tournament, teams, playerTeamMap = {} }) {
   const top3 = standingsRows.slice(0, 3);
   const placements = [
     { label: "CHAMPIONS", color: "#D4AF37", slug: "champions" },

@@ -108,7 +108,7 @@ export default function AdminInstaPosters() {
     });
   }, [matchResults, matches, normalizedTournament, teams]);
 
-  const stageBoards = participantState.stageBoards || [];
+  const stageBoards = useMemo(() => participantState.stageBoards || [], [participantState.stageBoards]);
   const activeStage = useMemo(() => {
     if (selectedStageName) {
       return stageBoards.find((stage) => stage.name === selectedStageName) || null;

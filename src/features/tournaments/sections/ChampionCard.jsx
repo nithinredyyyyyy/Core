@@ -3,14 +3,11 @@ import TeamIdentity from "@/components/shared/TeamIdentity";
 import { getPlayerPhotoByIgn } from "@/lib/playerPhotos";
 
 export function ChampionCard({
-  championEntry,
   championImageSrc,
   championRoster,
   championTeamName,
-  championDisplayName,
   championLogoOverride,
   tournament,
-  tournamentLogo,
 }) {
   const isBgms = /bgms|masters\s*series/i.test(tournament?.name);
   const publisherLogo = isBgms ? "/images/NODWIN.png" : "/images/Krafton.png";

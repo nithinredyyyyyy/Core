@@ -2,7 +2,7 @@ import React from "react";
 import { SF, CF, formatDate } from "@/components/admin/instaPosters/utils/posterHelpers";
 
 /* â”€â”€â”€ NEWS â€” q1-style full-bleed image + gradient + overlaid headline â”€â”€â”€ */
-export function NewsPoster({ tournament, article, manual, brandLogo, brandText }) {
+export function NewsPoster({ article, manual, brandLogo, brandText }) {
   const hasImg = !!article?.thumbnail_url;
   return (
     <div className="insta-poster-export" style={{ width: 1080, height: 1350, borderRadius: 28, overflow: "hidden", position: "relative", background: "#111", color: "#fff", fontFamily: SF }}>

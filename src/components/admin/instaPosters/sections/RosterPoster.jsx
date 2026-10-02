@@ -4,7 +4,7 @@ import { SF, CF, makeInitials } from "@/components/admin/instaPosters/utils/post
 import { TeamLogo } from "@/components/admin/instaPosters/sections/TeamLogo";
 
 /* â”€â”€â”€ ROSTER â€” q1-style: team logo hero + player strip on dark bg â”€â”€â”€ */
-export function RosterPoster({ tournament, teamName, roster, manual, brandLogo, brandText }) {
+export function RosterPoster({ teamName, roster, manual, brandLogo, brandText }) {
   return (
     <div className="insta-poster-export" style={{ width: 1080, height: 1350, borderRadius: 28, overflow: "hidden", position: "relative", background: "linear-gradient(170deg, #0d1117 0%, #161b22 100%)", color: "#fff", fontFamily: SF }}>
       <div style={{ position: "absolute", top: -80, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,0,0.08), transparent 70%)" }} />

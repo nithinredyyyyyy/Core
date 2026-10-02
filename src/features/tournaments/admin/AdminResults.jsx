@@ -1,7 +1,7 @@
 import PageSkeleton from "@/components/shared/PageSkeleton";
 import QueryError from "@/components/shared/QueryError";
 import PageShell from "@/components/shared/PageShell";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -88,7 +88,7 @@ export default function AdminResults() {
     return result;
   }, [allMatchResults, matches, teams, tournaments]);
 
-  const getMatchTeams = (match) => {
+  const getMatchTeams = useCallback((match) => {
     if (!match) {
       return [];
     }
@@ -120,7 +120,7 @@ export default function AdminResults() {
     }
 
     return resolvedTeams;
-  };
+  }, [tournamentMap, resolvedParticipantsByTournamentId, teams, allMatchResults, matches]);
 
   const invalidateResultQueries = () =>
     Promise.all([
@@ -143,7 +143,7 @@ export default function AdminResults() {
     if (currentIndex === -1) return "";
     return availableMatches[currentIndex + 1]?.id || "";
   };
-  const getNextMatchId = (matchId) => getNextMatchIdRef.current(matchId);
+  
 
   const createResults = useMutation({
     mutationFn: (data) => base44.entities.MatchResult.bulkCreate(data),
@@ -409,10 +409,7 @@ export default function AdminResults() {
     () => availableMatches.find((match) => match.id === selectedMatch),
     [availableMatches, selectedMatch]
   );
-  const selectedMatchTeams = useMemo(
-    () => (selectedMatchData ? getMatchTeams(selectedMatchData) : []),
-    [selectedMatchData, resolvedParticipantsByTournamentId, teams, tournamentMap]
-  );
+  const selectedMatchTeams = useMemo(() => selectedMatchData ? getMatchTeams(selectedMatchData) : [], [selectedMatchData, getMatchTeams]);
   const baselineStandingsByTeamId = useMemo(() => {
     if (!selectedMatchData) return new Map();
 

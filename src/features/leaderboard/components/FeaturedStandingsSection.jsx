@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import {

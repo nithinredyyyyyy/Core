@@ -4,7 +4,7 @@ import { SF, CF } from "@/components/admin/instaPosters/utils/posterHelpers";
 import { TeamLogo } from "@/components/admin/instaPosters/sections/TeamLogo";
 
 /* â”€â”€â”€ PLAYER AWARD (IGL/FMVP/MVP) â€” q1-style full-bleed player photo + massive name â”€â”€â”€ */
-export function PlayerAwardPoster({ tournament, awardLabel, player, manual, brandLogo, brandText }) {
+export function PlayerAwardPoster({ awardLabel, player, manual, brandLogo, brandText }) {
   const pn = manual.playerName || player?.player || "";
   const tn = manual.teamName || player?.teamName || "";
   const s1l = manual.statOneLabel || (awardLabel === "Best IGL" ? "IGL RATING" : "FINISHES");
