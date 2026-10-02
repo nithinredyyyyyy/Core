@@ -21,7 +21,7 @@ export function useAdminTournamentsState() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const { data: tournaments = [] } = useQuery({
+  const { data: tournaments = [], isLoading: tournamentsLoading, isError: tournamentsError, refetch: tournamentsRefetch } = useQuery({
     queryKey: ["admin-tournaments"],
     queryFn: () =>
       base44.entities.Tournament.list("-created_date", 50, undefined, {
@@ -54,7 +54,7 @@ export function useAdminTournamentsState() {
       .toLowerCase();
     return searchable.includes(query);
   });
-  const { data: teams = [] } = useQuery({
+  const { data: teams = [], isLoading: teamsLoading, isError: teamsError, refetch: teamsRefetch } = useQuery({
     queryKey: ["teams"],
     queryFn: () => base44.entities.Team.list("-created_date", 500),
     enabled: showForm,
@@ -320,6 +320,7 @@ export function useAdminTournamentsState() {
 
 
   return {
+    queryState: { isLoading: tournamentsLoading || teamsLoading, isError: tournamentsError || teamsError, refetch: () => Promise.all([tournamentsRefetch(), teamsRefetch()]) },
     showForm,
     editing,
     form,

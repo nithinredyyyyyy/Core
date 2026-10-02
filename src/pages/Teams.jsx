@@ -74,7 +74,7 @@ function TeamsHero({ teamCount, rosterCount, matchesPlayed, eventName }) {
 function TeamDirectoryHeader({ search, setSearch }) {
   return (
     <div className="rounded-xl border border-border bg-card p-3 md:p-4">
-      <div className="grid gap-3 md:grid-cols-[1fr_minmax(280px,420px)] md:items-center">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_minmax(280px,420px)] md:items-center">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
             Team directory

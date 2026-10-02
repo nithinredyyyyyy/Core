@@ -1,3 +1,4 @@
+import PageShell from "@/components/shared/PageShell";
 import React from "react";
 import ShareMenu from "@/components/shared/ShareMenu";
 import { usePlayerProfileModel } from "@/components/players/hooks/usePlayerProfileModel";
@@ -37,7 +38,7 @@ export default function PlayerProfile() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BackToTeamsLink teamName={teamName} />
         <ShareMenu title={`${displayIgn} — Player profile`} />
@@ -55,7 +56,7 @@ export default function PlayerProfile() {
         teamTag={teamTag}
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <TournamentAppearancesPanel
           tournaments={resolved.relatedTournaments}
         />
@@ -76,6 +77,6 @@ export default function PlayerProfile() {
         resultYears={resultYears}
         playerResults={resolved.playerResults}
       />
-    </div>
+    </PageShell>
   );
 }

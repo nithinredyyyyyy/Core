@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React, { useState } from "react";
 import { formatUsdAmount } from "@/features/tournaments/utils/detailHelpers";
 
@@ -19,7 +20,7 @@ export function PrizePoolSection({ stage, rows }) {
           Total: {formatUsdAmount(total)}
         </p>
       </div>
-      <table className="w-full text-sm">
+      <Table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">
             <th className="px-4 py-2 text-left">Place</th>
@@ -34,7 +35,7 @@ export function PrizePoolSection({ stage, rows }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
       {hasMore ? (
         <button
           type="button"

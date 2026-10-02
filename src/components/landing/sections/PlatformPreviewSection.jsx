@@ -12,7 +12,7 @@ export function PlatformPreviewSection({ boardLeaders }) {
       title="Designed to feel like a product, not one overloaded homepage."
       body="This side previews the desktop and mobile experiences without forcing the landing page to behave like a dashboard."
     >
-      <div className="grid gap-4 lg:grid-cols-[1.04fr_0.96fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.04fr_0.96fr]">
         <SoftCard className="overflow-hidden bg-[linear-gradient(180deg,var(--brand-ink-soft)_0%,var(--brand-ink-soft-3)_100%)] p-5 text-white sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -68,7 +68,7 @@ export function PlatformPreviewSection({ boardLeaders }) {
           </div>
         </SoftCard>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <SoftCard className="p-5 sm:p-6">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-slate-gray">
               Mobile app

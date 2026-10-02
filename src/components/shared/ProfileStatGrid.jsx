@@ -8,8 +8,8 @@ function joinClassNames(...values) {
 
 const VARIANTS = {
   light: {
-    primaryGrid: "grid gap-3 sm:grid-cols-2 xl:grid-cols-4",
-    secondaryGrid: "grid gap-3 md:grid-cols-3",
+    primaryGrid: "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4",
+    secondaryGrid: "grid grid-cols-1 gap-3 md:grid-cols-3",
     card: "rounded-[20px] border border-border bg-background/75 p-4",
     label:
       "mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground",
@@ -21,8 +21,8 @@ const VARIANTS = {
     icon: "size-4 text-primary",
   },
   dark: {
-    primaryGrid: "grid gap-3 sm:grid-cols-2 xl:grid-cols-4",
-    secondaryGrid: "grid gap-3 md:grid-cols-3",
+    primaryGrid: "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4",
+    secondaryGrid: "grid grid-cols-1 gap-3 md:grid-cols-3",
     card: "rounded-2xl border border-white/10 bg-white/5 p-4",
     label: "text-[10px] uppercase tracking-wider text-brand-gold",
     valueStrong: "mt-2 text-2xl font-heading font-bold text-white",

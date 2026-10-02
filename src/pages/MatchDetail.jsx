@@ -1,3 +1,4 @@
+import PageShell from "@/components/shared/PageShell";
 import React, { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarClock, MapPin, Swords, Trophy } from "lucide-react";
@@ -117,7 +118,7 @@ export default function MatchDetail() {
   const live = isLiveStatus(match.status);
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <Link
         to="/matches"
         className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -215,6 +216,6 @@ export default function MatchDetail() {
           />
         )}
       </section>
-    </div>
+    </PageShell>
   );
 }

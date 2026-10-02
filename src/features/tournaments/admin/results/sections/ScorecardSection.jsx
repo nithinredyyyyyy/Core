@@ -22,7 +22,7 @@ export function ScorecardSection({ scorecardTotals, entryScorecard }) {
           </span>
         </div>
       </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
         {entryScorecard.map((entry) => (
           <div
             key={`scorecard-${entry.team_id}`}

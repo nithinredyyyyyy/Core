@@ -40,7 +40,7 @@ function InspectorMetricCards({
 }) {
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             Participants
@@ -71,7 +71,7 @@ function InspectorMetricCards({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             Duplicate Orgs
@@ -113,7 +113,7 @@ function InspectorStructurePanels({
 }) {
   return (
     <>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-4">
           <h3 className="font-semibold">Participant Phases</h3>
           <div className="mt-4 space-y-3">
@@ -168,7 +168,7 @@ function InspectorStructurePanels({
 
       <div className="rounded-xl border border-border bg-card p-4">
         <h3 className="font-semibold">Result Coverage By Match</h3>
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {resultCoverage.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No matches available yet.
@@ -225,7 +225,7 @@ function InspectorIssuePanels({
         )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-4">
           <h3 className="font-semibold">Duplicate Organization Rows</h3>
           {duplicateOrganizations.length === 0 ? (

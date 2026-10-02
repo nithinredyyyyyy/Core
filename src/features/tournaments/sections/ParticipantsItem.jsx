@@ -22,7 +22,7 @@ export function ParticipantsItem({ participantSections, liveParticipantRosters, 
                   <p className="mt-1 text-sm text-muted-foreground">{section.entries.length} teams</p>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {section.entries.map((entry) => (
                   <ParticipantRosterCard
                     key={`${entry.placement}-${entry.team}`}

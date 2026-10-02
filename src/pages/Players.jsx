@@ -1,3 +1,4 @@
+import PageShell from "@/components/shared/PageShell";
 import React, { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { UserCircle2 } from "lucide-react";
@@ -52,7 +53,7 @@ export default function Players() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <PageHeader
         kicker="Player directory"
         title="Players"
@@ -131,6 +132,6 @@ export default function Players() {
           </ul>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -15,7 +15,7 @@ export function PlayerProfileHero({
 }) {
   return (
     <div className="overflow-hidden rounded-[30px] border border-border/70 bg-card shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-      <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
+      <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
         <div className="space-y-5">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">

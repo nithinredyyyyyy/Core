@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
@@ -34,9 +35,9 @@ function StatisticsHeader({ title, icon }) {
 function StatisticsTableShell({ minWidth, children }) {
   return (
     <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
-      <table className={`w-full ${minWidth} border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary`}>
+      <Table className={`w-full ${minWidth} border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary`}>
         {children}
-      </table>
+      </Table>
     </div>
   );
 }

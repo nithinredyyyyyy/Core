@@ -45,7 +45,7 @@ export default function TeamDetail({ team, participant, onBack }) {
         secondaryStats={secondaryStats}
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_0.7fr]">
         <TeamDetailMainColumn
           participant={participant}
           team={team}

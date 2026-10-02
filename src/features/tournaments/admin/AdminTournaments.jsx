@@ -1,3 +1,6 @@
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import QueryError from "@/components/shared/QueryError";
+import PageShell from "@/components/shared/PageShell";
 import React from "react";
 import { useAdminTournamentsState } from "@/features/tournaments/admin/hooks/useAdminTournamentsState";
 import { TournamentAdminHero } from "@/features/tournaments/admin/sections/TournamentAdminHero";
@@ -6,6 +9,7 @@ import { TournamentList } from "@/features/tournaments/admin/sections/Tournament
 
 export default function AdminTournaments() {
   const {
+    queryState,
     showForm,
     editing,
     form,
@@ -31,8 +35,11 @@ export default function AdminTournaments() {
     deleteMut,
   } = useAdminTournamentsState();
 
+  if (queryState.isError) return <QueryError onRetry={queryState.refetch} />;
+  if (queryState.isLoading) return <PageSkeleton label="Loading editor" />;
+
   return (
-    <div className="space-y-4">
+    <PageShell>
       <TournamentAdminHero
         filteredCount={visibleTournaments.length}
         isMutating={isMutating}
@@ -66,6 +73,6 @@ export default function AdminTournaments() {
         openEdit={openEdit}
         deleteTournament={(id) => deleteMut.mutate(id)}
       />
-    </div>
+    </PageShell>
   );
 }

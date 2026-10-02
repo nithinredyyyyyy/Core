@@ -1,10 +1,11 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Input } from "@/components/ui/input";
 
 export function ResultEntryTable({ entries, onEntryChange }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <Table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-xs text-muted-foreground bg-secondary/20">
             <th className="text-left p-3">Team</th>
@@ -34,7 +35,7 @@ export function ResultEntryTable({ entries, onEntryChange }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }

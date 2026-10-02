@@ -13,7 +13,7 @@ export function TeamDetailMainColumn({ participant, team, achievementHistory, ac
         panelClassName="rounded-xl border border-border bg-card"
         titleClassName="font-heading text-sm font-bold uppercase tracking-wider p-5 border-b border-border"
       >
-        <div className="grid gap-4 p-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
           {(participant?.roster || []).map((player) => (
             <Link
               key={player.name}

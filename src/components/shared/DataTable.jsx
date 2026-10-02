@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +22,7 @@ export default function DataTable({
 
   return (
     <div className={cn("relative w-full overflow-x-auto rounded-xl border border-border bg-card", className)}>
-      <table className="w-full min-w-[560px] border-collapse text-sm">
+      <Table className="w-full min-w-[560px] border-collapse text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
           <tr className="border-b border-border bg-muted/60 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -77,7 +78,7 @@ export default function DataTable({
             ))
           )}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }

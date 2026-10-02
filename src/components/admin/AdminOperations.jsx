@@ -133,7 +133,7 @@ export default function AdminOperations({ onSelectTab }) {
         </button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="rounded-[24px] border border-border bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <CheckCircle2 className="size-5 text-primary" />
@@ -154,7 +154,7 @@ export default function AdminOperations({ onSelectTab }) {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {CONTROL_AREAS.map((area) => (
             <button
               key={area.tab}

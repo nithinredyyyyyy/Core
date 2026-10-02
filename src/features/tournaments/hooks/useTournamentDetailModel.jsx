@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, Users, Award } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { getTournamentCore, getTournamentFull, tournamentQueryOptions } from "@/services/tournaments";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { applyCurrentRosterOverride } from "@/lib/currentRosterOverrides";
 import { buildLiveRoster } from "@/lib/rosterUtils";
@@ -18,18 +18,18 @@ import { getChampionDisplayName, getChampionLogoOverride, normalizeTeamName } fr
 
 /** @param {Pick<import("@/types/tournaments").TournamentDetailProps, "tournament" | "requestedStage">} props */
 export function useTournamentDetailModel({ tournament, requestedStage = "" }) {
-  const { data: coreData = {}, isLoading: isCoreLoading } = useQuery({
+  const { data: coreData = {}, isLoading: isCoreLoading, isError: coreError, refetch: refetchCore } = useQuery({
     queryKey: ["tournament-core", tournament.id],
-    queryFn: () => base44.pages.tournamentCore(tournament.id),
+    queryFn: () => getTournamentCore(tournament.id),
     enabled: Boolean(tournament?.id),
-    staleTime: 120_000,
+    ...tournamentQueryOptions,
     refetchOnWindowFocus: false,
   });
-  const { data: fullData = {}, isLoading: isFullLoading } = useQuery({
+  const { data: fullData = {}, isLoading: isFullLoading, isError: fullError, refetch: refetchFull } = useQuery({
     queryKey: ["tournament-full", tournament.id],
-    queryFn: () => base44.pages.tournamentFull(tournament.id),
+    queryFn: () => getTournamentFull(tournament.id),
     enabled: Boolean(tournament?.id),
-    staleTime: 120_000,
+    ...tournamentQueryOptions,
     refetchOnWindowFocus: false,
   });
   const stageBoardRef = useRef(null);
@@ -459,6 +459,7 @@ export function useTournamentDetailModel({ tournament, requestedStage = "" }) {
     };
   }, [tournament.prize_breakdown]);
   return {
+    isCoreLoading, isFullLoading, coreError, fullError, refetchCore, refetchFull,
     tournamentLogo,
     participantCount,
     featuredFacts,

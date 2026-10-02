@@ -18,7 +18,7 @@ export function EventBriefBody({ tournament, spotlightStage, allocations }) {
       {allocations.length > 0 && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
           <p className="text-[10px] uppercase tracking-wider text-amber-300">International Slots</p>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {allocations.map((allocation) => (
               <div
                 key={`${allocation.title}-${allocation.event}`}

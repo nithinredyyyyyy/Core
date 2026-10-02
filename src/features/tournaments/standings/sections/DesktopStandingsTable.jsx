@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Link } from "react-router-dom";
 import TeamIdentity from "@/components/shared/TeamIdentity";
@@ -14,7 +15,7 @@ export function DesktopStandingsTable({ usesPromotionGroups, completeGroupStandi
 
   return (
     <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
-      <table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
+      <Table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
         <thead>
           <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             <th className="border-r border-border/60 p-4 text-left">#</th>
@@ -100,7 +101,7 @@ export function DesktopStandingsTable({ usesPromotionGroups, completeGroupStandi
             );
           })}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }

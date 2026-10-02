@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Link } from "react-router-dom";
 import TeamIdentity from "@/components/shared/TeamIdentity";
@@ -28,7 +29,7 @@ export function DesktopGroupParticipants({ tournamentName, activeStage, isSurviv
             </p>
           </div>
         ) : activeStage?.name === "Round 4" ? (
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-border bg-secondary/20 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group A</p>
               <p className="mt-2 text-sm text-muted-foreground">Top 8 teams advance to Grand Finals.</p>
@@ -50,7 +51,7 @@ export function DesktopGroupParticipants({ tournamentName, activeStage, isSurviv
             </div>
           </div>
         ) : (
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-border bg-secondary/20 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-foreground">Group A ? B</p>
               <p className="mt-2 text-sm text-muted-foreground">Bottom 4 from Group A move to Group B.</p>
@@ -72,7 +73,7 @@ export function DesktopGroupParticipants({ tournamentName, activeStage, isSurviv
       ) : null}
 
       <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
-        <table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
+        <Table className="w-full min-w-[820px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary">
           <thead>
             <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <th className="border-r border-border/60 p-4 text-left">#</th>
@@ -117,7 +118,7 @@ export function DesktopGroupParticipants({ tournamentName, activeStage, isSurviv
               );
             })}
           </tbody>
-        </table>
+        </Table>
       </div>
     </div>
   );

@@ -55,7 +55,7 @@ function TransferEntryForm({
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <Label>Window *</Label>
           <Input

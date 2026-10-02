@@ -11,7 +11,7 @@ export function CircuitPulseSection({ featuredTournament, featuredStages, upcomi
       title="Still alive with the current season."
       body="The landing page previews the live circuit, but it stays curated and readable instead of becoming a desktop dashboard clone."
     >
-      <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[0.92fr_1.08fr]">
         <SoftCard className="p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -31,7 +31,7 @@ export function CircuitPulseSection({ featuredTournament, featuredStages, upcomi
               ? `${featuredStages[0].week} is the active schedule window in the current circuit focus.`
               : "As soon as the circuit schedule locks, this preview will show the active window."}
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-[22px] border border-brand-cream-fog bg-brand-cream-paper px-4 py-3">
               <p className="text-[10px] uppercase tracking-[0.16em] text-brand-slate-gray">
                 Upcoming matches
@@ -55,7 +55,7 @@ export function CircuitPulseSection({ featuredTournament, featuredStages, upcomi
           <p className="text-[10px] uppercase tracking-[0.18em] text-brand-slate-gray">
             Stage map
           </p>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {featuredStages.length > 0 ? (
               featuredStages.slice(0, 6).map((stage) => (
                 <div

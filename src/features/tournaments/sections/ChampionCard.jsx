@@ -23,7 +23,7 @@ export function ChampionCard({
         fontFamily: "'Inter', sans-serif", borderRadius: "20px",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)",
       }}>
-        {/* BG: Gold gradient + grid */}
+        {/* BG: Gold gradient + grid grid-cols-1 */}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
           <div style={{
             position: "absolute", inset: 0,
@@ -111,9 +111,9 @@ export function ChampionCard({
           ) : (
             <TeamIdentity name={championTeamName} compact plain hideText containerClassName="!size-[52px]" logoClassName="!w-[52px] !h-[52px] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]" />
           )}
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#111", letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <p style={{ fontSize: "18px", fontWeight: 800, color: "#111", letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {championTeamName}
-          </h1>
+          </p>
         </div>
 
         {/* CHAMPIONS label + tournament */}

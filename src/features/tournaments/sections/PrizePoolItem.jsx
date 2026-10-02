@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Gift } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -56,7 +57,7 @@ export function PrizePoolItem({ tournament, prizeColumns }) {
       </AccordionTrigger>
       <AccordionContent>
         <div className="overflow-x-auto rounded-lg border border-border bg-background/80">
-          <table className="w-full text-sm">
+          <Table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/30 text-[11px] uppercase tracking-wider text-muted-foreground">
                 <th className="px-4 py-3 text-left">Place</th>
@@ -109,7 +110,7 @@ export function PrizePoolItem({ tournament, prizeColumns }) {
                 );
               })}
             </tbody>
-          </table>
+          </Table>
         </div>
       </AccordionContent>
     </AccordionItem>

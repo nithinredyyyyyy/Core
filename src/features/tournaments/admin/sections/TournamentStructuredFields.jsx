@@ -43,7 +43,7 @@ export function TournamentStructuredFields({
           </div>
           <div className="space-y-2">
             {(form.participantsRows || []).map((entry, idx) => (
-              <div key={idx} className="grid gap-2 rounded-lg border border-border bg-card p-3 md:grid-cols-[90px_1.6fr_1fr_0.9fr_1.6fr_auto]">
+              <div key={idx} className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-card p-3 md:grid-cols-[90px_1.6fr_1fr_0.9fr_1.6fr_auto]">
                 <Input type="number" placeholder="Place" value={entry.placement ?? ""} onChange={(e) => updateParticipant(idx, "placement", e.target.value)} />
                 <Select value={entry.team || ""} onValueChange={(value) => updateParticipant(idx, "team", value)}>
                   <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>

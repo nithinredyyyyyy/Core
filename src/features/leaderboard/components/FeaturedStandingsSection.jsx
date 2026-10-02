@@ -103,7 +103,7 @@ export default function FeaturedStandingsSection({
         ) : null}
       </div>
 
-      <div className="grid gap-4 border-b border-border p-4 sm:px-5 sm:py-5 md:grid-cols-4 md:px-6">
+      <div className="grid grid-cols-1 gap-4 border-b border-border p-4 sm:px-5 sm:py-5 md:grid-cols-4 md:px-6">
         <SignalCard
           label="Live match"
           value={

@@ -50,7 +50,7 @@ DrawerContent.displayName = "DrawerContent";
 
 const DrawerHeader = ({ className, ...props }) => (
   <div
-    className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)}
+    className={cn("grid grid-cols-1 gap-1.5 p-4 text-center sm:text-left", className)}
     {...props}
   />
 );

@@ -42,7 +42,7 @@ export function TournamentAdminHero({
           </Button>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {statCards.map((card) => (
             <div
               key={card.label}
@@ -62,7 +62,7 @@ export function TournamentAdminHero({
         </div>
       </div>
 
-      <div className="grid gap-3 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div className="grid grid-cols-1 gap-3 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

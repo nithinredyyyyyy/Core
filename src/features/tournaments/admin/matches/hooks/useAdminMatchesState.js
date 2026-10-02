@@ -29,15 +29,15 @@ export function useAdminMatchesState() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const { data: matches = [] } = useQuery({
+  const { data: matches = [], isLoading: matchesLoading, isError: matchesError, refetch: matchesRefetch } = useQuery({
     queryKey: ["matches"],
     queryFn: () => base44.entities.Match.list("-created_date", 300),
   });
-  const { data: tournaments = [] } = useQuery({
+  const { data: tournaments = [], isLoading: tournamentsLoading, isError: tournamentsError, refetch: tournamentsRefetch } = useQuery({
     queryKey: ["tournaments"],
     queryFn: () => base44.entities.Tournament.list("-created_date", 50),
   });
-  const { data: allMatchResults = [] } = useQuery({
+  const { data: allMatchResults = [], isLoading: allMatchResultsLoading, isError: allMatchResultsError, refetch: allMatchResultsRefetch } = useQuery({
     queryKey: ["match-results-all"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 2000),
     staleTime: 60_000,
@@ -317,6 +317,7 @@ export function useAdminMatchesState() {
 
 
   return {
+    queryState: { isLoading: matchesLoading || tournamentsLoading || allMatchResultsLoading, isError: matchesError || tournamentsError || allMatchResultsError, refetch: () => Promise.all([matchesRefetch(), tournamentsRefetch(), allMatchResultsRefetch()]) },
     showForm,
     editing,
     form,

@@ -23,7 +23,7 @@ export default function PageLoader({
           <Skeleton className="h-8 w-64 max-w-full" />
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[0, 1, 2].map((item) => (
             <Skeleton key={item} className="h-24 rounded-xl" />
           ))}

@@ -21,7 +21,7 @@ export function FormatCalendarItem({ tournament, stageDetails }) {
             </div>
           )}
           {tournament.calendar?.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {tournament.calendar.map((item) => (
                 <div key={`${item.week}-${item.label}`} className="rounded-xl border border-border bg-secondary/20 px-5 py-4">
                   <p className="text-xs uppercase tracking-wider text-primary">{item.week}</p>
@@ -38,7 +38,7 @@ export function FormatCalendarItem({ tournament, stageDetails }) {
                   Complete stage notes for this tournament, including team counts and standings coverage.
                 </p>
               </div>
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {stageDetails.map((stage) => (
                   <div key={stage.name} className="rounded-xl border border-border bg-secondary/20 px-5 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">

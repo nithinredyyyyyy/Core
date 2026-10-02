@@ -9,10 +9,10 @@ export function TournamentHero({ tournament, tournamentLogo, participantCount })
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   return (
-    <div className="rounded-[32px] p-8 md:p-12 border-none shadow-lg bg-gradient-to-br from-brand-sky-azure to-brand-navy-bright text-white relative overflow-hidden mb-6">
+    <div className="rounded-[32px] p-4 sm:p-8 md:p-12 border-none shadow-lg bg-gradient-to-br from-brand-sky-azure to-brand-navy-bright text-white relative overflow-hidden mb-6">
       <div className="absolute inset-0 bg-white/5 pointer-events-none" />
       <div className="flex flex-wrap items-start justify-between gap-4 relative z-10">
-        <div className="flex items-start gap-5">
+        <div className="flex min-w-0 flex-1 flex-col sm:flex-row items-start gap-5">
           {tournamentLogo && (
             <LogoBlock
               src={tournamentLogo}
@@ -23,9 +23,9 @@ export function TournamentHero({ tournament, tournamentLogo, participantCount })
               className="!border-white/20 !bg-white/10 backdrop-blur-md shadow-lg"
             />
           )}
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
+          <div className="min-w-0 break-words animate-in fade-in slide-in-from-bottom-2 duration-700">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/80">Event profile</p>
-            <h1 className="mt-3 text-4xl md:text-5xl font-heading font-bold tracking-tight text-white drop-shadow-sm leading-tight">{tournament.name}</h1>
+            <h1 className="mt-3 text-3xl md:text-5xl font-heading font-bold tracking-tight text-white drop-shadow-sm leading-tight">{tournament.name}</h1>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-base text-white/90">
               {tournament.start_date && (
                 <span className="flex items-center gap-1.5 font-medium bg-black/10 px-3 py-1.5 rounded-full">

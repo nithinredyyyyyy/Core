@@ -15,7 +15,7 @@ export function AwardsItem({ tournament }) {
         </div>
       </AccordionTrigger>
       <AccordionContent>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {tournament.awards.map((award) => {
             const teamName = String(award.team || "").trim();
             const isKnownTeam = teamName && !/^TBD$/i.test(teamName);

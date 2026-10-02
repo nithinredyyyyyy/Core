@@ -9,7 +9,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
   return (
     <section className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
       <SoftCard className="overflow-hidden p-5 sm:p-7 lg:p-8">
-        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="max-w-3xl">
             <div className="type-kicker inline-flex items-center gap-2 rounded-full border border-brand-cream-edge bg-white px-3 py-1.5 text-brand-slate-bone">
               <Sparkles className="size-3.5 text-brand-mint" />
@@ -53,7 +53,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
                 </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <MiniPreview
                 step="Step 1"
                 title="Track every major event"
@@ -75,7 +75,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
             </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <SoftCard className="p-5 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -96,7 +96,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
                 ) : null}
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {(featuredFacts || []).slice(0, 3).map((fact) => (
                   <div
                     key={fact.label}
@@ -117,7 +117,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-slate-gray">
                 Platform split
               </p>
-              <div className="mt-4 grid gap-3">
+              <div className="mt-4 grid grid-cols-1 gap-3">
                 <div className="rounded-[22px] border border-brand-cream-fog bg-brand-cream-paper p-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-mint">
                     Landing page

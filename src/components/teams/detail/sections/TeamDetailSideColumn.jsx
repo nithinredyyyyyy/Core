@@ -17,7 +17,7 @@ export function TeamDetailSideColumn({
         panelClassName="rounded-xl border border-border bg-card"
         titleClassName="font-heading text-sm font-bold uppercase tracking-wider p-5 border-b border-border"
       >
-        <div className="grid gap-4 p-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-3">
           <div className="rounded-xl border border-border bg-secondary/20 p-4">
             <p className="text-[10px] uppercase tracking-wider text-primary">
               Short Tag

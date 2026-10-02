@@ -26,7 +26,7 @@ export function TournamentList({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       {visibleTournaments.map((t) => (
         <div
           key={t.id}
@@ -45,7 +45,7 @@ export function TournamentList({
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
               {t.game} • {t.prize_pool || "No prize"} • Full setup on edit
             </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
               <span className="rounded-lg border border-border bg-secondary/25 px-3 py-2 text-xs font-semibold text-foreground">
                 {t.game || "-"}
               </span>

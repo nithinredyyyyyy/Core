@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Link } from "react-router-dom";
 import TeamIdentity from "@/components/shared/TeamIdentity";
@@ -17,7 +18,7 @@ export function DesktopGroupedDraw({ activeStage, groupedParticipants, maxGroupR
       </div>
     ) : null}
     {isBmps2026SurvivalStage(activeStage?.name) ? (
-      <div className="grid overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:grid-cols-2 xl:grid-cols-4">
         {groupedParticipants.map((section, index) => (
           <div
             key={`${activeStage.name}-${section.group}`}
@@ -77,7 +78,7 @@ export function DesktopGroupedDraw({ activeStage, groupedParticipants, maxGroupR
           </p>
         </div>
         <div className="max-h-[70vh] overflow-auto">
-        <table className="w-full min-w-[920px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-brand-sky-mist dark:[&_thead_th]:bg-slate-800">
+        <Table className="w-full min-w-[920px] border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-brand-sky-mist dark:[&_thead_th]:bg-slate-800">
           <thead>
             <tr className="border-b border-border bg-brand-sky-mist text-sm font-black uppercase tracking-[0.06em] text-slate-800 dark:bg-slate-800 dark:text-slate-100">
               {groupedParticipants.map((section) => (
@@ -128,7 +129,7 @@ export function DesktopGroupedDraw({ activeStage, groupedParticipants, maxGroupR
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
         </div>
       </div>
     )}

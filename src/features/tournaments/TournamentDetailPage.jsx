@@ -1,3 +1,6 @@
+import QueryError from "@/components/shared/QueryError";
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import PageShell from "@/components/shared/PageShell";
 import { useTournamentDetailModel } from "@/features/tournaments/hooks/useTournamentDetailModel";
 import React from "react";
 import StageStandingsBoard from "@/features/tournaments/components/StageStandingsBoard";
@@ -10,6 +13,7 @@ import { ChampionCard } from "@/features/tournaments/sections/ChampionCard";
 /** @param {import("@/types/tournaments").TournamentDetailProps} props */
 export default function TournamentDetail({ tournament, onBack, requestedStage = "" }) {
   const {
+    isCoreLoading, isFullLoading, coreError, fullError, refetchCore, refetchFull,
     tournamentLogo,
     participantCount,
     featuredFacts,
@@ -41,7 +45,7 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
 
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <BackButton onBack={onBack} tournamentName={tournament.name} />
 
       <TournamentHero
@@ -49,6 +53,10 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
         tournamentLogo={tournamentLogo}
         participantCount={participantCount}
       />
+
+      {coreError && <QueryError title="Tournament data unavailable" onRetry={refetchCore} />}
+      {fullError && <QueryError title="Tournament details unavailable" onRetry={refetchFull} />}
+      {(isCoreLoading || isFullLoading) && <PageSkeleton label="Loading tournament details" rows={3} showHeader={false} />}
 
       <FeaturedFactsGrid facts={featuredFacts} />
 
@@ -96,17 +104,9 @@ export default function TournamentDetail({ tournament, onBack, requestedStage = 
           />
         )}
         {hasStageProgression && !stageBoardVisible && (
-          <div className="rounded-xl border bg-card p-8 animate-pulse">
-            <div className="h-6 w-48 bg-muted rounded mb-4" />
-            <div className="h-4 w-32 bg-muted rounded mb-6" />
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-10 bg-muted rounded" />
-              ))}
-            </div>
-          </div>
+          <PageSkeleton label="Loading standings" rows={3} showHeader={false} />
         )}
       </div>
-    </div>
+    </PageShell>
   );
 }

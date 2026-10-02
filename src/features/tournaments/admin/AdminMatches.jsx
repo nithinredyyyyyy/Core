@@ -1,3 +1,6 @@
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import QueryError from "@/components/shared/QueryError";
+import PageShell from "@/components/shared/PageShell";
 import React from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +11,7 @@ import { MatchListSection } from "@/features/tournaments/admin/matches/sections/
 
 export default function AdminMatches() {
   const {
+    queryState,
     showForm,
     editing,
     form,
@@ -38,8 +42,11 @@ export default function AdminMatches() {
     deleteMatch,
   } = useAdminMatchesState();
 
+  if (queryState.isError) return <QueryError onRetry={queryState.refetch} />;
+  if (queryState.isLoading) return <PageSkeleton label="Loading editor" />;
+
   return (
-    <div className="space-y-4">
+    <PageShell>
       <MatchAutoToolsSection
         autoForm={autoForm}
         setAutoForm={setAutoForm}
@@ -89,6 +96,6 @@ export default function AdminMatches() {
         isFormMutating={isFormMutating}
         deleteMatch={deleteMatch}
       />
-    </div>
+    </PageShell>
   );
 }

@@ -1,3 +1,6 @@
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import QueryError from "@/components/shared/QueryError";
+import PageShell from "@/components/shared/PageShell";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,14 +27,14 @@ export default function AdminResults() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const { data: matches = [] } = useQuery({ queryKey: ["matches"], queryFn: () => base44.entities.Match.list("-created_date", 300) });
-  const { data: teams = [] } = useQuery({ queryKey: ["teams"], queryFn: () => base44.entities.Team.list("-created_date", 500) });
-  const { data: tournaments = [] } = useQuery({ queryKey: ["tournaments"], queryFn: () => base44.entities.Tournament.list("-created_date", 50) });
-  const { data: allMatchResults = [] } = useQuery({
+  const { data: matches = [], isLoading: matchesLoading, isError: matchesError, refetch: matchesRefetch } = useQuery({ queryKey: ["matches"], queryFn: () => base44.entities.Match.list("-created_date", 300) });
+  const { data: teams = [], isLoading: teamsLoading, isError: teamsError, refetch: teamsRefetch } = useQuery({ queryKey: ["teams"], queryFn: () => base44.entities.Team.list("-created_date", 500) });
+  const { data: tournaments = [], isLoading: tournamentsLoading, isError: tournamentsError, refetch: tournamentsRefetch } = useQuery({ queryKey: ["tournaments"], queryFn: () => base44.entities.Tournament.list("-created_date", 50) });
+  const { data: allMatchResults = [], isLoading: allMatchResultsLoading, isError: allMatchResultsError, refetch: allMatchResultsRefetch } = useQuery({
     queryKey: ["match-results-all"],
     queryFn: () => base44.entities.MatchResult.list("-created_date", 5000),
   });
-  const { data: existingResults = [] } = useQuery({
+  const { data: existingResults = [], isLoading: existingResultsLoading, isError: existingResultsError, refetch: existingResultsRefetch } = useQuery({
     queryKey: ["results", selectedMatch],
     enabled: Boolean(selectedMatch),
     queryFn: () => base44.entities.MatchResult.filter({ match_id: selectedMatch }, "-created_date", 32),
@@ -525,8 +528,12 @@ export default function AdminResults() {
     }
   }, [entries, matchResults.length, selectedMatchData, selectedMatchTeams]);
 
+  const queryState = { isLoading: matchesLoading || teamsLoading || tournamentsLoading || allMatchResultsLoading || existingResultsLoading, isError: matchesError || teamsError || tournamentsError || allMatchResultsError || existingResultsError, refetch: () => Promise.all([matchesRefetch(), teamsRefetch(), tournamentsRefetch(), allMatchResultsRefetch(), existingResultsRefetch()]) };
+  if (queryState.isError) return <QueryError onRetry={queryState.refetch} />;
+  if (queryState.isLoading) return <PageSkeleton label="Loading editor" />;
+
   return (
-    <div className="space-y-4">
+    <PageShell>
       <h2 className="font-semibold">Match Results</h2>
 
       <MatchSelector
@@ -569,6 +576,6 @@ export default function AdminResults() {
       {selectedMatch && matchResults.length === 0 && entries.length === 0 ? (
         <EmptyResultsNotice />
       ) : null}
-    </div>
+    </PageShell>
   );
 }

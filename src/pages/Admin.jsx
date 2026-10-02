@@ -1,3 +1,4 @@
+import PageShell from "@/components/shared/PageShell";
 import React, { useState, Suspense, lazy } from "react";
 import {
   Shield,
@@ -95,7 +96,7 @@ export default function Admin() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <div className="flex items-center gap-3">
         <div className="rounded-lg bg-primary/10 p-2">
           <Shield className="size-6 text-primary" />
@@ -114,7 +115,7 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {overviewCards.map((card) => (
           <div
             key={card.label}
@@ -150,7 +151,7 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-[20px] border border-border bg-secondary/35 p-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               Duplicate org rows
@@ -243,6 +244,6 @@ export default function Admin() {
           {activeTab === "inspector" && <AdminInspector />}
         </ErrorBoundary>
       </Suspense>
-    </div>
+    </PageShell>
   );
 }

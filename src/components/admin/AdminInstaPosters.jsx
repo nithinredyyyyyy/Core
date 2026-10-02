@@ -398,7 +398,7 @@ export default function AdminInstaPosters() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_1fr]">
         <div className="space-y-4 rounded-[24px] border border-border bg-card p-5 shadow-sm">
           <div>
             <Label>Poster Type</Label>

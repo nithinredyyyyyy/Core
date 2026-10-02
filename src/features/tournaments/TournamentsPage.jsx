@@ -1,6 +1,7 @@
+import PageShell from "@/components/shared/PageShell";
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { listTournaments, listTournamentMatches, listTournamentResults, tournamentQueryOptions } from "@/services/tournaments";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import EmptyState from "@/components/shared/EmptyState";
@@ -125,20 +126,20 @@ export default function Tournaments() {
 
   const { data: tournaments = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["tournaments"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 50),
-    staleTime: 60_000,
+    queryFn: () => listTournaments(50),
+    ...tournamentQueryOptions,
     refetchOnWindowFocus: false,
   });
   const { data: matches = [] } = useQuery({
     queryKey: ["tournaments-matches"],
-    queryFn: () => base44.entities.Match.list("-scheduled_time", 500),
-    staleTime: 60_000,
+    queryFn: () => listTournamentMatches(500),
+    ...tournamentQueryOptions,
     refetchOnWindowFocus: false,
   });
   const { data: rawResults = [] } = useQuery({
     queryKey: ["tournaments-results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 1500),
-    staleTime: 60_000,
+    queryFn: () => listTournamentResults(1500),
+    ...tournamentQueryOptions,
     refetchOnWindowFocus: false,
   });
   const results = React.useMemo(
@@ -260,7 +261,7 @@ export default function Tournaments() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <PageHeader
         kicker="Events"
         title="Tournaments"
@@ -310,6 +311,6 @@ export default function Tournaments() {
           </div>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }

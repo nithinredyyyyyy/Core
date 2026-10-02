@@ -33,3 +33,7 @@ export function listTournamentResults(limit = 1500) {
 export function getTournamentPage(tournamentId) {
   return base44.pages.tournament(tournamentId);
 }
+
+export const tournamentQueryOptions = { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1 };
+export function getTournamentCore(id) { return base44.pages.tournamentCore(id); }
+export function getTournamentFull(id) { return base44.pages.tournamentFull(id); }

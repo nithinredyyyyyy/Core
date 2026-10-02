@@ -12,7 +12,7 @@ export function SigninSection() {
       title="Operator access behind the season."
       body="Google admin sign-in keeps the operational product focused on tournaments, teams, and standings."
     >
-      <div className="grid gap-4 lg:grid-cols-[1.02fr_0.98fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.02fr_0.98fr]">
         <SoftCard className="overflow-hidden bg-[linear-gradient(180deg,var(--brand-ink-soft)_0%,var(--brand-ink-soft-2)_100%)] p-5 text-white sm:p-6">
           <p className="text-[10px] uppercase tracking-[0.18em] text-white/72">Admin access</p>
           <h3 className="mt-3 text-[2rem] font-semibold leading-[0.96] tracking-[-0.05em] text-white">
@@ -31,7 +31,7 @@ export function SigninSection() {
           </div>
         </SoftCard>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {[
             {
               label: "Admin route",

@@ -13,7 +13,7 @@ export function TeamDetailHero({
 }) {
   return (
     <div className="overflow-hidden rounded-[26px] border border-brand-gold-olive bg-[radial-gradient(circle_at_top_left,_rgba(184,140,40,0.24),_rgba(18,15,11,0.98)_50%,_rgba(10,10,12,1)_100%)]">
-      <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">

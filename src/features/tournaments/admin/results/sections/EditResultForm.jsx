@@ -11,7 +11,7 @@ export function EditResultForm({ resultForm, onResultFormChange, onClose, update
         <h4 className="text-sm font-semibold">Edit Result</h4>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} disabled={updateResult.isPending}><X className="w-4 h-4" /></Button>
       </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
         <div>
           <Label>Placement</Label>
           <Input
