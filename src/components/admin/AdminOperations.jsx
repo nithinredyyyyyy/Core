@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowRightLeft,
   BarChart3,
@@ -84,6 +84,12 @@ export default function AdminOperations({ onSelectTab }) {
   const [cacheClearing, setCacheClearing] = useState(false);
   const [cacheMsg, setCacheMsg] = useState("");
 
+  useEffect(() => {
+    if (!cacheMsg) return;
+    const timer = setTimeout(() => setCacheMsg(""), 4000);
+    return () => clearTimeout(timer);
+  }, [cacheMsg]);
+
   async function clearCache() {
     setCacheClearing(true);
     setCacheMsg("");
@@ -94,7 +100,6 @@ export default function AdminOperations({ onSelectTab }) {
       setCacheMsg("Failed to clear cache.");
     } finally {
       setCacheClearing(false);
-      setTimeout(() => setCacheMsg(""), 4000);
     }
   }
 

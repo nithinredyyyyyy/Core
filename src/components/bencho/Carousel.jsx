@@ -365,18 +365,18 @@ const write = (el, sp, angle) => {
 };
 const out = (t) => 1 - (1 - t) ** 4;
 function CarouselRing({
-    shots, displayScale = 1, 
+    shots, displayScale = 1,
 /* how far out to the sides the ring reaches, in px */
-orbit = ORBIT, 
+orbit = ORBIT,
 /* how much smaller the back of the ring is, 0..100 */
-depth = DEPTH, corner = CORNER, 
+depth = DEPTH, corner = CORNER,
 /* how much they drift at rest, 0..100 — 0 is a still ring,
    which is a real setting and not a broken one */
-float = FLOAT, 
+float = FLOAT,
 /* how deep the pointer presses, 0..100 */
-sink = SINK, 
+sink = SINK,
 /* how quickly a swipe settles, 0..100 */
-settle = SETTLE, 
+settle = SETTLE,
 /* ── seconds for one whole turn of the ring ──────────────
    0 is off, and off is the default: on the bench this ring
    is a thing you push, and one that also drifts round on its
@@ -397,7 +397,7 @@ spin = 0, } = {}) {
        third. It changes every frame of a drag, which is exactly
        the value that must not be state — React renders when a
        knob moves, the ring is painted.
-  
+
        It is NOT clamped and NOT wrapped. See the note at the
        top: this is the number a modulo would ruin. */
     const turn = useRef(OPENS_ON);
@@ -416,12 +416,12 @@ spin = 0, } = {}) {
        `raf` — that one belongs to the settle after a swipe, and
        the two sharing it would mean whichever started last
        cancelled the other.
-  
+
        It advances `turn` by time rather than stepping between
        whole positions: a ring that clicks from card to card is
        reading as a slideshow, and the whole point of this one is
        that it is a continuous ring you are looking at side on.
-  
+
        Held pauses it. Nothing on the Pro sheet can grab it —
        that reel is pointer-events: none — but the pause costs a
        line and means the prop is safe anywhere. */
@@ -542,7 +542,7 @@ spin = 0, } = {}) {
                 ["--lift"]: `${((clamp(float, 0, 100) / 100) * 16).toFixed(2)}px`,
                 ["--sway"]: `${((clamp(float, 0, 100) / 100) * 1.4).toFixed(2)}deg`,
             }}>
-              <Card shot={shot.src} name={shot.name} corner={r} sink={sink} 
+              <Card shot={shot.src} name={shot.name} corner={r} sink={sink}
         /* a card under a finger that is turning the
            ring is not being pressed, it is being
            carried — and two gestures fighting for one
@@ -609,7 +609,7 @@ function Card({ shot, name, corner, sink, off, }) {
         });
         setOn(true);
     };
-    return (<div ref={skin} className="car-card" role="img" aria-label={name} onPointerMove={track} 
+    return (<div ref={skin} className="car-card" role="img" aria-label={name} onPointerMove={track}
     /* `out` with a containment test rather than `leave` — the
        rehearsal's scripted pointer walks off carrying
        `relatedTarget: null`, which React does not synthesise

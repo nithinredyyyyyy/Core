@@ -15,17 +15,17 @@ const DOCK = [
    applying only to the hovered item, which is what stops it
    reading as a row of buttons that happen to grow. */
 export function MagnifyingDock({
-    items = DOCK, activeKey, onSelect, 
+    items = DOCK, activeKey, onSelect,
 /* what the glyph under the cursor grows to */
-magnify = 1.32, 
+magnify = 1.32,
 /* how many neighbours either side feel it. This is the knob
    that decides whether the dock reads as a row of buttons
    that happen to grow or as a sheet being pushed up from
    underneath — at 0 it is the former, and no amount of
    magnification rescues it. */
-spread = 2, 
+spread = 2,
 /* how far the nearest glyph rises out of the bar */
-lift = 8, 
+lift = 8,
 /* the name that appears over whatever is under the cursor */
 labels = true, }) {
     const [hover, setHover] = useState(null);
@@ -40,7 +40,7 @@ labels = true, }) {
        to whatever it started on, so sliding a finger along the
        dock keeps sending every event to the first icon you
        landed on and nothing else ever learns the finger arrived.
-  
+
        One handler on the bar, and the index comes from where the
        pointer is: the nearest item centre to the pointer's x.
        Measured rather than derived from the index, because the
@@ -87,7 +87,7 @@ labels = true, }) {
             return;
         to(at(e.clientX));
     };
-    return (<div className="bencho-scope bencho-dock" data-surface="glass"><nav className="gdock" aria-label="Primary" ref={bar} 
+    return (<div className="bencho-scope bencho-dock" data-surface="glass"><nav className="gdock" aria-label="Primary" ref={bar}
     /* ── CAPTURE PHASE, and no pointer capture ───────────
        Two different things with confusingly similar names.
 
@@ -120,7 +120,7 @@ labels = true, }) {
                decided to do with the last one. */
             chose.current = false;
             to(at(e.clientX));
-        }} onPointerMoveCapture={track} 
+        }} onPointerMoveCapture={track}
     /* ── and the touch has to CHOOSE something ────────────
        With the bar holding the capture the button underneath
        never gets its click, so the lift is where a finger
@@ -152,7 +152,7 @@ labels = true, }) {
                past it. */
             const f = d > spread ? 0 : (1 + Math.cos((Math.PI * d) / (spread + 1))) / 2;
             const scale = 1 + (magnify - 1) * f;
-            return (<button type="button" key={key} className="gdock-item" aria-label={label} aria-current={active === key ? "page" : undefined} data-near={d <= 1 ? d : undefined} data-active={active === key} 
+            return (<button type="button" key={key} className="gdock-item" aria-label={label} aria-haspopup={key === "more" ? "dialog" : undefined} aria-expanded={key === "more" ? active === "more" : undefined} aria-current={active === key ? "page" : undefined} data-near={d <= 1 ? d : undefined} data-active={active === key}
             /* Crossing onto a glyph, not hovering one: a sound
                on hover fires on every pixel of a mouse sweep.
                Quiet, floored, and pitched by position so
