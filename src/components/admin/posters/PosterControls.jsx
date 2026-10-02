@@ -306,7 +306,7 @@ export default function PosterControls({
                 ["cardBg", "Card"], ["muted", "Muted"], ["bodyColor", "Body"],
               ].map(([key, label]) => (
                 <div key={key} className="flex flex-col items-center gap-1">
-                  <input type="color" value={customConfig?.[key] || "#000000"}
+                  <input type="color" value={customConfig?.[key] || "var(--art-000000)"}
                     onChange={(e) => onCustomConfigChange({ ...customConfig, [key]: e.target.value })}
                     className="size-8 rounded-lg border border-border cursor-pointer" />
                   <span className="text-[9px] text-muted-foreground">{label}</span>
@@ -395,7 +395,7 @@ export default function PosterControls({
                   placeholder="Top 6"
                   className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary/40 placeholder:text-muted-foreground/40" />
                 <div className="flex items-center gap-1 mt-1">
-                  <input type="color" value={customConfig?.leftBg || "#16a34a"}
+                  <input type="color" value={customConfig?.leftBg || "var(--art-16a34a)"}
                     onChange={(e) => onCustomConfigChange({ ...customConfig, leftBg: e.target.value })}
                     className="size-6 rounded border border-border cursor-pointer" />
                   <span className="text-[9px] text-muted-foreground">BG</span>
@@ -408,7 +408,7 @@ export default function PosterControls({
                   placeholder="Playoffs"
                   className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary/40 placeholder:text-muted-foreground/40" />
                 <div className="flex items-center gap-1 mt-1">
-                  <input type="color" value={customConfig?.rightBg || "#7c3aed"}
+                  <input type="color" value={customConfig?.rightBg || "var(--art-7c3aed)"}
                     onChange={(e) => onCustomConfigChange({ ...customConfig, rightBg: e.target.value })}
                     className="size-6 rounded border border-border cursor-pointer" />
                   <span className="text-[9px] text-muted-foreground">BG</span>

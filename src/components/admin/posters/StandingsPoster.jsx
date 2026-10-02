@@ -176,9 +176,9 @@ export default function StandingsPoster({ activeOption, standingsRows, tournamen
           <div className="poster-standings-v2-brand-row">
             <div className="poster-standings-v2-brand-mark">
               <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#f2efe6"/>
-                <path d="M2 17L12 22L22 17" stroke="#f2efe6" strokeWidth="2"/>
-                <path d="M2 12L12 17L22 12" stroke="#f2efe6" strokeWidth="2"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="var(--art-f2efe6)"/>
+                <path d="M2 17L12 22L22 17" stroke="var(--art-f2efe6)" strokeWidth="2"/>
+                <path d="M2 12L12 17L22 12" stroke="var(--art-f2efe6)" strokeWidth="2"/>
               </svg>
             </div>
             <span className="poster-standings-v2-brand-name">CORE ESPORTS</span>

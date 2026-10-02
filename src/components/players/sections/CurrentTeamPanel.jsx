@@ -17,7 +17,7 @@ export function CurrentTeamPanel({ teamName, teamTag, teamLogo, teamLogoSurfaceT
           roundedClass="rounded-2xl"
           paddingClass="p-2.5"
           surfaceTone={teamLogoSurfaceTone}
-          className="bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
+          className="bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.14),rgba(var(--rgb-255-255-255),0.98)_72%,rgba(var(--rgb-248-243-235),0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.18),rgba(var(--rgb-27-27-31),0.98)_72%,rgba(var(--rgb-17-24-39),1)_100%)]"
         />
         <div>
           <p className="font-semibold text-foreground">{teamName}</p>

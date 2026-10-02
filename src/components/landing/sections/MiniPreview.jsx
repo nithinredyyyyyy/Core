@@ -9,9 +9,9 @@ export function MiniPreview({ step, title, body, accent = "mint" }) {
       >
         {step}
       </div>
-      <h3 className="type-title-md mt-5 text-brand-ink-pure">
+      <p className="type-title-md mt-5 text-brand-ink-pure">
         {title}
-      </h3>
+      </p>
       <p className="type-caption mt-2 text-brand-slate-bone">{body}</p>
     </div>
   );

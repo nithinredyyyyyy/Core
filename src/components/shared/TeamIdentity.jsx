@@ -81,7 +81,7 @@ export default React.memo(function TeamIdentity({
                 }
                 style={{
                   filter:
-                    "drop-shadow(0 1px 1px rgba(11,31,61,0.16)) drop-shadow(0 0 1px rgba(11,31,61,0.08))",
+                    "drop-shadow(0 1px 1px rgba(var(--rgb-11-31-61),0.16)) drop-shadow(0 0 1px rgba(var(--rgb-11-31-61),0.08))",
                 }}
               />
             </span>
@@ -97,7 +97,7 @@ export default React.memo(function TeamIdentity({
                 }
                 style={{
                   filter:
-                    "drop-shadow(0 1px 1px rgba(11,31,61,0.16)) drop-shadow(0 0 1px rgba(11,31,61,0.08))",
+                    "drop-shadow(0 1px 1px rgba(var(--rgb-11-31-61),0.16)) drop-shadow(0 0 1px rgba(var(--rgb-11-31-61),0.08))",
                 }}
               />
             </span>

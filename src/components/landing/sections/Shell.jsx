@@ -2,8 +2,8 @@ import React from "react";
 
 export function Shell({ eyebrow, title, body, id, children }) {
   return (
-    <section id={id} className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl">
+    <section id={id} className="landing-section mx-auto max-w-[var(--content-max-width)] px-4 sm:px-6">
+      <div className="text-center">
         <p className="type-kicker text-brand-mint">
           {eyebrow}
         </p>

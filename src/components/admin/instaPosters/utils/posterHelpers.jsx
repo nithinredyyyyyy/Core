@@ -31,15 +31,15 @@ export const MANUAL_FORM = {
 };
 
 export const POSTER_COLORS = {
-  paper: "#fbfcff",
-  paperWarm: "#fff8ec",
-  ink: "#101827",
-  muted: "#657289",
-  faint: "#e8edf5",
-  navy: "#101827",
-  orange: "#ff7a1a",
-  red: "#e6113f",
-  blue: "#2563eb",
+  paper: "var(--art-fbfcff)",
+  paperWarm: "var(--art-fff8ec)",
+  ink: "var(--art-101827)",
+  muted: "var(--art-657289)",
+  faint: "var(--art-e8edf5)",
+  navy: "var(--art-101827)",
+  orange: "var(--art-ff7a1a)",
+  red: "var(--art-e6113f)",
+  blue: "var(--art-2563eb)",
 };
 
 export function normalizeName(value) {

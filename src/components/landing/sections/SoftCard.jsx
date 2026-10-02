@@ -1,11 +1,12 @@
 import React from "react";
+import { Card } from "@/components/ui/card";
 
 export function SoftCard({ className = "", children }) {
   return (
-    <div
-      className={`rounded-[30px] border border-brand-cream-edge bg-white shadow-[0_24px_70px_rgba(17,17,17,0.06)] ${className}`}
+    <Card
+      className={`rounded-[var(--radius-xl)] border-border bg-card text-card-foreground shadow-[var(--shadow-md)] ${className}`}
     >
       {children}
-    </div>
+    </Card>
   );
 }

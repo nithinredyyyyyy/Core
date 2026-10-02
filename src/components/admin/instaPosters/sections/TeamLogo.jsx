@@ -17,11 +17,11 @@ export function TeamLogo({ teamName, size = 190, muted = false, framed = true })
         placeItems: "center",
         background: framed
           ? muted
-            ? "#f0f3f8"
-            : "#ffffff"
+            ? "var(--art-f0f3f8)"
+            : "var(--brand-white)"
           : "transparent",
         border: framed ? `1px solid ${POSTER_COLORS.faint}` : "0",
-        boxShadow: framed ? "0 16px 32px rgba(16,24,39,0.08)" : "none",
+        boxShadow: framed ? "0 16px 32px rgba(var(--rgb-16-24-39),0.08)" : "none",
         overflow: "hidden",
       }}
     >
@@ -40,7 +40,7 @@ export function TeamLogo({ teamName, size = 190, muted = false, framed = true })
       ) : (
         <span
           style={{
-            color: muted ? "#94a3b8" : POSTER_COLORS.ink,
+            color: muted ? "var(--brand-slate-400)" : POSTER_COLORS.ink,
             fontSize: size * 0.28,
             fontWeight: 950,
             letterSpacing: 0,

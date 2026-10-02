@@ -277,7 +277,7 @@ export default function AdminInstaPosters() {
           teamName={podiumTeam}
           placeLabel="2nd Place"
           headline="RUNNER-UP"
-          accent="#cbd5e1"
+          accent="var(--art-cbd5e1)"
           manual={manual}
           {...brandProps}
         />
@@ -290,7 +290,7 @@ export default function AdminInstaPosters() {
           teamName={podiumTeam}
           placeLabel="3rd Place"
           headline="2ND RUNNER-UP"
-          accent="#f59e0b"
+          accent="var(--brand-amber)"
           manual={manual}
           {...brandProps}
         />
@@ -302,7 +302,7 @@ export default function AdminInstaPosters() {
         teamName={podiumTeam}
         placeLabel="Champions"
         headline="CHAMPIONS"
-        accent="#facc15"
+        accent="var(--brand-yellow)"
         manual={manual}
         {...brandProps}
       />

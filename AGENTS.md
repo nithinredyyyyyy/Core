@@ -50,7 +50,7 @@ standings honestly. Never present cumulative rows as single-match results.
 
 ## Design system
 
-- `tailwind.config.js` holds the brand palette. Pages reference ~387 brand
+- `src/styles/design-tokens.css` holds the brand palette; `tailwind.config.js` reads its RGB tokens. Pages reference ~387 brand
   colour usages, so any palette edit must stay a strict superset of the
   existing keys.
 - Dark-first, high contrast, minimal. No heavy effects, no oversized cards.

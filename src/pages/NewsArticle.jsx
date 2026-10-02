@@ -212,7 +212,7 @@ export default function NewsArticle() {
 
   if (!article) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center rounded-[28px] border border-dashed border-brand-border-faint bg-[rgba(255,255,255,0.75)] p-6 text-sm text-brand-slate">
+      <div className="flex min-h-[40vh] items-center justify-center rounded-[28px] border border-dashed border-brand-border-faint bg-[rgba(var(--rgb-255-255-255),0.75)] p-6 text-sm text-brand-slate">
         Loading article…
       </div>
     );

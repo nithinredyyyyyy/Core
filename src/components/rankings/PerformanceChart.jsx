@@ -23,9 +23,9 @@ export default React.memo(function PerformanceChart({ chartData = [], teamNames 
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={CHART_MARGIN}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-            <XAxis dataKey="name" stroke="#888" tick={{ fill: "#888" }} axisLine={false} tickLine={false} />
-            <YAxis stroke="#888" tick={{ fill: "#888" }} axisLine={false} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--art-333333)" vertical={false} />
+            <XAxis dataKey="name" stroke="var(--art-888888)" tick={{ fill: "var(--art-888888)" }} axisLine={false} tickLine={false} />
+            <YAxis stroke="var(--art-888888)" tick={{ fill: "var(--art-888888)" }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={TOOLTIP_STYLE} />
             {teamNames.map((teamName, index) => (
               <Line

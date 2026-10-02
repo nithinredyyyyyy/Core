@@ -5,7 +5,7 @@ import { BrandMark } from "@/components/shared/BrandMark";
 
 export function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-brand-cream-edge/90 bg-[rgba(247,247,245,0.88)] backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-border bg-[var(--glass-surface)] backdrop-blur-xl">
       <div className="mx-auto flex min-h-[5rem] w-full max-w-[1240px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
@@ -27,7 +27,7 @@ export function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav aria-label="Landing navigation" className="hidden items-center gap-1 lg:flex">
           {[
             ["Why Core", "#why"],
             ["Platform", "#platform"],

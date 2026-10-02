@@ -1,10 +1,10 @@
 const AWARD_TYPES = {
   FMVP: {
     label: "FMVP",
-    color: "#D4AF37",
-    colorLight: "rgba(212,175,55,0.15)",
-    colorMid: "rgba(212,175,55,0.25)",
-    gradient: "linear-gradient(135deg, #D4AF37, #b8960c)",
+    color: "var(--art-d4af37)",
+    colorLight: "rgba(var(--rgb-212-175-55),0.15)",
+    colorMid: "rgba(var(--rgb-212-175-55),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-d4af37), var(--art-b8960c))",
     icon: "trophy",
     stats: [
       { key: "mvpRating", label: "RATING" },
@@ -22,10 +22,10 @@ const AWARD_TYPES = {
   },
   MVP: {
     label: "MVP",
-    color: "#ef4444",
-    colorLight: "rgba(239,68,68,0.15)",
-    colorMid: "rgba(239,68,68,0.25)",
-    gradient: "linear-gradient(135deg, #ef4444, #dc2626)",
+    color: "var(--art-ef4444)",
+    colorLight: "rgba(var(--rgb-239-68-68),0.15)",
+    colorMid: "rgba(var(--rgb-239-68-68),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-ef4444), var(--art-dc2626))",
     icon: "trophy",
     stats: [
       { key: "mvpRating", label: "RATING" },
@@ -48,10 +48,10 @@ const AWARD_TYPES = {
   },
   IGL: {
     label: "BEST IGL",
-    color: "#2563eb",
-    colorLight: "rgba(37,99,235,0.15)",
-    colorMid: "rgba(37,99,235,0.25)",
-    gradient: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+    color: "var(--art-2563eb)",
+    colorLight: "rgba(var(--rgb-37-99-235),0.15)",
+    colorMid: "rgba(var(--rgb-37-99-235),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-2563eb), var(--art-1d4ed8))",
     icon: "compass",
     stats: [
       { key: "iglRating", label: "IGL RATING" },
@@ -61,10 +61,10 @@ const AWARD_TYPES = {
   },
   SUPPORT: {
     label: "BEST SUPPORT",
-    color: "#22c55e",
-    colorLight: "rgba(34,197,94,0.15)",
-    colorMid: "rgba(34,197,94,0.25)",
-    gradient: "linear-gradient(135deg, #22c55e, #16a34a)",
+    color: "var(--art-22c55e)",
+    colorLight: "rgba(var(--rgb-34-197-94),0.15)",
+    colorMid: "rgba(var(--rgb-34-197-94),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-22c55e), var(--art-16a34a))",
     icon: "shield",
     stats: [
       { key: "assistsPerRd", label: "ASSISTS/RD" },
@@ -73,10 +73,10 @@ const AWARD_TYPES = {
   },
   ROOKIE: {
     label: "ROOKIE OF THE YEAR",
-    color: "#8b5cf6",
-    colorLight: "rgba(139,92,246,0.15)",
-    colorMid: "rgba(139,92,246,0.25)",
-    gradient: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+    color: "var(--art-8b5cf6)",
+    colorLight: "rgba(var(--rgb-139-92-246),0.15)",
+    colorMid: "rgba(var(--rgb-139-92-246),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-8b5cf6), var(--art-7c3aed))",
     icon: "risingStar",
     stats: [
       { key: "age", label: "AGE" },
@@ -85,10 +85,10 @@ const AWARD_TYPES = {
   },
   GRENADE_MASTER: {
     label: "GRENADE MASTER",
-    color: "#f97316",
-    colorLight: "rgba(249,115,22,0.15)",
-    colorMid: "rgba(249,115,22,0.25)",
-    gradient: "linear-gradient(135deg, #f97316, #ea580c)",
+    color: "var(--brand-orange)",
+    colorLight: "rgba(var(--rgb-249-115-22),0.15)",
+    colorMid: "rgba(var(--rgb-249-115-22),0.25)",
+    gradient: "linear-gradient(135deg, var(--brand-orange), var(--art-ea580c))",
     icon: "grenade",
     stats: [
       { key: "grenadeKills", label: "GRENADE KILLS" },
@@ -97,10 +97,10 @@ const AWARD_TYPES = {
   },
   FIELD_MEDIC: {
     label: "FIELD MEDIC",
-    color: "#0891b2",
-    colorLight: "rgba(8,145,178,0.15)",
-    colorMid: "rgba(8,145,178,0.25)",
-    gradient: "linear-gradient(135deg, #0891b2, #0e7490)",
+    color: "var(--art-0891b2)",
+    colorLight: "rgba(var(--rgb-8-145-178),0.15)",
+    colorMid: "rgba(var(--rgb-8-145-178),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-0891b2), var(--art-0e7490))",
     icon: "medical",
     stats: [
       { key: "revives", label: "REVIVES" },
@@ -109,10 +109,10 @@ const AWARD_TYPES = {
   },
   EAGLE_EYE: {
     label: "EAGLE EYE",
-    color: "#eab308",
-    colorLight: "rgba(234,179,8,0.15)",
-    colorMid: "rgba(234,179,8,0.25)",
-    gradient: "linear-gradient(135deg, #eab308, #ca8a04)",
+    color: "var(--art-eab308)",
+    colorLight: "rgba(var(--rgb-234-179-8),0.15)",
+    colorMid: "rgba(var(--rgb-234-179-8),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-eab308), var(--art-ca8a04))",
     icon: "eye",
     stats: [
       { key: "headshotPct", label: "HEADSHOT %" },
@@ -121,10 +121,10 @@ const AWARD_TYPES = {
   },
   BEST_CLUTCH: {
     label: "BEST CLUTCH",
-    color: "#dc2626",
-    colorLight: "rgba(220,38,38,0.15)",
-    colorMid: "rgba(220,38,38,0.25)",
-    gradient: "linear-gradient(135deg, #dc2626, #b91c1c)",
+    color: "var(--art-dc2626)",
+    colorLight: "rgba(var(--rgb-220-38-38),0.15)",
+    colorMid: "rgba(var(--rgb-220-38-38),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-dc2626), var(--art-b91c1c))",
     icon: "lightning",
     stats: [
       { key: "clutchWins", label: "CLUTCH WINS" },
@@ -133,10 +133,10 @@ const AWARD_TYPES = {
   },
   ELIMINATOR: {
     label: "THE ELIMINATOR",
-    color: "#7f1d1d",
-    colorLight: "rgba(127,29,29,0.15)",
-    colorMid: "rgba(127,29,29,0.25)",
-    gradient: "linear-gradient(135deg, #7f1d1d, #6b1a1a)",
+    color: "var(--art-7f1d1d)",
+    colorLight: "rgba(var(--rgb-127-29-29),0.15)",
+    colorMid: "rgba(var(--rgb-127-29-29),0.25)",
+    gradient: "linear-gradient(135deg, var(--art-7f1d1d), var(--art-6b1a1a))",
     icon: "skull",
     stats: [
       { key: "totalElims", label: "TOTAL ELIMS" },

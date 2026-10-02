@@ -3,7 +3,7 @@ import { getStatusLabel, getStatusMeta } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 const TONE_CLASSES = {
-  live: "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400",
+  live: "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
   info: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
   neutral: "border-border bg-muted text-muted-foreground",
   danger:

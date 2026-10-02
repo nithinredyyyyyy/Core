@@ -59,13 +59,13 @@ export default function PlayerCard3D({ player, rank }) {
           className="absolute inset-0 overflow-visible rounded-[16px]"
           style={{
             backfaceVisibility: "hidden",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)",
+            boxShadow: "0 12px 40px rgba(var(--rgb-0-0-0),0.5), 0 0 0 1px rgba(var(--rgb-255-255-255),0.08)",
           }}
         >
-          <div className="absolute inset-0 rounded-[16px] bg-[#0c0c0c]" />
+          <div className="absolute inset-0 rounded-[16px] bg-[var(--art-0c0c0c)]" />
           <div className="absolute inset-[5px] rounded-[12px] overflow-hidden">
-            <div className="absolute inset-0" style={{ background: "linear-gradient(140deg, #e879f9 0%, #818cf8 12%, #38bdf8 24%, #a78bfa 36%, #34d399 48%, #f472b6 60%, #818cf8 72%, #c084fc 84%, #38bdf8 100%)" }} />
-            <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.4) 38%, rgba(255,255,255,0.15) 50%, transparent 62%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(140deg, var(--art-e879f9) 0%, var(--art-818cf8) 12%, var(--brand-sky-clear) 24%, var(--art-a78bfa) 36%, var(--art-34d399) 48%, var(--art-f472b6) 60%, var(--art-818cf8) 72%, var(--art-c084fc) 84%, var(--brand-sky-clear) 100%)" }} />
+            <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(115deg, transparent 25%, rgba(var(--rgb-255-255-255),0.4) 38%, rgba(var(--rgb-255-255-255),0.15) 50%, transparent 62%)" }} />
             <div className="absolute inset-0 overflow-hidden opacity-15">
               <div className="absolute -left-20 top-1/4 h-[200px] w-[140px] rotate-[-25deg] rounded-[20px] bg-white/20" />
               <div className="absolute -right-16 top-1/3 h-[180px] w-[120px] rotate-[20deg] rounded-[16px] bg-white/15" />
@@ -77,7 +77,7 @@ export default function PlayerCard3D({ player, rank }) {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative h-full w-full">
                 {player.photo ? (
-                  <img src={player.photo} alt={player.playerName} className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.01]" style={{ filter: "drop-shadow(0 -8px 24px rgba(0,0,0,0.5))" }} />
+                  <img src={player.photo} alt={player.playerName} className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.01]" style={{ filter: "drop-shadow(0 -8px 24px rgba(var(--rgb-0-0-0),0.5))" }} />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="flex size-28 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 font-['Archivo_Black',sans-serif] text-4xl font-black text-white">{lastName?.[0]}</div>
@@ -111,7 +111,7 @@ export default function PlayerCard3D({ player, rank }) {
             </div>
 
             {/* Bottom overlay */}
-            <div className="absolute inset-x-0 bottom-0 z-20" style={{ height: "38%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.88) 55%, transparent 100%)" }} />
+            <div className="absolute inset-x-0 bottom-0 z-20" style={{ height: "38%", background: "linear-gradient(to top, rgba(var(--rgb-0-0-0),0.95) 0%, rgba(var(--rgb-0-0-0),0.88) 55%, transparent 100%)" }} />
 
             <div className="absolute inset-x-0 bottom-0 z-30 p-3.5">
               <div className="mb-2.5">
@@ -122,7 +122,7 @@ export default function PlayerCard3D({ player, rank }) {
                   {lastName}
                 </h3>
               </div>
-              <div className="flex items-center gap-0 rounded-[10px] border border-white/[0.08] bg-[#12121a]/70 backdrop-blur-xl">
+              <div className="flex items-center gap-0 rounded-[10px] border border-white/[0.08] bg-[var(--art-12121a)]/70 backdrop-blur-xl">
                 <div className="flex items-center gap-2 border-r border-white/[0.08] px-3 py-2.5">
                   <TeamIdentity name={player.teamName} hideText contained logoBlockClassName="size-5" logoClassName="h-4 w-4 object-contain" />
                   <span className="text-[8px] font-bold tracking-wider text-white/55">{player.teamName?.slice(0, 14)}</span>
@@ -141,7 +141,7 @@ export default function PlayerCard3D({ player, rank }) {
               </div>
             </div>
           </div>
-          <div className="absolute inset-0 rounded-[16px] pointer-events-none" style={{ border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 0 30px rgba(255,255,255,0.03)" }} />
+          <div className="absolute inset-0 rounded-[16px] pointer-events-none" style={{ border: "1px solid rgba(var(--rgb-255-255-255),0.1)", boxShadow: "inset 0 0 30px rgba(var(--rgb-255-255-255),0.03)" }} />
         </div>
 
         {/* ====== BACK FACE ====== */}
@@ -150,16 +150,16 @@ export default function PlayerCard3D({ player, rank }) {
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)",
+            boxShadow: "0 12px 40px rgba(var(--rgb-0-0-0),0.5), 0 0 0 1px rgba(var(--rgb-255-255-255),0.08)",
           }}
         >
-          <div className="absolute inset-0 rounded-[16px] bg-[#0c0c0c]" />
+          <div className="absolute inset-0 rounded-[16px] bg-[var(--art-0c0c0c)]" />
           <div className="absolute inset-[5px] rounded-[12px] overflow-hidden">
             {/* Holographic base — matches front */}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(140deg, #e879f9 0%, #818cf8 12%, #38bdf8 24%, #a78bfa 36%, #34d399 48%, #f472b6 60%, #818cf8 72%, #c084fc 84%, #38bdf8 100%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(140deg, var(--art-e879f9) 0%, var(--art-818cf8) 12%, var(--brand-sky-clear) 24%, var(--art-a78bfa) 36%, var(--art-34d399) 48%, var(--art-f472b6) 60%, var(--art-818cf8) 72%, var(--art-c084fc) 84%, var(--brand-sky-clear) 100%)" }} />
 
             {/* Shimmer */}
-            <div className="absolute inset-0 opacity-50" style={{ background: "linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.35) 40%, transparent 60%)" }} />
+            <div className="absolute inset-0 opacity-50" style={{ background: "linear-gradient(115deg, transparent 25%, rgba(var(--rgb-255-255-255),0.35) 40%, transparent 60%)" }} />
 
             {/* Geometric shapes */}
             <div className="absolute inset-0 overflow-hidden opacity-15">
@@ -244,7 +244,7 @@ export default function PlayerCard3D({ player, rank }) {
               </div>
             </div>
           </div>
-          <div className="absolute inset-0 rounded-[16px] pointer-events-none" style={{ border: "1px solid rgba(255,255,255,0.06)" }} />
+          <div className="absolute inset-0 rounded-[16px] pointer-events-none" style={{ border: "1px solid rgba(var(--rgb-255-255-255),0.06)" }} />
         </div>
       </motion.div>
     </div>

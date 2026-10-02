@@ -110,10 +110,10 @@ export default function SignIn() {
           className="absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(17,19,26,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(17,19,26,0.045) 1px, transparent 1px)",
+              "linear-gradient(rgba(var(--rgb-17-19-26),0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--rgb-17-19-26),0.045) 1px, transparent 1px)",
             backgroundSize: "52px 52px",
             maskImage:
-              "radial-gradient(circle at center, rgba(0,0,0,1), rgba(0,0,0,0.24) 72%, transparent 100%)",
+              "radial-gradient(circle at center, rgba(var(--rgb-0-0-0),1), rgba(var(--rgb-0-0-0),0.24) 72%, transparent 100%)",
           }}
         />
       </div>

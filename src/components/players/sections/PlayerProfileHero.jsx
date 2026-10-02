@@ -44,7 +44,7 @@ export function PlayerProfileHero({
 
         <div className="flex items-center justify-center">
           {playerPhoto ? (
-            <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.14),rgba(255,255,255,0.98)_52%,rgba(248,243,235,0.98)_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_58%,rgba(17,24,39,1)_100%)]">
+            <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.14),rgba(var(--rgb-255-255-255),0.98)_52%,rgba(var(--rgb-248-243-235),0.98)_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.18),rgba(var(--rgb-27-27-31),0.98)_58%,rgba(var(--rgb-17-24-39),1)_100%)]">
               <img
                 src={playerPhoto}
                 alt={displayIgn}
@@ -60,7 +60,7 @@ export function PlayerProfileHero({
               roundedClass="rounded-[30px]"
               paddingClass="p-7"
               surfaceTone={teamLogoSurfaceTone}
-              className="border-border bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.12),rgba(255,255,255,0.98)_72%,rgba(248,243,235,0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.18),rgba(27,27,31,0.98)_72%,rgba(17,24,39,1)_100%)]"
+              className="border-border bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.12),rgba(var(--rgb-255-255-255),0.98)_72%,rgba(var(--rgb-248-243-235),0.98)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.18),rgba(var(--rgb-27-27-31),0.98)_72%,rgba(var(--rgb-17-24-39),1)_100%)]"
             >
               {!teamLogo ? (
                 <span className="text-5xl font-black uppercase text-primary">

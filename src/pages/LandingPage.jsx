@@ -1,3 +1,4 @@
+import QueryError from "@/components/shared/QueryError";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -14,7 +15,7 @@ import { LandingFinalCta } from "@/components/landing/sections/LandingFinalCta";
 export default function LandingPage() {
   const { theme, toggle } = useTheme();
   const { isInstallable, promptInstall } = useInstallPrompt();
-  const { data: homeView } = useQuery({
+  const { data: homeView, isError, refetch } = useQuery({
     queryKey: ["landing-home-view"],
     queryFn: () => base44.home.view("desktop"),
   });
@@ -27,17 +28,14 @@ export default function LandingPage() {
   const featuredFacts = homeView?.featuredTournamentFacts || [];
 
   return (
-    <div className="min-h-screen bg-brand-cream-canvas text-brand-ink-pure">
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(103,201,187,0.10),transparent_28%),linear-gradient(180deg,var(--brand-cream-paper)_0%,var(--brand-cream-canvas)_55%,var(--brand-cream-mist)_100%)]" />
-        <div className="absolute left-[-4rem] top-24 size-56 rounded-full bg-brand-mint-fog blur-3xl" />
-        <div className="absolute right-[-4rem] top-40 size-72 rounded-full bg-brand-cream-haze-2 blur-3xl" />
-      </div>
-
+    <div className="landing-page min-h-screen bg-background text-foreground">
+      <a href="#landing-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-card focus:p-4">Skip to content</a>
       <LandingHeader theme={theme} toggle={toggle} isInstallable={isInstallable} promptInstall={promptInstall} />
 
-      <main className="pb-20 pt-6 sm:pt-8 lg:pt-10">
+      <main id="landing-content" className="pb-20">
         <LandingHero featuredTournament={featuredTournament} featuredStages={featuredStages} featuredFacts={featuredFacts} isInstallable={isInstallable} promptInstall={promptInstall} />
+
+        {isError && <QueryError title="Circuit preview unavailable" onRetry={refetch} />}
 
         <div className="mt-20 space-y-20">
           <WhyCoreSection />

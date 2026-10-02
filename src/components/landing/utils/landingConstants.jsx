@@ -2,7 +2,7 @@ import { Megaphone, UserCircle2, Trophy } from "lucide-react";
 
 export const MINI_PREVIEW_ACCENT_CLASSES = {
   mint: "bg-brand-mint-mist text-brand-mint-deep",
-  peach: "bg-brand-gold-melon text-brand-coral-melon",
+  peach: "bg-brand-gold-melon text-brand-coral-cocoa",
   ink: "bg-brand-gray-100 text-brand-ink-pure",
 };
 

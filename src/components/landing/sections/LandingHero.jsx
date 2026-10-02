@@ -7,29 +7,29 @@ import { MiniPreview } from "@/components/landing/sections/MiniPreview";
 
 export function LandingHero({ featuredTournament, featuredStages, featuredFacts, isInstallable, promptInstall }) {
   return (
-    <section className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
-      <SoftCard className="overflow-hidden p-5 sm:p-7 lg:p-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="max-w-3xl">
+    <section className="marquee-hero">
+      <div className="marquee-inner">
+        <div className="marquee-content">
+          <div className="marquee-copy">
             <div className="type-kicker inline-flex items-center gap-2 rounded-full border border-brand-cream-edge bg-white px-3 py-1.5 text-brand-slate-bone">
               <Sparkles className="size-3.5 text-brand-mint" />
               Premium esports platform
             </div>
 
-            <h1 className="type-display-hero mt-6 text-brand-ink-pure">
+            <h1 className="type-display-hero mt-6 text-[var(--marquee-text)]">
               A smarter esports system for fans,
-              <span className="ml-3 inline-flex rounded-full bg-brand-mint-mist px-4 py-1 text-brand-mint-deep">
+              <span className="ml-2 inline">
                 organizers
               </span>
             </h1>
 
-            <p className="type-body mt-5 max-w-2xl text-brand-slate-stone">
+            <p className="type-body mt-5 max-w-2xl text-[var(--marquee-text)]">
               Core helps you follow the live Indian esports season with
               one cleaner layer for tournaments, standings, team tracking,
               and editorial updates.
             </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-7 flex justify-center flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
             to="/app"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-ink-pure px-6 py-3 text-sm font-semibold text-white"
@@ -75,7 +75,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="marquee-preview grid grid-cols-1 gap-4">
             <SoftCard className="p-5 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -146,7 +146,7 @@ export function LandingHero({ featuredTournament, featuredStages, featuredFacts,
             </SoftCard>
           </div>
         </div>
-      </SoftCard>
+      </div>
     </section>
   );
 }
