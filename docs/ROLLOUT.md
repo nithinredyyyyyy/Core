@@ -218,6 +218,7 @@ umask 077
 # BACKUP_FILE identifies the checksum-verified pre-deploy snapshot restored to disk.
 # CORE_DB_PATH identifies the production database; neither may be empty.
 : "${BACKUP_FILE:?Select verified backup}" "${CORE_DB_PATH:?Select database}"
+export BACKUP_FILE CORE_DB_PATH
 node --input-type=module <<'JS'
 import Database from 'better-sqlite3';
 const db = new Database(process.env.BACKUP_FILE, { readonly: true, fileMustExist: true });

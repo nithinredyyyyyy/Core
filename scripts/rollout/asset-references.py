@@ -24,6 +24,23 @@ def git(*args):
     return subprocess.check_output(["git", *args])
 
 
+# Resolve symbolic refs once: a concurrent local commit cannot change the tree
+# halfway through a proof or make its revision label disagree with its blobs.
+BASE = git("rev-parse", BASE).decode().strip()
+FINAL = git("rev-parse", FINAL).decode().strip()
+
+
+def glob_matches(filename, pattern):
+    # Vite's globstar includes zero directory segments; Python fnmatch does not.
+    return fnmatch.fnmatch(filename, pattern) or (
+        "**/" in pattern and fnmatch.fnmatch(filename, pattern.replace("**/", ""))
+    )
+
+
+assert glob_matches("images/example.png", "images/**/*")
+assert glob_matches("images/nested/example.png", "images/**/*")
+assert not glob_matches("other/example.png", "images/**/*")
+
 removed = [p for p in git("diff-tree", "--no-commit-id", "--name-only", "--diff-filter=D", "-r", REMOVAL).decode().splitlines()
            if p.startswith("public/images/") and Path(p).suffix.lower() in (".png", ".jpg", ".jpeg")]
 assert len(removed) == 313, len(removed)
@@ -81,7 +98,7 @@ for ref in (BASE, FINAL):
             include = re.search(r"includeAssets:\s*\[([^]]*)\]", content, re.S)
             for pattern in re.findall(r"[\"']([^\"']+)[\"']", include.group(1) if include else ""):
                 for p in removed:
-                    if fnmatch.fnmatch(p.removeprefix("public/"), pattern):
+                    if glob_matches(p.removeprefix("public/"), pattern):
                         matches[p].append({"file": filename, "kind": "pwa-includeAssets-glob", "pattern": pattern})
         for number, line in enumerate(content.splitlines(), 1):
             normalized = unquote(line.replace("\\/", "/"))
