@@ -1,5 +1,6 @@
 import react from "@vitejs/plugin-react";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -9,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   logLevel: "warn",
+  build: { manifest: true },
   cacheDir: path.resolve(__dirname, "node_modules/.vite"),
   resolve: {
     alias: {
@@ -21,11 +23,29 @@ export default defineConfig({
       ? null
       : VitePWA({
           registerType: "autoUpdate",
-          includeAssets: ["favicon.ico", "images/core-logo.png", "images/**/*"],
+          includeAssets: ["images/core-logo.svg", "pwa-192x192.png", "pwa-512x512.png"],
           workbox: {
             importScripts: ["/sw-cleanup.js"],
-            globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}"],
-            maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+            globPatterns: ["index.html", "assets/*.{js,css}", "fonts/*.woff2"],
+            navigateFallbackDenylist: [/^\/api\//],
+            cleanupOutdatedCaches: true,
+            manifestTransforms: [async (entries) => {
+              const manifest = JSON.parse(readFileSync(path.join(__dirname, "dist/.vite/manifest.json"), "utf8"));
+              const shell = new Set(["index.html", "images/core-logo.svg", "pwa-192x192.png", "pwa-512x512.png"]);
+              const visited = new Set();
+              function include(key) {
+                if (visited.has(key)) return;
+                visited.add(key);
+                const chunk = manifest[key];
+                if (!chunk) return;
+                shell.add(chunk.file);
+                for (const css of chunk.css || []) shell.add(css);
+                for (const dependency of chunk.imports || []) include(dependency);
+              }
+              for (const [key, chunk] of Object.entries(manifest)) if (chunk.isEntry) include(key);
+              return { manifest: entries.filter((entry) => shell.has(entry.url)), warnings: [] };
+            }],
+            maximumFileSizeToCacheInBytes: 1024 * 1024,
             runtimeCaching: [
               {
                 urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

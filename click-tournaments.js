@@ -1,1 +1,0 @@
-document.querySelectorAll('a').forEach(a => { if(a.textContent.includes('Tournaments') && !a.textContent.includes('Core')) a.click() })
