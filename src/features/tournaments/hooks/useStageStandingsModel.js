@@ -90,7 +90,7 @@ export function useStageStandingsModel({
     },
     [bmps2026StatisticsRowCount, hasBmps2026Statistics, rankings.length, resolvedParticipantEntries, stages, matches, tournamentId, tournamentName]
   );
-  
+
   const defaultStageName = useMemo(() => {
     if (requestedStage && stageOptions.some((stage) => stage.name === requestedStage)) {
       return requestedStage;

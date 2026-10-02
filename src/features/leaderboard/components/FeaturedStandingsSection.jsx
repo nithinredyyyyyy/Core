@@ -49,7 +49,7 @@ export default function FeaturedStandingsSection({
     <m.section
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+      className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(var(--rgb-15-23-42),0.06)]"
     >
       <div className="border-b border-border bg-card p-4 sm:px-5 sm:py-5 md:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -166,7 +166,7 @@ export default function FeaturedStandingsSection({
 
       <div className="-mx-4 overflow-x-auto sm:-mx-5 md:mx-0">
         <div className="flex min-w-[1120px] overflow-hidden md:min-w-0">
-          <div className="shrink-0 border-r border-border bg-card shadow-[10px_0_24px_rgba(15,23,42,0.08)]">
+          <div className="shrink-0 border-r border-border bg-card shadow-[10px_0_24px_rgba(var(--rgb-15-23-42),0.08)]">
             <table className="w-[756px] table-fixed text-sm">
               <colgroup>
                 <col style={{ width: "72px" }} />

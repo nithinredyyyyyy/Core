@@ -118,7 +118,7 @@ export function usePlayerProfileData() {
       }),
     [normalizedParticipants, normalizedStages, normalizedStandings],
   );
-  
+
   const decoratedMatches = useMemo(
     () => decorateMatchesWithLiveStatus(matches, results),
     [matches, results],

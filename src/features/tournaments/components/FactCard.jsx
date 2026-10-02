@@ -10,7 +10,7 @@ import React from 'react';
  */
 export default function FactCard({ label, value, icon, variant = 'default' }) {
   const baseClasses = "rounded-[24px] p-6 transition-all hover:-translate-y-1 hover:shadow-lg flex flex-col justify-between min-h-[140px]";
-  
+
   const variants = {
     default: "bg-white dark:bg-card border border-border shadow-sm text-foreground",
     lime: "bg-brand-lime text-black border-none shadow-md",

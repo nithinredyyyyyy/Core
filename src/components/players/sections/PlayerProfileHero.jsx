@@ -14,7 +14,7 @@ export function PlayerProfileHero({
   teamTag,
 }) {
   return (
-    <div className="overflow-hidden rounded-[30px] border border-border/70 bg-card shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+    <div className="overflow-hidden rounded-[30px] border border-border/70 bg-card shadow-[0_24px_60px_rgba(var(--rgb-15-23-42),0.08)]">
       <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
         <div className="space-y-5">
           <div>
@@ -44,7 +44,7 @@ export function PlayerProfileHero({
 
         <div className="flex items-center justify-center">
           {playerPhoto ? (
-            <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.14),rgba(var(--rgb-255-255-255),0.98)_52%,rgba(var(--rgb-248-243-235),0.98)_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.18),rgba(var(--rgb-27-27-31),0.98)_58%,rgba(var(--rgb-17-24-39),1)_100%)]">
+            <div className="relative flex h-[26rem] w-full max-w-[24rem] items-end justify-center overflow-hidden rounded-[30px] border border-border bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.14),rgba(var(--rgb-255-255-255),0.98)_52%,rgba(var(--rgb-248-243-235),0.98)_100%)] shadow-[0_24px_60px_rgba(var(--rgb-15-23-42),0.08)] dark:bg-[radial-gradient(circle_at_top,rgba(var(--rgb-251-146-60),0.18),rgba(var(--rgb-27-27-31),0.98)_58%,rgba(var(--rgb-17-24-39),1)_100%)]">
               <img
                 src={playerPhoto}
                 alt={displayIgn}

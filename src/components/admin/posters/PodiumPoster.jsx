@@ -151,16 +151,16 @@ export default function PodiumPoster({ standingsRows, tournament, teams, playerT
                     <React.Fragment key={pi}>
                       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                         {photo ? (
-                          <img 
-                            src={photo} 
-                            alt={name} 
-                            style={{ 
-                              width: "100%", 
-                              height: "100%", 
-                              objectFit: "cover", 
-                              objectPosition: "center top", 
-                              filter: `contrast(1.15) brightness(0.95) saturate(0.85) sepia(0.15) hue-rotate(-5deg)` 
-                            }} 
+                          <img
+                            src={photo}
+                            alt={name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              objectPosition: "center top",
+                              filter: `contrast(1.15) brightness(0.95) saturate(0.85) sepia(0.15) hue-rotate(-5deg)`
+                            }}
                           />
                         ) : (
                           <div style={{ width: "100%", height: "100%", background: `linear-gradient(180deg, ${p.color}30, var(--brand-ink-pure))`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 900, color: `${p.color}60` }}>

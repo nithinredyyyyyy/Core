@@ -106,7 +106,7 @@ export function ChampionCard({
           {championLogoOverride ? (
             <img src={championLogoOverride} alt={championTeamName} style={{ width: "52px", height: "52px", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(var(--rgb-0-0-0),0.25))" }} />
           ) : (
-            <TeamIdentity name={championTeamName} compact plain hideText containerClassName="!size-[52px]" logoClassName="!w-[52px] !h-[52px] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]" />
+            <TeamIdentity name={championTeamName} compact plain hideText containerClassName="!size-[52px]" logoClassName="!w-[52px] !h-[52px] object-contain drop-shadow-[0_4px_12px_rgba(var(--rgb-0-0-0),0.25)]" />
           )}
           <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--brand-ink-pure)", letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {championTeamName}

@@ -143,7 +143,7 @@ export default function AdminResults() {
     if (currentIndex === -1) return "";
     return availableMatches[currentIndex + 1]?.id || "";
   };
-  
+
 
   const createResults = useMutation({
     mutationFn: (data) => base44.entities.MatchResult.bulkCreate(data),

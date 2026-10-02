@@ -23,28 +23,49 @@ export default defineConfig({
       ? null
       : VitePWA({
           registerType: "autoUpdate",
-          includeAssets: ["images/core-logo.svg", "pwa-192x192.png", "pwa-512x512.png"],
+          includeAssets: [
+            "images/core-logo.svg",
+            "pwa-192x192.png",
+            "pwa-512x512.png",
+          ],
           workbox: {
             importScripts: ["/sw-cleanup.js"],
             globPatterns: ["index.html", "assets/*.{js,css}", "fonts/*.woff2"],
             navigateFallbackDenylist: [/^\/api\//],
             cleanupOutdatedCaches: true,
-            manifestTransforms: [async (entries) => {
-              const manifest = JSON.parse(readFileSync(path.join(__dirname, "dist/.vite/manifest.json"), "utf8"));
-              const shell = new Set(["index.html", "images/core-logo.svg", "pwa-192x192.png", "pwa-512x512.png"]);
-              const visited = new Set();
-              function include(key) {
-                if (visited.has(key)) return;
-                visited.add(key);
-                const chunk = manifest[key];
-                if (!chunk) return;
-                shell.add(chunk.file);
-                for (const css of chunk.css || []) shell.add(css);
-                for (const dependency of chunk.imports || []) include(dependency);
-              }
-              for (const [key, chunk] of Object.entries(manifest)) if (chunk.isEntry) include(key);
-              return { manifest: entries.filter((entry) => shell.has(entry.url)), warnings: [] };
-            }],
+            manifestTransforms: [
+              async (entries) => {
+                const manifest = JSON.parse(
+                  readFileSync(
+                    path.join(__dirname, "dist/.vite/manifest.json"),
+                    "utf8",
+                  ),
+                );
+                const shell = new Set([
+                  "index.html",
+                  "images/core-logo.svg",
+                  "pwa-192x192.png",
+                  "pwa-512x512.png",
+                ]);
+                const visited = new Set();
+                function include(key) {
+                  if (visited.has(key)) return;
+                  visited.add(key);
+                  const chunk = manifest[key];
+                  if (!chunk) return;
+                  shell.add(chunk.file);
+                  for (const css of chunk.css || []) shell.add(css);
+                  for (const dependency of chunk.imports || [])
+                    include(dependency);
+                }
+                for (const [key, chunk] of Object.entries(manifest))
+                  if (chunk.isEntry) include(key);
+                return {
+                  manifest: entries.filter((entry) => shell.has(entry.url)),
+                  warnings: [],
+                };
+              },
+            ],
             maximumFileSizeToCacheInBytes: 1024 * 1024,
             runtimeCaching: [
               {

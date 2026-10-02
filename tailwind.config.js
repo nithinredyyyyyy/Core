@@ -1,6 +1,14 @@
 import { readFileSync } from "node:fs";
-const tokenCss = readFileSync(new URL("./src/styles/design-tokens.css", import.meta.url), "utf8");
-const brandColors = Object.fromEntries([...tokenCss.matchAll(/--brand-([\w-]+)-rgb:/g)].map(([, name]) => [name, `rgb(var(--brand-${name}-rgb) / <alpha-value>)`]));
+const tokenCss = readFileSync(
+  new URL("./src/styles/design-tokens.css", import.meta.url),
+  "utf8",
+);
+const brandColors = Object.fromEntries(
+  [...tokenCss.matchAll(/--brand-([\w-]+)-rgb:/g)].map(([, name]) => [
+    name,
+    `rgb(var(--brand-${name}-rgb) / <alpha-value>)`,
+  ]),
+);
 
 /** @type {import('tailwindcss').Config} */
 export default {

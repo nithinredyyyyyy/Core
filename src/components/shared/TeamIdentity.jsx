@@ -40,7 +40,7 @@ export default React.memo(function TeamIdentity({
             roundedClass="rounded-md"
             paddingClass="p-1.5"
             surfaceTone={logoSurfaceTone}
-            className={`border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white ${logoBlockClassName}`}
+            className={`border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(var(--rgb-15-23-42),0.06)] dark:border-white/10 dark:bg-white ${logoBlockClassName}`}
           />
         ) : contained ? (
           <LogoBlock
@@ -53,8 +53,8 @@ export default React.memo(function TeamIdentity({
             className={logoBlockClassName}
           />
         ) : glowed ? (
-          <div className="relative flex items-center justify-center rounded-2xl border border-brand-gold-mocha bg-[radial-gradient(circle_at_top,_rgba(255,201,107,0.22),_rgba(44,30,14,0.96)_58%,_rgba(18,12,8,0.98)_100%)] px-4 py-3 shadow-[0_12px_30px_rgba(255,184,77,0.2)]">
-            <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle,_rgba(255,220,160,0.16)_0%,_rgba(255,179,71,0.12)_42%,_rgba(255,179,71,0)_76%)] blur-md" />
+          <div className="relative flex items-center justify-center rounded-2xl border border-brand-gold-mocha bg-[radial-gradient(circle_at_top,_rgba(var(--rgb-255-201-107),0.22),_rgba(var(--rgb-44-30-14),0.96)_58%,_rgba(var(--rgb-18-12-8),0.98)_100%)] px-4 py-3 shadow-[0_12px_30px_rgba(var(--rgb-255-184-77),0.2)]">
+            <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle,_rgba(var(--rgb-255-220-160),0.16)_0%,_rgba(var(--rgb-255-179-71),0.12)_42%,_rgba(var(--rgb-255-179-71),0)_76%)] blur-md" />
             <div className="relative z-10">
               <LogoBlock
                 src={teamLogo}
@@ -63,7 +63,7 @@ export default React.memo(function TeamIdentity({
                 roundedClass="rounded-2xl"
                 paddingClass="p-3"
                 surfaceTone={logoSurfaceTone}
-                className="border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.68),_rgba(2,6,23,0.76))] shadow-[0_8px_22px_rgba(15,23,42,0.14)]"
+                className="border-white/10 bg-[linear-gradient(180deg,_rgba(var(--rgb-15-23-42),0.68),_rgba(var(--rgb-2-6-23),0.76))] shadow-[0_8px_22px_rgba(var(--rgb-15-23-42),0.14)]"
                 imgClassName={logoClassName || championLogoClass}
               />
             </div>

@@ -4,36 +4,42 @@ import "./MagnifyingDock.css";
 import { useRef, useState } from "react";
 import { Bookmark, Folder, House, Search, User } from "lucide-react";
 const DOCK = [
-    { key: "home", label: "Home", Icon: House },
-    { key: "search", label: "Search", Icon: Search },
-    { key: "files", label: "Files", Icon: Folder },
-    { key: "saved", label: "Saved", Icon: Bookmark },
-    { key: "you", label: "You", Icon: User },
+  { key: "home", label: "Home", Icon: House },
+  { key: "search", label: "Search", Icon: Search },
+  { key: "files", label: "Files", Icon: Folder },
+  { key: "saved", label: "Saved", Icon: Bookmark },
+  { key: "you", label: "You", Icon: User },
 ];
 /* ══ dock, distance based magnification ═══════════════════
    Scale falls off with distance from the cursor rather than
    applying only to the hovered item, which is what stops it
    reading as a row of buttons that happen to grow. */
 export function MagnifyingDock({
-    items = DOCK, activeKey, onSelect,
-/* what the glyph under the cursor grows to */
-magnify = 1.32,
-/* how many neighbours either side feel it. This is the knob
+  items = DOCK,
+  activeKey,
+  onSelect,
+  /* what the glyph under the cursor grows to */
+  magnify = 1.32,
+  /* how many neighbours either side feel it. This is the knob
    that decides whether the dock reads as a row of buttons
    that happen to grow or as a sheet being pushed up from
    underneath — at 0 it is the former, and no amount of
    magnification rescues it. */
-spread = 2,
-/* how far the nearest glyph rises out of the bar */
-lift = 8,
-/* the name that appears over whatever is under the cursor */
-labels = true, }) {
-    const [hover, setHover] = useState(null);
-    const [chosen, setChosen] = useState(items[0]?.key);
-    const active = activeKey ?? chosen;
-    const still = useReducedMotion();
-    const setActive = (key) => { setChosen(key); onSelect?.(key); };
-    /* ── THE BAR READS THE POINTER, THE ITEMS DO NOT ─────────
+  spread = 2,
+  /* how far the nearest glyph rises out of the bar */
+  lift = 8,
+  /* the name that appears over whatever is under the cursor */
+  labels = true,
+}) {
+  const [hover, setHover] = useState(null);
+  const [chosen, setChosen] = useState(items[0]?.key);
+  const active = activeKey ?? chosen;
+  const still = useReducedMotion();
+  const setActive = (key) => {
+    setChosen(key);
+    onSelect?.(key);
+  };
+  /* ── THE BAR READS THE POINTER, THE ITEMS DO NOT ─────────
        Each item used to carry its own onMouseEnter, which fails
        on a touch screen twice over. A mouse event is the smaller
        half of it — the real problem is that a touch is captured
@@ -48,47 +54,50 @@ labels = true, }) {
        magnified — the geometry moves as you sweep, which is
        exactly what makes a dock a dock, and an arithmetic guess
        would lag it. */
-    const bar = useRef(null);
-    const down = useRef(false);
-    /* set when a finger has already chosen on lift, so the click
+  const bar = useRef(null);
+  const down = useRef(false);
+  /* set when a finger has already chosen on lift, so the click
        the browser sends afterwards — aimed at whichever item the
        touch STARTED on, which is not the one it ended over — does
        not undo the choice. A mouse never sets it. */
-    const chose = useRef(false);
-    const at = (clientX) => {
-        const items = bar.current?.querySelectorAll(".gdock-item");
-        if (!items?.length)
-            return null;
-        let best = 0;
-        let gap = Infinity;
-        items.forEach((el, i) => {
-            const b = el.getBoundingClientRect();
-            const d = Math.abs(clientX - (b.left + b.width / 2));
-            if (d < gap) {
-                gap = d;
-                best = i;
-            }
-        });
-        return best;
-    };
-    /* Crossing onto a glyph, not hovering one: a sound on hover
+  const chose = useRef(false);
+  const at = (clientX) => {
+    const items = bar.current?.querySelectorAll(".gdock-item");
+    if (!items?.length) return null;
+    let best = 0;
+    let gap = Infinity;
+    items.forEach((el, i) => {
+      const b = el.getBoundingClientRect();
+      const d = Math.abs(clientX - (b.left + b.width / 2));
+      if (d < gap) {
+        gap = d;
+        best = i;
+      }
+    });
+    return best;
+  };
+  /* Crossing onto a glyph, not hovering one: a sound on hover
        fires on every pixel of a sweep. Quiet, floored, and
        pitched by position so running along the dock is a scale. */
-    const to = (i) => {
-        setHover((_was) => {
-            return i;
-        });
-    };
-    const track = (e) => {
-        /* a mouse magnifies on hover, the way it always did; a
+  const to = (i) => {
+    setHover((_was) => {
+      return i;
+    });
+  };
+  const track = (e) => {
+    /* a mouse magnifies on hover, the way it always did; a
            finger has to be down, or the bar would answer a scroll
            passing over it */
-        if (e.pointerType !== "mouse" && !down.current)
-            return;
-        to(at(e.clientX));
-    };
-    return (<div className="bencho-scope bencho-dock" data-surface="glass"><nav className="gdock" aria-label="Primary" ref={bar}
-    /* ── CAPTURE PHASE, and no pointer capture ───────────
+    if (e.pointerType !== "mouse" && !down.current) return;
+    to(at(e.clientX));
+  };
+  return (
+    <div className="bencho-scope bencho-dock" data-surface="glass">
+      <nav
+        className="gdock"
+        aria-label="Primary"
+        ref={bar}
+        /* ── CAPTURE PHASE, and no pointer capture ───────────
        Two different things with confusingly similar names.
 
        The phase is capture because each item stops
@@ -105,9 +114,9 @@ labels = true, }) {
        Capturing on the bar as well would retarget the click
        and take it from the item — breaking the mouse to fix
        the finger. */
-    onPointerDownCapture={(e) => {
-            down.current = true;
-            /* ── disarmed HERE, not by the click ────────────────
+        onPointerDownCapture={(e) => {
+          down.current = true;
+          /* ── disarmed HERE, not by the click ────────────────
                `chose` used to be cleared by the click it was meant
                to swallow, which assumes a click always follows a
                touch. It does not: a finger that lands on one item
@@ -118,61 +127,92 @@ labels = true, }) {
                any touch sweep. Cleared at the start of the next
                gesture instead, which is true whatever the browser
                decided to do with the last one. */
-            chose.current = false;
-            to(at(e.clientX));
-        }} onPointerMoveCapture={track}
-    /* ── and the touch has to CHOOSE something ────────────
+          chose.current = false;
+          to(at(e.clientX));
+        }}
+        onPointerMoveCapture={track}
+        /* ── and the touch has to CHOOSE something ────────────
        With the bar holding the capture the button underneath
        never gets its click, so the lift is where a finger
        picks: whichever item it came to rest over. A mouse is
        untouched by this — it still clicks the button. */
-    onPointerUpCapture={(e) => {
-            if (down.current && e.pointerType !== "mouse") {
-                const i = at(e.clientX);
-                if (i !== null) {
-                    chose.current = true;
-                    if (items[i].key !== active) {
-                        setActive(items[i].key);
-                    }
-                }
+        onPointerUpCapture={(e) => {
+          if (down.current && e.pointerType !== "mouse") {
+            const i = at(e.clientX);
+            if (i !== null) {
+              chose.current = true;
+              if (items[i].key !== active) {
+                setActive(items[i].key);
+              }
             }
-            down.current = false;
-            if (e.pointerType !== "mouse")
-                to(null);
-        }} onPointerCancelCapture={() => { down.current = false; to(null); }} onPointerLeave={() => { if (!down.current)
-        to(null); }}>
-      {items.map(({ key, label, Icon }, i) => {
-            const d = still || hover === null ? 99 : Math.abs(i - hover);
-            /* A raised cosine over the reach, rather than the three
+          }
+          down.current = false;
+          if (e.pointerType !== "mouse") to(null);
+        }}
+        onPointerCancelCapture={() => {
+          down.current = false;
+          to(null);
+        }}
+        onPointerLeave={() => {
+          if (!down.current) to(null);
+        }}
+      >
+        {items.map(({ key, label, Icon }, i) => {
+          const d = still || hover === null ? 99 : Math.abs(i - hover);
+          /* A raised cosine over the reach, rather than the three
                hand-picked steps this used to carry. Those could not
                be made adjustable without also picking every
                intermediate value by hand, and a curve is what the
                effect was always imitating: 1 under the cursor,
                easing to 0 at the edge of the reach, and flat zero
                past it. */
-            const f = d > spread ? 0 : (1 + Math.cos((Math.PI * d) / (spread + 1))) / 2;
-            const scale = 1 + (magnify - 1) * f;
-            return (<button type="button" key={key} className="gdock-item" aria-label={label} aria-haspopup={key === "more" ? "dialog" : undefined} aria-expanded={key === "more" ? active === "more" : undefined} aria-current={active === key ? "page" : undefined} data-near={d <= 1 ? d : undefined} data-active={active === key}
-            /* Crossing onto a glyph, not hovering one: a sound
+          const f =
+            d > spread ? 0 : (1 + Math.cos((Math.PI * d) / (spread + 1))) / 2;
+          const scale = 1 + (magnify - 1) * f;
+          return (
+            <button
+              type="button"
+              key={key}
+              className="gdock-item"
+              aria-label={label}
+              aria-haspopup={key === "more" ? "dialog" : undefined}
+              aria-expanded={key === "more" ? active === "more" : undefined}
+              aria-current={active === key ? "page" : undefined}
+              data-near={d <= 1 ? d : undefined}
+              data-active={active === key}
+              /* Crossing onto a glyph, not hovering one: a sound
                on hover fires on every pixel of a mouse sweep.
                Quiet, floored, and pitched by position so
                running along the dock is a scale. */
-            onClick={() => {
-                    /* the lift already chose — see `chose` */
-                    if (chose.current)
-                        return;
-                    setActive(key);
-                }} onPointerDown={(e) => e.stopPropagation()}>
-            {/* the glyph magnifies, not the button. Scaling the
+              onClick={() => {
+                /* the lift already chose — see `chose` */
+                if (chose.current) return;
+                setActive(key);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {/* the glyph magnifies, not the button. Scaling the
                     whole item dragged the dot and the label along
                     with it — the label ended up 15px further from
                     the bar purely as a side effect of the zoom. */}
-            <span className="gdock-glyph" style={{ transform: `translateY(${-lift * f}px) scale(${scale})` }}>
-              <Icon size={20} strokeWidth={2}/>
-            </span>
-            <span className="gdock-dot" data-on={active === key}/>
-            {labels && (<span className="gdock-tip" data-on={hover === i}>{label}</span>)}
-          </button>);
+              <span
+                className="gdock-glyph"
+                style={{
+                  transform: `translateY(${-lift * f}px) scale(${scale})`,
+                }}
+              >
+                <Icon size={20} strokeWidth={2} />
+              </span>
+              <span className="gdock-dot" data-on={active === key} />
+              {labels && (
+                <span className="gdock-tip" data-on={hover === i}>
+                  {label}
+                </span>
+              )}
+            </button>
+          );
         })}
-    </nav></div>);
+      </nav>
+    </div>
+  );
 }

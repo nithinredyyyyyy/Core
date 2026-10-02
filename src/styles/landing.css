@@ -25,3 +25,31 @@
 .landing-page :is(a, button) { min-height: var(--touch-target); }
 @media (min-width: 768px) { .marquee-hero { padding-block: var(--space-24); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } .marquee-preview { transform: none; } }
+
+.landing-page {
+  color-scheme: light;
+  --background: var(--landing-background);
+  --foreground: var(--landing-foreground);
+  --card: var(--landing-card);
+  --card-foreground: var(--landing-card-foreground);
+  --popover: var(--landing-popover);
+  --popover-foreground: var(--landing-popover-foreground);
+  --primary: var(--landing-primary);
+  --primary-foreground: var(--landing-primary-foreground);
+  --secondary: var(--landing-secondary);
+  --secondary-foreground: var(--landing-secondary-foreground);
+  --muted: var(--landing-muted);
+  --muted-foreground: var(--landing-muted-foreground);
+  --accent: var(--landing-accent);
+  --accent-foreground: var(--landing-accent-foreground);
+  --border: var(--landing-border);
+  --input: var(--landing-input);
+  --ring: var(--landing-ring);
+  --destructive: var(--landing-destructive);
+  --destructive-foreground: var(--landing-destructive-foreground);
+}
+:root .landing-page [data-status-tone="live"], :root .landing-page [data-status-tone="danger"] { color: var(--art-b91c1c); }
+:root .landing-page [data-status-tone="info"] { color: var(--marquee-deep); }
+:root .landing-page [data-status-tone="warning"] { color: var(--brand-amber-deep); }
+
+.landing-page { --glass-surface: var(--landing-glass-surface); }

@@ -18,7 +18,7 @@ export default function LogoBlock({
   if (shouldUseDarkSurface) {
     return (
       <div
-        className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
+        className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(var(--rgb-15-23-42),0.06)] dark:border-white/10 dark:bg-white ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
       >
         {src ? (
           <img
@@ -37,7 +37,7 @@ export default function LogoBlock({
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden border border-slate-200/90 bg-white shadow-[0_4px_12px_rgba(var(--rgb-15-23-42),0.06)] dark:border-white/10 dark:bg-white ${sizeClass} ${roundedClass} ${paddingClass} ${className}`}
     >
       {src ? (
         <img

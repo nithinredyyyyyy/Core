@@ -150,8 +150,8 @@ export function buildTeamMapStats({
           return left.map.localeCompare(right.map);
         });
 
-      
-      
+
+
 
       const totals = maps.reduce(
         (accumulator, mapRow) => {

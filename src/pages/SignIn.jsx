@@ -121,7 +121,7 @@ export default function SignIn() {
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-[1160px] items-center justify-center">
         <div className="w-full max-w-[420px] rounded-[32px] border border-border bg-card px-6 py-7 shadow-2xl backdrop-blur sm:px-7 sm:py-8">
           <div className="flex items-center justify-center">
-            <div className="flex size-14 items-center justify-center rounded-[18px] border border-brand-border-ivory bg-white shadow-[0_12px_24px_rgba(17,19,26,0.05)]">
+            <div className="flex size-14 items-center justify-center rounded-[18px] border border-brand-border-ivory bg-white shadow-[0_12px_24px_rgba(var(--rgb-17-19-26),0.05)]">
               <BrandMark concept="site" className="size-7 object-contain" />
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function SignIn() {
             </p>
           </div>
 
-          <div className="mt-6 rounded-[20px] border border-brand-border-linen bg-brand-cream-sand p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+          <div className="mt-6 rounded-[20px] border border-brand-border-linen bg-brand-cream-sand p-3 shadow-[inset_0_1px_0_rgba(var(--rgb-255-255-255),0.7)]">
             {googleEnabled ? (
               <>
                 <div id="stagecore-google-button" className="min-h-[44px]" />

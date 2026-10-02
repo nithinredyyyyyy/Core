@@ -13,7 +13,7 @@ export function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
         >
           <div
             data-core-logo-target="primary"
-            className="flex size-10 items-center justify-center rounded-full border border-brand-cream-edge-soft bg-white p-1.5 shadow-[0_10px_24px_rgba(17,17,17,0.05)]"
+            className="flex size-10 items-center justify-center rounded-full border border-brand-cream-edge-soft bg-white p-1.5 shadow-[0_10px_24px_rgba(var(--rgb-17-17-17),0.05)]"
           >
             <BrandMark concept="site" className="size-full object-contain" />
           </div>
@@ -48,7 +48,7 @@ export function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
           <button
             type="button"
             onClick={toggle}
-            className="inline-flex size-11 items-center justify-center rounded-full border border-brand-cream-line bg-white text-brand-ink-pure shadow-[0_8px_20px_rgba(17,17,17,0.04)]"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-brand-cream-line bg-white text-brand-ink-pure shadow-[0_8px_20px_rgba(var(--rgb-17-17-17),0.04)]"
             aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
           >
             {theme === "light" ? (
@@ -59,7 +59,7 @@ export function LandingHeader({ theme, toggle, isInstallable, promptInstall }) {
           </button>
           <Link
             to="/app"
-            className="hidden rounded-full border border-brand-cream-line bg-white px-5 py-2.5 text-sm font-semibold text-brand-ink-pure shadow-[0_8px_20px_rgba(17,17,17,0.04)] sm:inline-flex"
+            className="hidden rounded-full border border-brand-cream-line bg-white px-5 py-2.5 text-sm font-semibold text-brand-ink-pure shadow-[0_8px_20px_rgba(var(--rgb-17-17-17),0.04)] sm:inline-flex"
           >
             Open desktop app
           </Link>

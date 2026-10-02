@@ -28,6 +28,7 @@ export default function StatusBadge({
 
   return (
     <span
+      data-status-tone={meta.tone}
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border font-bold uppercase tracking-[0.14em]",
         size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]",

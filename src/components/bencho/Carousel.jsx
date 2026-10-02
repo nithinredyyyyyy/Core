@@ -4,7 +4,13 @@ import EmptyState from "@/components/shared/EmptyState";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import "./tokens.css";
 import "./Carousel.css";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 /* ── inlined from lab/spring ──────────────────────── */
 /* ── one spring, for everything that settles ───────────────
    The maths was already on this bench twice, copied by hand:
@@ -64,57 +70,60 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
    Both ends shippable, which is the constraint that fixed the
    numbers rather than taste. */
 const springOf = (tune) => ({
-    /* stiffness: how hard it is pulled toward the target */
-    k: 0.08 + (tune / 100) * 0.16,
-    /* decay, per frame: how much of the velocity survives */
-    d: 0.62 + (tune / 100) * 0.2,
+  /* stiffness: how hard it is pulled toward the target */
+  k: 0.08 + (tune / 100) * 0.16,
+  /* decay, per frame: how much of the velocity survives */
+  d: 0.62 + (tune / 100) * 0.2,
 });
 /* Units matter. The snap threshold is absolute, so a caller
    works in pixels or in 0..100 — a spring driven over 0..1
    would be "settled" before it had visibly moved. */
 function useSpring(target, tune = 50, instant = false) {
-    const [at, setAt] = useState(target);
-    const cur = useRef(target);
-    const vel = useRef(0);
-    const raf = useRef(0);
-    useEffect(() => {
-        if (instant) {
-            cur.current = target;
-            vel.current = 0;
-            setAt(target);
-            return;
-        }
-        const { k, d } = springOf(tune);
-        let prev = 0;
-        const tick = (t) => {
-            const dt = prev ? clamp((t - prev) / 16.67, 0, 2.5) : 1;
-            prev = t;
-            vel.current += (target - cur.current) * k * dt;
-            vel.current *= Math.pow(d, dt);
-            cur.current += vel.current * dt;
-            if (Math.abs(target - cur.current) < 0.02 && Math.abs(vel.current) < 0.02) {
-                cur.current = target;
-                vel.current = 0;
-                setAt(target);
-                raf.current = 0;
-                return;
-            }
-            setAt(cur.current);
-            raf.current = requestAnimationFrame(tick);
-        };
-        raf.current = requestAnimationFrame(tick);
-        return () => {
-            cancelAnimationFrame(raf.current);
-            raf.current = 0;
-        };
-        /* `tune` sits here beside `target` for the reason
+  const [at, setAt] = useState(target);
+  const cur = useRef(target);
+  const vel = useRef(0);
+  const raf = useRef(0);
+  useEffect(() => {
+    if (instant) {
+      cur.current = target;
+      vel.current = 0;
+      setAt(target);
+      return;
+    }
+    const { k, d } = springOf(tune);
+    let prev = 0;
+    const tick = (t) => {
+      const dt = prev ? clamp((t - prev) / 16.67, 0, 2.5) : 1;
+      prev = t;
+      vel.current += (target - cur.current) * k * dt;
+      vel.current *= Math.pow(d, dt);
+      cur.current += vel.current * dt;
+      if (
+        Math.abs(target - cur.current) < 0.02 &&
+        Math.abs(vel.current) < 0.02
+      ) {
+        cur.current = target;
+        vel.current = 0;
+        setAt(target);
+        raf.current = 0;
+        return;
+      }
+      setAt(cur.current);
+      raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+    };
+    /* `tune` sits here beside `target` for the reason
            Brightness spells out: the loop closes over it, so
            without it a knob turned mid-flight would do nothing
            until something else restarted the effect. Restarting
            picks up from the refs, so it continues rather than
            snapping. */
-    }, [target, tune, instant]);
-    return at;
+  }, [target, tune, instant]);
+  return at;
 }
 /* Read once, the way the wheel and the pill nav do. A
    preference, not a live input. */
@@ -340,58 +349,61 @@ const PERIOD = [4.7, 5.9, 6.7, 5.3, 7.1, 6.1];
    and forward, and the one behind crosses without any of them
    knowing about the others. */
 const spotOf = (i, turn, orbit, depth, N) => {
-    const th = (i - turn) * ((Math.PI * 2) / N);
-    const f = (Math.cos(th) + 1) / 2;
-    return {
-        x: Math.sin(th) * orbit,
-        y: -(1 - f) * LEAN,
-        s: mix(1 - clamp(depth, 0, DEPTH_MAX) / 200, 1, f),
-        /* ── paint order is a z-index, by hand ──────────────
+  const th = (i - turn) * ((Math.PI * 2) / N);
+  const f = (Math.cos(th) + 1) / 2;
+  return {
+    x: Math.sin(th) * orbit,
+    y: -(1 - f) * LEAN,
+    s: mix(1 - clamp(depth, 0, DEPTH_MAX) / 200, 1, f),
+    /* ── paint order is a z-index, by hand ──────────────
            Everything here is 2D — scale and offset, not
            translateZ — so nothing sorts itself and a card would
            otherwise paint in DOM order and sit over the one in
            front of it. `f` already knows which is nearer. */
-        z: Math.round(f * 100),
-    };
+    z: Math.round(f * 100),
+  };
 };
 const write = (el, sp, angle) => {
-    /* NO OPACITY IS WRITTEN HERE. The cards used to fade with
+  /* NO OPACITY IS WRITTEN HERE. The cards used to fade with
        distance, which meant dragging dimmed and lit every one of
        them — the whole block pulsed on a gesture that should
        only move things round. Size, lean and paint order say
        which is in front; none of them touch the picture. */
-    el.style.transform = `translate(-50%, -50%) translate(${sp.x.toFixed(2)}px, ${sp.y.toFixed(2)}px) rotate(${angle}deg) scale(${sp.s.toFixed(4)})`;
-    el.style.zIndex = String(sp.z);
+  el.style.transform = `translate(-50%, -50%) translate(${sp.x.toFixed(2)}px, ${sp.y.toFixed(2)}px) rotate(${angle}deg) scale(${sp.s.toFixed(4)})`;
+  el.style.zIndex = String(sp.z);
 };
 const out = (t) => 1 - (1 - t) ** 4;
 function CarouselRing({
-    shots, displayScale = 1,
-/* how far out to the sides the ring reaches, in px */
-orbit = ORBIT,
-/* how much smaller the back of the ring is, 0..100 */
-depth = DEPTH, corner = CORNER,
-/* how much they drift at rest, 0..100 — 0 is a still ring,
+  shots,
+  displayScale = 1,
+  /* how far out to the sides the ring reaches, in px */
+  orbit = ORBIT,
+  /* how much smaller the back of the ring is, 0..100 */
+  depth = DEPTH,
+  corner = CORNER,
+  /* how much they drift at rest, 0..100 — 0 is a still ring,
    which is a real setting and not a broken one */
-float = FLOAT,
-/* how deep the pointer presses, 0..100 */
-sink = SINK,
-/* how quickly a swipe settles, 0..100 */
-settle = SETTLE,
-/* ── seconds for one whole turn of the ring ──────────────
+  float = FLOAT,
+  /* how deep the pointer presses, 0..100 */
+  sink = SINK,
+  /* how quickly a swipe settles, 0..100 */
+  settle = SETTLE,
+  /* ── seconds for one whole turn of the ring ──────────────
    0 is off, and off is the default: on the bench this ring
    is a thing you push, and one that also drifts round on its
    own would be answering a gesture nobody made. It is here
    for the places the carousel is a PICTURE rather than a
    control — the Pro sheet, today — where it has to carry
    itself because nobody is going to touch it. */
-spin = 0, } = {}) {
-    const N = shots.length;
-    const namedFront = shots.findIndex((shot) => shot.name === FRONT);
-    const OPENS_ON = namedFront < 0 ? Math.floor((N - 1) / 2) : namedFront;
-    const [front, setFront] = useState(OPENS_ON);
-    const still = useReducedMotion();
-    const slots = useRef([]);
-    /* ── where the ring is, and it is a REF ──────────────────
+  spin = 0,
+} = {}) {
+  const N = shots.length;
+  const namedFront = shots.findIndex((shot) => shot.name === FRONT);
+  const OPENS_ON = namedFront < 0 ? Math.floor((N - 1) / 2) : namedFront;
+  const [front, setFront] = useState(OPENS_ON);
+  const still = useReducedMotion();
+  const slots = useRef([]);
+  /* ── where the ring is, and it is a REF ──────────────────
        A continuous position in card-steps: 0 puts the first
        card at the front, 1.5 is halfway between the second and
        third. It changes every frame of a drag, which is exactly
@@ -400,18 +412,26 @@ spin = 0, } = {}) {
 
        It is NOT clamped and NOT wrapped. See the note at the
        top: this is the number a modulo would ruin. */
-    const turn = useRef(OPENS_ON);
-    const raf = useRef(0);
-    const drag = useRef(null);
-    const [held, setHeld] = useState(false);
-    const paint = useCallback(() => {
-        slots.current.forEach((el, i) => el && write(el, spotOf(i, turn.current, orbit, depth, N), ANGLE[i % ANGLE.length]));
-    }, [orbit, depth, N]);
-    /* placed on mount, and again whenever a knob changes the
+  const turn = useRef(OPENS_ON);
+  const raf = useRef(0);
+  const drag = useRef(null);
+  const [held, setHeld] = useState(false);
+  const paint = useCallback(() => {
+    slots.current.forEach(
+      (el, i) =>
+        el &&
+        write(
+          el,
+          spotOf(i, turn.current, orbit, depth, N),
+          ANGLE[i % ANGLE.length],
+        ),
+    );
+  }, [orbit, depth, N]);
+  /* placed on mount, and again whenever a knob changes the
        arithmetic under it */
-    useLayoutEffect(paint, [paint]);
-    useEffect(() => () => cancelAnimationFrame(raf.current), []);
-    /* ── the ring turning itself ─────────────────────────────
+  useLayoutEffect(paint, [paint]);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  /* ── the ring turning itself ─────────────────────────────
        Its own frame loop and its own handle, deliberately not
        `raf` — that one belongs to the settle after a swipe, and
        the two sharing it would mean whichever started last
@@ -425,229 +445,298 @@ spin = 0, } = {}) {
        Held pauses it. Nothing on the Pro sheet can grab it —
        that reel is pointer-events: none — but the pause costs a
        line and means the prop is safe anywhere. */
-    useEffect(() => {
-        if (!spin || still || held)
-            return;
-        let id = 0;
-        let prev = 0;
-        const step = (t) => {
-            /* N cards over `spin` seconds is one whole revolution */
-            if (prev)
-                turn.current += ((t - prev) / 1000) * (N / spin);
-            prev = t;
-            paint();
-            id = requestAnimationFrame(step);
-        };
-        id = requestAnimationFrame(step);
-        return () => cancelAnimationFrame(id);
-    }, [spin, still, held, paint, N]);
-    /* ── the settle ──────────────────────────────────────────
+  useEffect(() => {
+    if (!spin || still || held) return;
+    let id = 0;
+    let prev = 0;
+    const step = (t) => {
+      /* N cards over `spin` seconds is one whole revolution */
+      if (prev) turn.current += ((t - prev) / 1000) * (N / spin);
+      prev = t;
+      paint();
+      id = requestAnimationFrame(step);
+    };
+    id = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(id);
+  }, [spin, still, held, paint, N]);
+  /* ── the settle ──────────────────────────────────────────
        Quart-out from wherever the ring currently is to a whole
        position. It reads its start from the live value rather
        than from where the drag began, so a second swipe during
        one turns the ring further instead of snapping it back. */
-    const glide = (to) => {
-        setFront(((Math.round(to) % N) + N) % N);
-        cancelAnimationFrame(raf.current);
-        const from = turn.current;
-        if (still || from === to) {
-            turn.current = to;
-            paint();
-            return;
-        }
-        const ms = BASE * rate(clamp(settle, 0, 100));
-        const t0 = performance.now();
-        const tick = (now) => {
-            const p = Math.min(1, (now - t0) / ms);
-            turn.current = mix(from, to, out(p));
-            paint();
-            if (p < 1)
-                raf.current = requestAnimationFrame(tick);
-        };
-        raf.current = requestAnimationFrame(tick);
+  const glide = (to) => {
+    setFront(((Math.round(to) % N) + N) % N);
+    cancelAnimationFrame(raf.current);
+    const from = turn.current;
+    if (still || from === to) {
+      turn.current = to;
+      paint();
+      return;
+    }
+    const ms = BASE * rate(clamp(settle, 0, 100));
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / ms);
+      turn.current = mix(from, to, out(p));
+      paint();
+      if (p < 1) raf.current = requestAnimationFrame(tick);
     };
-    const go = (d) => glide(Math.round(turn.current) + d);
-    const down = (e) => {
-        cancelAnimationFrame(raf.current);
-        drag.current = {
-            x0: e.clientX, t0: turn.current, last: e.clientX,
-            t: e.timeStamp, vx: 0, moved: false,
-        };
-        setHeld(true);
-        try {
-            e.currentTarget.setPointerCapture(e.pointerId);
-        }
-        catch { /* not a live pointer */ }
+    raf.current = requestAnimationFrame(tick);
+  };
+  const go = (d) => glide(Math.round(turn.current) + d);
+  const down = (e) => {
+    cancelAnimationFrame(raf.current);
+    drag.current = {
+      x0: e.clientX,
+      t0: turn.current,
+      last: e.clientX,
+      t: e.timeStamp,
+      vx: 0,
+      moved: false,
     };
-    const move = (e) => {
-        const g = drag.current;
-        if (!g)
-            return;
-        const dx = e.clientX - g.x0;
-        if (!g.moved && Math.abs(dx) > 3)
-            g.moved = true;
-        /* px per ms, smoothed against the previous reading so one
+    setHeld(true);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* not a live pointer */
+    }
+  };
+  const move = (e) => {
+    const g = drag.current;
+    if (!g) return;
+    const dx = e.clientX - g.x0;
+    if (!g.moved && Math.abs(dx) > 3) g.moved = true;
+    /* px per ms, smoothed against the previous reading so one
            jittery frame cannot fake a flick — and measured from
            the LAST position rather than from the grab, because the
            speed at release is the only part of a swipe that says
            how far it meant to go */
-        const dt = Math.max(1, e.timeStamp - g.t);
-        g.vx = (g.vx + (e.clientX - g.last) / dt) / 2;
-        g.last = e.clientX;
-        g.t = e.timeStamp;
-        /* ── no rubber band, because there is no end ─────────
+    const dt = Math.max(1, e.timeStamp - g.t);
+    g.vx = (g.vx + (e.clientX - g.last) / dt) / 2;
+    g.last = e.clientX;
+    g.t = e.timeStamp;
+    /* ── no rubber band, because there is no end ─────────
            A row had to give at its first and last card, or it read
            as broken input. A ring has neither, so the drag is a
            plain one-to-one and keeps going as long as you do. */
-        turn.current = g.t0 - dx / PULL;
-        paint();
-    };
-    const up = () => {
-        const g = drag.current;
-        if (!g)
-            return;
-        drag.current = null;
-        setHeld(false);
-        /* where it would come to rest if it kept going, capped so
+    turn.current = g.t0 - dx / PULL;
+    paint();
+  };
+  const up = () => {
+    const g = drag.current;
+    if (!g) return;
+    drag.current = null;
+    setHeld(false);
+    /* where it would come to rest if it kept going, capped so
            a hard flick cannot spin the ring past where you can
            follow it */
-        const carry = clamp((-g.vx * TOSS) / PULL, -MOST, MOST);
-        const to = Math.round(turn.current + carry);
-        glide(to);
-    };
-    const key = (e) => {
-        const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-        if (!d)
-            return;
-        e.preventDefault();
-        go(d);
-    };
-    const r = clamp(corner, 0, 40);
-    return (<><div style={{ height: STAGE_H * displayScale }}><div className="car" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${displayScale})`, transformOrigin: "top left" }}>
-      <div className="car-track" data-held={held} role="group" aria-label="Featured tournaments. Use left and right arrows to browse." aria-roledescription="carousel" tabIndex={0} onKeyDown={key} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-        {shots.map((shot, i) => (<div key={shot.id || shot.name} ref={(el) => { slots.current[i] = el; }} className="car-slot" style={{ width: CARD_W, height: CARD_H }}>
-            {/* ── the drift ─────────────────────────────────
+    const carry = clamp((-g.vx * TOSS) / PULL, -MOST, MOST);
+    const to = Math.round(turn.current + carry);
+    glide(to);
+  };
+  const key = (e) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    go(d);
+  };
+  const r = clamp(corner, 0, 40);
+  return (
+    <>
+      <div style={{ height: STAGE_H * displayScale }}>
+        <div
+          className="car"
+          style={{
+            width: STAGE_W,
+            height: STAGE_H,
+            transform: `scale(${displayScale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <div
+            className="car-track"
+            data-held={held}
+            role="group"
+            aria-label="Featured tournaments. Use left and right arrows to browse."
+            aria-roledescription="carousel"
+            tabIndex={0}
+            onKeyDown={key}
+            onPointerDown={down}
+            onPointerMove={move}
+            onPointerUp={up}
+            onPointerCancel={up}
+          >
+            {shots.map((shot, i) => (
+              <div
+                key={shot.id || shot.name}
+                ref={(el) => {
+                  slots.current[i] = el;
+                }}
+                className="car-slot"
+                style={{ width: CARD_W, height: CARD_H }}
+              >
+                {/* ── the drift ─────────────────────────────────
                 Its own element, so the keyframes own this
                 transform outright and neither the ring nor the
                 tilt ever writes it. The period is per card and
                 the amplitudes are the knob. */}
-            <div className="car-float" style={{
-                /* at Float 0 the keyframes come off rather than
+                <div
+                  className="car-float"
+                  style={{
+                    /* at Float 0 the keyframes come off rather than
                    running at zero amplitude. Identical to look
                    at, and one of them holds a compositor layer
                    per card for a motion the knob has just
                    turned off. */
-                animationName: float <= 0 ? "none" : undefined,
-                animationDuration: `${PERIOD[i % PERIOD.length]}s`,
-                ["--lift"]: `${((clamp(float, 0, 100) / 100) * 16).toFixed(2)}px`,
-                ["--sway"]: `${((clamp(float, 0, 100) / 100) * 1.4).toFixed(2)}deg`,
-            }}>
-              <Card shot={shot.src} name={shot.name} corner={r} sink={sink}
-        /* a card under a finger that is turning the
+                    animationName: float <= 0 ? "none" : undefined,
+                    animationDuration: `${PERIOD[i % PERIOD.length]}s`,
+                    ["--lift"]: `${((clamp(float, 0, 100) / 100) * 16).toFixed(2)}px`,
+                    ["--sway"]: `${((clamp(float, 0, 100) / 100) * 1.4).toFixed(2)}deg`,
+                  }}
+                >
+                  <Card
+                    shot={shot.src}
+                    name={shot.name}
+                    corner={r}
+                    sink={sink}
+                    /* a card under a finger that is turning the
            ring is not being pressed, it is being
            carried — and two gestures fighting for one
            transform is the one way this can look
            broken */
-        off={held || still}/>
-            </div>
-          </div>))}
+                    off={held || still}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
-    </div><div className="car-controls">
-      <Button variant="outline" type="button" onClick={() => go(-1)} aria-label="Previous featured tournament">←</Button>
-      <Link className="car-current" aria-live="polite" to={shots[front].href}>{shots[front].name}</Link>
-      <Button variant="outline" type="button" onClick={() => go(1)} aria-label="Next featured tournament">→</Button>
-    </div></>);
+      <div className="car-controls">
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => go(-1)}
+          aria-label="Previous featured tournament"
+        >
+          ←
+        </Button>
+        <Link className="car-current" aria-live="polite" to={shots[front].href}>
+          {shots[front].name}
+        </Link>
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => go(1)}
+          aria-label="Next featured tournament"
+        >
+          →
+        </Button>
+      </div>
+    </>
+  );
 }
 /* ── one card, and the press is its own ───────────────────
    A component per card rather than a loop, because the tilt is
    a pair of springs and a hook cannot be called n times from
    the parent. It costs nothing at rest: a spring at its target
    runs no loop at all. */
-function Card({ shot, name, corner, sink, off, }) {
-    const skin = useRef(null);
-    const [pt, setPt] = useState({ x: 0, y: 0 });
-    const [on, setOn] = useState(false);
-    const still = useReducedMotion();
-    /* ── the state, and there is only this ───────────────────
+function Card({ shot, name, corner, sink, off }) {
+  const skin = useRef(null);
+  const [pt, setPt] = useState({ x: 0, y: 0 });
+  const [on, setOn] = useState(false);
+  const still = useReducedMotion();
+  /* ── the state, and there is only this ───────────────────
        Where the pointer is, as -1..1 on each axis, sprung. The
        spring is on the POSITION rather than on the rotation, so
        the transform and both gradients are three readings of one
        number instead of three things animating toward the same
        place. */
-    const live = on && !off;
-    const sx = useSpring(live ? pt.x : 0, 50, still);
-    const sy = useSpring(live ? pt.y : 0, 50, still);
-    const lit = useSpring(live ? 1 : 0, 50, still);
-    const deep = clamp(sink, 0, 100) / 100;
-    const max = deep * 13;
-    /* IT SINKS, IT DOES NOT LIFT — the tilt card's rule. The
+  const live = on && !off;
+  const sx = useSpring(live ? pt.x : 0, 50, still);
+  const sy = useSpring(live ? pt.y : 0, 50, still);
+  const lit = useSpring(live ? 1 : 0, 50, still);
+  const deep = clamp(sink, 0, 100) / 100;
+  const max = deep * 13;
+  /* IT SINKS, IT DOES NOT LIFT — the tilt card's rule. The
        point you are over goes AWAY and the far side comes up, so
        the card is being touched rather than displayed. */
-    const rx = -sy * max;
-    const ry = sx * max;
-    /* the pointer in the card's own terms, as a PERCENTAGE. The
+  const rx = -sy * max;
+  const ry = sx * max;
+  /* the pointer in the card's own terms, as a PERCENTAGE. The
        wall, the overlay and the Pro sheet all draw this card at
        their own scale, and a gradient placed in pixels would
        land somewhere else in each of them. */
-    const px = ((sx + 1) / 2) * 100;
-    const py = ((sy + 1) / 2) * 100;
-    const dark = deep * 0.5 * lit;
-    /* the rim is a hint, not a highlight: at the tilt card's own
+  const px = ((sx + 1) / 2) * 100;
+  const py = ((sy + 1) / 2) * 100;
+  const dark = deep * 0.5 * lit;
+  /* the rim is a hint, not a highlight: at the tilt card's own
        0.34 a white wash slides across the photograph and reads
        as a sheen laid ON the picture rather than as the far edge
        of a dented surface catching light */
-    const rim = deep * 0.16 * lit;
-    const track = (e) => {
-        const el = skin.current;
-        if (!el)
-            return;
-        const b = el.getBoundingClientRect();
-        setPt({
-            x: clamp(((e.clientX - b.left) / b.width) * 2 - 1, -1, 1),
-            y: clamp(((e.clientY - b.top) / b.height) * 2 - 1, -1, 1),
-        });
-        setOn(true);
-    };
-    return (<div ref={skin} className="car-card" role="img" aria-label={name} onPointerMove={track}
-    /* `out` with a containment test rather than `leave` — the
+  const rim = deep * 0.16 * lit;
+  const track = (e) => {
+    const el = skin.current;
+    if (!el) return;
+    const b = el.getBoundingClientRect();
+    setPt({
+      x: clamp(((e.clientX - b.left) / b.width) * 2 - 1, -1, 1),
+      y: clamp(((e.clientY - b.top) / b.height) * 2 - 1, -1, 1),
+    });
+    setOn(true);
+  };
+  return (
+    <div
+      ref={skin}
+      className="car-card"
+      role="img"
+      aria-label={name}
+      onPointerMove={track}
+      /* `out` with a containment test rather than `leave` — the
        rehearsal's scripted pointer walks off carrying
        `relatedTarget: null`, which React does not synthesise
        a leave from, and the card would finish the demo still
        sunk under a cursor that had gone. */
-    onPointerOut={(e) => {
-            const el = skin.current;
-            const to = e.relatedTarget;
-            if (!el || !to || !el.contains(to))
-                setOn(false);
-        }} onPointerCancel={() => setOn(false)} style={{
-            borderRadius: corner,
-            backgroundImage: `url(${JSON.stringify(shot)})`,
-            /* translateZ FIRST, so the retreat is measured in the
+      onPointerOut={(e) => {
+        const el = skin.current;
+        const to = e.relatedTarget;
+        if (!el || !to || !el.contains(to)) setOn(false);
+      }}
+      onPointerCancel={() => setOn(false)}
+      style={{
+        borderRadius: corner,
+        backgroundImage: `url(${JSON.stringify(shot)})`,
+        /* translateZ FIRST, so the retreat is measured in the
                room's axes rather than in the card's own — after a
                rotation the card's z points off to one side and
                "back" stops meaning back */
-            transform: `translateZ(${(-10 * deep * lit).toFixed(2)}px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`,
-            /* ── ONE SHADOW, AND IT DOES NOT MOVE ─────────────
+        transform: `translateZ(${(-10 * deep * lit).toFixed(2)}px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`,
+        /* ── ONE SHADOW, AND IT DOES NOT MOVE ─────────────
                It tightened as the card sank, which is the honest
                physics, and on four cards it was four shadows
                resizing as the pointer crossed them — the ring
                flickering rather than one card being touched. The
                dent and the rim say the card went back; the shadow
                only has to say it is off the ground. */
-            boxShadow: "0 12px 28px -10px rgba(var(--shadow-rgb), 0.28)",
-        }}>
+        boxShadow: "0 12px 28px -10px rgba(var(--shadow-rgb), 0.28)",
+      }}
+    >
       {/* the dent, and the rim opposite it. The shadow pools
             where the surface is deepest, which is under the
             pointer, and the light catches the far edge that has
             risen — so the two are placed at mirrored points and
             neither is centred on anything. This layer is what
             makes the transform read as a press. */}
-      <span className="car-sheen" aria-hidden="true" style={{
-            borderRadius: corner,
-            backgroundImage: `radial-gradient(44% 36% at ${px.toFixed(1)}% ${py.toFixed(1)}%, rgba(var(--shadow-rgb), ${dark.toFixed(3)}) 0%, rgba(var(--shadow-rgb), 0) 100%), radial-gradient(54% 44% at ${(100 - px).toFixed(1)}% ${(100 - py).toFixed(1)}%, rgba(var(--white-rgb), ${rim.toFixed(3)}) 0%, rgba(var(--white-rgb), 0) 100%)`,
-        }}/>
-    </div>);
+      <span
+        className="car-sheen"
+        aria-hidden="true"
+        style={{
+          borderRadius: corner,
+          backgroundImage: `radial-gradient(44% 36% at ${px.toFixed(1)}% ${py.toFixed(1)}%, rgba(var(--shadow-rgb), ${dark.toFixed(3)}) 0%, rgba(var(--shadow-rgb), 0) 100%), radial-gradient(54% 44% at ${(100 - px).toFixed(1)}% ${(100 - py).toFixed(1)}%, rgba(var(--white-rgb), ${rim.toFixed(3)}) 0%, rgba(var(--white-rgb), 0) 100%)`,
+        }}
+      />
+    </div>
+  );
 }
 
 /** An empty feed never mounts ring geometry or starts animation frames. */
@@ -663,8 +752,21 @@ export function Carousel({ shots = SHOTS, ...props }) {
     observer.observe(element);
     return () => observer.disconnect();
   }, [shots.length]);
-  if (!shots.length) return <EmptyState title="No featured tournaments" description="Featured events will appear here when available." />;
-  return <div ref={frame} className="bencho-scope bencho-carousel">
-    <CarouselRing key={shots.map((shot) => shot.id || shot.name).join("|")} shots={shots} displayScale={scale} {...props} />
-  </div>;
+  if (!shots.length)
+    return (
+      <EmptyState
+        title="No featured tournaments"
+        description="Featured events will appear here when available."
+      />
+    );
+  return (
+    <div ref={frame} className="bencho-scope bencho-carousel">
+      <CarouselRing
+        key={shots.map((shot) => shot.id || shot.name).join("|")}
+        shots={shots}
+        displayScale={scale}
+        {...props}
+      />
+    </div>
+  );
 }

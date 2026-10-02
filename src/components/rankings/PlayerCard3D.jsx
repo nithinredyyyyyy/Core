@@ -195,7 +195,7 @@ export default function PlayerCard3D({ player, rank }) {
                     <p className="font-['Archivo_Black',sans-serif] text-[13px] font-black uppercase leading-tight text-white drop-shadow-sm">{lastName}</p>
                   </div>
                 </div>
-                <div className="rounded-[7px] border border-white/20 bg-white/[0.08] px-2.5 py-1.5 text-center shadow-[0_0_10px_rgba(255,255,255,0.08)]">
+                <div className="rounded-[7px] border border-white/20 bg-white/[0.08] px-2.5 py-1.5 text-center shadow-[0_0_10px_rgba(var(--rgb-255-255-255),0.08)]">
                   <p className="text-[5px] font-bold uppercase tracking-[1.5px] text-white/50">Rank</p>
                   <p className="font-['Archivo_Black',sans-serif] text-[16px] font-black text-white drop-shadow-sm">#{rank}</p>
                 </div>

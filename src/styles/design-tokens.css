@@ -725,3 +725,44 @@
   --art-d4af3766: #D4AF3766;
   --art-d4af3722: #D4AF3722;
 }
+
+:root {
+  --rgb-255-201-107: 255, 201, 107;
+  --rgb-44-30-14: 44, 30, 14;
+  --rgb-18-12-8: 18, 12, 8;
+  --rgb-255-184-77: 255, 184, 77;
+  --rgb-255-220-160: 255, 220, 160;
+  --rgb-255-179-71: 255, 179, 71;
+  --rgb-2-6-23: 2, 6, 23;
+  --rgb-184-140-40: 184, 140, 40;
+  --rgb-18-15-11: 18, 15, 11;
+  --rgb-10-10-12: 10, 10, 12;
+  --rgb-24-20-15: 24, 20, 15;
+  --rgb-12-11-10: 12, 11, 10;
+  --rgb-17-17-17: 17, 17, 17;
+}
+
+/* The supplied landing reference has a light identity in both app themes. */
+:root {
+  --landing-background: 210 20% 98%;
+  --landing-foreground: 222 47% 11%;
+  --landing-card: 0 0% 100%;
+  --landing-card-foreground: 222 47% 11%;
+  --landing-popover: 0 0% 100%;
+  --landing-popover-foreground: 222 47% 11%;
+  --landing-primary: 24 95% 48%;
+  --landing-primary-foreground: 0 0% 100%;
+  --landing-secondary: 215 20% 94%;
+  --landing-secondary-foreground: 222 47% 11%;
+  --landing-muted: 214 25% 95%;
+  --landing-muted-foreground: 215 16% 42%;
+  --landing-accent: 214 25% 93%;
+  --landing-accent-foreground: 222 47% 11%;
+  --landing-border: 214 24% 88%;
+  --landing-input: 214 24% 88%;
+  --landing-ring: 24 95% 48%;
+  --landing-destructive: 0 72% 48%;
+  --landing-destructive-foreground: 0 0% 100%;
+}
+
+:root { --landing-glass-surface: hsl(var(--landing-card) / 0.88); }

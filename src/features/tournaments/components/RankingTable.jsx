@@ -70,7 +70,7 @@ export default function RankingTable({ ranking }) {
                     framed
                     hideText
                     surfaceToneOverride="light"
-                    logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
+                    logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(var(--rgb-15-23-42),0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
                   />
                   <span>{entry.player}</span>
                 </Link>

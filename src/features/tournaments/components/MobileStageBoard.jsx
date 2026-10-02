@@ -84,7 +84,7 @@ export function MobileStageSelector({ stageOptions, activeStage, dispatchStageBo
 export function MobileStandingsCard({ entry, index, activeStage, currentSelectedGroup, tournamentName, showMovementColumn, isPmwcMovementStage }) {
   const position = showMovementColumn ? index + 1 : entry.placement;
   const podiumTone = getGrandFinalsPlacementTone(activeStage.name, entry.placement);
-  
+
   const movement = showMovementColumn
     ? getGroupMovementRule(tournamentName, activeStage?.name, currentSelectedGroup, index + 1, (showMovementColumn ? index + 1 : 0))
     : null;

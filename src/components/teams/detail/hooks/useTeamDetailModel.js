@@ -72,7 +72,7 @@ export function useTeamDetailModel({ team, participant }) {
     [normalizedParticipants, normalizedStages, normalizedStandings],
   );
 
-  
+
 
   const achievementHistory = useMemo(() => {
     return tournaments
