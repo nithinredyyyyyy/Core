@@ -21,7 +21,7 @@ function getPublisherLogo(game, tournamentName) {
   return PUBLISHER_LOGOS.BGMI;
 }
 
-export default function PodiumPoster({ standingsRows, tournament, tournamentLogo, teams, playerTeamMap = {} }) {
+export default function PodiumPoster({ standingsRows, tournament, teams, playerTeamMap = {} }) {
   const top3 = standingsRows.slice(0, 3);
   const placements = [
     { label: "CHAMPIONS", color: "#D4AF37", slug: "champions" },
@@ -116,11 +116,11 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
 
         return (
           <div key={team.teamId || team.teamName} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-            <div className="poster-podium-item" data-team={team.teamName} data-poster-index={i} style={{ width: "480px", height: "640px", position: "relative", overflow: "hidden", fontFamily: "'Inter', sans-serif", borderRadius: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)" }}>
+            <div className="poster-podium-item" data-team={team.teamName} data-poster-index={i} style={{ width: "480px", height: "640px", position: "relative", overflow: "hidden", fontFamily: "'Inter', sans-serif", borderRadius: "20px", boxShadow: "0 1px 3px rgba(var(--rgb-0-0-0),0.04), 0 12px 40px rgba(var(--rgb-0-0-0),0.08)" }}>
               <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
                 <div style={{
                   position: "absolute", inset: 0,
-                  background: `linear-gradient(180deg, ${p.color} 0%, ${p.color}cc 15%, ${p.color}66 30%, ${p.color}22 45%, #f0ece8 65%, #f2eeeb 85%, #f5f2ef 100%)`,
+                  background: `linear-gradient(180deg, ${p.color} 0%, ${p.color}cc 15%, ${p.color}66 30%, ${p.color}22 45%, var(--art-f0ece8) 65%, var(--art-f2eeeb) 85%, var(--art-f5f2ef) 100%)`,
                 }} />
                 <div style={{
                   position: "absolute", top: "-120px", left: "50%", transform: "translateX(-50%)",
@@ -129,7 +129,7 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
                 }} />
                 <div style={{
                   position: "absolute", inset: 0,
-                  backgroundImage: "linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)",
+                  backgroundImage: "linear-gradient(rgba(var(--rgb-255-255-255),0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--rgb-255-255-255),0.35) 1px, transparent 1px)",
                   backgroundSize: "32px 32px",
                   opacity: 1,
                 }} />
@@ -151,19 +151,19 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
                     <React.Fragment key={pi}>
                       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                         {photo ? (
-                          <img 
-                            src={photo} 
-                            alt={name} 
-                            style={{ 
-                              width: "100%", 
-                              height: "100%", 
-                              objectFit: "cover", 
-                              objectPosition: "center top", 
-                              filter: `contrast(1.15) brightness(0.95) saturate(0.85) sepia(0.15) hue-rotate(-5deg)` 
-                            }} 
+                          <img
+                            src={photo}
+                            alt={name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              objectPosition: "center top",
+                              filter: `contrast(1.15) brightness(0.95) saturate(0.85) sepia(0.15) hue-rotate(-5deg)`
+                            }}
                           />
                         ) : (
-                          <div style={{ width: "100%", height: "100%", background: `linear-gradient(180deg, ${p.color}30, #111)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 900, color: `${p.color}60` }}>
+                          <div style={{ width: "100%", height: "100%", background: `linear-gradient(180deg, ${p.color}30, var(--brand-ink-pure))`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 900, color: `${p.color}60` }}>
                             {name.slice(0, 2).toUpperCase()}
                           </div>
                         )}
@@ -171,16 +171,16 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
                         <div style={{
                           position: "absolute", bottom: 0, left: 0, right: 0, height: "24px",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)",
+                          background: "rgba(var(--rgb-0-0-0),0.85)", backdropFilter: "blur(4px)",
                           fontFamily: "'Inter', sans-serif", fontSize: "8px", fontWeight: 800,
-                          color: "#fff", letterSpacing: "0.15em", textTransform: "uppercase",
+                          color: "var(--brand-white)", letterSpacing: "0.15em", textTransform: "uppercase",
                           zIndex: 10
                         }}>
                           {name}
                         </div>
                       </div>
                       {pi < sliceCount - 1 && (
-                        <div style={{ width: "2px", background: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                        <div style={{ width: "2px", background: "rgba(var(--rgb-255-255-255),0.2)", flexShrink: 0 }} />
                       )}
                     </React.Fragment>
                   );
@@ -190,9 +190,9 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
               {/* ===== Team logo + name ===== */}
               <div style={{ position: "absolute", bottom: "100px", left: 0, right: 0, height: "100px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "6px", zIndex: 3 }}>
                 {teamLogo && (
-                  <img src={teamLogo} alt={team.teamName} style={{ width: "52px", height: "52px", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }} />
+                  <img src={teamLogo} alt={team.teamName} style={{ width: "52px", height: "52px", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(var(--rgb-0-0-0),0.25))" }} />
                 )}
-                <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#111", letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--brand-ink-pure)", letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {team.teamName}
                 </h1>
               </div>
@@ -200,11 +200,11 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
               {/* ===== Placement + tournament info ===== */}
 
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "100px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", zIndex: 3, padding: "0 24px" }}>
-                <h2 style={{ fontSize: p.label.length > 12 ? "36px" : "46px", fontWeight: 900, color: "#111", letterSpacing: "-0.02em", lineHeight: 0.9, textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <h2 style={{ fontSize: p.label.length > 12 ? "36px" : "46px", fontWeight: 900, color: "var(--brand-ink-pure)", letterSpacing: "-0.02em", lineHeight: 0.9, textTransform: "uppercase", textAlign: "center", maxWidth: "420px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {p.label}
                 </h2>
                 <div style={{ marginTop: "6px" }}>
-                  <span style={{ fontSize: "8px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                  <span style={{ fontSize: "8px", fontWeight: 700, color: "var(--brand-slate-400)", letterSpacing: "0.15em", textTransform: "uppercase" }}>
                     {tournament?.name || "Tournament"}
                   </span>
                 </div>
@@ -217,7 +217,7 @@ export default function PodiumPoster({ standingsRows, tournament, tournamentLogo
                 const el = document.querySelector(`.poster-podium-item[data-team="${CSS.escape(team.teamName)}"]`);
                 handleDownloadSingle(el, team.teamName, p.slug);
               }}
-              style={{ padding: "8px 20px", background: p.color, color: "#000", border: "none", borderRadius: "8px", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", letterSpacing: "0.05em" }}
+              style={{ padding: "8px 20px", background: p.color, color: "var(--art-000000)", border: "none", borderRadius: "8px", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", letterSpacing: "0.05em" }}
             >
               <Download size={13} />
               Download {p.label}

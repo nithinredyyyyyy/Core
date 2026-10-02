@@ -27,7 +27,7 @@ export default function PageSkeleton({
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
       ) : null}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: rows }).map((_, index) => (
           <div
             key={index}

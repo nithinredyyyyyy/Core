@@ -199,7 +199,7 @@ export default function AdminPlayerStats() {
               Paste official pipe-table rows here. Saved rows override the built-in stats on the public tournament Statistics tab.
             </p>
           </div>
-          <div className="grid min-w-[260px] grid-cols-2 gap-2 text-center">
+          <div className="grid grid-cols-1 min-w-[260px] grid-cols-2 gap-2 text-center">
             <div className="rounded-xl border border-border bg-secondary/35 p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 Overall rows

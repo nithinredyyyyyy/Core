@@ -5,7 +5,7 @@ import { getSupportDataFromTournament } from "./posterMvpHelpers";
 import { getAwardType } from "@/lib/awardTypes";
 import NftCardPoster from "./NftCardPoster";
 
-export default function SupportCardPoster({ tournament, tournamentLogo, playerTeamMap = {} }) {
+export default function SupportCardPoster({ tournament, playerTeamMap = {} }) {
   const support = getSupportDataFromTournament(tournament, playerTeamMap);
   const p = support?.[0];
   const photo = getPlayerPhotoByIgn(p?.player);

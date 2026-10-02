@@ -83,31 +83,31 @@ export function getRowRankColor(stage, group, index, total) {
   const s = String(stage || "").toLowerCase();
   const g = String(group || "").toUpperCase();
   if (s === "grand finals") {
-    if (index === 0) return "#b45309";
-    if (index === 1) return "#64748b";
-    if (index === 2) return "#c2410c";
-    return "#334155";
+    if (index === 0) return "var(--brand-amber-deep)";
+    if (index === 1) return "var(--art-64748b)";
+    if (index === 2) return "var(--art-c2410c)";
+    return "var(--art-334155)";
   }
   if (s === "round 1" || s === "round 2" || s === "round 3") {
-    if (index < 8) return "#16a34a";
-    if (index >= total - 4) return "#dc2626";
-    return "#64748b";
+    if (index < 8) return "var(--art-16a34a)";
+    if (index >= total - 4) return "var(--art-dc2626)";
+    return "var(--art-64748b)";
   }
   if (s === "round 4") {
-    if (g === "A") return index < 8 ? "#b45309" : "#16a34a";
-    if (g === "B") return index < 8 ? "#16a34a" : "#dc2626";
-    if (g === "D") return index < 8 ? "#16a34a" : "#dc2626";
-    return "#64748b";
+    if (g === "A") return index < 8 ? "var(--brand-amber-deep)" : "var(--art-16a34a)";
+    if (g === "B") return index < 8 ? "var(--art-16a34a)" : "var(--art-dc2626)";
+    if (g === "D") return index < 8 ? "var(--art-16a34a)" : "var(--art-dc2626)";
+    return "var(--art-64748b)";
   }
-  if (s === "survival stage") return index < 8 ? "#16a34a" : "#dc2626";
+  if (s === "survival stage") return index < 8 ? "var(--art-16a34a)" : "var(--art-dc2626)";
   if (s === "semi finals") {
-    if (index < 6) return "#b45309";
-    if (index < 22) return "#16a34a";
-    return "#dc2626";
+    if (index < 6) return "var(--brand-amber-deep)";
+    if (index < 22) return "var(--art-16a34a)";
+    return "var(--art-dc2626)";
   }
-  if (s === "last chance stage") return index < 2 ? "#b45309" : "#dc2626";
-  if (index === 0) return "#f97316";
-  return "#64748b";
+  if (s === "last chance stage") return index < 2 ? "var(--brand-amber-deep)" : "var(--art-dc2626)";
+  if (index === 0) return "var(--brand-orange)";
+  return "var(--art-64748b)";
 }
 
 export function getMedalIcon(index) {

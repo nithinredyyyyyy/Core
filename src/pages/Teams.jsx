@@ -74,7 +74,7 @@ function TeamsHero({ teamCount, rosterCount, matchesPlayed, eventName }) {
 function TeamDirectoryHeader({ search, setSearch }) {
   return (
     <div className="rounded-xl border border-border bg-card p-3 md:p-4">
-      <div className="grid gap-3 md:grid-cols-[1fr_minmax(280px,420px)] md:items-center">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_minmax(280px,420px)] md:items-center">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
             Team directory
@@ -397,7 +397,21 @@ export default function Teams() {
       requestedTeam,
       teamAliasIndex,
     ).key;
-    return teamCards.find((card) => card.key === targetKey) || null;
+    const card = teamCards.find((entry) => entry.key === targetKey);
+    if (card) return card;
+    // Deep links also address historical/international seed teams that are not
+    // entrants in the directory's featured tournament. Do not drop their detail.
+    const team = resolveTeamByAlias(requestedTeam, teamAliasIndex);
+    if (!team) return null;
+    const meta = getOrganizationMetaFromAliases(team, teamAliasIndex);
+    return {
+      ...team,
+      name: meta.name,
+      tag: meta.tag,
+      logoUrl: getTeamCardLogo(meta.name, team.logo_url),
+      representativeIds: [team.id],
+      aliases: team.aliases || [],
+    };
   }, [searchParams, teamAliasIndex, teamCards]);
 
   const selectedParticipant = useMemo(() => {

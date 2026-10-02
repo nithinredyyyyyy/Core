@@ -39,7 +39,7 @@ function NewsCard({ article, tournaments }) {
   return (
     <Link
       to={`/news/${article.id}`}
-      className="group rounded-[24px] border border-brand-border bg-white p-5 shadow-[0_16px_34px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-brand-border-lift-2 dark:border-white/10 dark:bg-card dark:shadow-[0_16px_34px_rgba(0,0,0,0.24)]"
+      className="group rounded-[24px] border border-brand-border bg-white p-5 shadow-[0_16px_34px_rgba(var(--rgb-15-23-42),0.04)] transition hover:-translate-y-0.5 hover:border-brand-border-lift-2 dark:border-white/10 dark:bg-card dark:shadow-[0_16px_34px_rgba(var(--rgb-0-0-0),0.24)]"
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-brand-gold-shell px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-coral-rose">
@@ -104,7 +104,7 @@ function LeadStoryPanel({
   }
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-brand-border bg-card shadow-[0_18px_42px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-card">
+    <div className="overflow-hidden rounded-[28px] border border-brand-border bg-card shadow-[0_18px_42px_rgba(var(--rgb-15-23-42),0.06)] dark:border-white/10 dark:bg-card">
       <div className="p-6 lg:p-7">
         <div className="flex flex-wrap items-center gap-3">
           <p className="type-kicker text-primary">Lead story</p>
@@ -189,7 +189,7 @@ function TransferWatchPanel({ transfers }) {
   const visibleTransfers = transfers.slice(0, 6);
 
   return (
-    <div className="flex flex-col rounded-[28px] border border-brand-border bg-card p-6 shadow-[0_18px_42px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-card">
+    <div className="flex flex-col rounded-[28px] border border-brand-border bg-card p-6 shadow-[0_18px_42px_rgba(var(--rgb-15-23-42),0.06)] dark:border-white/10 dark:bg-card">
       <div className="mb-6">
         <p className="type-kicker text-primary">Transfer watch</p>
         <h2 className="type-display-section mt-2 uppercase text-foreground leading-[1.05]">
@@ -336,7 +336,7 @@ function CoverageFeedPanel({
           />
         ))}
       </div>
-      
+
       {followupStories.length === 0 ? (
         <div className="rounded-[24px] border border-dashed border-border bg-secondary/10 p-8 text-center text-sm text-muted-foreground">
           No stories match the current filters. Try another category or clear the tag search.

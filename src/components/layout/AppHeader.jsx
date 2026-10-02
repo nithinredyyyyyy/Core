@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogIn, LogOut, Moon, Search, Shield, Sun } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { BrandMark } from "@/components/shared/BrandMark";
 import { useAdminAccess } from "@/lib/adminAccess";
@@ -17,35 +19,34 @@ const ICON_BUTTON =
 export default function AppHeader({ onOpenSearch, theme, onToggleTheme }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasAdminAccess } = useAdminAccess();
-  const [session, setSession] = useState(() => base44.auth.getStoredSession());
+  const { hasAdminAccess, authUser } = useAdminAccess();
+  const queryClient = useQueryClient();
+  const [signingOut, setSigningOut] = useState(false);
+  const isSignedIn = Boolean(authUser);
+  const showAdminLink = hasAdminAccess;
 
-  const isSignedIn = Boolean(session?.token);
-  const isAdminSignedIn = isSignedIn && session.user?.role === "admin";
-  const showAdminLink = hasAdminAccess || isAdminSignedIn;
-
-  useEffect(() => {
-    const syncSession = () => setSession(base44.auth.getStoredSession());
-    syncSession();
-    window.addEventListener("focus", syncSession);
-    window.addEventListener("storage", syncSession);
-    return () => {
-      window.removeEventListener("focus", syncSession);
-      window.removeEventListener("storage", syncSession);
-    };
-  }, [location.pathname]);
-
-  function handleSignOut() {
-    base44.auth.logout();
-    setSession({ user: null, token: "" });
-    navigate("/", { replace: true });
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await base44.auth.logout();
+      queryClient.clear();
+      queryClient.setQueryData(["auth-me"], null);
+      navigate("/", { replace: true });
+    } catch {
+      toast({
+        title: "Sign out failed",
+        description: "Please try again. Your session is still active.",
+        variant: "destructive",
+      });
+    } finally {
+      setSigningOut(false);
+    }
   }
 
-  const accountLabel = isAdminSignedIn
-    ? "Admin"
-    : session.user?.full_name?.split(" ")[0] ||
-      session.user?.email?.split("@")[0] ||
-      "Account";
+  const accountLabel =
+    authUser?.full_name?.split(" ")[0] ||
+    authUser?.email?.split("@")[0] ||
+    "Account";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -121,7 +122,7 @@ export default function AppHeader({ onOpenSearch, theme, onToggleTheme }) {
             )}
           </button>
 
-          {showAdminLink ? (
+          {showAdminLink && (
             <Link
               to="/admin"
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-3.5 text-xs font-bold uppercase tracking-[0.12em] text-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -129,11 +130,14 @@ export default function AppHeader({ onOpenSearch, theme, onToggleTheme }) {
               <Shield className="size-4" aria-hidden="true" />
               <span className="hidden sm:inline">Admin</span>
             </Link>
-          ) : isSignedIn ? (
+          )}
+          {isSignedIn ? (
             <button
               type="button"
               onClick={handleSignOut}
-              title={`Signed in as ${session.user?.email || ""}`}
+              disabled={signingOut}
+              aria-label="Sign out"
+              title={`Signed in as ${authUser?.email || ""}`}
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-3.5 text-xs font-bold uppercase tracking-[0.12em] text-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <LogOut className="size-4" aria-hidden="true" />

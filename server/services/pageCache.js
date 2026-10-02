@@ -1,30 +1,18 @@
-const PAGE_CACHE_TTL_MS = 60_000;
-const STALE_CACHE_TTL_MS = 120_000;
-const pagePayloadCache = new Map();
+import { BoundedCache } from "./boundedCache.js";
+
+const pagePayloadCache = new BoundedCache({ maxEntries: 128, ttlMs: 60_000 });
 
 export function clearPagePayloadCache() {
   pagePayloadCache.clear();
 }
 
 export function sendCachedPagePayload(res, cacheKey, buildPayload) {
-  const now = Date.now();
   const cached = pagePayloadCache.get(cacheKey);
+  if (cached !== undefined) return res.json(cached);
 
-  if (cached && now - cached.timestamp < PAGE_CACHE_TTL_MS) {
-    return res.json(cached.payload);
-  }
-
-  if (cached && now - cached.timestamp < STALE_CACHE_TTL_MS) {
-    setImmediate(() => {
-      try {
-        const freshPayload = buildPayload();
-        pagePayloadCache.set(cacheKey, { payload: freshPayload, timestamp: Date.now() });
-      } catch {}
-    });
-    return res.json(cached.payload);
-  }
-
+  // Build synchronously on expiry. A deferred refresh could repopulate a cache
+  // after a write clears it, or queue many refreshes for one expired entry.
   const payload = buildPayload();
-  pagePayloadCache.set(cacheKey, { payload, timestamp: now });
+  pagePayloadCache.set(cacheKey, payload);
   return res.json(payload);
 }

@@ -5,7 +5,7 @@ import { getRookieDataFromTournament } from "./posterMvpHelpers";
 import { getAwardType } from "@/lib/awardTypes";
 import NftCardPoster from "./NftCardPoster";
 
-export default function RookieCardPoster({ tournament, tournamentLogo, playerTeamMap = {} }) {
+export default function RookieCardPoster({ tournament, playerTeamMap = {} }) {
   const rookie = getRookieDataFromTournament(tournament, playerTeamMap);
   const p = rookie?.[0];
   const photo = getPlayerPhotoByIgn(p?.player);

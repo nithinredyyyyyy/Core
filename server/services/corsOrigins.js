@@ -48,6 +48,8 @@ export function corsOriginCallback(allowedOrigins) {
     if (allowedOrigins.has(origin)) {
       return callback(null, true);
     }
-    return callback(new Error(`CORS origin not allowed: ${origin}`));
+    const error = new Error("CORS origin not allowed");
+    error.code = "CORS_ORIGIN_DENIED";
+    return callback(error);
   };
 }

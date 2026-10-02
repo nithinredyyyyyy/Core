@@ -1,3 +1,4 @@
+import { sendRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
 import { getNormalizedTournament } from "../services/tournaments.js";
 
@@ -11,6 +12,6 @@ tournamentsRouter.get("/tournaments/:id/normalized", (req, res) => {
     }
     return res.json(normalized);
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load tournament" });
+    return sendRequestError(req, res, error, 500);
   }
 });

@@ -1,6 +1,6 @@
 import React from "react";
 
-export function AwardIcon({ type, size = 20, color = "#ffffff" }) {
+export function AwardIcon({ type, size = 20, color = "var(--brand-white)" }) {
   const s = size;
   switch (type) {
     case "trophy":
@@ -71,9 +71,9 @@ export function AwardIcon({ type, size = 20, color = "#ffffff" }) {
       return (
         <svg width={s} height={s} viewBox="0 0 24 24" fill={color}>
           <path d="M12 2C6.5 2 2 6.5 2 12c0 3.3 1.6 6.2 4 8v2h4v-1.5c0-.8.7-1.5 1.5-1.5h3c.8 0 1.5.7 1.5 1.5V22h4v-2c2.4-1.8 4-4.7 4-8 0-5.5-4.5-10-10-10z" />
-          <circle cx="8.5" cy="11" r="2" fill="#0a0a0a" />
-          <circle cx="15.5" cy="11" r="2" fill="#0a0a0a" />
-          <rect x="10" y="16" width="4" height="1.5" rx="0.5" fill="#0a0a0a" />
+          <circle cx="8.5" cy="11" r="2" fill="var(--art-0a0a0a)" />
+          <circle cx="15.5" cy="11" r="2" fill="var(--art-0a0a0a)" />
+          <rect x="10" y="16" width="4" height="1.5" rx="0.5" fill="var(--art-0a0a0a)" />
         </svg>
       );
     default:

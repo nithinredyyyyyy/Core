@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -8,10 +8,16 @@ import { randomBytes, createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { z } from "zod";
+import {
+  requestContext,
+  requestErrorHandler,
+} from "./services/requestErrors.js";
 import { backfillImportedNewsMetadata } from "./newsIngest.js";
 import { splitTrimmedValues } from "./services/schemas.js";
-import { buildAllowedOrigins, corsOriginCallback } from "./services/corsOrigins.js";
+import {
+  buildAllowedOrigins,
+  corsOriginCallback,
+} from "./services/corsOrigins.js";
 import { logger } from "./services/logger.js";
 import { seedIfEmpty, ensureLegacyTournaments } from "./services/seed.js";
 import { assertDatabaseUsable } from "./services/dbIntegrity.js";
@@ -59,8 +65,12 @@ const isProduction = process.env.NODE_ENV === "production";
 if (isProduction) {
   try {
     if (existsSync(distDir)) {
-      const assets = existsSync(path.join(distDir, "assets")) ? readdirSync(path.join(distDir, "assets")).length : 0;
-      logger.info(`dist OK: ${readdirSync(distDir).length} entries, ${assets} assets`);
+      const assets = existsSync(path.join(distDir, "assets"))
+        ? readdirSync(path.join(distDir, "assets")).length
+        : 0;
+      logger.info(
+        `dist OK: ${readdirSync(distDir).length} entries, ${assets} assets`,
+      );
     } else {
       logger.error(`dist directory NOT FOUND at ${distDir}`);
     }
@@ -80,29 +90,54 @@ ensureLegacyTournaments();
 repairTournamentDataIntegrity();
 repairPlayerReferences();
 
+// Render terminates TLS and forwards directly to Node in this Docker image.
+// Trust only the immediate hop: use the rightmost X-Forwarded-For address,
+// never an arbitrary caller-supplied prefix. See docs/DEPLOYMENT.md.
 app.set("trust proxy", isProduction ? 1 : false);
+app.use("/api", requestContext);
 
 app.use((req, res, next) => {
   res.locals.cspNonce = randomBytes(16).toString("base64");
   next();
 });
 
-app.use(helmet({
-  contentSecurityPolicy: isProduction ? {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [...SCRIPT_CSP_SOURCES, (req, res) => `'nonce-${res.locals.cspNonce}'`],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://accounts.google.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
-      frameSrc: ["https://accounts.google.com"],
-    },
-  } : false,
-  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: isProduction
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: [
+              ...SCRIPT_CSP_SOURCES,
+              (req, res) => `'nonce-${res.locals.cspNonce}'`,
+            ],
+            styleSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              "https://fonts.googleapis.com",
+              "https://cdn.jsdelivr.net",
+              "https://accounts.google.com",
+            ],
+            fontSrc: [
+              "'self'",
+              "https://fonts.gstatic.com",
+              "https://cdn.jsdelivr.net",
+            ],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            connectSrc: [
+              "'self'",
+              "https://accounts.google.com",
+              "https://oauth2.googleapis.com",
+            ],
+            frameSrc: ["https://accounts.google.com"],
+          },
+        }
+      : false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 const CONFIGURED_CORS_ORIGINS = [
   ...splitTrimmedValues(process.env.FRONTEND_ORIGIN || ""),
@@ -130,8 +165,6 @@ app.use("/api", (req, res, next) => {
     origin: corsOriginCallback(ALLOWED_CORS_ORIGINS),
   })(req, res, next);
 });
-app.use("/api", express.json({ limit: "2mb" }));
-app.use("/api", enforceCsrfProtection);
 
 const searchLimiter = rateLimit({
   windowMs: 60_000,
@@ -188,6 +221,13 @@ app.use("/api/tournaments", publicLimiter);
 app.use("/api/entities", publicLimiter, entityBulkLimiter);
 app.use("/api/pages", publicLimiter);
 
+// Count malformed bodies and rejected CSRF attempts before either middleware.
+app.use("/api", express.json({ limit: "2mb" }));
+app.use("/api", enforceCsrfProtection);
+app.use("/api", (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 app.use("/api", authRouter);
 app.use("/api", homeRouter);
 app.use("/api", newsRouter);
@@ -197,6 +237,7 @@ app.use("/api", tournamentsRouter);
 app.use("/api", adminRouter);
 app.use("/api", entitiesRouter);
 app.use("/api/pages", pagesRouter);
+app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
 
 function renderIndexHtml(nonce) {
   if (!indexHtmlTemplate) return "";
@@ -230,19 +271,7 @@ app.use((req, res, next) => {
   return res.type("html").send(renderIndexHtml(res.locals.cspNonce));
 });
 
-app.use((error, _req, res, _next) => {
-  if (error instanceof z.ZodError) {
-    return res.status(400).json({
-      error: "Invalid payload",
-      issues: error.issues,
-    });
-  }
-  logger.error("Unhandled request error", {
-    error: String(error?.stack || error?.message || error),
-  });
-
-  return res.status(500).json({ error: "Internal server error" });
-});
+app.use(requestErrorHandler);
 
 const httpServer = createServer(app);
 

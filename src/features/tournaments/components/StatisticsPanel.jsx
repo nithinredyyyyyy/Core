@@ -1,7 +1,8 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
-import SortableColumnHeader from "@/components/tournaments/SortableColumnHeader";
+import SortableColumnHeader from "@/features/tournaments/components/SortableColumnHeader";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import { getOrganizationMeta, normalizeOrganizationName } from "@/lib/organizationIdentity";
 import {
@@ -34,9 +35,9 @@ function StatisticsHeader({ title, icon }) {
 function StatisticsTableShell({ minWidth, children }) {
   return (
     <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background/90 shadow-sm">
-      <table className={`w-full ${minWidth} border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary`}>
+      <Table className={`w-full ${minWidth} border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary`}>
         {children}
-      </table>
+      </Table>
     </div>
   );
 }
@@ -51,7 +52,7 @@ function PlayerLinkCell({ teamName, playerName }) {
           compact
           hideText
           logoClassName="size-5 object-contain"
-          logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
+          logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(var(--rgb-15-23-42),0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
         />
         <span className="leading-none">{playerName}</span>
       </Link>
@@ -60,9 +61,6 @@ function PlayerLinkCell({ teamName, playerName }) {
 }
 
 function EliminatorStatistics({
-  categories,
-  currentCategory,
-  onSelectCategory,
   subStages,
   currentSubStage,
   onSelectSubStage,

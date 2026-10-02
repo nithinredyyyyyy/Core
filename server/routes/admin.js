@@ -1,3 +1,4 @@
+import { sendRequestError, logRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
 import { db, entityConfigs } from "../db.js";
 import { getTeamLogoByName } from "../shared/teamLogos.js";
@@ -111,9 +112,7 @@ adminRouter.get("/admin/overview", (req, res) => {
       },
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "Failed to load admin overview data" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -148,9 +147,7 @@ adminRouter.get("/admin/backup-status", (req, res) => {
   try {
     return res.json({ backup: getBackupHealth() });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "Failed to read backup status" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -161,6 +158,8 @@ adminRouter.post("/admin/news/import", async (req, res) => {
 
   try {
     const result = await importNewsFromSources({
+      onError: (error) => logRequestError(req, error),
+      requestId: req.requestId,
       sourceIds: Array.isArray(req.body?.source_ids) ? req.body.source_ids : [],
       limitPerSource: Math.min(Number.isFinite(Number(req.body?.limit_per_source))
         ? Number(req.body.limit_per_source)
@@ -174,9 +173,7 @@ adminRouter.post("/admin/news/import", async (req, res) => {
     });
     return res.status(201).json(result);
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "News import failed" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -188,9 +185,7 @@ adminRouter.post("/admin/news/backfill", (req, res) => {
   try {
     return res.status(200).json(backfillImportedNewsMetadata());
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "News metadata refresh failed" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -208,9 +203,7 @@ adminRouter.post("/admin/bmps-2026-player-stats", (req, res) => {
     );
     return res.json(saved);
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "Failed to update BMPS 2026 stats" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -223,6 +216,6 @@ adminRouter.post("/admin/cache/clear", (req, res) => {
     clearSearchCache();
     return res.json({ success: true, message: "Server page cache cleared." });
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to clear cache" });
+    return sendRequestError(req, res, error, 500);
   }
 });

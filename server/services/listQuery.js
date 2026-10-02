@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { paginationSchema } from "./pagination.js";
 import { db, entityConfigs, normalizeRecord } from "../db.js";
 
 const ORDERABLE_COLUMNS = {
@@ -195,7 +197,7 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
     whereClauses.push(MATCH_RESULT_PUBLIC_FILTER);
   }
 
-  for (const [key, value] of Object.entries(query)) {
+  for (const [key, value] of Object.entries(z.record(z.unknown()).parse(query))) {
     if (!allowedFilterColumns.has(key)) {
       throw new Error("Invalid filter parameter");
     }
@@ -203,20 +205,20 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
     params.push(serializeFilterValue(config, key, value));
   }
 
-  const maxListLimit = entityName === "MatchResult" ? 5000 : 500;
-  const safeLimit = Number.isFinite(Number(options.limit))
-    ? Math.min(Number(options.limit), maxListLimit)
-    : null;
-  const safeSkip = Number.isFinite(Number(options.skip))
-    ? Math.max(Number(options.skip), 0)
-    : 0;
+  const { limit: safeLimit, skip: safeSkip } = paginationSchema({
+    maxLimit: entityName === "MatchResult" ? 5000 : 500,
+  }).parse(options);
+  const { sort_by: sortBy, fields } = z.object({
+    sort_by: z.string().max(64).optional(),
+    fields: z.string().max(2048).optional(),
+  }).parse(options);
 
   let orderBy = "created_date DESC";
-  if (options.sort_by) {
-    orderBy = getAllowedSort(entityName, options.sort_by);
+  if (sortBy) {
+    orderBy = getAllowedSort(entityName, sortBy);
   }
 
-  const requestedFields = String(options.fields || "")
+  const requestedFields = String(fields || "")
     .split(",")
     .map((field) => field.trim())
     .filter(Boolean);
@@ -233,12 +235,8 @@ export function applyListQuery(entityName, config, query = {}, options = {}) {
     sql += ` WHERE ${whereClauses.join(" AND ")}`;
   }
   sql += ` ORDER BY ${orderBy}`;
-  if (safeLimit) {
-    sql += ` LIMIT ${safeLimit}`;
-  }
-  if (safeSkip) {
-    sql += ` OFFSET ${safeSkip}`;
-  }
+  sql += " LIMIT ? OFFSET ?";
+  params.push(safeLimit, safeSkip);
 
   const records = db
     .prepare(sql)

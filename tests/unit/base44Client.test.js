@@ -48,3 +48,29 @@ test("admin player stats save uses the backend POST route", async (t) => {
   assert.equal(calls[0].options.method, "POST");
   assert.equal(calls[0].options.body, JSON.stringify({ players: [] }));
 });
+
+for (const succeeds of [false, true]) {
+  test(`logout ${succeeds ? "clears" : "preserves"} local session after server response`, async (t) => {
+    installBrowserStubs();
+    window.localStorage.setItem(
+      "stagecore_auth_user_email",
+      "member@example.test",
+    );
+    window.localStorage.setItem("stagecore_csrf_token", "synthetic-csrf");
+    globalThis.fetch = async () =>
+      new Response(succeeds ? null : "Request failed", {
+        status: succeeds ? 204 : 503,
+      });
+    t.after(() => {
+      delete globalThis.fetch;
+      delete globalThis.window;
+    });
+    if (succeeds) await base44.auth.logout();
+    else await assert.rejects(base44.auth.logout(), /Request failed/);
+    assert.equal(Boolean(base44.auth.getStoredSession().user), !succeeds);
+    assert.equal(
+      Boolean(window.localStorage.getItem("stagecore_csrf_token")),
+      !succeeds,
+    );
+  });
+}

@@ -1,8 +1,9 @@
+import { BoundedCache } from "./boundedCache.js";
+import { searchQuerySchema } from "./pagination.js";
 import { db, entityConfigs, normalizeRecord } from "../db.js";
 import { normalizeTournamentPayload } from "./tournaments.js";
 
-const searchCache = new Map();
-const SEARCH_CACHE_TTL = 30_000;
+const searchCache = new BoundedCache({ maxEntries: 128, ttlMs: 30_000 });
 
 export function clearSearchCache() {
   searchCache.clear();
@@ -84,20 +85,15 @@ function isShortCodeQuery(query) {
 }
 
 export function getGlobalSearchResults(rawQuery, rawLimit = 10) {
-  const query = String(rawQuery || "")
-    .toLowerCase()
-    .trim();
+  const parsed = searchQuerySchema.parse({ q: rawQuery, limit: rawLimit });
+  const query = parsed.q.toLowerCase();
+  const limit = parsed.limit;
   if (query.length < 2) return [];
 
-  const cacheKey = `${normalizeSearchValue(query)}:${rawLimit}`;
+  const cacheKey = `${query}:${limit}`;
   const cached = searchCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL) {
-    return cached.result;
-  }
+  if (cached !== undefined) return cached;
 
-  const limit = Number.isFinite(Number(rawLimit))
-    ? Math.min(Math.max(Number(rawLimit), 1), 20)
-    : 10;
   const compactQuery = normalizeSearchValue(query);
   const shortCodeQuery = isShortCodeQuery(query);
 
@@ -304,6 +300,6 @@ export function getGlobalSearchResults(rawQuery, rawLimit = 10) {
     .slice(0, limit)
     .map(({ score, ...rest }) => rest);
 
-  searchCache.set(cacheKey, { result: finalResults, timestamp: Date.now() });
+  searchCache.set(cacheKey, finalResults);
   return finalResults;
 }

@@ -6,6 +6,8 @@ import { join } from "node:path";
 // helper, and the DB path is read when server/db/schema.js first loads. Setting
 // it inside startServer() would be too late. Keeps integration fixtures out of
 // the committed server/data/stagecore.sqlite.
+// Synthetic identities only: integration tests must not depend on dashboard env.
+process.env.CORE_ADMIN_EMAILS = "admin@example.com,admin@example.test";
 let tempDir;
 if (!process.env.CORE_DB_PATH) {
   tempDir = mkdtempSync(join(tmpdir(), "stagecore-test-"));

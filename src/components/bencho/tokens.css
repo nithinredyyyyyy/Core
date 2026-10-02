@@ -1,0 +1,80 @@
+.bencho-dock,
+.bencho-carousel {
+  --ink: hsl(var(--foreground));
+  --ink-rgb: var(--ink-rgb-light);
+  --shadow-rgb: var(--shadow-rgb-base);
+  --font-ui: var(--font-family-base);
+}
+.dark .bencho-dock,
+.dark .bencho-carousel {
+  --ink-rgb: var(--white-rgb);
+}
+.bencho-dock {
+  --font-mono: var(--font-mono-family);
+  --g-blur: var(--blur-glass);
+  --g-bright: 100%;
+  --g-edge-far: 0.08;
+  --g-edge-hi: 0.65;
+  --g-edge-lo: 0.16;
+  --g-lift: 0.12;
+  --g-sat: 150%;
+  --g-shadow: var(--shadow-lg);
+  --g-spec: 0.6;
+  --on-ink: hsl(var(--background));
+  --pane: var(--glass-surface);
+  --pane-edge: hsl(var(--border));
+  --try-edge: hsl(var(--ring));
+  display: flex;
+  justify-content: center;
+}
+.bencho-dock .gdock {
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+}
+.bencho-dock .gdock-item {
+  opacity: 0.75;
+}
+.bencho-dock .gdock-item[data-active="true"] {
+  opacity: 1;
+}
+.bencho-carousel {
+  --bg: hsl(var(--background));
+  --lift: 0px;
+  --sway: 0deg;
+  max-width: 476px;
+  width: 100%;
+  margin-inline: auto;
+}
+.car-fit {
+  width: 476px;
+  transform-origin: top left;
+}
+.car-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-2);
+}
+.car-current {
+  max-width: 300px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.car-current:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 4px;
+}
+.bencho-carousel .car-card {
+  background-color: hsl(var(--card));
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: 1px solid hsl(var(--border));
+}
+@media (prefers-reduced-motion: reduce) {
+  .bencho-dock .gdock-glyph {
+    transform: none !important;
+  }
+}

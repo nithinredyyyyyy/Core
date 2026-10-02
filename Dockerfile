@@ -4,7 +4,7 @@ COPY package*.json ./
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/* && npm ci
 COPY . .
-ENV DISABLE_PWA=1
+# Ship the service worker update and legacy api-cache cleanup on Render too.
 ARG VITE_GOOGLE_CLIENT_ID
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 ARG CACHE_BUST=1

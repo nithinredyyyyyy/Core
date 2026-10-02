@@ -1,11 +1,15 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual, createHash } from "node:crypto";
-import { entityConfigs } from "../db.js";
+import { db, entityConfigs } from "../db.js";
 import { splitTrimmedValues } from "./schemas.js";
 import { logger } from "./logger.js";
+import { startupWarnings } from "./startupWarnings.js";
+import { createSessionRevocationStore } from "./sessionRevocations.js";
 
 const ADMIN_WRITE_ENTITIES = new Set(Object.keys(entityConfigs));
 
 const isProduction = process.env.NODE_ENV === "production";
+
+for (const warning of startupWarnings()) logger.warn(warning);
 
 export const AUTH_SESSION_SECRET = String(
   process.env.CORE_AUTH_SESSION_SECRET || "",
@@ -32,7 +36,7 @@ const ADMIN_EMAILS = new Set(
 
 const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
-const revokedTokens = new Set();
+const revocations = createSessionRevocationStore(db);
 
 export const AUTH_COOKIE_NAME = "stagecore_auth_token";
 export const CSRF_COOKIE_NAME = "stagecore_csrf";
@@ -40,17 +44,6 @@ export const CSRF_HEADER_NAME = "x-stagecore-csrf";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-export function revokeToken(tokenHash) {
-  revokedTokens.add(tokenHash);
-  if (revokedTokens.size > 10000) {
-    const first = revokedTokens.values().next().value;
-    revokedTokens.delete(first);
-  }
-}
-
-export function isTokenRevoked(tokenHash) {
-  return revokedTokens.has(tokenHash);
-}
 
 function hashToken(token) {
   return createHash("sha256").update(String(token)).digest("hex");
@@ -128,9 +121,11 @@ export function clearAuthSessionCookies(res) {
 }
 
 export function revokeRequestToken(req) {
-  const token = getSessionToken(req);
-  if (!token) return false;
-  revokeToken(hashToken(token));
+  // Only verified, unexpired sessions can add rows; forged cookies cannot fill
+  // the revocation table. Keep the original expiry instead of extending it.
+  const session = resolveAppAuthSession(req);
+  if (!session) return false;
+  revocations.revoke(hashToken(session.token), session.issuedAt + TOKEN_EXPIRY_MS);
   return true;
 }
 
@@ -199,13 +194,19 @@ function resolveAppAuthSession(req) {
   const rawToken = getSessionToken(req);
   if (!rawToken) return null;
 
+  // Accept exactly the issued wire format. Ignoring extra segments allowed a
+  // revoked token to authenticate under a different hash (token + ".suffix").
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(rawToken)) return null;
   const [encodedPayload, providedSignature] = rawToken.split(".");
-  if (!encodedPayload || !providedSignature) return null;
 
   const expectedSignature = signAuthSessionPayload(encodedPayload);
   if (!constantTimeEqual(providedSignature, expectedSignature)) {
     return null;
   }
+
+  // A storage failure must surface as a server error, not a successful logout
+  // that only clears cookies while leaving a usable session unrevoked.
+  const revoked = revocations.isRevoked(hashToken(rawToken));
 
   try {
     const payload = JSON.parse(decodeTokenSegment(encodedPayload));
@@ -213,11 +214,12 @@ function resolveAppAuthSession(req) {
       return null;
     }
 
-    if (payload.issuedAt && Date.now() - payload.issuedAt > TOKEN_EXPIRY_MS) {
+    if (!Number.isSafeInteger(payload.issuedAt) || payload.issuedAt > Date.now() ||
+        Date.now() - payload.issuedAt >= TOKEN_EXPIRY_MS) {
       return null;
     }
 
-    if (isTokenRevoked(hashToken(rawToken))) {
+    if (revoked) {
       return null;
     }
 
@@ -227,7 +229,9 @@ function resolveAppAuthSession(req) {
         id: String(payload.userId),
         email: String(payload.email || ""),
         full_name: String(payload.fullName || ""),
-        role: String(payload.role || "member"),
+        // Identity is signed; administrative permission comes from the current
+        // deployment allowlist, never from a stale role embedded in a session.
+        role: isConfiguredAdminEmail(payload.email) ? "admin" : "member",
         auth_method: String(payload.authMethod || "custom"),
       },
       issuedAt: payload.issuedAt || null,
@@ -265,7 +269,7 @@ export function requireAdminAccess(req, res) {
     });
     return false;
   }
-  if (!isConfiguredAdminEmail(auth.user?.email) && auth.user?.role !== "admin") {
+  if (auth.user?.role !== "admin") {
     res.status(403).json({
       error: "Admin permission required",
       code: "admin_required",

@@ -3,26 +3,26 @@ import React from "react";
 export default function NewsPoster({ article, tournamentLogo }) {
   if (!article) {
     return (
-      <div style={{ width: "540px", height: "300px", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", borderRadius: "20px", color: "#94a3b8", fontFamily: "'Inter', sans-serif", fontSize: "14px" }}>
+      <div style={{ width: "540px", height: "300px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--brand-sky-snow)", borderRadius: "20px", color: "var(--brand-slate-400)", fontFamily: "'Inter', sans-serif", fontSize: "14px" }}>
         No news article selected.
       </div>
     );
   }
 
   const categoryColors = {
-    tournament: { bg: "#fff7ed", border: "#fed7aa", text: "#ea580c", label: "Tournament" },
-    roster_change: { bg: "#f0fdf4", border: "#bbf7d0", text: "#16a34a", label: "Roster Change" },
-    patch_update: { bg: "#eff6ff", border: "#bfdbfe", text: "#2563eb", label: "Patch Update" },
-    announcement: { bg: "#fdf4ff", border: "#e9d5ff", text: "#9333ea", label: "Announcement" },
-    general: { bg: "#f8fafc", border: "#e2e8f0", text: "#475569", label: "General" },
+    tournament: { bg: "var(--art-fff7ed)", border: "var(--art-fed7aa)", text: "var(--art-ea580c)", label: "Tournament" },
+    roster_change: { bg: "var(--art-f0fdf4)", border: "var(--art-bbf7d0)", text: "var(--art-16a34a)", label: "Roster Change" },
+    patch_update: { bg: "var(--art-eff6ff)", border: "var(--art-bfdbfe)", text: "var(--art-2563eb)", label: "Patch Update" },
+    announcement: { bg: "var(--art-fdf4ff)", border: "var(--art-e9d5ff)", text: "var(--art-9333ea)", label: "Announcement" },
+    general: { bg: "var(--brand-sky-snow)", border: "var(--art-e2e8f0)", text: "var(--art-475569)", label: "General" },
   };
   const cat = categoryColors[article.category] || categoryColors.general;
 
   const priorityAccent = {
-    breaking: "#ef4444",
-    important: "#f97316",
-    routine: "#64748b",
-  }[article.priority] || "#f97316";
+    breaking: "var(--art-ef4444)",
+    important: "var(--brand-orange)",
+    routine: "var(--art-64748b)",
+  }[article.priority] || "var(--brand-orange)";
 
   const formattedDate = article.created_date
     ? new Date(article.created_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
@@ -30,7 +30,7 @@ export default function NewsPoster({ article, tournamentLogo }) {
 
   return (
     <div className="poster-root">
-      <div style={{ width: "540px", background: "#FAFAFA", borderRadius: "20px", overflow: "hidden", position: "relative", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)", fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ width: "540px", background: "var(--art-fafafa)", borderRadius: "20px", overflow: "hidden", position: "relative", boxShadow: "0 1px 3px rgba(var(--rgb-0-0-0),0.04), 0 12px 40px rgba(var(--rgb-0-0-0),0.08)", fontFamily: "'Inter', sans-serif" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
           <div style={{ position: "absolute", inset: "-50%", opacity: 0.05, display: "flex", flexDirection: "column", gap: "4px", transform: "rotate(-8deg)", transformOrigin: "center" }}>
             {Array.from({ length: 60 }).map((_, i) => (
@@ -61,7 +61,7 @@ export default function NewsPoster({ article, tournamentLogo }) {
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
             {article.priority === "breaking" && (
-              <div style={{ background: "#ef4444", color: "#fff", fontSize: "9px", fontWeight: 900, letterSpacing: "0.2em", textTransform: "uppercase", padding: "3px 10px", borderRadius: "6px" }}>
+              <div style={{ background: "var(--art-ef4444)", color: "var(--brand-white)", fontSize: "9px", fontWeight: 900, letterSpacing: "0.2em", textTransform: "uppercase", padding: "3px 10px", borderRadius: "6px" }}>
                 Breaking
               </div>
             )}
@@ -69,36 +69,36 @@ export default function NewsPoster({ article, tournamentLogo }) {
               {cat.label}
             </div>
             {article.game && article.game !== "General" && (
-              <div style={{ background: "#f1f5f9", color: "#475569", fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", padding: "3px 10px", borderRadius: "6px" }}>
+              <div style={{ background: "var(--art-f1f5f9)", color: "var(--art-475569)", fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", padding: "3px 10px", borderRadius: "6px" }}>
                 {article.game}
               </div>
             )}
             <div style={{ flex: 1 }} />
             {formattedDate && (
-              <span style={{ fontSize: "9px", fontWeight: 600, color: "#94a3b8" }}>{formattedDate}</span>
+              <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--brand-slate-400)" }}>{formattedDate}</span>
             )}
           </div>
 
-          <h1 style={{ fontSize: "24px", fontWeight: 900, color: "#0f172a", letterSpacing: "-0.03em", lineHeight: 1.2, marginBottom: "12px" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: 900, color: "var(--brand-ink-slate)", letterSpacing: "-0.03em", lineHeight: 1.2, marginBottom: "12px" }}>
             {article.title}
           </h1>
 
           {article.summary && (
-            <p style={{ fontSize: "13px", fontWeight: 400, color: "#475569", lineHeight: 1.65, marginBottom: "20px", display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            <p style={{ fontSize: "13px", fontWeight: 400, color: "var(--art-475569)", lineHeight: 1.65, marginBottom: "20px", display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {article.summary}
             </p>
           )}
 
-          <div style={{ height: "1px", background: "linear-gradient(90deg, transparent, #e2e8f0, transparent)", marginBottom: "14px" }} />
+          <div style={{ height: "1px", background: "linear-gradient(90deg, transparent, var(--art-e2e8f0), transparent)", marginBottom: "14px" }} />
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
               {article.source_name && (
-                <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#94a3b8" }}>
+                <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--brand-slate-400)" }}>
                   Source: {article.source_name}
                 </div>
               )}
-              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", color: "#64748b", marginTop: "2px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--art-64748b)", marginTop: "2px" }}>
                 CORE ESPORTS
               </div>
             </div>

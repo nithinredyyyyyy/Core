@@ -1,3 +1,4 @@
+import { Table } from "@/components/ui/table";
 import React from "react";
 import { Link } from "react-router-dom";
 import TeamIdentity from "@/components/shared/TeamIdentity";
@@ -19,7 +20,7 @@ export default function RankingTable({ ranking }) {
 
   return (
     <div className="max-h-[70vh] overflow-auto rounded-lg border border-border bg-background/90 shadow-sm">
-      <table className={`w-full border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary ${isSimpleFinishesTable ? "min-w-[420px]" : "min-w-[720px]"}`}>
+      <Table className={`w-full border-separate border-spacing-0 text-sm [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-secondary ${isSimpleFinishesTable ? "min-w-[420px]" : "min-w-[720px]"}`}>
         <thead>
           <tr className="border-b border-border bg-secondary/40 text-[11px] uppercase tracking-wider text-muted-foreground">
             <th className="border-r border-border/60 p-3 text-left">#</th>
@@ -69,7 +70,7 @@ export default function RankingTable({ ranking }) {
                     framed
                     hideText
                     surfaceToneOverride="light"
-                    logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
+                    logoBlockClassName="!border-slate-200/90 !bg-white !shadow-[0_4px_12px_rgba(var(--rgb-15-23-42),0.06)] dark:!border-white/10 dark:!bg-white/[0.07]"
                   />
                   <span>{entry.player}</span>
                 </Link>
@@ -106,7 +107,7 @@ export default function RankingTable({ ranking }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }

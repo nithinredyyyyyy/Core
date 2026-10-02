@@ -150,13 +150,8 @@ export function buildTeamMapStats({
           return left.map.localeCompare(right.map);
         });
 
-      const bestMap = maps[0] || null;
-      const weakestMap =
-        maps.toSorted((left, right) => {
-          if (left.points !== right.points) return left.points - right.points;
-          if (left.wwcd !== right.wwcd) return left.wwcd - right.wwcd;
-          return left.map.localeCompare(right.map);
-        })[0] || null;
+
+
 
       const totals = maps.reduce(
         (accumulator, mapRow) => {

@@ -437,10 +437,12 @@ export async function importNewsFromSources(options = {}) {
         });
       }
     } catch (error) {
+      options.onError?.(error);
       failed.push({
         sourceId: source.id,
         sourceName: source.name,
-        error: error.message || "Import failed",
+        error: "Import failed",
+        requestId: options.requestId,
       });
     }
   }

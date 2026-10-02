@@ -323,7 +323,7 @@ export default function AdminStagePosters() {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[18rem_1fr]">
+        <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[18rem_1fr]">
           <PosterControls
             activeOption={activeOption}
             posterOptions={posterOptions}

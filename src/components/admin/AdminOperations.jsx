@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowRightLeft,
   BarChart3,
@@ -84,6 +84,12 @@ export default function AdminOperations({ onSelectTab }) {
   const [cacheClearing, setCacheClearing] = useState(false);
   const [cacheMsg, setCacheMsg] = useState("");
 
+  useEffect(() => {
+    if (!cacheMsg) return;
+    const timer = setTimeout(() => setCacheMsg(""), 4000);
+    return () => clearTimeout(timer);
+  }, [cacheMsg]);
+
   async function clearCache() {
     setCacheClearing(true);
     setCacheMsg("");
@@ -94,7 +100,6 @@ export default function AdminOperations({ onSelectTab }) {
       setCacheMsg("Failed to clear cache.");
     } finally {
       setCacheClearing(false);
-      setTimeout(() => setCacheMsg(""), 4000);
     }
   }
 
@@ -133,7 +138,7 @@ export default function AdminOperations({ onSelectTab }) {
         </button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="rounded-[24px] border border-border bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <CheckCircle2 className="size-5 text-primary" />
@@ -154,7 +159,7 @@ export default function AdminOperations({ onSelectTab }) {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {CONTROL_AREAS.map((area) => (
             <button
               key={area.tab}

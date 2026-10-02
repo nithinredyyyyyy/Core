@@ -133,3 +133,79 @@ returns the token, the remote URL, or filesystem paths.
 - [ ] backup succeeds
 - [ ] backup contains expected snapshot
 - [ ] restore drill tested separately
+
+## Client IP and session revocation assertions
+
+The committed Render Docker path is **Render ingress → Node/Express**:
+`render.yaml` selects `Dockerfile`, whose runtime executes `run.sh` → `npm start`.
+It does not install or start the optional `deploy.nginx.conf`. Production uses
+`trust proxy = 1`; development trusts no proxy. Express therefore takes the
+rightmost `X-Forwarded-For` address (one hop from Node) for `req.ip`, which is the
+rate limiter's default key source. It does not trust a caller-supplied leftmost
+prefix. The test in `tests/unit/trustProxy.test.js` asserts that two clients get
+separate rate-limit buckets and changing a spoofed prefix cannot reset a bucket.
+
+This is correct **provided Render ingress appends/overwrites the actual client
+address as the rightmost forwarded address and Node is reachable only through
+that ingress**. This task cannot remotely inspect the deployed service's headers.
+Verify that assertion when deploying, and re-evaluate the trust boundary if adding
+NGINX, another CDN, or a directly reachable application port; never replace it with
+`trust proxy = true` to hide a rate-limit warning.
+
+References: [Render web-service TLS forwarding](https://render.com/docs/web-services#port-binding)
+and [Express proxy trust semantics](https://expressjs.com/en/guide/behind-proxies.html).
+
+Migration `010_session_revocations.sql` adds a table and expiry index only; it does
+not update existing application records. Revocation stores only the SHA-256 token
+digest and original expiry, survives process restarts on the configured persistent
+disk, and prunes expired rows on initialization and at most once a minute during
+requests. No active revocation is evicted due to an entry-count limit. A backup
+restore can roll back revocations along with the DB: rotate the session secret
+after restoring an older backup. Previously in-memory revocations cannot be
+recovered by this migration; the planned rollout secret rotation remains necessary.
+
+### Removing administrator access
+
+After updating CORE_ADMIN_EMAILS and restarting the deployment, each authenticated
+request derives its role from the current allowlist. A previously issued signed
+admin role cannot preserve access after removal. The session remains a member
+session until logout, expiry or session-secret rotation.
+
+## Rollout configuration contract
+
+`CORE_ADMIN_EMAILS` is parsed once when `server/services/auth.js` loads, via
+`splitTrimmedValues`: split on commas, trim whitespace, discard empty entries,
+then lowercase. It is **not** a JSON array or a newline-separated list. Matching
+also trims and lowercases the signed Google email. Restart every application
+process after changing the variable. A verified Google identity outside the set
+can sign in as a member; `/api/auth/me` returns that role, the admin UI stays
+locked, admin endpoints reject with 403, and entity writes reject with 403.
+Anonymous admin requests return 401. There is no organizer exception.
+
+Startup warnings name configuration variables, never their values. An empty
+allowlist, a missing or UTF-8 secret shorter than 32 bytes, and each unset or
+wildcard-containing origin variable in production produce warnings. Missing
+production session secrets still fail startup. A short supplied secret warns but
+does not abort; treat that warning as a release blocker. Either origin variable
+can supply the exact allowlist; an unset alternate warns so operators explicitly
+verify their chosen topology. No wildcard is expanded by the CORS implementation.
+
+### Supported proxy boundaries
+
+| Topology | Express trust | Constraint |
+|---|---|---|
+| Current `render.yaml` → Docker `run.sh` → Node | `1` in production | Only Render ingress can reach Node; ingress must append/overwrite the actual peer as rightmost XFF. |
+| Direct Node, no reverse proxy | `false` | Production default `1` is unsuitable; change configuration/code before using this topology. |
+| Public NGINX (`deploy.nginx.conf`) → private Node | `1` | NGINX appends `$remote_addr` via `$proxy_add_x_forwarded_for`; firewall Node against direct access. |
+| Render ingress → NGINX → Node | Requires an explicit trusted proxy chain; fixed `2` only if every path has exactly two trusted hops | Current `1` sees Render ingress, grouping users. Prefer trusted address ranges/NGINX real-IP normalization and prove no shorter path; this topology is not configured by Docker. |
+| Vercel static SPA → browser fetch to Render API | Render API remains `1` | `vercel.json` only rewrites non-API paths to `/`; it does not proxy API traffic. Configure the frontend API URL, CORS and cross-site cookies. |
+| Vercel API proxy → Render → Node | Not configured; reassess the chain before adoption | Do not assume Vercel rewrite rules or a hop count from a static frontend. |
+
+These are repository configuration assertions, not an inspection of the live
+Render dashboard. `tests/unit/trustProxy.test.js` covers both explicit forwarded
+chains and an actual HTTP ingress appending its socket peer. A changing spoofed
+XFF prefix receives 429 from the same bucket. It cannot prove an external ingress
+configuration or firewall: verify those during staging. Never expose a direct Node
+port with the production single-hop setting.
+
+See [ROLLOUT.md](ROLLOUT.md) for the ordered deployment and database rollback drill.

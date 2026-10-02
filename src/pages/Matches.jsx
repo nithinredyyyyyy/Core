@@ -1,3 +1,4 @@
+import PageShell from "@/components/shared/PageShell";
 import React, { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Swords } from "lucide-react";
@@ -52,7 +53,7 @@ function sortBySchedule(matches, direction) {
 export default function Matches() {
   const { matchViewModels, tournaments, isLoading, isError, refetch } = useMatches();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [group, setGroup] = useState(searchParams.get("view") || "live");
+  const [group, setGroup] = useState(GROUP_TABS.some((tab) => tab.value === searchParams.get("view")) ? searchParams.get("view") : "live");
   const [period, setPeriod] = useState(searchParams.get("period") || "all");
   const [tournamentId, setTournamentId] = useState(searchParams.get("tournament") || "all");
 
@@ -133,7 +134,7 @@ export default function Matches() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <PageHeader
         kicker="Match center"
         title="Matches"
@@ -218,6 +219,6 @@ export default function Matches() {
           </div>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }

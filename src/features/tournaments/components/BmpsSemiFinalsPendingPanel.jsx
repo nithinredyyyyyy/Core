@@ -42,7 +42,7 @@ export default function BmpsSemiFinalsPendingPanel({ stageParticipants, matches,
               Until the first lobby is scored, this view keeps the projected 24-team field and opening matchday schedule visible beside the Groups draw.
             </p>
           </div>
-          <div className="grid min-w-[260px] grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-1 min-w-[260px] grid-cols-3 gap-2 text-center">
             <div className="rounded-lg border border-border bg-background/80 p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Teams</p>
               <p className="mt-1 text-lg font-semibold text-foreground">{stageParticipants.length || 24}</p>
@@ -59,7 +59,7 @@ export default function BmpsSemiFinalsPendingPanel({ stageParticipants, matches,
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <div className="rounded-xl border border-border bg-background/90 p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -76,7 +76,7 @@ export default function BmpsSemiFinalsPendingPanel({ stageParticipants, matches,
               Day 1
             </div>
           </div>
-          <div className="mt-4 grid gap-2">
+          <div className="mt-4 grid grid-cols-1 gap-2">
             {dayOneMatches.slice(0, 6).map((match) => (
               <div
                 key={match.id}
@@ -115,7 +115,7 @@ export default function BmpsSemiFinalsPendingPanel({ stageParticipants, matches,
               </p>
             </div>
           </div>
-          <div className="mt-4 grid max-h-[420px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 max-h-[420px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
             {stageParticipants.map((entry, index) => (
               <Link
                 key={`semi-pending-${entry.team}`}

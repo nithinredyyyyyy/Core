@@ -218,7 +218,7 @@ describe("run.sh restore gate", () => {
     assert.match(result.stdout, /Backups disabled/);
   });
 
-  test("restore requested but no backup configured: bootstraps, does not fail", async () => {
+  test("restore requested but no backup configured: fails without seeding", async () => {
     const dbPath = newDbPath();
 
     const result = await runRunSh({
@@ -231,11 +231,9 @@ describe("run.sh restore gate", () => {
       },
     });
 
-    assert.equal(result.code, 0);
-    assert.match(
-      result.stderr,
-      /no backup to restore from. Bootstrapping from canonical seed/,
-    );
+    assert.notEqual(result.code, 0);
+    assert.match(result.stderr, /FATAL: explicit GitHub restore requires/);
+    assert.equal(fs.existsSync(dbPath), false, "no seed or restore occurred");
   });
 
   test("the backup token never appears in run.sh output", async () => {

@@ -132,7 +132,10 @@ function persistAuthSession(session) {
   try {
     window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
     window.localStorage.setItem(AUTH_USER_ID_KEY, session?.user?.id || "");
-    window.localStorage.setItem(AUTH_USER_EMAIL_KEY, session?.user?.email || "");
+    window.localStorage.setItem(
+      AUTH_USER_EMAIL_KEY,
+      session?.user?.email || "",
+    );
     window.localStorage.setItem(
       AUTH_USER_NAME_KEY,
       session?.user?.full_name || "",
@@ -341,6 +344,9 @@ export const base44 = {
     teams() {
       return request("/api/pages/teams");
     },
+    playerDetail() {
+      return request("/api/pages/player-detail");
+    },
     teamDetail() {
       return request("/api/pages/team-detail");
     },
@@ -443,11 +449,8 @@ export const base44 = {
       return persistAuthSession(session);
     },
     async logout() {
-      try {
-        await request("/api/auth/logout", { method: "POST" });
-      } catch {
-        // Even if the revoke call fails, clear local state.
-      }
+      // Do not report success until the HttpOnly session has been revoked.
+      await request("/api/auth/logout", { method: "POST" });
       return clearStoredAuthSession();
     },
   },

@@ -11,6 +11,21 @@ describe("API integration tests", () => {
     await stopServer();
   });
 
+  test("public player payload supplies bounded display data while raw identity entities stay protected", async () => {
+    const response = await fetch(`${getBaseUrl()}/api/pages/player-detail`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.ok(payload.players.length > 0 && payload.players.length <= 800);
+    assert.ok(payload.playerAliases.length > 0 && payload.playerAliases.length <= 3000);
+    assert.ok(payload.playerTeamHistory.length > 0 && payload.playerTeamHistory.length <= 4000);
+    for (const row of payload.playerAliases) assert.deepEqual(Object.keys(row).sort(), ["alias", "normalized_alias", "player_id"]);
+    for (const row of payload.playerTeamHistory) assert.ok(!("source" in row) && !("created_by" in row));
+    for (const entity of ["PlayerAlias", "PlayerTeamHistory", "TeamAlias", "TournamentStage", "TournamentParticipant", "StageStanding"]) {
+      const raw = await fetch(`${getBaseUrl()}/api/entities/${entity}`);
+      assert.equal(raw.status, 403, entity);
+    }
+  });
+
   describe("GET /api/health", () => {
     test("returns 200 with status information", async () => {
       const res = await fetch(`${getBaseUrl()}/api/health`);

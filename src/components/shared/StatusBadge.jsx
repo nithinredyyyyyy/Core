@@ -3,7 +3,7 @@ import { getStatusLabel, getStatusMeta } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 const TONE_CLASSES = {
-  live: "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400",
+  live: "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400",
   info: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
   neutral: "border-border bg-muted text-muted-foreground",
   danger:
@@ -28,6 +28,7 @@ export default function StatusBadge({
 
   return (
     <span
+      data-status-tone={meta.tone}
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border font-bold uppercase tracking-[0.14em]",
         size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]",

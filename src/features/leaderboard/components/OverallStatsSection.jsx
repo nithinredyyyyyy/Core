@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { m } from "framer-motion";
 import {
   LeaderboardTeamLink,
   MapAverageCell,
@@ -60,7 +60,7 @@ export default function OverallStatsSection({ featuredTournament, teamMapStats, 
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.06 }}
-      className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+      className="overflow-hidden rounded-[32px] border border-border bg-card shadow-[0_18px_40px_rgba(var(--rgb-15-23-42),0.06)]"
     >
       <div className="border-b border-border p-4 sm:px-5 sm:py-5 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">

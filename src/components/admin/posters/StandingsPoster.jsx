@@ -1,6 +1,6 @@
 import React from "react";
 import { getTeamLogoByName } from "@/lib/teamLogos";
-import { getMedalIcon } from "./posterStandingsHelpers";
+
 
 const STARS = [
   { top: "250px", left: "26px", size: "24px" },
@@ -11,13 +11,7 @@ const STARS = [
   { top: "715px", right: "50px", size: "24px" },
 ];
 
-const IG_SOCIAL = [
-  { label: "Instagram", handle: "/coreesports", color: "#E1306C", iconChar: "◎" },
-  { label: "X", handle: "/coreesports", color: "#000000", iconChar: "𝕏" },
-  { label: "Facebook", handle: "/coreesports", color: "#1877F2", iconChar: "f" },
-  { label: "Thread", handle: "/coreesports", color: "#000000", iconChar: "↻" },
-  { label: "Website", handle: "www.coreesports.com", color: "#6B7280", iconChar: "🌐" },
-];
+
 
 function TeamRow({ row, index, isIg }) {
   const logo = getTeamLogoByName(row.logoName || row.teamName);
@@ -59,7 +53,7 @@ function TeamRow({ row, index, isIg }) {
   );
 }
 
-export default function StandingsPoster({ activeOption, standingsRows, tournament, tournamentLogo, posterFormat, slide = 0 }) {
+export default function StandingsPoster({ activeOption, standingsRows, tournament, posterFormat, slide = 0 }) {
   const isGrandFinals = String(activeOption?.stage || "").toLowerCase() === "grand finals";
   const isBgms = /bgms|masters\s*series/i.test(tournament?.name);
   const seriesLabel = isBgms ? "BGMI MASTERS SERIES" : tournament?.name || "TOURNAMENT";
@@ -182,9 +176,9 @@ export default function StandingsPoster({ activeOption, standingsRows, tournamen
           <div className="poster-standings-v2-brand-row">
             <div className="poster-standings-v2-brand-mark">
               <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#f2efe6"/>
-                <path d="M2 17L12 22L22 17" stroke="#f2efe6" strokeWidth="2"/>
-                <path d="M2 12L12 17L22 12" stroke="#f2efe6" strokeWidth="2"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="var(--art-f2efe6)"/>
+                <path d="M2 17L12 22L22 17" stroke="var(--art-f2efe6)" strokeWidth="2"/>
+                <path d="M2 12L12 17L22 12" stroke="var(--art-f2efe6)" strokeWidth="2"/>
               </svg>
             </div>
             <span className="poster-standings-v2-brand-name">CORE ESPORTS</span>

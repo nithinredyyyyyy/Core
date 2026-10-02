@@ -1,7 +1,9 @@
+// @ts-check
 // Guards against open-redirect (CWE-601) when a redirect target comes from a
 // URL query param, search result, or any other untrusted source. Browsers
 // treat a leading backslash as a forward slash, so "/\evil.com" resolves to a
 // different origin even though it passes a naive "starts with /" check.
+/** @param {unknown} rawPath @param {string} [fallback] @returns {string} */
 export function safeInternalPath(rawPath, fallback = "/") {
   const value = String(rawPath ?? "").trim();
   if (!value) return fallback;
