@@ -50,8 +50,8 @@ maybe_restore_from_backup() {
   fi
 
   if [ -z "$GITHUB_BACKUP_TOKEN" ] || [ -z "$GITHUB_BACKUP_REPO" ]; then
-    echo "[Run.sh] CORE_ALLOW_GITHUB_RESTORE is enabled but GITHUB_BACKUP_TOKEN/GITHUB_BACKUP_REPO are not configured; no backup to restore from. Bootstrapping from canonical seed instead." >&2
-    return 0
+    echo "[Run.sh] FATAL: explicit GitHub restore requires GITHUB_BACKUP_TOKEN and GITHUB_BACKUP_REPO. Refusing to bootstrap seed data during recovery." >&2
+    exit 1
   fi
 
   echo "[Run.sh] Explicit GitHub restore requested for an empty database. Attempting recovery..."
