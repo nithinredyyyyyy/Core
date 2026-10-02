@@ -133,3 +133,33 @@ returns the token, the remote URL, or filesystem paths.
 - [ ] backup succeeds
 - [ ] backup contains expected snapshot
 - [ ] restore drill tested separately
+
+## Client IP and session revocation assertions
+
+The committed Render Docker path is **Render ingress → Node/Express**:
+`render.yaml` selects `Dockerfile`, whose runtime executes `run.sh` → `npm start`.
+It does not install or start the optional `deploy.nginx.conf`. Production uses
+`trust proxy = 1`; development trusts no proxy. Express therefore takes the
+rightmost `X-Forwarded-For` address (one hop from Node) for `req.ip`, which is the
+rate limiter's default key source. It does not trust a caller-supplied leftmost
+prefix. The test in `tests/unit/trustProxy.test.js` asserts that two clients get
+separate rate-limit buckets and changing a spoofed prefix cannot reset a bucket.
+
+This is correct **provided Render ingress appends/overwrites the actual client
+address as the rightmost forwarded address and Node is reachable only through
+that ingress**. This task cannot remotely inspect the deployed service's headers.
+Verify that assertion when deploying, and re-evaluate the trust boundary if adding
+NGINX, another CDN, or a directly reachable application port; never replace it with
+`trust proxy = true` to hide a rate-limit warning.
+
+References: [Render web-service TLS forwarding](https://render.com/docs/web-services#port-binding)
+and [Express proxy trust semantics](https://expressjs.com/en/guide/behind-proxies.html).
+
+Migration `010_session_revocations.sql` adds a table and expiry index only; it does
+not update existing application records. Revocation stores only the SHA-256 token
+digest and original expiry, survives process restarts on the configured persistent
+disk, and prunes expired rows on initialization and at most once a minute during
+requests. No active revocation is evicted due to an entry-count limit. A backup
+restore can roll back revocations along with the DB: rotate the session secret
+after restoring an older backup. Previously in-memory revocations cannot be
+recovered by this migration; the planned rollout secret rotation remains necessary.

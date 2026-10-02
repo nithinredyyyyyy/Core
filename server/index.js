@@ -80,6 +80,9 @@ ensureLegacyTournaments();
 repairTournamentDataIntegrity();
 repairPlayerReferences();
 
+// Render terminates TLS and forwards directly to Node in this Docker image.
+// Trust only the immediate hop: use the rightmost X-Forwarded-For address,
+// never an arbitrary caller-supplied prefix. See docs/DEPLOYMENT.md.
 app.set("trust proxy", isProduction ? 1 : false);
 app.use("/api", requestContext);
 

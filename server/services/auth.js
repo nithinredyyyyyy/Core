@@ -1,7 +1,8 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual, createHash } from "node:crypto";
-import { entityConfigs } from "../db.js";
+import { db, entityConfigs } from "../db.js";
 import { splitTrimmedValues } from "./schemas.js";
 import { logger } from "./logger.js";
+import { createSessionRevocationStore } from "./sessionRevocations.js";
 
 const ADMIN_WRITE_ENTITIES = new Set(Object.keys(entityConfigs));
 
@@ -32,7 +33,7 @@ const ADMIN_EMAILS = new Set(
 
 const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
-const revokedTokens = new Set();
+const revocations = createSessionRevocationStore(db);
 
 export const AUTH_COOKIE_NAME = "stagecore_auth_token";
 export const CSRF_COOKIE_NAME = "stagecore_csrf";
@@ -40,17 +41,6 @@ export const CSRF_HEADER_NAME = "x-stagecore-csrf";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-export function revokeToken(tokenHash) {
-  revokedTokens.add(tokenHash);
-  if (revokedTokens.size > 10000) {
-    const first = revokedTokens.values().next().value;
-    revokedTokens.delete(first);
-  }
-}
-
-export function isTokenRevoked(tokenHash) {
-  return revokedTokens.has(tokenHash);
-}
 
 function hashToken(token) {
   return createHash("sha256").update(String(token)).digest("hex");
@@ -128,9 +118,11 @@ export function clearAuthSessionCookies(res) {
 }
 
 export function revokeRequestToken(req) {
-  const token = getSessionToken(req);
-  if (!token) return false;
-  revokeToken(hashToken(token));
+  // Only verified, unexpired sessions can add rows; forged cookies cannot fill
+  // the revocation table. Keep the original expiry instead of extending it.
+  const session = resolveAppAuthSession(req);
+  if (!session) return false;
+  revocations.revoke(hashToken(session.token), session.issuedAt + TOKEN_EXPIRY_MS);
   return true;
 }
 
@@ -209,6 +201,10 @@ function resolveAppAuthSession(req) {
     return null;
   }
 
+  // A storage failure must surface as a server error, not a successful logout
+  // that only clears cookies while leaving a usable session unrevoked.
+  const revoked = revocations.isRevoked(hashToken(rawToken));
+
   try {
     const payload = JSON.parse(decodeTokenSegment(encodedPayload));
     if (!payload?.userId) {
@@ -220,7 +216,7 @@ function resolveAppAuthSession(req) {
       return null;
     }
 
-    if (isTokenRevoked(hashToken(rawToken))) {
+    if (revoked) {
       return null;
     }
 

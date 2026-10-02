@@ -183,7 +183,7 @@ scripted sweeps means the rate limiter is working, not that the page is broken
 - Sessions are a self-contained HMAC-signed token (`server/services/auth.js`), signed with `CORE_AUTH_SESSION_SECRET`.
 - The token travels in an **HttpOnly cookie** (`stagecore_auth_token`), never in JS-readable storage or a custom header.
 - State-changing requests require a **double-submit CSRF token**: the server sets a readable `stagecore_csrf` cookie and also returns `csrfToken` from `POST /api/auth/google` (cross-origin frontends cannot read the API-domain cookie). The client echoes it in `X-StageCore-CSRF`.
-- `POST /api/auth/logout` revokes the token server-side (`revokeToken`) and clears cookies. Revocation is in-memory, so it does not survive a restart or span instances.
+- `POST /api/auth/logout` revokes the token server-side (`revokeToken`) and clears cookies. Revocation hashes and expiry timestamps are persisted in SQLite (`session_revocations`, migration 010); expired rows are pruned on store initialization and during requests.
 - Cookie `SameSite` is `lax` by default and `none` in production (cross-site Vercel frontend). Override with `CORE_AUTH_COOKIE_SAMESITE`.
 - Production **fails fast** if `CORE_AUTH_SESSION_SECRET` is missing.
 - CORS uses an explicit origin allowlist with `credentials: true`; never replace the allowlist with a wildcard.
