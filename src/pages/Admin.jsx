@@ -19,8 +19,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const AdminTournaments = lazy(() => import("@/features/tournaments/admin/AdminTournaments"));
 const AdminTeams = lazy(() => import("../components/admin/AdminTeams"));
-const AdminMatches = lazy(() => import("../components/admin/AdminMatches"));
-const AdminResults = lazy(() => import("../components/admin/AdminResults"));
+const AdminMatches = lazy(() => import("@/features/tournaments/admin/AdminMatches"));
+const AdminResults = lazy(() => import("@/features/tournaments/admin/AdminResults"));
 const AdminNews = lazy(() => import("../components/admin/AdminNews"));
 const AdminTransfers = lazy(() => import("../components/admin/AdminTransfers"));
 const AdminInspector = lazy(() => import("../components/admin/AdminInspector"));
