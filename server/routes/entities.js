@@ -1,5 +1,5 @@
+import { sendRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
-import { z } from "zod";
 import { db, entityConfigs } from "../db.js";
 import {
   ensureEntityWriteAccess,
@@ -46,8 +46,8 @@ entitiesRouter.get("/entities/:entity", (req, res) => {
   if (req.query.q) {
     try {
       query = JSON.parse(req.query.q);
-    } catch {
-      return res.status(400).json({ error: "Invalid q filter" });
+    } catch (error) {
+      return sendRequestError(req, res, error, 400);
     }
   }
 
@@ -58,9 +58,7 @@ entitiesRouter.get("/entities/:entity", (req, res) => {
     });
     return res.json(records);
   } catch (error) {
-    return res
-      .status(400)
-      .json({ error: error.message || "Invalid list query" });
+    return sendRequestError(req, res, error, 400);
   }
 });
 
@@ -79,12 +77,7 @@ entitiesRouter.post("/entities/:entity", (req, res) => {
     clearSearchCache();
     return res.status(201).json(created);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid payload", issues: error.issues });
-    }
-    return res.status(500).json({ error: "Internal server error" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -106,12 +99,7 @@ entitiesRouter.post("/entities/:entity/bulk", (req, res) => {
     clearSearchCache();
     return res.status(201).json(created);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid bulk payload", issues: error.issues });
-    }
-    return res.status(500).json({ error: "Internal server error" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -163,12 +151,7 @@ entitiesRouter.put("/entities/:entity/:id", (req, res) => {
     clearSearchCache();
     return res.json(updated);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid payload", issues: error.issues });
-    }
-    return res.status(500).json({ error: "Internal server error" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -185,6 +168,6 @@ entitiesRouter.delete("/entities/:entity/:id", (req, res) => {
     clearSearchCache();
     return res.json({ ok });
   } catch (error) {
-    return res.status(500).json({ error: "Internal server error" });
+    return sendRequestError(req, res, error, 500);
   }
 });

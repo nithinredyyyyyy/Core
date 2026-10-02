@@ -1,3 +1,4 @@
+import { sendRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
 import { getPublishedNewsArticles } from "../services/listQuery.js";
 import { getRecord } from "../services/entities.js";
@@ -9,9 +10,7 @@ newsRouter.get("/news/public", (req, res) => {
     const records = getPublishedNewsArticles(req.query);
     return res.json(records);
   } catch (error) {
-    return res
-      .status(400)
-      .json({ error: error.message || "Invalid news query" });
+    return sendRequestError(req, res, error, 400);
   }
 });
 

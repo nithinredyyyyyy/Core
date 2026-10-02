@@ -8,7 +8,7 @@ import { randomBytes, createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { z } from "zod";
+import { requestContext, requestErrorHandler } from "./services/requestErrors.js";
 import { backfillImportedNewsMetadata } from "./newsIngest.js";
 import { splitTrimmedValues } from "./services/schemas.js";
 import { buildAllowedOrigins, corsOriginCallback } from "./services/corsOrigins.js";
@@ -81,6 +81,7 @@ repairTournamentDataIntegrity();
 repairPlayerReferences();
 
 app.set("trust proxy", isProduction ? 1 : false);
+app.use("/api", requestContext);
 
 app.use((req, res, next) => {
   res.locals.cspNonce = randomBytes(16).toString("base64");
@@ -197,6 +198,7 @@ app.use("/api", tournamentsRouter);
 app.use("/api", adminRouter);
 app.use("/api", entitiesRouter);
 app.use("/api/pages", pagesRouter);
+app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
 
 function renderIndexHtml(nonce) {
   if (!indexHtmlTemplate) return "";
@@ -230,19 +232,7 @@ app.use((req, res, next) => {
   return res.type("html").send(renderIndexHtml(res.locals.cspNonce));
 });
 
-app.use((error, _req, res, _next) => {
-  if (error instanceof z.ZodError) {
-    return res.status(400).json({
-      error: "Invalid payload",
-      issues: error.issues,
-    });
-  }
-  logger.error("Unhandled request error", {
-    error: String(error?.stack || error?.message || error),
-  });
-
-  return res.status(500).json({ error: "Internal server error" });
-});
+app.use(requestErrorHandler);
 
 const httpServer = createServer(app);
 

@@ -1,3 +1,4 @@
+import { sendRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
 import { buildHomeViewModel } from "../homeView.js";
 import { sendCachedPagePayload } from "../services/pageCache.js";
@@ -5,26 +6,22 @@ import { getHomeSummaryPayload } from "../services/pagePayloads.js";
 
 export const homeRouter = Router();
 
-homeRouter.get("/home/summary", (_req, res) => {
+homeRouter.get("/home/summary", (req, res) => {
   try {
     return res.json(getHomeSummaryPayload());
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "Failed to build home summary" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
-homeRouter.get("/home/view", (_req, res) => {
+homeRouter.get("/home/view", (req, res) => {
   try {
-    const mode = _req.query.mode === "mobile" ? "mobile" : "desktop";
+    const mode = req.query.mode === "mobile" ? "mobile" : "desktop";
     return sendCachedPagePayload(res, `home:${mode}`, () => {
       const summary = getHomeSummaryPayload();
       return buildHomeViewModel(summary, { mode });
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message || "Failed to build home view" });
+    return sendRequestError(req, res, error, 500);
   }
 });

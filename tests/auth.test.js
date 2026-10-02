@@ -118,6 +118,16 @@ describe("auth session and access control", () => {
         headers: { Cookie: cookieHeader(token) },
       });
       assert.equal(afterLogout.status, 401);
+
+      // The old parser ignored segments after the signature, while revocation
+      // hashed the whole token. Both variants must stay invalid after logout.
+      for (const suffix of [".suffix", ".", ".one.two"]) {
+        const replay = await fetch(`${getBaseUrl()}/api/auth/me`, {
+          headers: { Cookie: cookieHeader(`${token}${suffix}`) },
+        });
+        assert.equal(replay.status, 401, `revoked token accepted with ${suffix}`);
+      }
+
     });
   });
 

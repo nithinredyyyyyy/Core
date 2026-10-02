@@ -199,8 +199,10 @@ function resolveAppAuthSession(req) {
   const rawToken = getSessionToken(req);
   if (!rawToken) return null;
 
+  // Accept exactly the issued wire format. Ignoring extra segments allowed a
+  // revoked token to authenticate under a different hash (token + ".suffix").
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(rawToken)) return null;
   const [encodedPayload, providedSignature] = rawToken.split(".");
-  if (!encodedPayload || !providedSignature) return null;
 
   const expectedSignature = signAuthSessionPayload(encodedPayload);
   if (!constantTimeEqual(providedSignature, expectedSignature)) {
@@ -213,7 +215,8 @@ function resolveAppAuthSession(req) {
       return null;
     }
 
-    if (payload.issuedAt && Date.now() - payload.issuedAt > TOKEN_EXPIRY_MS) {
+    if (!Number.isSafeInteger(payload.issuedAt) || payload.issuedAt > Date.now() ||
+        Date.now() - payload.issuedAt >= TOKEN_EXPIRY_MS) {
       return null;
     }
 

@@ -1,3 +1,4 @@
+import { sendRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
 import { createRankingsRouter } from "./rankings.js";
 import { sendCachedPagePayload } from "../services/pageCache.js";
@@ -22,7 +23,7 @@ pagesRouter.get("/tournament/:id/core", (req, res) => {
       getTournamentCorePayload(tournamentId),
     );
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load core payload" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -36,7 +37,7 @@ pagesRouter.get("/tournament/:id/full", (req, res) => {
       getTournamentFullPayload(tournamentId),
     );
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load full payload" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -50,15 +51,15 @@ pagesRouter.get("/tournament/:id", (req, res) => {
       getTournamentPagePayload(tournamentId),
     );
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load tournament payload" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
-pagesRouter.get("/teams", (_req, res) => {
+pagesRouter.get("/teams", (req, res) => {
   try {
     return sendCachedPagePayload(res, "teams", getTeamsPagePayload);
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load teams payload" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
@@ -69,15 +70,15 @@ pagesRouter.get("/leaderboard", (req, res) => {
       getLeaderboardPagePayload(tournamentId),
     );
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load leaderboard payload" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
-pagesRouter.get("/team-detail", (_req, res) => {
+pagesRouter.get("/team-detail", (req, res) => {
   try {
     return res.json(getTeamDetailPagePayload());
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load team detail payload" });
+    return sendRequestError(req, res, error, 500);
   }
 });
 

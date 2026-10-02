@@ -1,3 +1,4 @@
+import { sendRequestError } from "../services/requestErrors.js";
 import { Router } from "express";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
@@ -10,7 +11,6 @@ import {
   resolveRequestAuth,
   revokeRequestToken,
 } from "../services/auth.js";
-import { logger } from "../services/logger.js";
 
 export const authRouter = Router();
 
@@ -24,7 +24,7 @@ authRouter.get("/auth/me", (req, res) => {
   return res.json(auth.user);
 });
 
-authRouter.get("/auth/config", (_req, res) => {
+authRouter.get("/auth/config", (req, res) => {
   return res.json({
     googleClientId: GOOGLE_CLIENT_ID || null,
     googleEnabled: Boolean(GOOGLE_CLIENT_ID),
@@ -85,19 +85,7 @@ authRouter.post("/auth/google", async (req, res) => {
 
     return res.status(201).json({ user: session.user, csrfToken });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: "Invalid Google sign-in payload",
-        issues: error.issues,
-      });
-    }
-
-    logger.error("Google sign-in failed", { error: String(error?.message || error) });
-
-    return res.status(500).json({
-      error: error?.message || "Google sign-in failed",
-      code: "google_signin_failed",
-    });
+    return sendRequestError(req, res, error, 500);
   }
 });
 
