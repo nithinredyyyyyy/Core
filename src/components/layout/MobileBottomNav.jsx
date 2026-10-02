@@ -1,5 +1,6 @@
+import { MagnifyingDock } from "@/components/bencho/MagnifyingDock";
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   MoreHorizontal,
@@ -33,60 +34,28 @@ const ITEM_ICONS = {
   leaderboard: Star,
 };
 
-const ITEM_CLASS =
-  "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
 /**
  * Mobile bottom navigation: four primary destinations plus a "More" sheet that
  * folds in Teams, Players, Rankings, Leaderboard, Search, and Admin.
  */
 export default function MobileBottomNav({ onOpenSearch }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { hasAdminAccess } = useAdminAccess();
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <>
-      <nav
-        aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90 lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <div className="mx-auto flex h-16 w-full max-w-[var(--shell-max-width)] items-stretch gap-0.5 px-1">
-          {MOBILE_PRIMARY_ITEMS.map((item) => {
-            const Icon = ITEM_ICONS[item.key] || Home;
-            const active = isNavItemActive(item, location.pathname);
-            return (
-              <Link
-                key={item.key}
-                to={item.path}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  ITEM_CLASS,
-                  active ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                <Icon
-                  className="size-5"
-                  strokeWidth={active ? 2.4 : 1.8}
-                  aria-hidden="true"
-                />
-                {item.mobileLabel || item.label}
-              </Link>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={moreOpen}
-            className={cn(ITEM_CLASS, "text-muted-foreground")}
-          >
-            <MoreHorizontal className="size-5" strokeWidth={1.8} aria-hidden="true" />
-            More
-          </button>
-        </div>
-      </nav>
+      <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <MagnifyingDock
+          activeKey={moreOpen ? "more" : MOBILE_PRIMARY_ITEMS.find((item) => isNavItemActive(item, location.pathname))?.key || ""}
+          items={[...MOBILE_PRIMARY_ITEMS.map((item) => ({ ...item, Icon: ITEM_ICONS[item.key] })), { key: "more", label: "More", Icon: MoreHorizontal }]}
+          onSelect={(key) => {
+            if (key === "more") setMoreOpen(true);
+            else { const item = MOBILE_PRIMARY_ITEMS.find((entry) => entry.key === key); if (item) navigate(item.path); }
+          }}
+        />
+      </div>
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl pb-8">

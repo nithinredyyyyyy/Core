@@ -1,3 +1,4 @@
+import { Carousel } from "@/components/bencho/Carousel";
 import PageShell from "@/components/shared/PageShell";
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -267,6 +268,10 @@ export default function Tournaments() {
         title="Tournaments"
         description="Every BGMI event on the circuit — live now, upcoming, and the full archive."
       />
+
+      {calendarTournaments.length > 0 && <section aria-label="Featured tournaments">
+        <Carousel shots={[...calendarTournaments].sort(compareTournaments).slice(0, 5).map((event) => ({ id: event.id, name: event.name, src: getTournamentLogo(event) || "/images/core-logo.svg", href: `/tournaments?id=${encodeURIComponent(event.id)}` }))} />
+      </section>}
 
       <TournamentFilters
         filterStatus={filterStatus}
