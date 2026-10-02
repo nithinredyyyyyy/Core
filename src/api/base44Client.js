@@ -344,6 +344,9 @@ export const base44 = {
     teams() {
       return request("/api/pages/teams");
     },
+    playerDetail() {
+      return request("/api/pages/player-detail");
+    },
     teamDetail() {
       return request("/api/pages/team-detail");
     },

@@ -4,6 +4,7 @@ import { createRankingsRouter } from "./rankings.js";
 import { sendCachedPagePayload } from "../services/pageCache.js";
 import {
   getLeaderboardPagePayload,
+  getPlayerDetailPagePayload,
   getTeamDetailPagePayload,
   getTeamsPagePayload,
   getTournamentCorePayload,
@@ -77,6 +78,14 @@ pagesRouter.get("/leaderboard", (req, res) => {
 pagesRouter.get("/team-detail", (req, res) => {
   try {
     return res.json(getTeamDetailPagePayload());
+  } catch (error) {
+    return sendRequestError(req, res, error, 500);
+  }
+});
+
+pagesRouter.get("/player-detail", (req, res) => {
+  try {
+    return sendCachedPagePayload(res, "player-detail", getPlayerDetailPagePayload);
   } catch (error) {
     return sendRequestError(req, res, error, 500);
   }

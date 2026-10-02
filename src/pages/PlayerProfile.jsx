@@ -1,3 +1,4 @@
+import QueryError from "@/components/shared/QueryError";
 import PageShell from "@/components/shared/PageShell";
 import React from "react";
 import ShareMenu from "@/components/shared/ShareMenu";
@@ -18,6 +19,7 @@ export default function PlayerProfile() {
     currentTournament,
     displayIgn,
     isLoading,
+    error,
     playerPhoto,
     primaryStats,
     resolved,
@@ -28,6 +30,8 @@ export default function PlayerProfile() {
     teamName,
     teamTag,
   } = usePlayerProfileModel();
+
+  if (error) return <PageShell><QueryError title="Could not load player" /></PageShell>;
 
   if (isLoading) {
     return <LoadingPlayerState />;

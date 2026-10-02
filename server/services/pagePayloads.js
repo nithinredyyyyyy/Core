@@ -196,3 +196,21 @@ export function getTeamDetailPagePayload() {
     articles: getPublishedNewsArticles({ sort_by: "-created_date", limit: 50 }),
   };
 }
+
+// Public player profiles need identity/history display fields, never admin source
+// metadata. Raw alias/history entity endpoints remain administrator-only.
+export function getPlayerDetailPagePayload() {
+  return {
+    ...getTeamDetailPagePayload(),
+    // Retain the player's original coverage limits when sharing team data.
+    matches: listEntity("Match", {}, { sort_by: "-scheduled_time", limit: 2000 }),
+    tournaments: listEntity("Tournament", {}, { sort_by: "-created_date", limit: 100 }),
+    articles: getPublishedNewsArticles({ sort_by: "-created_date", limit: 80 }),
+    players: listEntity("Player", {}, { sort_by: "-created_date", limit: 800 }),
+    playerAliases: listEntity("PlayerAlias", {}, { sort_by: "-created_date", limit: 3000 })
+      .map(({ player_id, alias, normalized_alias }) => ({ player_id, alias, normalized_alias })),
+    playerTeamHistory: listEntity("PlayerTeamHistory", {}, { sort_by: "-updated_date", limit: 4000 })
+      .map(({ id, player_id, team_id, joined_date, left_date, role, updated_date }) =>
+        ({ id, player_id, team_id, joined_date, left_date, role, updated_date })),
+  };
+}

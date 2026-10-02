@@ -15,3 +15,7 @@ export function listPlayerAliases(limit = 3000) {
 export function listPlayerTeamHistory(limit = 4000) {
   return base44.entities.PlayerTeamHistory.list("-updated_date", limit);
 }
+
+export function getPlayerDetailPage() {
+  return base44.pages.playerDetail();
+}

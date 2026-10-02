@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Shield, Swords, Trophy, UserCircle2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { getPlayerDetailPage } from "@/services/players";
 import { getTeamLogoByName, getTeamLogoSurfaceTone } from "@/lib/teamLogos";
 import { decorateMatchesWithLiveStatus } from "@/lib/liveCalendar";
 import { buildPlayerAliasIndex, buildPlayerTeamHistoryMap, buildTeamAliasIndex, getOrganizationMetaFromAliases, pickBestPlayerRowForTeamContext, resolvePlayerRowsByAlias } from "@/lib/normalizedIdentity";
@@ -20,83 +20,19 @@ export function usePlayerProfileData() {
   const decodedIgn = decodeIgn(playerIgn);
   const queryTeam = searchParams.get("team");
 
-  const { data: players = [], isLoading: playersLoading } = useQuery({
-    queryKey: ["players"],
-    queryFn: () => base44.entities.Player.list("-created_date", 800),
-  });
-  const { data: teams = [], isLoading: teamsLoading } = useQuery({
-    queryKey: ["teams"],
-    queryFn: () => base44.entities.Team.list("-total_points", 400),
-  });
-  const { data: teamAliases = [], isLoading: teamAliasesLoading } = useQuery({
-    queryKey: ["team-aliases"],
-    queryFn: () => base44.entities.TeamAlias.list("-created_date", 2000),
-  });
-  const { data: playerAliases = [], isLoading: playerAliasesLoading } =
-    useQuery({
-      queryKey: ["player-aliases"],
-      queryFn: () => base44.entities.PlayerAlias.list("-created_date", 3000),
-    });
-  const { data: playerTeamHistory = [], isLoading: playerTeamHistoryLoading } =
-    useQuery({
-      queryKey: ["player-team-history"],
-      queryFn: () =>
-        base44.entities.PlayerTeamHistory.list("-updated_date", 4000),
-    });
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
-    queryKey: ["tournaments"],
-    queryFn: () => base44.entities.Tournament.list("-created_date", 100),
-  });
-  const { data: rawResults = [], isLoading: resultsLoading } = useQuery({
-    queryKey: ["results"],
-    queryFn: () => base44.entities.MatchResult.list("-created_date", 3000),
-  });
-  const results = useMemo(
-    () => filterPublishedMatchResults(rawResults),
-    [rawResults],
-  );
-  const { data: matches = [], isLoading: matchesLoading } = useQuery({
-    queryKey: ["matches"],
-    queryFn: () => base44.entities.Match.list("-scheduled_time", 2000),
-  });
-  const { data: normalizedStages = [], isLoading: normalizedStagesLoading } =
-    useQuery({
-      queryKey: ["normalized-tournament-stages"],
-      queryFn: () => base44.entities.TournamentStage.list("stage_order", 1000),
-    });
-  const {
-    data: normalizedParticipants = [],
-    isLoading: normalizedParticipantsLoading,
-  } = useQuery({
-    queryKey: ["normalized-tournament-participants"],
-    queryFn: () =>
-      base44.entities.TournamentParticipant.list("-created_date", 2000),
+  const { data: pageData, isLoading, error } = useQuery({
+    queryKey: ["player-detail-page"],
+    queryFn: getPlayerDetailPage,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const {
-    data: normalizedStandings = [],
-    isLoading: normalizedStandingsLoading,
-  } = useQuery({
-    queryKey: ["normalized-stage-standings"],
-    queryFn: () => base44.entities.StageStanding.list("rank", 5000),
-  });
-  const { data: articles = [], isLoading: articlesLoading } = useQuery({
-    queryKey: ["news"],
-    queryFn: () => base44.news.listPublished("-created_date", 80),
-  });
-
-  const isLoading =
-    playersLoading ||
-    teamsLoading ||
-    teamAliasesLoading ||
-    playerAliasesLoading ||
-    playerTeamHistoryLoading ||
-    tournamentsLoading ||
-    resultsLoading ||
-    matchesLoading ||
-    normalizedStagesLoading ||
-    normalizedParticipantsLoading ||
-    normalizedStandingsLoading ||
-    articlesLoading;
+    players = [], teams = [], teamAliases = [], playerAliases = [],
+    playerTeamHistory = [], tournaments = [], results: rawResults = [],
+    matches = [], normalizedStages = [], normalizedParticipants = [],
+    normalizedStandings = [], articles = [],
+  } = pageData || {};
+  const results = useMemo(() => filterPublishedMatchResults(rawResults), [rawResults]);
   const teamAliasIndex = useMemo(
     () => buildTeamAliasIndex(teams, teamAliases),
     [teamAliases, teams],
@@ -502,6 +438,7 @@ export function usePlayerProfileData() {
     decodedIgn,
     displayIgn,
     isLoading,
+    error,
     resolved,
     resultYears,
     primaryStats,
