@@ -7,6 +7,7 @@ import { FeaturedFactsGrid } from "@/features/tournaments/sections/FeaturedFacts
 import { EventBriefPanel } from "@/features/tournaments/sections/EventBriefPanel";
 import { ChampionCard } from "@/features/tournaments/sections/ChampionCard";
 
+/** @param {import("@/types/tournaments").TournamentDetailProps} props */
 export default function TournamentDetail({ tournament, onBack, requestedStage = "" }) {
   const {
     tournamentLogo,

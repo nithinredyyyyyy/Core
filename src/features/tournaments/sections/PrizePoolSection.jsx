@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { formatUsdAmount } from "@/features/tournaments/utils/detailHelpers";
 
+/** @param {{ stage: string, rows: import("@/types/tournaments").PrizeEntry[] }} props */
 export function PrizePoolSection({ stage, rows }) {
   const [expanded, setExpanded] = useState(false);
   const total = rows.reduce((sum, entry) => {

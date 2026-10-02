@@ -16,6 +16,7 @@ import { BMPS_2026_STYLE_STAGE_TOURNAMENTS, EMPTY_NORMALIZED_STAGES, EMPTY_STAGE
 import { buildNormalizedParticipantEntries, buildNormalizedStageBoardStages, getCleanStageLabel, getParticipantSectionLabel, mergeDisplayStages } from "@/features/tournaments/utils/stageHelpers";
 import { getChampionDisplayName, getChampionLogoOverride, normalizeTeamName } from "@/features/tournaments/utils/participantHelpers";
 
+/** @param {Pick<import("@/types/tournaments").TournamentDetailProps, "tournament" | "requestedStage">} props */
 export function useTournamentDetailModel({ tournament, requestedStage = "" }) {
   const { data: coreData = {}, isLoading: isCoreLoading } = useQuery({
     queryKey: ["tournament-core", tournament.id],

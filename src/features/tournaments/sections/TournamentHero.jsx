@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import LogoBlock from "@/components/shared/LogoBlock";
 import StatusBadge from "@/components/shared/StatusBadge";
 
+/** @param {{ tournament: import("@/types/tournaments").Tournament, tournamentLogo: string | null, participantCount: number }} props */
 export function TournamentHero({ tournament, tournamentLogo, participantCount }) {
   const [showFullDescription, setShowFullDescription] = useState(false);
 

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
  * field size. Every value is optional — a missing stat is simply omitted rather
  * than filled with a placeholder number.
  */
+/** @param {import("@/types/tournaments").TournamentCardProps} props */
 export default function TournamentCard({
   tournament,
   logo = null,
