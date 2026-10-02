@@ -163,3 +163,10 @@ requests. No active revocation is evicted due to an entry-count limit. A backup
 restore can roll back revocations along with the DB: rotate the session secret
 after restoring an older backup. Previously in-memory revocations cannot be
 recovered by this migration; the planned rollout secret rotation remains necessary.
+
+### Removing administrator access
+
+After updating CORE_ADMIN_EMAILS and restarting the deployment, each authenticated
+request derives its role from the current allowlist. A previously issued signed
+admin role cannot preserve access after removal. The session remains a member
+session until logout, expiry or session-secret rotation.

@@ -226,7 +226,9 @@ function resolveAppAuthSession(req) {
         id: String(payload.userId),
         email: String(payload.email || ""),
         full_name: String(payload.fullName || ""),
-        role: String(payload.role || "member"),
+        // Identity is signed; administrative permission comes from the current
+        // deployment allowlist, never from a stale role embedded in a session.
+        role: isConfiguredAdminEmail(payload.email) ? "admin" : "member",
         auth_method: String(payload.authMethod || "custom"),
       },
       issuedAt: payload.issuedAt || null,
@@ -264,7 +266,7 @@ export function requireAdminAccess(req, res) {
     });
     return false;
   }
-  if (!isConfiguredAdminEmail(auth.user?.email) && auth.user?.role !== "admin") {
+  if (auth.user?.role !== "admin") {
     res.status(403).json({
       error: "Admin permission required",
       code: "admin_required",

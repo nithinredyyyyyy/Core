@@ -44,6 +44,19 @@ describe("security boundaries", () => {
   before(startServer);
   after(stopServer);
 
+  test("an old admin role cannot outlive removal from the current allowlist", async () => {
+    const token = createAuthSession({ id: "removed-admin", email: "removed@example.test", role: "admin", auth_method: "google" }).token;
+    const requestHeaders = {
+      Cookie: `stagecore_auth_token=${token}; stagecore_csrf=test-csrf`,
+      "X-StageCore-CSRF": "test-csrf", "Content-Type": "application/json",
+    };
+    const identity = await fetch(`${getBaseUrl()}/api/auth/me`, { headers: requestHeaders });
+    assert.equal(identity.status, 200);
+    assert.equal((await identity.json()).role, "member");
+    await assertSafeError(await fetch(`${getBaseUrl()}/api/admin/overview`, { headers: requestHeaders }), 403);
+    await assertSafeError(await fetch(`${getBaseUrl()}/api/entities/Tournament`, { method: "POST", headers: requestHeaders, body: "{}" }), 403);
+  });
+
   test("all admin routes are represented in the access-control matrix", () => {
     const source = readFileSync(new URL("../server/routes/admin.js", import.meta.url), "utf8");
     const routes = [...source.matchAll(/adminRouter\.(get|post|put|patch|delete)\("([^"]+)"/g)]
