@@ -397,7 +397,21 @@ export default function Teams() {
       requestedTeam,
       teamAliasIndex,
     ).key;
-    return teamCards.find((card) => card.key === targetKey) || null;
+    const card = teamCards.find((entry) => entry.key === targetKey);
+    if (card) return card;
+    // Deep links also address historical/international seed teams that are not
+    // entrants in the directory's featured tournament. Do not drop their detail.
+    const team = resolveTeamByAlias(requestedTeam, teamAliasIndex);
+    if (!team) return null;
+    const meta = getOrganizationMetaFromAliases(team, teamAliasIndex);
+    return {
+      ...team,
+      name: meta.name,
+      tag: meta.tag,
+      logoUrl: getTeamCardLogo(meta.name, team.logo_url),
+      representativeIds: [team.id],
+      aliases: team.aliases || [],
+    };
   }, [searchParams, teamAliasIndex, teamCards]);
 
   const selectedParticipant = useMemo(() => {

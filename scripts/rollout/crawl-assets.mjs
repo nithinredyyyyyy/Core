@@ -40,7 +40,7 @@ const report = { revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding
 try {
   let healthy = false;
   for (let n = 0; n < 120; n++) {
-    if (server.exitCode !== null) throw new Error(`Server exited ${server.exitCode}`);
+    if ((server.exitCode !== null || server.signalCode !== null)) throw new Error(`Server exited ${server.exitCode}`);
     try { healthy = (await fetch(`${origin}/api/health`)).ok; } catch { /* startup */ }
     if (healthy) break;
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -91,7 +91,7 @@ try {
     const deadline = Date.now() + 45_000;
     let quietSince = Date.now();
     while (Date.now() < deadline) {
-      if (server.exitCode !== null) throw new Error('Server stopped during crawl');
+      if ((server.exitCode !== null || server.signalCode !== null)) throw new Error('Server stopped during crawl');
       if (pending.size) quietSince = Date.now();
       if (!pending.size && Date.now() - quietSince > 200) return;
       await page.waitForTimeout(50);
@@ -107,10 +107,11 @@ try {
     await page.evaluate(() => { document.querySelectorAll('img[loading="lazy"]').forEach(img => { img.loading = 'eager'; }); window.scrollTo(0, document.body.scrollHeight); });
     await settle();
     await page.evaluate(() => document.fonts.ready);
-    await page.waitForFunction(() => !document.body.innerText.includes('Something went wrong'), { timeout: 5000 });
+    await page.waitForFunction(() => !document.body.innerText.includes('Something went wrong'), null, { timeout: 5000 });
     const state = await page.evaluate(() => ({ heading: document.querySelector('h1')?.textContent || '',
       broken: [...document.images].filter(img => img.currentSrc && img.complete && img.naturalWidth === 0).map(img => img.currentSrc),
       body: document.body.textContent.slice(0, 300) }));
+    if (!state.heading || (route.startsWith('/teams?team=') && state.heading === 'Teams')) throw new Error(`Seeded detail did not render on ${route}`);
     report.brokenImages.push(...state.broken.map(url => ({ route, url })));
     report.routes.push({ route, heading: state.heading, brokenImages: state.broken.length });
     if (report.routes.length % 50 === 0) {
@@ -126,7 +127,7 @@ try {
   await context?.close();
   await browser?.close();
   server.kill('SIGTERM');
-  await new Promise(resolve => { if (server.exitCode !== null) resolve(); else server.once('exit', resolve); });
+  await new Promise(resolve => { if ((server.exitCode !== null || server.signalCode !== null)) resolve(); else server.once('exit', resolve); });
   closeSync(log);
   rmSync(temporary, { recursive: true, force: true });
   writeFileSync(path.join(output, 'crawl.json'), JSON.stringify(report, null, 2) + '\n');
