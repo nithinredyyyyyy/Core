@@ -1,16 +1,16 @@
-﻿import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
-import EmptyState from "../components/shared/EmptyState";
-import PageHeader from "../components/shared/PageHeader";
-import PageSkeleton from "../components/shared/PageSkeleton";
-import QueryError from "../components/shared/QueryError";
-import FilterTabs from "../components/shared/FilterTabs";
-import SectionHeader from "../components/shared/SectionHeader";
-import TournamentCard from "../components/shared/TournamentCard";
-import TournamentDetail from "../components/tournaments/TournamentDetail";
+import EmptyState from "@/components/shared/EmptyState";
+import PageHeader from "@/components/shared/PageHeader";
+import PageSkeleton from "@/components/shared/PageSkeleton";
+import QueryError from "@/components/shared/QueryError";
+import FilterTabs from "@/components/shared/FilterTabs";
+import SectionHeader from "@/components/shared/SectionHeader";
+import TournamentCard from "@/features/tournaments/components/TournamentCard";
+import TournamentDetail from "@/features/tournaments/TournamentDetailPage";
 import {
   Select,
   SelectContent,

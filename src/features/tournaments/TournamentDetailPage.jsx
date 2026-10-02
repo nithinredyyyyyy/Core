@@ -20,7 +20,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import LogoBlock from "@/components/shared/LogoBlock";
 import StatusBadge from "@/components/shared/StatusBadge";
-import FactCard from "@/components/tournaments/FactCard";
+import FactCard from "@/features/tournaments/components/FactCard";
 import { normalizeOrganizationName } from "@/lib/organizationIdentity";
 import { applyCurrentRosterOverride } from "@/lib/currentRosterOverrides";
 import { buildLiveRoster } from "@/lib/rosterUtils";

@@ -17,7 +17,7 @@ import { base44 } from "@/api/base44Client";
 import PageLoader from "@/components/shared/PageLoader";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-const AdminTournaments = lazy(() => import("../components/admin/AdminTournaments"));
+const AdminTournaments = lazy(() => import("@/features/tournaments/admin/AdminTournaments"));
 const AdminTeams = lazy(() => import("../components/admin/AdminTeams"));
 const AdminMatches = lazy(() => import("../components/admin/AdminMatches"));
 const AdminResults = lazy(() => import("../components/admin/AdminResults"));

@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
-import SortableColumnHeader from "@/components/tournaments/SortableColumnHeader";
+import SortableColumnHeader from "@/features/tournaments/components/SortableColumnHeader";
 import TeamIdentity from "@/components/shared/TeamIdentity";
 import { getOrganizationMeta, normalizeOrganizationName } from "@/lib/organizationIdentity";
 import {

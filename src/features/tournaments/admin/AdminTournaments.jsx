@@ -29,8 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import StatusBadge from "../shared/StatusBadge";
-import { confirmDiscardIfDirty, createFormSnapshot } from "./formState";
+import StatusBadge from "@/components/shared/StatusBadge";
+import { confirmDiscardIfDirty, createFormSnapshot } from "@/components/admin/formState";
 import { getOfficialParticipantCount } from "@/lib/tournamentParticipants";
 
 const GAMES = [
