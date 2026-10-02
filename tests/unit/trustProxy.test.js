@@ -22,3 +22,31 @@ test("Render's single proxy hop keys limits on the rightmost client IP, ignoring
   assert.equal((await request("198.51.100.100, 203.0.113.10")).status, 429);
   assert.equal((await request("203.0.113.11")).status, 200);
 });
+
+test('a forwarding ingress appends the socket peer; changing spoofed XFF cannot reset the limit', async (t) => {
+  const { createServer, request } = await import('node:http');
+  const app = express();
+  app.set('trust proxy', 1);
+  app.use(rateLimit({ windowMs: 60_000, limit: 1 }));
+  app.get('/', (req, res) => res.json({ ip: req.ip }));
+  const backend = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => backend.once('listening', resolve));
+  const ingress = createServer((req, res) => {
+    const upstream = request({ hostname: '127.0.0.1', port: backend.address().port, path: '/',
+      headers: { ...req.headers, 'x-forwarded-for': [req.headers['x-forwarded-for'], req.socket.remoteAddress].filter(Boolean).join(', ') } }, response => {
+      res.writeHead(response.statusCode, response.headers); response.pipe(res);
+    });
+    upstream.on('error', () => { res.writeHead(502); res.end(); });
+    req.pipe(upstream);
+  });
+  ingress.listen(0, '127.0.0.1');
+  await new Promise(resolve => ingress.once('listening', resolve));
+  t.after(async () => {
+    for (const server of [ingress, backend]) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+  });
+  const url = `http://127.0.0.1:${ingress.address().port}`;
+  const first = await fetch(url, { headers: { 'X-Forwarded-For': '198.51.100.1' } });
+  assert.equal(first.status, 200);
+  assert.equal((await first.json()).ip, '127.0.0.1');
+  assert.equal((await fetch(url, { headers: { 'X-Forwarded-For': '203.0.113.99, 198.51.100.2' } })).status, 429);
+});
